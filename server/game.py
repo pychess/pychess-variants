@@ -51,6 +51,7 @@ from fairy import (
     get_san_moves,
     modded_variant,
 )
+from fairy.fairy_board import MoveResult
 from glicko2.glicko2 import Rating, gl2
 from lobby_panels_cache import refresh_lobby_leaderboard_cache
 from rated_start import can_rate_start, can_rate_variant
@@ -611,7 +612,12 @@ class Game:
         await self.app_state.db.game.update_one({"_id": self.id}, {"$set": new_data})
 
     async def play_move(
-        self, move: str, clocks: ClockValues | None = None, ply: int | None = None
+        self,
+        move: str,
+        clocks: ClockValues | None = None,
+        ply: int | None = None,
+        *,
+        move_result: MoveResult | None = None,
     ) -> None:
         self.stopwatch.stop()
 
@@ -695,7 +701,14 @@ class Game:
                 if self.jieqi:
                     # Reset per-move capture hint so stale captures are never reused.
                     self.last_jieqi_capture = None
-                san = self.board.get_san(move)
+                if self.board.supports_combined_move:
+                    if move_result is None:
+                        move_result = self.board.prepare_move(
+                            move, include_legal_moves=self.random_mover
+                        )
+                    san = move_result.san
+                else:
+                    san = self.board.get_san(move)
 
                 if self.jieqi:
                     # Capture identity must be read before the board mutates, because
@@ -714,13 +727,19 @@ class Game:
                 else:
                     self.clocks_b.append(clocks[BLACK])
 
-                self.board.push(move)
+                self.board.push(move, move_result=move_result)
 
-                self.has_legal_move = self.board.has_legal_move()
-                if self.random_mover:
-                    self.legal_moves = self.board.legal_moves()
+                if move_result is not None:
+                    self.has_legal_move = move_result.has_legal_moves
+                    if self.random_mover:
+                        assert move_result.legal_moves is not None
+                        self.legal_moves = move_result.legal_moves
+                else:
+                    self.has_legal_move = self.board.has_legal_move()
+                    if self.random_mover:
+                        self.legal_moves = self.board.legal_moves()
 
-                self.update_status()
+                self.update_status(move_result=move_result)
 
                 self.steps.append(
                     {
@@ -1459,7 +1478,13 @@ class Game:
     def ply(self) -> int:
         return self.board.ply
 
-    def update_status(self, status: int | None = None, result: str | None = None) -> None:
+    def update_status(
+        self,
+        status: int | None = None,
+        result: str | None = None,
+        *,
+        move_result: MoveResult | None = None,
+    ) -> None:
         if self.status > STARTED:
             return
 
@@ -1481,18 +1506,30 @@ class Game:
             return
 
         if self.board.move_stack:
-            self.check = self.board.is_checked()
+            self.check = move_result.check if move_result is not None else self.board.is_checked()
 
-        w, b = self.board.insufficient_material()
+        w, b = (
+            move_result.insufficient_material
+            if move_result is not None
+            else self.board.insufficient_material()
+        )
         if w and b:
             self.status = DRAW
             self.result = "1/2-1/2"
 
         if not self.has_legal_move:
-            game_result_value = self.board.game_result()
+            game_result_value = (
+                move_result.game_result if move_result is not None else self.board.game_result()
+            )
+            assert game_result_value is not None
             self.result = result_string_from_value(self.board.color, game_result_value)
 
-            if self.board.is_immediate_game_end()[0]:
+            immediate_end = (
+                move_result.immediate_game_end
+                if move_result is not None
+                else self.board.is_immediate_game_end()
+            )
+            if immediate_end[0]:
                 self.status = VARIANTEND
             elif self.check:
                 self.status = MATE
@@ -1517,7 +1554,11 @@ class Game:
 
         else:
             # end the game by 50 move rule and repetition automatically
-            is_game_end, game_result_value = self.board.is_optional_game_end()
+            is_game_end, game_result_value = (
+                move_result.optional_game_end
+                if move_result is not None
+                else self.board.is_optional_game_end()
+            )
             if is_game_end and (
                 game_result_value != 0
                 or (game_result_value == 0 and self.n_fold_is_draw)

@@ -4,7 +4,7 @@ import logging
 import random
 import re
 from functools import lru_cache
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 from const import CATEGORIES
 from variants import catalogued_variant_random_start, is_catalogued_variant
@@ -50,6 +50,18 @@ MANCHU_R_FEN = "m1bakab1r/9/9/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 
 JIEQI_FEN = "r~n~b~a~ka~b~n~r~/9/1c~5c~1/p~1p~1p~1p~1p~/9/9/P~1P~1P~1P~1P~/1C~5C~1/9/R~N~B~A~KA~B~N~R~ w - - 0 1"
 
 RANDOM_START_VARIANTS = frozenset(("ataxx", "paradigm"))
+
+
+class MoveResult(NamedTuple):
+    san: str
+    fen: str
+    check: bool
+    has_legal_moves: bool
+    legal_moves: list[str] | None
+    insufficient_material: tuple[bool, bool]
+    immediate_game_end: tuple[bool, int]
+    optional_game_end: tuple[bool, int]
+    game_result: int | None
 
 
 def _normalize_variant_and_chess960(variant: str | None, chess960: bool) -> tuple[str, bool]:
@@ -260,7 +272,47 @@ class FairyBoard:
         self.jieqi_initial_covered_pieces = initial_mapping
         self.jieqi_covered_pieces = dict(initial_mapping)
 
-    def push(self, move, append=True, *, raise_on_error=True):
+    @property
+    def supports_combined_move(self) -> bool:
+        # Alice uses a separate binding; Jieqi and partner transfers cannot be
+        # reconstructed by replaying this board's native move stack.
+        return self.variant not in ("alice", "jieqi", "bughouse", "supply", "makbug")
+
+    def prepare_move(self, move: str, *, include_legal_moves: bool = False) -> MoveResult:
+        """Validate a move and compute its result without changing the board."""
+        result = MoveResult(
+            *self.sf.apply_move(
+                self.variant,
+                self.initial_fen,
+                self.move_stack,
+                move,
+                self.chess960,
+                self.notation,
+                self.sfen,
+                self.show_promoted,
+                self.count_started,
+                include_legal_moves,
+            )
+        )
+        if self.variant in ("makruk", "makpong", "cambodian", "sittuyin", "asean"):
+            # Counting toggles are not native moves. Preserve the counter from
+            # the current FEN instead of reconstructing it from move history.
+            result = result._replace(
+                fen=self.sf.get_fen(
+                    self.variant,
+                    self.fen,
+                    [move],
+                    self.chess960,
+                    self.sfen,
+                    self.show_promoted,
+                    self.count_started,
+                )
+            )
+        return result
+
+    def push(
+        self, move, append=True, *, raise_on_error=True, move_result: MoveResult | None = None
+    ):
         previous_fen = self.fen
         previous_color = self.color
         previous_ply = self.ply
@@ -279,6 +331,8 @@ class FairyBoard:
                     self.jieqi_initial_covered_pieces = dict(self.jieqi_covered_pieces)
                 self.fen = apply_move_and_transform(self.fen, move, self.jieqi_covered_pieces)
                 # print(move, self.fen)
+            elif move_result is not None:
+                self.fen = move_result.fen
             else:
                 self.fen = self.sf.get_fen(
                     self.variant,

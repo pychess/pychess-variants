@@ -301,6 +301,49 @@ position.
 Random-Mover also has an obvious small duplication where availability of a legal
 move can be checked immediately before obtaining the legal-move list itself.
 
+### Prepared integration: combined pyffish move processing
+
+The `feature/pyffish-apply-move` branch uses the new native `apply_move` binding
+proposed in [Fairy-Stockfish PR #1055](https://github.com/fairy-stockfish/Fairy-Stockfish/pull/1055).
+It requires a pyffish build containing that API; deployment and the dependency
+version update must wait for upstream acceptance and a release.
+
+Human moves are validated by the combined operation before clocks, draw offers,
+or board state change. Its result is passed into `Game.play_move()` and consumed
+for SAN, FEN, legal-move availability, check, material, and game-end decisions.
+Bots compute the same result in the existing trusted move path. Native move
+history is reconstructed once, preserving repetition, chasing, and
+history-dependent legality. No derived result is cached across moves or takebacks.
+
+Random-Mover requests the post-move legal list from this operation and reuses it
+instead of asking for availability and then generating the list again. Ordinary
+moves request only availability, avoiding Python move-string/list allocations.
+Counting variants retain one incremental FEN call because counting toggles can
+change serialized counters outside native move history. Their other engine
+queries share the combined result.
+
+Alice continues to use its separate `pyffish-alice` binding. Jieqi retains its
+hidden-piece transformations and advisor filtering. Two-board live move processing
+remains separate because partner pocket transfers are absent from each board's
+ordinary native move history. These are rule-specific paths; the feature branch
+assumes the new pyffish API is available.
+
+A local CPU benchmark compared the previous human-move engine query sequence
+with `FairyBoard.prepare_move()` using the candidate pyffish build. Median CPU
+time over three batches of thirty calls was:
+
+| Variant and preceding history | Previous queries | Prepared result |
+| --- | --- | --- |
+| Chess, no preceding moves | 8.79 ms | 1.26 ms |
+| Chess, 400 plies | 9.62 ms | 2.02 ms |
+| Shogi, 80 plies | 9.45 ms | 1.77 ms |
+| Makruk, 80 plies | 9.27 ms | 2.81 ms |
+| Janggi, 64 plies | 10.02 ms | 1.61 ms |
+
+These measurements cover engine queries, excluding database and WebSocket work,
+and are not production guarantees. Native history still needs one replay per
+move; the reduction comes from sharing reconstruction across queries.
+
 ## 5. Bughouse live move processing — P1
 
 `server/bug/game_bug.py` performs similar synchronous work for each Bughouse

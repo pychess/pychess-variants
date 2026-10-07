@@ -237,11 +237,15 @@ class StaleAtomicBotMoveTestCase(AioHTTPTestCase):
 
         # This reproduces the production symptom at the Game/FairyBoard layer:
         # if c8b7 reaches game.play_move() on the logged FEN, it becomes INVALIDMOVE.
+        clocks_before = list(game.clocks_w), list(game.clocks_b)
         await game.play_move("c8b7", clocks=[300000, 300000], ply=None)
 
         self.assertEqual(game.board.fen, POST_CASTLE_FEN)
         self.assertEqual(game.ply, 18)
-        self.assertEqual(game.lastmove, "c8b7")
+        # Combined validation refuses the move before recording its clocks or
+        # replacing the last successfully played move.
+        self.assertEqual(game.lastmove, "c8b8")
+        self.assertEqual(clocks_before, (game.clocks_w, game.clocks_b))
         self.assertEqual(game.status, INVALIDMOVE)
         self.assertEqual(game.result, "0-1")
 

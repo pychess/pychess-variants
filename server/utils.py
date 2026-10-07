@@ -40,6 +40,7 @@ from fairy import (
     modded_variant,
     validate_fen,
 )
+from fairy.fairy_board import MoveResult
 from game import Game, StaleMovePersistenceError
 from newid import new_id
 from seek import (
@@ -1104,6 +1105,7 @@ async def play_move(
     gameId = game.id
     users = app_state.users
     invalid_move = False
+    move_result: MoveResult | None = None
     play_color = game.board.color
     player_color = (
         WHITE
@@ -1222,8 +1224,24 @@ async def play_move(
             invalid_move = True
 
         if not user.bot and not invalid_move:
-            legal_moves = game.board.legal_moves()
-            if move not in legal_moves:
+            if game.board.supports_combined_move:
+                try:
+                    # The native parser accepts these aliases; human clients
+                    # previously had to submit the exact legal UCI string.
+                    if len(move) == 5 and (
+                        move[-1] == "=" or ("@" not in move and move[-1].isupper())
+                    ):
+                        raise ValueError("Noncanonical human move")
+                    move_result = game.board.prepare_move(
+                        move, include_legal_moves=game.random_mover
+                    )
+                except ValueError:
+                    illegal_move = True
+                else:
+                    illegal_move = False
+            else:
+                illegal_move = move not in game.board.legal_moves()
+            if illegal_move:
                 log.warning(
                     "Rejecting illegal human move in %s by %s (move=%s ply=%s turn=%s fen=%s)",
                     gameId,
@@ -1238,7 +1256,7 @@ async def play_move(
 
         if not invalid_move:
             try:
-                await game.play_move(move, clocks, ply)
+                await game.play_move(move, clocks, ply, move_result=move_result)
             except StaleMovePersistenceError:
                 log.warning(
                     "Rejecting stale move after persistence conflict in %s by %s (move=%s)",
