@@ -31,6 +31,7 @@ import { model } from './main';
 import { MsgBoard } from './messages';
 import { variantPanels } from './lobby/layer1';
 import { shouldShowRatingRange } from './lobby/ratingRange';
+import { filterSeeks, SeekRatedFilter } from './lobby/seekFilter';
 import {
     Post,
     Stream,
@@ -136,6 +137,8 @@ export class LobbyController {
     validGameData: boolean;
     readyState: number;
     seeks: Seek[];
+    seekFilterVariant: string;
+    seekFilterRated: SeekRatedFilter;
     streams: VNode | HTMLElement;
     spotlights: VNode | HTMLElement;
     timeline: LiveTimelinePanel | null;
@@ -291,6 +294,14 @@ export class LobbyController {
         }
 
         boardSettings.assetURL = this.assetURL;
+
+        this.seekFilterVariant = localStorage.seek_filter_variant ?? '';
+        this.seekFilterRated = (localStorage.seek_filter_rated as SeekRatedFilter) ?? 'all';
+
+        const filtersEl = document.getElementById('seek-filters');
+        if (filtersEl) {
+            patch(filtersEl, this.renderSeekFilters());
+        }
     }
 
     doSend(message: JSONObject) {
@@ -1318,6 +1329,87 @@ export class LobbyController {
         return fen === '' || validFen(VARIANTS[variant], fen);
     }
 
+    private renderSeekFilters(): VNode {
+        const variantFilter = selectVariant(
+            'seek-variant-filter',
+            this.seekFilterVariant || null,
+            () => this.onSeekVariantFilterChange(),
+            // No insert hook: the LobbyController is constructed from the
+            // live <table.seeks> insert hook, so any nested patch of that table
+            // here would corrupt snabbdom's vnode tracking and break later
+            // get_seeks renders. Re-render only happens on user change.
+            () => {},
+            this.disabledVariants(),
+            this.gameCategory,
+            _('All variants'),
+        );
+        const modeFilter = h(
+            'select#seek-mode-filter',
+            {
+                on: {
+                    change: (e: Event) =>
+                        this.onSeekRatedFilterChange((e.target as HTMLSelectElement).value),
+                },
+            },
+            [
+                h('option', { props: { value: 'all' }, attrs: { selected: this.seekFilterRated === 'all' } }, _('All')),
+                h(
+                    'option',
+                    { props: { value: 'rated' }, attrs: { selected: this.seekFilterRated === 'rated' } },
+                    _('Rated'),
+                ),
+                h(
+                    'option',
+                    { props: { value: 'casual' }, attrs: { selected: this.seekFilterRated === 'casual' } },
+                    _('Casual'),
+                ),
+            ],
+        );
+        return h(
+            'div.seek-filters',
+            { style: { display: 'flex', gap: '0.5em', alignItems: 'center', margin: '0.5em 0', flexWrap: 'wrap' } },
+            [
+                h('label', { attrs: { for: 'seek-variant-filter' } }, _('Variant')),
+                variantFilter,
+                h('label', { attrs: { for: 'seek-mode-filter' } }, _('Mode')),
+                modeFilter,
+            ],
+        );
+    }
+
+    private onSeekVariantFilterChange() {
+        const select = document.getElementById('seek-variant-filter') as HTMLSelectElement | null;
+        this.seekFilterVariant = select ? select.value : '';
+        localStorage.seek_filter_variant = this.seekFilterVariant;
+        this.renderSeekList();
+    }
+
+    private onSeekRatedFilterChange(value: string) {
+        this.seekFilterRated = (value as SeekRatedFilter) || 'all';
+        localStorage.seek_filter_rated = this.seekFilterRated;
+        this.renderSeekList();
+    }
+
+    // Re-renders the live and correspondence seek tables applying the current
+    // variant + rated filters (which combine via AND — see issue #648).
+    private renderSeekList() {
+        const visibleSeeks = this.seeks.filter(seek => this.isVariantAllowed(seek.variant));
+        const filtered = filterSeeks(visibleSeeks, this.seekFilterVariant, this.seekFilterRated);
+        const liveSeeks = filtered.filter(seek => seek.day === 0);
+        const corrSeeks = filtered.filter(seek => seek.day !== 0);
+
+        const oldSeeks = document.querySelector('.seek-container table.seeks') as Element | null;
+        if (oldSeeks) {
+            oldSeeks.innerHTML = '';
+            patch(oldSeeks, h('table.seeks', this.renderSeeks(liveSeeks)));
+        }
+        const oldCorrs = document.querySelector('.corr-container table.seeks') as Element | null;
+        if (oldCorrs) {
+            oldCorrs.innerHTML = '';
+            patch(oldCorrs, h('table.seeks', this.renderSeeks(corrSeeks)));
+        }
+    }
+
     renderSeeks(seeks: Seek[]) {
         seeks.sort((a, b) => (a.bot && !b.bot ? 1 : -1));
         const rows = seeks.flatMap(seek => this.seekView(seek));
@@ -1866,16 +1958,7 @@ export class LobbyController {
 
     private onMsgGetSeeks(msg: MsgGetSeeks) {
         this.seeks = msg.seeks;
-        // console.log("!!!! got get_seeks msg:", msg);
-        const visibleSeeks = msg.seeks.filter(seek => this.isVariantAllowed(seek.variant));
-
-        const oldSeeks = document.querySelector('.seek-container table.seeks') as Element;
-        oldSeeks.innerHTML = '';
-        patch(oldSeeks, h('table.seeks', this.renderSeeks(visibleSeeks.filter(seek => seek.day === 0))));
-
-        const oldCorrs = document.querySelector('.corr-container table.seeks') as Element;
-        oldCorrs.innerHTML = '';
-        patch(oldCorrs, h('table.seeks', this.renderSeeks(visibleSeeks.filter(seek => seek.day !== 0))));
+        this.renderSeekList();
     }
 
     private onMsgNewGame(msg: MsgNewGame) {
@@ -2135,6 +2218,7 @@ export function lobbyView(model: PyChessModel): VNode[] {
             'div.seek-container',
             { attrs: { id: 'panel-1', role: 'tabpanel', tabindex: '-1', 'aria-labelledby': 'tab-1' } },
             [
+                h('div#seek-filters'),
                 h('div.seeks-table', [
                     h('div.seeks-wrapper', h('table.seeks', { hook: { insert: vnode => runSeeks(vnode, model) } })),
                 ]),
