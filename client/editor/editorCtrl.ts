@@ -92,6 +92,7 @@ export class EditorController extends ChessgroundController {
             e,
             h('input#fen', {
                 props: { name: 'fen', value: model['fen'] },
+                attrs: { 'aria-label': 'FEN' },
                 on: { input: () => this.onChangeFen(), paste: e => this.onPasteFen(e) },
             }),
         );
@@ -150,35 +151,125 @@ export class EditorController extends ChessgroundController {
                           ]),
                 ]),
 
-                h('a#flip.i-pgn', { on: { click: () => this.toggleOrientation() } }, [
-                    h('div.icon.icon-refresh', _('FLIP BOARD')),
-                ]),
-                h('a#clear.i-pgn', { on: { click: () => this.setEmptyFen() } }, [
-                    h('div.icon.icon-trash-o', _('CLEAR BOARD')),
-                ]),
+                h(
+                    'a#flip.i-pgn',
+                    {
+                        attrs: { href: '#' },
+                        on: {
+                            click: (e: Event) => {
+                                e.preventDefault();
+                                this.toggleOrientation();
+                            },
+                        },
+                    },
+                    [h('div.icon.icon-refresh', _('FLIP BOARD'))],
+                ),
+                h(
+                    'a#clear.i-pgn',
+                    {
+                        attrs: { href: '#' },
+                        on: {
+                            click: (e: Event) => {
+                                e.preventDefault();
+                                this.setEmptyFen();
+                            },
+                        },
+                    },
+                    [h('div.icon.icon-trash-o', _('CLEAR BOARD'))],
+                ),
                 this.variant.pocket?.captureToHand
-                    ? h('a#fill.i-pgn', { on: { click: () => this.fillHand() } }, [
-                          h('div.icon.icon-sign-in', _("FILL %1'S HAND", secondColor.toUpperCase())),
-                      ])
+                    ? h(
+                          'a#fill.i-pgn',
+                          {
+                              attrs: { href: '#' },
+                              on: {
+                                  click: (e: Event) => {
+                                      e.preventDefault();
+                                      this.fillHand();
+                                  },
+                              },
+                          },
+                          [h('div.icon.icon-sign-in', _("FILL %1'S HAND", secondColor.toUpperCase()))],
+                      )
                     : '',
-                h('a#start.i-pgn', { on: { click: () => this.setStartFen() } }, [
-                    h('div.icon.' + dataIcon, _('STARTING POSITION')),
-                ]),
-                h('a#analysis.i-pgn', { on: { click: () => this.setAnalysisFen() } }, [
-                    h('div.icon.icon-microscope', _('ANALYSIS BOARD')),
-                ]),
-                h('a#challengeAI.i-pgn', { on: { click: () => this.setChallengeAIFen() } }, [
-                    h('div.icon.icon-bot', _('PLAY WITH MACHINE')),
-                ]),
-                h('a#createseek.i-pgn', { on: { click: () => this.setSeekFen() } }, [
-                    h('div.icon.icon-crossedswords', _('CONTINUE FROM HERE')),
-                ]),
-                h('a#pgn.i-pgn', { on: { click: () => copyBoardToPNG(this.parts.join(' ')) } }, [
-                    h('div.icon.icon-download', _('EXPORT TO PNG')),
-                ]),
-                h('a#pgn.i-pgn', { on: { click: () => copyTextToClipboard(this.parts.join(' ')) } }, [
-                    h('div.icon.icon-clipboard', _('COPY FEN TO CLIPBOARD')),
-                ]),
+                h(
+                    'a#start.i-pgn',
+                    {
+                        attrs: { href: '#' },
+                        on: {
+                            click: (e: Event) => {
+                                e.preventDefault();
+                                this.setStartFen();
+                            },
+                        },
+                    },
+                    [h('div.icon.' + dataIcon, _('STARTING POSITION'))],
+                ),
+                h(
+                    'a#analysis.i-pgn',
+                    {
+                        attrs: { href: '#' },
+                        on: {
+                            click: (e: Event) => {
+                                e.preventDefault();
+                                this.setAnalysisFen();
+                            },
+                        },
+                    },
+                    [h('div.icon.icon-microscope', _('ANALYSIS BOARD'))],
+                ),
+                h(
+                    'a#challengeAI.i-pgn',
+                    {
+                        attrs: { href: '#' },
+                        on: {
+                            click: (e: Event) => {
+                                e.preventDefault();
+                                this.setChallengeAIFen();
+                            },
+                        },
+                    },
+                    [h('div.icon.icon-bot', _('PLAY WITH MACHINE'))],
+                ),
+                h(
+                    'a#createseek.i-pgn',
+                    {
+                        attrs: { href: '#' },
+                        on: {
+                            click: (e: Event) => {
+                                e.preventDefault();
+                                this.setSeekFen();
+                            },
+                        },
+                    },
+                    [h('div.icon.icon-crossedswords', _('CONTINUE FROM HERE'))],
+                ),
+                h(
+                    'a#pgn.i-pgn',
+                    {
+                        attrs: { href: '#' },
+                        on: {
+                            click: (e: Event) => {
+                                e.preventDefault();
+                                copyBoardToPNG(this.parts.join(' '));
+                            },
+                        },
+                    },
+                    [h('div.icon.icon-download', _('EXPORT TO PNG'))],
+                ),
+                h(
+                    'a#pgn.i-pgn',
+                    {
+                        attrs: { href: '#' },
+                        on: {
+                            click: (e: Event) => {
+                                e.preventDefault();
+                                copyTextToClipboard(this.parts.join(' '));
+                            },
+                        },
+                    },
+                    [h('div.icon.icon-clipboard', _('COPY FEN TO CLIPBOARD'))],
+                ),
             ];
             if (this.variant.name === 'alice') {
                 const aliceMirrorSettings = new AliceMirrorSettings(this);

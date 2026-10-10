@@ -891,36 +891,72 @@ export class AnalysisController extends GameController {
         let container = document.getElementById('copyfen') as HTMLElement | null;
         if (container !== null) {
             const buttons = [
-                h('a.i-pgn', { on: { click: () => downloadPgnText('pychess-variants_' + this.gameId) } }, [
-                    h(
-                        'i',
-                        {
-                            props: { title: _('Download game to PGN file') },
-                            class: { icon: true, 'icon-download': true },
+                h(
+                    'a.i-pgn',
+                    {
+                        attrs: { href: '#' },
+                        on: {
+                            click: (e: Event) => {
+                                e.preventDefault();
+                                downloadPgnText('pychess-variants_' + this.gameId);
+                            },
                         },
-                        _('Download PGN'),
-                    ),
-                ]),
-                h('a.i-pgn', { on: { click: () => copyTextToClipboard(this.uci_usi) } }, [
-                    h(
-                        'i',
-                        {
-                            props: { title: _('Copy USI/UCI to clipboard') },
-                            class: { icon: true, 'icon-clipboard': true },
+                    },
+                    [
+                        h(
+                            'i',
+                            {
+                                props: { title: _('Download game to PGN file') },
+                                class: { icon: true, 'icon-download': true },
+                            },
+                            _('Download PGN'),
+                        ),
+                    ],
+                ),
+                h(
+                    'a.i-pgn',
+                    {
+                        attrs: { href: '#' },
+                        on: {
+                            click: (e: Event) => {
+                                e.preventDefault();
+                                copyTextToClipboard(this.uci_usi);
+                            },
                         },
-                        _('Copy UCI/USI'),
-                    ),
-                ]),
-                h('a.i-pgn', { on: { click: () => copyBoardToPNG(this.fullfen) } }, [
-                    h(
-                        'i',
-                        {
-                            props: { title: _('Download position to PNG image file') },
-                            class: { icon: true, 'icon-download': true },
+                    },
+                    [
+                        h(
+                            'i',
+                            {
+                                props: { title: _('Copy USI/UCI to clipboard') },
+                                class: { icon: true, 'icon-clipboard': true },
+                            },
+                            _('Copy UCI/USI'),
+                        ),
+                    ],
+                ),
+                h(
+                    'a.i-pgn',
+                    {
+                        attrs: { href: '#' },
+                        on: {
+                            click: (e: Event) => {
+                                e.preventDefault();
+                                copyBoardToPNG(this.fullfen);
+                            },
                         },
-                        _('PNG image'),
-                    ),
-                ]),
+                    },
+                    [
+                        h(
+                            'i',
+                            {
+                                props: { title: _('Download position to PNG image file') },
+                                class: { icon: true, 'icon-download': true },
+                            },
+                            _('PNG image'),
+                        ),
+                    ],
+                ),
                 h('div#imported'),
             ];
             patch(container, h('div.pgnbuttons', buttons));
@@ -963,13 +999,25 @@ export class AnalysisController extends GameController {
             const importedEl = document.getElementById('imported') as HTMLElement;
             patch(
                 importedEl,
-                h('a.i-pgn', { on: { click: () => this.deleteGame() } }, [
-                    h(
-                        'i',
-                        { props: { title: _('Delete game') }, class: { icon: true, 'icon-trash-o': true } },
-                        _('Delete game'),
-                    ),
-                ]),
+                h(
+                    'a.i-pgn',
+                    {
+                        attrs: { href: '#' },
+                        on: {
+                            click: (e: Event) => {
+                                e.preventDefault();
+                                this.deleteGame();
+                            },
+                        },
+                    },
+                    [
+                        h(
+                            'i',
+                            { props: { title: _('Delete game') }, class: { icon: true, 'icon-trash-o': true } },
+                            _('Delete game'),
+                        ),
+                    ],
+                ),
             );
         }
 
@@ -1335,8 +1383,14 @@ export class AnalysisController extends GameController {
                     if (ceval.d === this.maxDepth && this.maxDepth !== 99) {
                         info.push(
                             h('a.icon.icon-plus-square', {
-                                props: { type: 'button', title: _('Go deeper') },
-                                on: { click: () => this.onMoreDepth() },
+                                attrs: { href: '#', 'aria-label': _('Go deeper') },
+                                props: { title: _('Go deeper') },
+                                on: {
+                                    click: (e: Event) => {
+                                        e.preventDefault();
+                                        this.onMoreDepth();
+                                    },
+                                },
                             }),
                         );
                     } else if (ceval.d !== 99) {

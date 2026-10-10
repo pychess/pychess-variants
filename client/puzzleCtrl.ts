@@ -114,12 +114,39 @@ export class PuzzleController extends AnalysisController {
         engineEl.style.display = 'none';
 
         const viewHintEl = document.querySelector('.hint') as HTMLElement;
-        patch(viewHintEl, h('a.button.hint.button-empty', { on: { click: () => this.viewHint() } }, _('Hint')));
+        patch(
+            viewHintEl,
+            h(
+                'a.button.hint.button-empty',
+                {
+                    attrs: { href: '#' },
+                    on: {
+                        click: (e: Event) => {
+                            e.preventDefault();
+                            this.viewHint();
+                        },
+                    },
+                },
+                _('Hint'),
+            ),
+        );
 
         const viewSolutionEl = document.querySelector('.solution') as HTMLElement;
         patch(
             viewSolutionEl,
-            h('a.button.solution.button-empty', { on: { click: () => this.viewSolution() } }, _('View the solution')),
+            h(
+                'a.button.solution.button-empty',
+                {
+                    attrs: { href: '#' },
+                    on: {
+                        click: (e: Event) => {
+                            e.preventDefault();
+                            this.viewSolution();
+                        },
+                    },
+                },
+                _('View the solution'),
+            ),
         );
 
         this.renderInfos();
@@ -301,6 +328,7 @@ export class PuzzleController extends AnalysisController {
 
         this.chessground.set(this.cgConfig(move));
         this.setDests();
+        this.updateBoardSummary(san);
 
         const step = {
             fen: this.fullfen,
@@ -353,6 +381,10 @@ export class PuzzleController extends AnalysisController {
                 ]),
             ]),
         );
+        // The board summary's status line is the puzzle's spoken feedback; this first one only sets it up.
+        this.boardSummary.setStatus(
+            `${_('Your turn')}. ${_('Find the best move for %1.', turnColor === 'w' ? first : second)}`,
+        );
         const player =
             this.playerEl instanceof HTMLElement ? this.playerEl : (this.playerEl.elm as HTMLElement | undefined);
         if (player) boardSettings.updateScopedPieceStyle(this.variant, player, this.steps[0]?.fen ?? this.fullfen);
@@ -375,6 +407,7 @@ export class PuzzleController extends AnalysisController {
                 ]),
             ]),
         );
+        this.boardSummary.setStatus(`${san}? ${_("That's not the move!")} ${_('Try something else.')}`);
         const feedbackEl = document.querySelector('.feedback') as HTMLInputElement;
         feedbackEl.classList.toggle('good', false);
         feedbackEl.classList.toggle('fail', true);
@@ -388,6 +421,7 @@ export class PuzzleController extends AnalysisController {
                 h('div.instruction', [h('strong', _('Best move!')), h('em', _('Keep going...'))]),
             ]),
         );
+        this.boardSummary.setStatus(`${_('Best move!')} ${_('Keep going...')}`);
         const feedbackEl = document.querySelector('.feedback') as HTMLInputElement;
         feedbackEl.classList.toggle('fail', false);
         feedbackEl.classList.toggle('good', true);
@@ -409,6 +443,8 @@ export class PuzzleController extends AnalysisController {
             }
         }
         this.completed = true;
+        // Solved after a wrong move shows no text; a reader still needs to hear that it is over.
+        this.boardSummary.setStatus(text || _('Puzzle complete!'));
         if (this.hintRevealTimeout !== undefined) {
             // Completing quickly can beat the delayed reveal callback.
             window.clearTimeout(this.hintRevealTimeout);
@@ -436,7 +472,19 @@ export class PuzzleController extends AnalysisController {
                     ]),
                 ]),
                 h('div.more', [
-                    h('a', { on: { click: () => this.continueTraining(this.variant.name) } }, _('Continue training')),
+                    h(
+                        'a',
+                        {
+                            attrs: { href: '#' },
+                            on: {
+                                click: (e: Event) => {
+                                    e.preventDefault();
+                                    this.continueTraining(this.variant.name);
+                                },
+                            },
+                        },
+                        _('Continue training'),
+                    ),
                 ]),
             ]),
         );

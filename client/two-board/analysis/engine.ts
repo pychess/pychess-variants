@@ -758,8 +758,14 @@ export class EngineController {
                 if (ceval.d === this.maxDepth && this.maxDepth !== 99) {
                     info.push(
                         h('a.icon.icon-plus-square', {
-                            props: { type: 'button', title: _('Go deeper') },
-                            on: { click: () => this.onMoreDepth() },
+                            attrs: { href: '#', 'aria-label': _('Go deeper') },
+                            props: { title: _('Go deeper') },
+                            on: {
+                                click: (e: Event) => {
+                                    e.preventDefault();
+                                    this.onMoreDepth();
+                                },
+                            },
                         }),
                     );
                 } else if (ceval.d !== 99) {

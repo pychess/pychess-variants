@@ -702,6 +702,7 @@ export class LobbyController {
                             ),
                         ]),
                         h('input#fen', {
+                            attrs: { 'aria-label': 'FEN' },
                             props: {
                                 name: 'fen',
                                 placeholder:
@@ -857,6 +858,7 @@ export class LobbyController {
                             _('Rating range'),
                             h('div.rating-range', [
                                 h('input#rating-min.slider', {
+                                    attrs: { 'aria-label': `${_('Rating range')} −` },
                                     props: {
                                         name: 'rating-min',
                                         type: 'range',
@@ -877,6 +879,7 @@ export class LobbyController {
                                 h('span', '/'),
                                 h('div.rating-max', '+1000'),
                                 h('input#rating-max.slider', {
+                                    attrs: { 'aria-label': `${_('Rating range')} +` },
                                     props: {
                                         name: 'rating-max',
                                         type: 'range',
@@ -1751,6 +1754,7 @@ export class LobbyController {
             _('Rating range'),
             h('div.rating-range', [
                 h('input#auto-rating-min.slider', {
+                    attrs: { 'aria-label': `${_('Rating range')} −` },
                     props: { name: 'rating-min', type: 'range', min: -1000, max: 0, step: 50, value: aRatingMin },
                     on: { input: e => this.setAutoRatingMin(parseInt((e.target as HTMLInputElement).value)) },
                     hook: { insert: vnode => this.setAutoRatingMin(parseInt((vnode.elm as HTMLInputElement).value)) },
@@ -1759,6 +1763,7 @@ export class LobbyController {
                 h('span', '/'),
                 h('div.auto-rating-max', '+1000'),
                 h('input#auto-rating-max.slider', {
+                    attrs: { 'aria-label': `${_('Rating range')} +` },
                     props: { name: 'rating-max', type: 'range', min: 0, max: 1000, step: 50, value: aRatingMax },
                     on: { input: e => this.setAutoRatingMax(parseInt((e.target as HTMLInputElement).value)) },
                     hook: { insert: vnode => this.setAutoRatingMax(parseInt((vnode.elm as HTMLInputElement).value)) },
