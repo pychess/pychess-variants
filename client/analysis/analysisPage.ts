@@ -6,6 +6,7 @@ import type { PyChessModel } from '../types';
 import { VARIANTS } from '../variants';
 import { gaugeSideColors } from '../variantColor';
 import { analysisSettings } from './analysisSettings';
+import { BoardSummaryView } from '../accessibility/boardSummary';
 
 export type AnalysisPageParts = {
     side: VNode | VNode[];
@@ -65,6 +66,7 @@ export function renderAnalysisPage(model: PyChessModel, parts: AnalysisPageParts
             ]),
             h('under-left#spectators'),
             h('under-board', parts.underboard),
+            BoardSummaryView.placeholder('', 'polite'),
         ]),
     ];
 }

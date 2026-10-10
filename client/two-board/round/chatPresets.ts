@@ -2,6 +2,7 @@ import { h, VNode } from 'snabbdom';
 import * as cg from 'chessgroundx/types';
 
 import { _ } from '@/i18n';
+import { pieceName } from '@/pieceNames';
 import { Variant } from '../../variants';
 
 // The bughouse chat presets: the grid of "need a knight", "don't trade", "my bad"
@@ -56,9 +57,9 @@ export class ChatPresetsView {
     constructor(variant: Variant) {
         const roles: cg.Role[] = [...variant.pocket!.roles.white];
 
-        const need = roles.map(role => this.button(role.charAt(0), _('Need %1', variant.pocket!.pieceNames![role])));
+        const need = roles.map(role => this.button(role.charAt(0), _('Need %1', pieceName(variant, role, 'white'))));
         const dontGive = roles.map(role =>
-            this.button('no' + role.charAt(0), _("Don't give %1", variant.pocket!.pieceNames![role])),
+            this.button('no' + role.charAt(0), _("Don't give %1", pieceName(variant, role, 'white'))),
         );
         const tells = [
             this.button('sit', _('Sit/stall')),

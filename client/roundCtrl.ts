@@ -1475,6 +1475,7 @@ export class RoundController extends GameController {
             this.updateMaterial();
         }
 
+        this.updateBoardSummary(this.steps[this.ply]?.san);
         this.maybeAutoClaimDraw();
         this.ongoingRoundGames?.onBoard(msg);
     }

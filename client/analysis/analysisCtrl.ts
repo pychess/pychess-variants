@@ -1576,6 +1576,7 @@ export class AnalysisController extends GameController {
                 lastMove: this.fog ? undefined : lastMove,
             });
             animatePassMove(this.chessground, this.variant.rules.pass && !this.fog, lastMove);
+            this.updateBoardSummary(step.san);
 
             this.turnColor = step.turnColor;
             this.setDests();
@@ -1881,6 +1882,7 @@ export class AnalysisController extends GameController {
             this.ply = this.steps.length - 1;
             updateMovelist(this);
             this.checkStatus(msg);
+            this.updateBoardSummary(san);
             this.completeAnalysisPositionChange(origin, previousPath, '');
         }
 

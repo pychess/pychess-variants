@@ -6,6 +6,7 @@ import { selectVariant, VARIANTS, noPuzzleVariants, validVariant } from './varia
 import { PyChessModel } from './types';
 import { analysisTools, gauge } from './analysis';
 import { analysisSettings } from './analysis/analysisSettings';
+import { BoardSummaryView } from './accessibility/boardSummary';
 
 function runPuzzle(vnode: VNode, model: PyChessModel) {
     const el = vnode.elm as HTMLElement;
@@ -58,6 +59,7 @@ export function puzzleView(model: PyChessModel): VNode[] {
             ]),
             h('under-left#spectators'),
             h('under-board'),
+            BoardSummaryView.placeholder('', 'polite'),
         ]),
     ];
 }

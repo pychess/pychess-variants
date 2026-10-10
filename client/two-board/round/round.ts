@@ -11,6 +11,7 @@ import { RoundSeatView, RoundSeatViews } from './roundSeatView';
 import { trackSquareUnit } from '../squareUnit';
 import { boardZoom } from '@/boardSettings';
 import { TabbedPanels } from '../common/tabs';
+import { BoardSummaryView } from '../../accessibility/boardSummary';
 import { registerStandingTab } from '../common/toolsPlacement';
 
 // The partner board's position in the tab list below — FIRST. Named because two places need it and
@@ -385,5 +386,7 @@ export function roundView(model: PyChessModel): VNode[] {
         // A crosstable here would be worth having — the stylesheet's comments call its absence a
         // cost. But it was never a cost this markup was paying: nothing was ever drawn in it, so
         // building one is a feature, not the restoration of something these lines provided.
+        BoardSummaryView.placeholder('a', 'assertive'),
+        BoardSummaryView.placeholder('b', 'assertive'),
     ];
 }

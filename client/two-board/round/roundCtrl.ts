@@ -690,6 +690,7 @@ export class RoundControllerBughouse extends TwoBoardController implements ChatC
 
     private gameOver = () => {
         this.announceResult();
+        this.updateBoardSummaryStatus();
         markGameOver();
         this.controlsView.renderGameOverControls(
             this.spectator,

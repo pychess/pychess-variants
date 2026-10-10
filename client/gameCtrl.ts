@@ -36,6 +36,8 @@ import {
 import { boardSettings } from './boardSettings';
 import { aliceBoardFen } from './aliceBoard';
 import type { AliceBoardName } from './aliceBoard';
+import { BoardSummaryView } from './accessibility/boardSummary';
+import { result } from './result';
 
 export abstract class GameController extends ChessgroundController implements ChatController {
     sock: WebsocketHeartbeatJs;
@@ -118,6 +120,7 @@ export abstract class GameController extends ChessgroundController implements Ch
     undo?: any;
 
     keyboardHelpOpen: boolean;
+    boardSummary: BoardSummaryView;
     private readonly onGameKeyboardHelpKeyDown: (event: KeyboardEvent) => void;
 
     get pocketHotkeyRoles(): readonly cg.Role[] | undefined {
@@ -136,6 +139,7 @@ export abstract class GameController extends ChessgroundController implements Ch
         aliceBoardEl?: HTMLElement,
     ) {
         super(el, model, fullfen, pocket0, pocket1, boardName);
+        this.boardSummary = new BoardSummaryView(this.variant, boardName);
 
         this.gameId = model['gameId'] as string;
         this.tournamentId = model['tournamentId'];
@@ -247,6 +251,9 @@ export abstract class GameController extends ChessgroundController implements Ch
             this.initAliceSplitBoard(aliceBoardEl, model);
             Mousetrap.bind('s', () => this.toggleAliceSplitBoards());
         }
+
+        // Not every page navigates to a ply on load: a round at move 0 never does.
+        this.updateBoardSummary(undefined);
     }
 
     private initAliceSplitBoard(el: HTMLElement, model: PyChessModel): void {
@@ -587,6 +594,13 @@ export abstract class GameController extends ChessgroundController implements Ch
         }
 
         this.ply = ply;
+        this.updateBoardSummary(step.san);
+    }
+
+    // A page without a game (a bare analysis board) has no status to report.
+    updateBoardSummary(lastMove: string | undefined): void {
+        if (this.gameId) this.boardSummary.setStatus(result(this.variant, this.status, this.result));
+        this.boardSummary.setPosition(this.chessground.state.boardState, lastMove);
     }
 
     doSend = (message: JSONObject) => {
