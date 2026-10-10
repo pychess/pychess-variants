@@ -337,6 +337,7 @@ export class RoundController extends GameController {
 
             this.clocks[0].onTick(this.clocks[0].renderTime);
             this.clocks[1].onTick(this.clocks[1].renderTime);
+            this.wireClockSummary();
         } else {
             const c0 = new Clock(
                 this.base,
@@ -364,6 +365,7 @@ export class RoundController extends GameController {
 
             this.clocks[0].onTick(this.clocks[0].renderTime);
             this.clocks[1].onTick(this.clocks[1].renderTime);
+            this.wireClockSummary();
 
             const onMoreTime = () => {
                 if (
@@ -520,7 +522,7 @@ export class RoundController extends GameController {
         createMovelistButtons(this);
         this.vmovelist = document.getElementById('movelist') as HTMLElement;
 
-        this.vdialog = patch(document.getElementById('offer-dialog')!, h('div#offer-dialog', ''));
+        this.vdialog = patch(document.getElementById('offer-dialog')!, this.offerDialog(''));
 
         patch(document.getElementById('roundchat') as HTMLElement, chatView(this, 'roundchat'));
 
@@ -746,23 +748,39 @@ export class RoundController extends GameController {
         this.clearDialog();
     };
 
+    // clock0 is the top clock, so which colour it shows follows the orientation (a flip swaps times).
+    private wireClockSummary(): void {
+        const colorOf = (i: number): cg.Color => {
+            const bottom = this.chessground.state.orientation;
+            return i === 1 ? bottom : util.opposite(bottom);
+        };
+        this.clocks.forEach((clock, i) => {
+            clock.onRender(time => this.boardSummary.setClock(colorOf(i), time));
+            this.boardSummary.setClock(colorOf(i), clock.duration);
+        });
+    }
+
+    // A live region from page load on, so an arriving offer is read out without being looked for.
+    private offerDialog = (children: VNode[] | string) =>
+        h('div#offer-dialog', { attrs: { 'aria-live': 'polite' } }, children);
+
+    // The icon alone gives no name, so the label is both the accessible name and the tooltip.
+    private offerButton = (kind: 'accept' | 'reject', label: string, onClick: () => void) =>
+        h(
+            `button.${kind}`,
+            { attrs: { type: 'button', title: label, 'aria-label': label }, on: { click: onClick } },
+            h(kind === 'accept' ? 'i.icon.icon-check' : 'i.icon.icon-abort.reject'),
+        );
+
     private renderTakebackOffer = () => {
         (document.querySelector('.btn-controls.game') as HTMLElement).style.display = 'none';
         this.vdialog = patch(
             this.vdialog,
-            h('div#offer-dialog', [
+            this.offerDialog([
                 h('div.dcontrols', [
-                    h(
-                        'div',
-                        { class: { reject: true }, on: { click: () => this.rejectTakeback() } },
-                        h('i.icon.icon-abort.reject'),
-                    ),
+                    this.offerButton('reject', _('Decline'), () => this.rejectTakeback()),
                     h('div.text', _('Your opponent proposes a takeback')),
-                    h(
-                        'div',
-                        { class: { accept: true }, on: { click: () => this.acceptTakeback() } },
-                        h('i.icon.icon-check'),
-                    ),
+                    this.offerButton('accept', _('Accept'), () => this.acceptTakeback()),
                 ]),
             ]),
         );
@@ -772,13 +790,9 @@ export class RoundController extends GameController {
         (document.querySelector('.btn-controls.game') as HTMLElement).style.display = 'none';
         this.vdialog = patch(
             this.vdialog,
-            h('div#offer-dialog', [
+            this.offerDialog([
                 h('div.dcontrols', [
-                    h(
-                        'div',
-                        { class: { reject: true }, on: { click: () => this.rejectTakeback() } },
-                        h('i.icon.icon-abort.reject'),
-                    ),
+                    this.offerButton('reject', _('Cancel'), () => this.rejectTakeback()),
                     h('div.text', _('Takeback offer sent')),
                     h('div', { class: { accept: false } }),
                 ]),
@@ -827,15 +841,11 @@ export class RoundController extends GameController {
         (document.querySelector('.btn-controls.game') as HTMLElement).style.display = 'none';
         this.vdialog = patch(
             this.vdialog,
-            h('div#offer-dialog', [
+            this.offerDialog([
                 h('div.dcontrols', [
-                    h(
-                        'div',
-                        { class: { reject: true }, on: { click: () => this.rejectDrawOffer() } },
-                        h('i.icon.icon-abort.reject'),
-                    ),
+                    this.offerButton('reject', _('Decline'), () => this.rejectDrawOffer()),
                     h('div.text', _('Your opponent offers a draw')),
-                    h('div', { class: { accept: true }, on: { click: () => this.draw() } }, h('i.icon.icon-check')),
+                    this.offerButton('accept', _('Accept'), () => this.draw()),
                 ]),
             ]),
         );
@@ -850,15 +860,11 @@ export class RoundController extends GameController {
         (document.querySelector('.btn-controls.game') as HTMLElement).style.display = 'none';
         this.vdialog = patch(
             this.vdialog,
-            h('div#offer-dialog', [
+            this.offerDialog([
                 h('div.dcontrols', [
-                    h(
-                        'div',
-                        { class: { reject: true }, on: { click: () => this.rejectCorrMove() } },
-                        h('i.icon.icon-abort.reject'),
-                    ),
+                    this.offerButton('reject', _('Cancel'), () => this.rejectCorrMove()),
                     h('div.text', _('Confirm move')),
-                    h('div', { class: { accept: true }, on: { click: () => callback(move) } }, h('i.icon.icon-check')),
+                    this.offerButton('accept', _('Confirm'), () => callback(move)),
                 ]),
             ]),
         );
@@ -870,7 +876,7 @@ export class RoundController extends GameController {
 
         this.vdialog = patch(
             this.vdialog,
-            h('div#offer-dialog', [
+            this.offerDialog([
                 h('div.dcontrols', [
                     h('div', { class: { reject: false } }),
                     h('div.text', message),
@@ -882,7 +888,7 @@ export class RoundController extends GameController {
     };
 
     private clearDialog = () => {
-        this.vdialog = patch(this.vdialog, h('div#offer-dialog', []));
+        this.vdialog = patch(this.vdialog, this.offerDialog([]));
         const el = document.querySelector('.btn-controls.game') as HTMLElement;
         if (el) el.style.display = 'flex';
     };
@@ -1028,15 +1034,11 @@ export class RoundController extends GameController {
         (document.querySelector('.btn-controls.after') as HTMLElement).style.display = 'none';
         this.vdialog = patch(
             this.vdialog,
-            h('div#offer-dialog', [
+            this.offerDialog([
                 h('div.dcontrols', [
-                    h(
-                        'div',
-                        { class: { reject: true }, on: { click: () => this.rejectRematchOffer() } },
-                        h('i.icon.icon-abort.reject'),
-                    ),
+                    this.offerButton('reject', _('Decline'), () => this.rejectRematchOffer()),
                     h('div.text', _('Your opponent offers a rematch')),
-                    h('div', { class: { accept: true }, on: { click: () => this.rematch() } }, h('i.icon.icon-check')),
+                    this.offerButton('accept', _('Accept'), () => this.rematch()),
                 ]),
             ]),
         );
@@ -1257,7 +1259,8 @@ export class RoundController extends GameController {
         this.status = msg.status;
         this.syncCevalActiveRoundTracking();
 
-        if (msg.steps.length > 1) {
+        // A takeback to the start sends a single step, which the else branch would never replace.
+        if (msg.steps.length > 1 || msg.takeback) {
             this.steps = [];
             const container = document.getElementById('movelist') as HTMLElement;
             patch(container, h('div#movelist'));
@@ -1475,6 +1478,7 @@ export class RoundController extends GameController {
             this.updateMaterial();
         }
 
+        this.updateBoardSummary(this.steps[this.ply]?.san);
         this.maybeAutoClaimDraw();
         this.ongoingRoundGames?.onBoard(msg);
     }

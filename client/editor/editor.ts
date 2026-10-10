@@ -22,7 +22,7 @@ export function editorView(model: PyChessModel): VNode[] {
     const variant = VARIANTS[vVariant];
 
     return [
-        h('div.editor-app', [
+        h('main.editor-app', [
             h('aside.sidebar-first', [
                 h('div.container', [
                     h('div', [

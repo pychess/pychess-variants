@@ -10,7 +10,7 @@ import { Seat } from '../common/seat';
 import { Clock } from '../../clock';
 import { RoundControllerBughouseSocket } from '../socket/sockets';
 import { MovePlace, ReconnectController } from '../socket/reconnectController';
-import { ChatController, chatMessage, chatSender } from '../../chat';
+import { ChatController, chatMessage, chatSender, replayingChat } from '../../chat';
 import { MovelistView } from '../common/movelist';
 import { GameInfoView } from '../common/gameInfo';
 import { SpectatorsView } from '../common/spectatorsView';
@@ -346,7 +346,11 @@ export class RoundControllerBughouse extends TwoBoardController implements ChatC
     private createSeatWidgets(): void {
         this.seats.all.forEach(seat => {
             const view = this.viewOf(seat);
-            seat.clock = view.createClock(this.base, this.inc);
+            const clock = view.createClock(this.base, this.inc);
+            seat.clock = clock;
+            const summary = (seat.boardName === 'a' ? this.boardA : this.boardB).boardSummary;
+            clock.onRender(time => summary.setClock(seat.color, time));
+            summary.setClock(seat.color, clock.duration);
             view.renderPlayerBar(seat.player, this.level);
         });
     }
@@ -690,6 +694,7 @@ export class RoundControllerBughouse extends TwoBoardController implements ChatC
 
     private gameOver = () => {
         this.announceResult();
+        this.updateBoardSummaryStatus();
         markGameOver();
         this.controlsView.renderGameOverControls(
             this.spectator,
@@ -763,6 +768,7 @@ export class RoundControllerBughouse extends TwoBoardController implements ChatC
             // Clearing the flag lets the rebuild re-announce into the fresh chat, below.
             this.resultAnnounced = false;
             resetMovelistDom();
+            replayingChat('bugroundchat');
 
             steps.forEach((step, idx) => {
                 if (idx === 0) {

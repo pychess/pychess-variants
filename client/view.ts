@@ -1,4 +1,4 @@
-import { h, VNode } from 'snabbdom';
+import { h, VNode, VNodeChildren } from 'snabbdom';
 
 import { Settings } from './settings';
 import { _, ngettext } from './i18n';
@@ -173,6 +173,40 @@ export function alternateStartName(variant: Variant, initialFen: string) {
     } else {
         return undefined;
     }
+}
+
+/** A heading for screen readers to jump to, hidden because the page already shows what it names. */
+export function srHeading(level: 'h1' | 'h2', text: string): VNode {
+    return h(`${level}.sr-only`, text);
+}
+
+/** The page's h1: the title the server composed for the tab ("Crazyhouse • Alice vs Bob"). */
+export function pageHeading(): VNode {
+    return srHeading('h1', document.title.replace(/ • PyChess$/, ''));
+}
+
+/** An engine line: activating it plays its first move. Not a <button>, which would break the ellipsis. */
+export function pvLine(play: () => void, content: VNodeChildren): VNode {
+    return h(
+        'pv-san',
+        {
+            attrs: { role: 'button', tabindex: '0' },
+            on: {
+                click: play,
+                keydown: (e: KeyboardEvent) => {
+                    if (e.key !== 'Enter' && e.key !== ' ') return;
+                    e.preventDefault();
+                    play();
+                },
+            },
+        },
+        content,
+    );
+}
+
+/** A line waiting for the engine. Same pv-san element as pvLine, so a focused line keeps focus. */
+export function pvLinePending(): VNode {
+    return h('pvline', pvLine(() => {}, h('pvline', '-')));
 }
 
 export function spinner(): VNode {

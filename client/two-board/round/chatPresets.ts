@@ -1,7 +1,8 @@
 import { h, VNode } from 'snabbdom';
 import * as cg from 'chessgroundx/types';
 
-import { _ } from '@/i18n';
+import { _, N_ } from '@/i18n';
+import { pieceName } from '@/pieceNames';
 import { Variant } from '../../variants';
 
 // The bughouse chat presets: the grid of "need a knight", "don't trade", "my bad"
@@ -30,6 +31,31 @@ import { Variant } from '../../variants';
 // is a few milliseconds inside the same task in which the page becomes visible,
 // so queueing a click for later delivery would be machinery for a case that
 // cannot occur — but discarding is a decision, not an oversight.
+// The presets that are not about a piece, in the order their buttons appear.
+const TELLS: Readonly<Record<string, string>> = {
+    sit: N_('Sit/stall'),
+    go: N_('Go/hurry'),
+    trade: N_('Trades are good'),
+    notrade: N_("Don't trade"),
+    mate: N_('I have checkmate'),
+    ok: N_('OK'),
+    no: N_('No'),
+    mb: N_('My bad'),
+    nvm: N_('Nevermind'),
+    nice: N_('Nice'),
+};
+
+/** What a preset says, by the name it is sent as: "Need queen" for `q`, "Don't give knight" for `non`. */
+export function presetLabel(variant: Variant, name: string): string | undefined {
+    if (name in TELLS) return _(TELLS[name]);
+    for (const role of variant.pocket?.roles.white ?? []) {
+        const letter = role.charAt(0);
+        if (name === letter) return _('Need %1', pieceName(variant, role, 'white'));
+        if (name === 'no' + letter) return _("Don't give %1", pieceName(variant, role, 'white'));
+    }
+    return undefined;
+}
+
 export class ChatPresetsView {
     // TWO PARTS, each holding TWO SETS of five buttons.
     //
@@ -56,22 +82,10 @@ export class ChatPresetsView {
     constructor(variant: Variant) {
         const roles: cg.Role[] = [...variant.pocket!.roles.white];
 
-        const need = roles.map(role => this.button(role.charAt(0), _('Need %1', variant.pocket!.pieceNames![role])));
-        const dontGive = roles.map(role =>
-            this.button('no' + role.charAt(0), _("Don't give %1", variant.pocket!.pieceNames![role])),
-        );
-        const tells = [
-            this.button('sit', _('Sit/stall')),
-            this.button('go', _('Go/hurry')),
-            this.button('trade', _('Trades are good')),
-            this.button('notrade', _("Don't trade")),
-            this.button('mate', _('I have checkmate')),
-            this.button('ok', _('OK')),
-            this.button('no', _('No')),
-            this.button('mb', _('My bad')),
-            this.button('nvm', _('Nevermind')),
-            this.button('nice', _('Nice')),
-        ];
+        const button = (name: string) => this.button(name, presetLabel(variant, name)!);
+        const need = roles.map(role => button(role.charAt(0)));
+        const dontGive = roles.map(role => button('no' + role.charAt(0)));
+        const tells = Object.keys(TELLS).map(button);
 
         // The tells split in half rather than by meaning: the two halves are the
         // two rows they already occupied, so nothing moves relative to today.

@@ -512,7 +512,7 @@ class BoardStyleSettings extends NumberSettings {
                 h('input#board' + i, {
                     on: { change: evt => (this.value = Number((evt.target as HTMLInputElement).value)) },
                     props: { type: 'radio', name: 'board', value: i },
-                    attrs: { checked: vboard === i },
+                    attrs: { checked: vboard === i, 'aria-label': styleName(boardCSS[i]) },
                 }),
             );
             boards.push(
@@ -571,7 +571,7 @@ class PieceStyleSettings extends NumberSettings {
                 h('input#piece' + idx, {
                     on: { change: e => (this.value = Number((e.target as HTMLInputElement).value)) },
                     props: { type: 'radio', name: 'piece', value: idx },
-                    attrs: { checked: checkedPiece === idx },
+                    attrs: { checked: checkedPiece === idx, 'aria-label': styleName(css) },
                 }),
             );
             pieces.push(
@@ -600,7 +600,7 @@ class PieceStyleSettings extends NumberSettings {
             h('input#piece' + i, {
                 on: { change: e => (this.value = Number((e.target as HTMLInputElement).value)) },
                 props: { type: 'radio', name: 'piece', value: i },
-                attrs: { checked: vpiece === i },
+                attrs: { checked: vpiece === i, 'aria-label': styleName('invisible') },
             }),
         );
         pieces.push(h('label.piece.piece98', { attrs: { for: 'piece' + i } }, ''));
@@ -611,12 +611,24 @@ class PieceStyleSettings extends NumberSettings {
             h('input#piece' + l, {
                 on: { change: e => (this.value = Number((e.target as HTMLInputElement).value)) },
                 props: { type: 'radio', name: 'piece', value: l },
-                attrs: { checked: vpiece === l },
+                attrs: { checked: vpiece === l, 'aria-label': styleName('letters') },
             }),
         );
         pieces.push(h('label.piece.piece99', { attrs: { for: 'piece' + l } }, ''));
         return h('settings-pieces', pieces);
     }
+}
+
+// The style's own file or CSS name ("wood4.jpg", "cburnett"): the picture is all its label shows.
+function styleName(file: string): string {
+    const name = file
+        .replace(/^.*\//, '')
+        .replace(/\.[a-z0-9]+$/i, '')
+        .replace(/[-_]/g, ' ')
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2');
+    // "8x8brown": the size is the board's, not the theme's
+    return name.replace(/^\d+x\d+(?=\D)/, '') || name;
 }
 
 const ZOOM_DEFAULT = 80;

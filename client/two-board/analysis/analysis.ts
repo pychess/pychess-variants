@@ -1,4 +1,6 @@
 import { h, VNode } from 'snabbdom';
+import { BoardSummaryView } from '../../accessibility/boardSummary';
+import { pageHeading } from '../../view';
 
 import { _ } from '../../i18n';
 import { GameInfoView } from '../common/gameInfo';
@@ -423,6 +425,7 @@ export function analysisView(model: PyChessModel): VNode[] {
     registerStandingTab(toolsTabs, PARTNER_BOARD_TAB);
 
     return [
+        pageHeading(),
         h(
             'div.analysis-app.bug',
             {
@@ -523,5 +526,7 @@ export function analysisView(model: PyChessModel): VNode[] {
                 ]),
             ],
         ),
+        BoardSummaryView.placeholder('a', 'polite'),
+        BoardSummaryView.placeholder('b', 'polite'),
     ];
 }

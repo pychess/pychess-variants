@@ -309,6 +309,16 @@ export default class AnalysisControllerBughouse extends TwoBoardController {
      *  the boards and nothing else, which is exactly what the tree wants. */
     goPly = (ply: number) => this.movelistView.showPly(this, ply);
 
+    // The tree's active line, not the mainline `steps`, holds the moves of a variation.
+    lastSanOn(boardName: BugBoardName): string | undefined {
+        if (!this.tree.hasAnalysisTree()) return super.lastSanOn(boardName);
+        const line = this.tree.getTreeNodeList();
+        for (let i = line.length - 1; i > 0; i--) {
+            if (line[i].step.boardName === boardName) return line[i].step.san;
+        }
+        return undefined;
+    }
+
     renderPly = (ply: number, steppedForward: boolean) => {
         if (this.tree.hasAnalysisTree()) {
             const node = this.tree.getTreeNodeForPly(ply);

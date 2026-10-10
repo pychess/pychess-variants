@@ -9,6 +9,11 @@ export const i18n = gettext();
 export function _(msgid: string, ...vars: any): string {
     return i18n.gettext(msgid, vars);
 }
+// Marks a msgid for extraction without translating it, for tables built before translations load.
+// Translate it with _() where it is shown.
+export function N_(msgid: string): string {
+    return msgid;
+}
 export function ngettext(msgid: string, plural: string, n: number) {
     return i18n.ngettext(msgid, plural, n, n);
 }

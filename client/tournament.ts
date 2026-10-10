@@ -7,7 +7,7 @@ import { JSONObject, PyChessModel } from './types';
 import { _ } from './i18n';
 import { patch } from './document';
 import { alertDialog } from './alertDialog';
-import { chatMessage, chatView, ChatController } from './chat';
+import { chatMessage, chatView, ChatController, replayingChat } from './chat';
 import { colorIcon } from './chess';
 import { getLastMoveFen, VARIANTS, Variant, variantKey } from './variants';
 import { timeControlStr } from './view';
@@ -244,25 +244,25 @@ export class TournamentController implements ChatController {
     renderButtons() {
         return h('div#page-controls.btn-controls', [
             h('div.pager', [
-                h('button', { on: { click: () => this.goToPage(1) } }, [
-                    h('i.icon.icon-fast-backward', { props: { title: _('First') } }),
+                h('button', { on: { click: () => this.goToPage(1) }, props: { title: _('First') } }, [
+                    h('i.icon.icon-fast-backward', { attrs: { 'aria-hidden': 'true' } }),
                 ]),
-                h('button', { on: { click: () => this.goToPage(this.page - 1) } }, [
-                    h('i.icon.icon-step-backward', { props: { title: _('Prev') } }),
+                h('button', { on: { click: () => this.goToPage(this.page - 1) }, props: { title: _('Prev') } }, [
+                    h('i.icon.icon-step-backward', { attrs: { 'aria-hidden': 'true' } }),
                 ]),
                 // TODO: update
                 h(
                     'span.page',
                     `${(this.page - 1) * 10 + 1} - ${Math.min(this.page * 10, this.nbPlayers)} / ${this.nbPlayers}`,
                 ),
-                h('button', { on: { click: () => this.goToPage(this.page + 1) } }, [
-                    h('i.icon.icon-step-forward', { props: { title: _('Next') } }),
+                h('button', { on: { click: () => this.goToPage(this.page + 1) }, props: { title: _('Next') } }, [
+                    h('i.icon.icon-step-forward', { attrs: { 'aria-hidden': 'true' } }),
                 ]),
-                h('button', { on: { click: () => this.goToPage(10000) } }, [
-                    h('i.icon.icon-fast-forward', { props: { title: _('Last') } }),
+                h('button', { on: { click: () => this.goToPage(10000) }, props: { title: _('Last') } }, [
+                    h('i.icon.icon-fast-forward', { attrs: { 'aria-hidden': 'true' } }),
                 ]),
-                h('button', { on: { click: () => this.goToMyPage() } }, [
-                    h('i.icon.icon-target', { props: { title: _('Scroll to your player') } }),
+                h('button', { on: { click: () => this.goToMyPage() }, props: { title: _('Scroll to your player') } }, [
+                    h('i.icon.icon-target', { attrs: { 'aria-hidden': 'true' } }),
                 ]),
             ]),
             h('div#action'),
@@ -418,8 +418,15 @@ export class TournamentController implements ChatController {
         const fixedRoundSheet = this.system > 0 && this.rounds > 0;
         const sheetEntries = this.scoreSheetEntries(player.points);
         const rowCells: Array<VNode | string | number> = [
+            // The row's keyboard control: no handler, its click reaches the row's own.
             h('td.rank', [
-                player.paused && !this.completed() ? h('i', { class: { icon: true, 'icon-pause': true } }) : index,
+                h(
+                    'button.row-action',
+                    {
+                        attrs: { type: 'button', 'aria-label': displayUsername(player.name) },
+                    },
+                    [player.paused && !this.completed() ? h('i', { class: { icon: true, 'icon-pause': true } }) : index],
+                ),
             ]),
             h('td.player', [
                 h('span.title', player.title),
@@ -585,7 +592,13 @@ export class TournamentController implements ChatController {
                     },
                 },
                 [
-                    h('th', index),
+                    h('th', [
+                        h(
+                            'button.row-action',
+                            { attrs: { type: 'button', 'aria-label': `${_('Open game')}: ${displayUsername(game.name)}` } },
+                            index,
+                        ),
+                    ]),
                     h('td.player', [
                         h('span.title', game.title),
                         userLink(game.name, [displayUsername(game.name)], { className: 'name user-link' }),
@@ -639,9 +652,9 @@ export class TournamentController implements ChatController {
         }
 
         return [
-            h('span.close', {
+            h('button.close', {
                 on: { click: () => this.onClickPlayer(this.visitedPlayer) },
-                attrs: { 'data-icon': 'j' },
+                attrs: { type: 'button', 'data-icon': 'j', 'aria-label': _('Close') },
             }),
             h('h2', [h('rank', msg.rank + '. '), playerInfo(msg.name, msg.title)]),
             h('table.stats', statsRows),
@@ -666,10 +679,13 @@ export class TournamentController implements ChatController {
                 h('div#bresult'),
             ]),
             h(
-                `div#mainboard.${variant.boardFamily}.${variant.pieceFamily}.${variant.ui.boardMark}`,
+                `a#mainboard.${variant.boardFamily}.${variant.pieceFamily}.${variant.ui.boardMark}`,
                 {
                     class: { 'with-pockets': !!variant.pocket },
-                    on: { click: () => window.location.assign('/' + game.gameId) },
+                    attrs: {
+                        href: '/' + game.gameId,
+                        'aria-label': `${_('Open game')}: ${displayUsername(game.b)} – ${displayUsername(game.w)}`,
+                    },
                 },
                 [
                     h(`div.cg-wrap.${variant.board.cg}.mini`, {
@@ -784,7 +800,8 @@ export class TournamentController implements ChatController {
     private onMsgGetGames(msg: MsgGetGames) {
         const oldStats = document.getElementById('stats') as Element;
         oldStats.innerHTML = '';
-        patch(oldStats, h('div#stats.box', [h('tbody', this.renderStats(msg))]));
+        // Live, so a screen reader hears the player's summary when a row opens it.
+        patch(oldStats, h('div#stats.box', { attrs: { 'aria-live': 'polite' } }, [h('tbody', this.renderStats(msg))]));
 
         const oldGames = document.getElementById('games') as Element;
         oldGames.innerHTML = '';
@@ -1039,16 +1056,25 @@ export class TournamentController implements ChatController {
 
     private renderDuels(duels: Duel[]) {
         return duels.map(duel =>
-            h('a', { attrs: { href: '/' + duel.id } }, [
-                h('line.a', [
-                    h('strong', [userLink(duel.wp, [displayUsername(duel.wp)], { className: 'user-link' })]),
-                    h('span', [h('em.rating', duel.br), h('em.rank', '#' + duel.bk)]),
-                ]),
-                h('line.b', [
-                    h('span', [h('em.rank', '#' + duel.wk), h('em.rating', duel.wr)]),
-                    h('strong', [userLink(duel.bp, [displayUsername(duel.bp)], { className: 'user-link' })]),
-                ]),
-            ]),
+            h(
+                'a',
+                {
+                    attrs: {
+                        href: '/' + duel.id,
+                        'aria-label': `${_('Open game')}: ${displayUsername(duel.wp)} – ${displayUsername(duel.bp)}`,
+                    },
+                },
+                [
+                    h('line.a', [
+                        h('strong', [userLink(duel.wp, [displayUsername(duel.wp)], { className: 'user-link' })]),
+                        h('span', [h('em.rating', duel.br), h('em.rank', '#' + duel.bk)]),
+                    ]),
+                    h('line.b', [
+                        h('span', [h('em.rank', '#' + duel.wk), h('em.rating', duel.wr)]),
+                        h('strong', [userLink(duel.bp, [displayUsername(duel.bp)], { className: 'user-link' })]),
+                    ]),
+                ],
+            ),
         );
     }
 
@@ -1091,9 +1117,10 @@ export class TournamentController implements ChatController {
     }
     private onMsgFullChat(msg: MsgFullChat) {
         // To prevent multiplication of messages we have to remove old messages div first
+        replayingChat('lobbychat');
         patch(document.getElementById('messages') as HTMLElement, h('div#messages-clear'));
         // then create a new one
-        patch(document.getElementById('messages-clear') as HTMLElement, h('div#messages'));
+        patch(document.getElementById('messages-clear') as HTMLElement, h('div#messages', { attrs: { role: 'none' } }));
         msg.lines.forEach(line => chatMessage(line.user, line.message, 'lobbychat', line.time));
     }
 
@@ -1243,7 +1270,7 @@ export function tournamentView(model: PyChessModel): VNode[] {
         h('div.tour-table', [
             h('div#summarybox'),
             h('div#top-game'),
-            h('div#player', [h('div#stats.box'), h('table#games.box')]),
+            h('div#player', [h('div#stats.box', { attrs: { 'aria-live': 'polite' } }), h('table#games.box')]),
             h('div.duels'),
         ]),
         h('under-chat#spectators'),

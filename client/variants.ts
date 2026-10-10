@@ -16,7 +16,8 @@ import {
     TimeControlType,
     uci2LastMove,
 } from './chess';
-import { _, gameCategoryLabel } from './i18n';
+import { _, N_, gameCategoryLabel } from './i18n';
+import type { PieceNameTable } from './pieceNames';
 import { calculateDiff, Equivalence, MaterialDiff } from './material';
 
 export interface BoardFamily {
@@ -427,10 +428,11 @@ export interface Variant {
     };
     readonly pieceRow: Record<cg.Color, cg.Role[]>;
     readonly kingRoles: cg.Role[];
+    readonly pieceNames?: PieceNameTable;
+    readonly pieceNamesByColor?: Partial<Record<cg.Color, PieceNameTable>>;
     readonly pocket?: {
         readonly roles: Record<cg.Color, cg.Role[]>;
         readonly captureToHand: boolean;
-        readonly pieceNames?: Partial<Record<cg.Role, string>>;
     };
     readonly promotion: {
         readonly type: PromotionType;
@@ -538,6 +540,8 @@ export function variant(config: VariantConfig): Variant {
                   black: config.pieceRow.black.map(util.roleOf),
               },
         kingRoles: (config.kingRoles ?? ['k']).map(util.roleOf),
+        pieceNames: config.pieceNames,
+        pieceNamesByColor: config.pieceNamesByColor,
         pocket: config.pocket
             ? {
                   roles: Array.isArray(config.pocket.roles)
@@ -549,7 +553,6 @@ export function variant(config: VariantConfig): Variant {
                             white: config.pocket.roles.white.map(util.roleOf),
                             black: config.pocket.roles.black.map(util.roleOf),
                         },
-                  pieceNames: config.pocket?.pieceNames,
                   captureToHand: config.pocket.captureToHand,
               }
             : undefined,
@@ -660,12 +663,15 @@ interface VariantConfig {
     pieceRow: cg.Letter[] | Record<cg.Color, cg.Letter[]>;
     // Pieces considered king for check marking (default: ['k'])
     kingRoles?: cg.Letter[];
+    // English piece names by letter, each marked with N_(); only those the piece family's names
+    // in pieceNames.ts do not already cover
+    pieceNames?: PieceNameTable;
+    // Only where one side calls a letter something else (orda's khan)
+    pieceNamesByColor?: Partial<Record<cg.Color, PieceNameTable>>;
     pocket?: {
         // Pieces in the pocket
         // Use the record version if the pieces of each side are different
         roles: cg.Letter[] | Record<cg.Color, cg.Letter[]>;
-        // Translatable names of the pieces in the pocket (used for bug chat tooltip)
-        pieceNames?: Partial<Record<cg.Role, string>>;
         // Whether captured pieces go to the pocket (Fairy's terminology)
         captureToHand: boolean;
     };
@@ -882,13 +888,6 @@ export const VARIANTS: Record<string, Variant> = {
         pieceRow: ['k', 'q', 'r', 'b', 'n', 'p'],
         pocket: {
             roles: ['p', 'n', 'b', 'r', 'q'],
-            pieceNames: {
-                'p-piece': _('pawn'),
-                'n-piece': _('knight'),
-                'b-piece': _('bishop'),
-                'r-piece': _('rook'),
-                'q-piece': _('queen'),
-            },
             captureToHand: true,
         },
         rules: { enPassant: true },
@@ -1116,15 +1115,10 @@ export const VARIANTS: Record<string, Variant> = {
         pieceFamily: 'makruk',
         pieceRow: ['k', 's', 'm', 'n', 'r', 'p', 'm~' as cg.Letter],
         promotion: { type: 'regular', order: ['m'] },
+        // The names the bughouse chat presets have always used for makruk's pieces
+        pieceNames: { k: N_('king'), m: N_('queen'), s: N_('bishop'), n: N_('knight'), r: N_('rook'), p: N_('pawn') },
         pocket: {
             roles: ['p', 'm', 's', 'n', 'r'],
-            pieceNames: {
-                'p-piece': _('pawn'),
-                'm-piece': _('queen'),
-                's-piece': _('bishop'),
-                'n-piece': _('knight'),
-                'r-piece': _('rook'),
-            },
             captureToHand: true,
         },
         ui: { showPromoted: true },
@@ -1190,6 +1184,22 @@ export const VARIANTS: Record<string, Variant> = {
         notation: cg.Notation.SHOGI_ARBNUM,
         colors: { first: 'Black', second: 'White' },
         pieceRow: ['k', 'g', 'r', 'b', 's', 'n', 'l', 'p'],
+        pieceNames: {
+            k: N_('king'),
+            g: N_('gold general'),
+            r: N_('rook'),
+            b: N_('bishop'),
+            s: N_('silver general'),
+            n: N_('knight'),
+            l: N_('lance'),
+            p: N_('pawn'),
+            '+r': N_('dragon king'),
+            '+b': N_('dragon horse'),
+            '+s': N_('promoted silver'),
+            '+n': N_('promoted knight'),
+            '+l': N_('promoted lance'),
+            '+p': N_('tokin'),
+        },
         pocket: { roles: ['p', 'l', 'n', 's', 'g', 'b', 'r'], captureToHand: true },
         promotion: { type: 'shogi', roles: ['p', 'l', 'n', 's', 'r', 'b'] },
         rules: { defaultTimeControl: 'byoyomi', noDrawOffer: true },
@@ -1432,14 +1442,6 @@ export const VARIANTS: Record<string, Variant> = {
         promotion: { type: 'regular', roles: [] },
         pocket: {
             roles: ['p', 'n', 'b', 'r', 'c', 'a'],
-            pieceNames: {
-                'p-piece': _('pawn'),
-                'n-piece': _('horse'),
-                'b-piece': _('elephant'),
-                'r-piece': _('chariot'),
-                'c-piece': _('cannon'),
-                'a-piece': _('advisor'),
-            },
             captureToHand: true,
         },
         ui: { showPromoted: true },
@@ -1523,6 +1525,7 @@ export const VARIANTS: Record<string, Variant> = {
         boardFamily: 'standard10x8',
         pieceFamily: 'capa',
         pieceRow: ['k', 'q', 'c', 'a', 'r', 'b', 'n', 'p'],
+        pieceNames: { a: N_('archbishop'), c: N_('chancellor') },
         rules: { enPassant: true },
         alternateStart: {
             '': '',
@@ -1571,6 +1574,7 @@ export const VARIANTS: Record<string, Variant> = {
         boardFamily: 'standard10x8',
         pieceFamily: 'capa',
         pieceRow: ['k', 'q', 'c', 'a', 'r', 'b', 'n', 'p'],
+        pieceNames: { a: N_('archbishop'), c: N_('chancellor') },
         pocket: { roles: ['p', 'n', 'b', 'r', 'a', 'c', 'q'], captureToHand: true },
         rules: { enPassant: true },
         alternateStart: {
@@ -1636,6 +1640,7 @@ export const VARIANTS: Record<string, Variant> = {
         boardFamily: 'standard8x8',
         pieceFamily: 'seirawan',
         pieceRow: ['k', 'q', 'e', 'h', 'r', 'b', 'n', 'p'],
+        pieceNames: { h: N_('hawk'), e: N_('elephant') },
         pocket: { roles: ['h', 'e'], captureToHand: false },
         rules: { enPassant: true, gate: true },
     }),
@@ -1661,6 +1666,7 @@ export const VARIANTS: Record<string, Variant> = {
         boardFamily: 'grand10x10',
         pieceFamily: 'capa',
         pieceRow: ['k', 'q', 'c', 'a', 'r', 'b', 'n', 'p'],
+        pieceNames: { a: N_('cardinal'), c: N_('marshal') },
         rules: { enPassant: true },
     }),
 
@@ -1700,6 +1706,14 @@ export const VARIANTS: Record<string, Variant> = {
         boardFamily: 'shogun8x8',
         pieceFamily: 'shogun',
         pieceRow: ['k', 'f', 'r', 'b', 'n', 'p'],
+        pieceNames: {
+            f: N_('duchess'),
+            '+f': N_('queen'),
+            '+p': N_('captain'),
+            '+r': N_('mortar'),
+            '+b': N_('archbishop'),
+            '+n': N_('general'),
+        },
         pocket: { roles: ['p', 'n', 'b', 'r', 'f'], captureToHand: true },
         promotion: { type: 'shogi', roles: ['p', 'f', 'r', 'b', 'n'] },
         rules: { defaultTimeControl: 'byoyomi', enPassant: true },
@@ -1802,6 +1816,8 @@ export const VARIANTS: Record<string, Variant> = {
         pieceFamily: 'orda',
         colors: { first: 'White', second: 'Gold' },
         pieceRow: { white: ['k', 'q', 'r', 'b', 'n', 'p', 'h'], black: ['k', 'y', 'l', 'a', 'h', 'p', 'q'] },
+        pieceNames: { y: N_('yurt'), h: N_('kheshig'), a: N_('horse archer'), l: N_('lancer') },
+        pieceNamesByColor: { black: { k: N_('khan') } },
         promotion: { type: 'regular', order: ['q', 'h'] },
         rules: { enPassant: true },
         ui: { boardMark: 'campmate' },
@@ -2836,6 +2852,7 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
         pieceCSSExclude: compatiblePieceSource?.pieceCSSExclude,
         pieceRow: pieces,
         kingRoles,
+        pieceNames: meta.pieceNames,
         pocket: pocketRoles.length ? { roles: pocketRoles, captureToHand } : undefined,
         promotion: { type: promotionType, roles: promotionRoles, order: promotionOrder },
         rules: {

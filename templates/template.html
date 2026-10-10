@@ -3,16 +3,16 @@
     <header>
         <a id="zen-button"></a>
         <div class="site-title-nav">
-            <div class="hamburger hamburger--vortex">
-                <div class="hamburger-box">
-                    <div class="hamburger-inner"></div>
-                </div>
-            </div>
-            <div class="topnav">
+            <button type="button" class="hamburger hamburger--vortex" aria-label="{% trans %}Menu{% endtrans %}" aria-expanded="false" aria-controls="site-nav">
+                <span class="hamburger-box">
+                    <span class="hamburger-inner"></span>
+                </span>
+            </button>
+            <nav class="topnav" id="site-nav">
                 <a class="nav-link active home" href="/">PyChess{% if dev %}<span>DEV</span>{% endif %}</a>
                 <section>
-                    <a class="nav-link" href="/?any">{% trans %}Play{% endtrans %}</a>
-                    <div class="drp" >
+                    <button type="button" class="nav-link nav-section" aria-expanded="false" aria-controls="nav-play">{% trans %}Play{% endtrans %}</button>
+                    <div class="drp" id="nav-play">
                         <a class="nav-link" href="/?any">{% trans %}Create a game{% endtrans %}</a>
                         <a class="nav-link" href="/tournaments">{% trans %}Tournaments{% endtrans %}</a>
                         {% if simuling %}
@@ -21,14 +21,14 @@
                     </div>
                 </section>
                 <section>
-                    <a class="nav-link" href="/puzzle/{{ menu_variant }}">{% trans %}Puzzles{% endtrans %}</a>
-                    <div class="drp" >
+                    <button type="button" class="nav-link nav-section" aria-expanded="false" aria-controls="nav-puzzles">{% trans %}Puzzles{% endtrans %}</button>
+                    <div class="drp" id="nav-puzzles">
                         <a class="nav-link" href="/puzzle/{{ menu_variant }}">{% trans %}Puzzles{% endtrans %}</a>
                     </div>
                 </section>
                 <section>
-                    <a class="nav-link" href="/variants">{% trans %}Learn{% endtrans %}</a>
-                    <div class="drp" >
+                    <button type="button" class="nav-link nav-section" aria-expanded="false" aria-controls="nav-learn">{% trans %}Learn{% endtrans %}</button>
+                    <div class="drp" id="nav-learn">
                         <a class="nav-link" href="/variants">{% trans %}Rules & Variants{% endtrans %}</a>
                         <a class="nav-link" href="/authors">{% trans %}Authors{% endtrans %}</a>
                         <a class="nav-link" href="/memory">{% trans %}Memory{% endtrans %}</a>
@@ -37,16 +37,16 @@
                     </div>
                 </section>
                 <section>
-                    <a class="nav-link" href="/tv">{% trans %}Watch{% endtrans %}</a>
-                    <div class="drp" >
+                    <button type="button" class="nav-link nav-section" aria-expanded="false" aria-controls="nav-watch">{% trans %}Watch{% endtrans %}</button>
+                    <div class="drp" id="nav-watch">
                         <a class="nav-link" href="/tv">{% trans %}Tv{% endtrans %}</a>
                         <a class="nav-link" href="/games">{% trans %}Current games{% endtrans %}</a>
                         <a class="nav-link" href="/video">{% trans %}Video library{% endtrans %}</a>
                     </div>
                 </section>
                 <section>
-                    <a class="nav-link" href="/players">{% trans %}Community{% endtrans %}</a>
-                    <div class="drp" >
+                    <button type="button" class="nav-link nav-section" aria-expanded="false" aria-controls="nav-community">{% trans %}Community{% endtrans %}</button>
+                    <div class="drp" id="nav-community">
                         <a class="nav-link" href="/players">{% trans %}Players{% endtrans %}</a>
                         {% if not anon %}
                         <a class="nav-link" href="/@/{{ username }}/following">{% trans %}Friends{% endtrans %}</a>
@@ -58,8 +58,8 @@
                     </div>
                 </section>
                 <section>
-                    <a class="nav-link" href="/editor/{{ menu_variant }}">{% trans %}Tools{% endtrans %}</a>
-                    <div class="drp" >
+                    <button type="button" class="nav-link nav-section" aria-expanded="false" aria-controls="nav-tools">{% trans %}Tools{% endtrans %}</button>
+                    <div class="drp" id="nav-tools">
                         <a class="nav-link" href="/editor/{{ menu_variant }}">{% trans %}Editor{% endtrans %}</a>
                         <a class="nav-link" href="/analysis/{{ menu_variant }}">{% trans %}Analysis{% endtrans %}</a>
                         <a class="nav-link" href="/paste">{% trans %}Import game{% endtrans %}</a>
@@ -68,13 +68,13 @@
                     </div>
                 </section>
                 <a class="nav-link donate-link icon-patron-wing" href="/patron">{% trans %}Donate{% endtrans %}</a>
-            </div>
+            </nav>
         </div>
         <div class="site-buttons">
             <form autocomplete="off" class="search-bar">
                 <div class="search-icon"></div>
                 <div class="input">
-                    <input id="search-input" type="text" placeholder="Search" aria-label="Search users">
+                    <input id="search-input" type="text" placeholder="{% trans %}Search{% endtrans %}" aria-label="{% trans %}Search{% endtrans %}">
                 </div>
                 <div id="ac-result"></div>
             </form>
@@ -133,19 +133,19 @@
             </div>
             {% endif %}
             {% if admin and not anon %}
-            <a id="btn-mod" class="mod-link" href="/admin" aria-label="Administration" title="Administration">
+            <a id="btn-mod" class="mod-link" href="/admin" aria-label="{% trans %}Administration{% endtrans %}" title="{% trans %}Administration{% endtrans %}">
                 <div class="icon icon-warning data-count" data-count="{{ mod_report_score }}"></div>
             </a>
             {% endif %}
             {% if not anon %}
             <div id="challenge-panel">
-                <button id="btn-challenge" aria-label="Challenges: 0" title="Challenges: 0">
+                <button id="btn-challenge" aria-label="{% trans %}Challenges{% endtrans %}: 0" title="{% trans %}Challenges{% endtrans %}: 0" aria-expanded="false" aria-controls="challenge-app">
                     <div class="icon icon-crossedswords data-count" data-count="0"></div>
                 </button>
                 <div id="challenge-app"></div>
             </div>
             <div id="notify-panel">
-                <button id="btn-notify" aria-label="Notifications: 0">
+                <button id="btn-notify" aria-label="{% trans %}Notifications{% endtrans %}: 0" aria-expanded="false" aria-controls="notify-app">
                     <div class="icon icon-bell-o data-count" data-count="0"></div>
                 </button>
                 <div id="notify-app"></div>
@@ -155,7 +155,7 @@
             <div id="notify-panel"></div>
             {% endif %}
             <div id="settings-panel">
-                <button id="btn-settings" aria-label="Settings">
+                <button id="btn-settings" aria-label="{% trans %}Settings{% endtrans %}" aria-expanded="false" aria-controls="settings">
                     <div class="icon icon-cog"></div>
                 </button>
                 <div id="settings"></div>

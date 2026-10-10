@@ -248,6 +248,11 @@ export class GameControllerBughouse extends GameController {
         return { san, sanSAN };
     };
 
+    // The game status belongs to both boards, so the parent reports it (on one board only).
+    updateBoardSummary(lastMove: string | undefined): void {
+        this.boardSummary.setPosition(this.chessground.state.boardState, lastMove);
+    }
+
     renderState = () => {
         this.chessground.set({
             fen: this.fullfen,
@@ -255,6 +260,7 @@ export class GameControllerBughouse extends GameController {
             check: this.isCheck,
             lastMove: this.lastmove,
         });
+        this.updateBoardSummary(this.parent?.lastSanOn(this.boardName));
     };
 
     setGround = () => {

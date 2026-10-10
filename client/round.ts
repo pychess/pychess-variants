@@ -5,6 +5,9 @@ import { gameInfo } from './gameInfo';
 import { renderTimeago } from './datetime';
 import { VARIANTS } from './variants';
 import { PyChessModel } from './types';
+import { BoardSummaryView } from './accessibility/boardSummary';
+import { _ } from './i18n';
+import { pageHeading, srHeading } from './view';
 
 function runGround(vnode: VNode, model: PyChessModel, aliceBoardVNode?: VNode) {
     const el = vnode.elm as HTMLElement;
@@ -22,7 +25,8 @@ export function roundView(model: PyChessModel): VNode[] {
     renderTimeago();
 
     return [
-        h('aside.sidebar-first', [gameInfo(model), h('div#roundchat')]),
+        pageHeading(),
+        h('aside.sidebar-first', [gameInfo(model), srHeading('h2', _('Chat')), h('div#roundchat')]),
         h(
             'div.round-app',
             {
@@ -60,8 +64,10 @@ export function roundView(model: PyChessModel): VNode[] {
                 h('div#expiration-top'),
                 h('round-player0#rplayer0'),
                 h('div#move-controls'),
+                srHeading('h2', _('Moves')),
                 h('div.movelist-block', [h('div#movelist')]),
                 h('div#offer-dialog'),
+                srHeading('h2', _('Actions')),
                 h('div#game-controls'),
                 h('round-player1#rplayer1'),
                 h('div#expiration-bottom'),
@@ -76,5 +82,6 @@ export function roundView(model: PyChessModel): VNode[] {
         ),
         h('under-left#spectators'),
         h('under-board', [h('div.ctable-container'), h('div.games-container')]),
+        BoardSummaryView.placeholder('', 'assertive'),
     ];
 }

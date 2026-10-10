@@ -11,7 +11,7 @@
             </p>
         </header>
 
-        <section class="authors-grid" aria-label="Chess variant authors">
+        <section class="authors-grid" aria-label="{% trans %}Chess variant authors{% endtrans %}">
             {% for author in authors %}
             <article class="author-card">
                 <button
@@ -55,13 +55,13 @@
                         class="author-dialog-close"
                         type="button"
                         data-author-dialog-close
-                        aria-label="Close biography"
+                        aria-label="{% trans %}Close biography{% endtrans %}"
                     >×</button>
                     <p class="authors-kicker">Chess variant author{% if author.is_collaboration %}s{% endif %}</p>
                     <h2 id="author-title-{{ loop.index }}">{{ author.display_name }}</h2>
                     <p class="author-bio">{{ author.bio }}</p>
 
-                    <section class="author-variants" aria-label="Variants by {{ author.display_name }}">
+                    <section class="author-variants" aria-label="{% trans name=author.display_name %}Variants by {{ name }}{% endtrans %}">
                         <h3>On PyChess</h3>
                         <div class="author-variant-links">
                             {% for variant in author.variants %}

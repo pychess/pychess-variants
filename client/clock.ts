@@ -13,6 +13,9 @@ export type Millis = number;
 
 const HURRY = 10000;
 
+// Read as "05", ":", "23" with no owner; the board summary says the time in words instead.
+const hiddenFromReaders = () => ({ attrs: { 'aria-hidden': 'true' } });
+
 const prefixInteger = (num: number, length: number): string => (num / Math.pow(10, length)).toFixed(length).substr(2);
 
 function formatClockTime(time: Millis) {
@@ -47,6 +50,7 @@ export class Clock {
     timeout: ReturnType<typeof setTimeout> | null;
     startTime: number;
     tickCallbacks: ((diff: number) => void)[];
+    renderCallbacks: ((time: Millis) => void)[];
     flagCallback: (() => void) | null;
     byoyomiCallback: (() => void) | null;
     el: HTMLElement | VNode;
@@ -76,6 +80,7 @@ export class Clock {
         this.timeout = null;
         this.startTime = 0;
         this.tickCallbacks = [];
+        this.renderCallbacks = [];
         this.flagCallback = null;
         this.byoyomiCallback = null;
         this.el = el;
@@ -144,6 +149,12 @@ export class Clock {
         if (typeof callback === 'function') {
             this.tickCallbacks.push(callback);
         }
+        return this;
+    }
+
+    // Every repaint, ticking or not (pause, resync, flip), with the time shown.
+    onRender(callback: (time: Millis) => void) {
+        this.renderCallbacks.push(callback);
         return this;
     }
 
@@ -219,7 +230,7 @@ export class Clock {
 
     view(time: number) {
         if (this.corr) {
-            return h('div#' + this.id, [
+            return h('div#' + this.id, hiddenFromReaders(), [
                 h(
                     'div.clock.corr-clock',
                     {
@@ -237,7 +248,7 @@ export class Clock {
 
         const printed = this.printTime(time);
         const millis = new Date(time).getUTCMilliseconds();
-        return h('div#' + this.id, [
+        return h('div#' + this.id, hiddenFromReaders(), [
             h(
                 'div.clock',
                 {
@@ -266,6 +277,7 @@ export class Clock {
         if (!isNaN(time)) {
             if (this.granularity > 100 && time < HURRY) this.granularity = 100;
             this.el = patch(this.el, this.view(time));
+            this.renderCallbacks.forEach(callback => callback(time));
         }
     }
 }
