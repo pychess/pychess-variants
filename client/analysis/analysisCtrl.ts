@@ -30,7 +30,7 @@ import { Ceval, MsgBoard, MsgUserConnected, Step, CrossTable } from '../messages
 import { MsgAnalysis, MsgAnalysisBoard } from './analysisType';
 import { GameController } from '../gameCtrl';
 import { analysisSettings, EngineSettings } from './analysisSettings';
-import { setAriaTabClick } from '../view';
+import { pvLine, pvLinePending, setAriaTabClick } from '../view';
 import { createWebsocket } from '@/socket/webSocketUtils';
 import { setPocketRowCssVars } from '../pocketRow';
 import { updateCount, updatePoint } from '../info';
@@ -824,7 +824,7 @@ export class AnalysisController extends GameController {
         this.pvHoverPreview.hide();
         for (let i = 4; i >= 0; i--) {
             if (i + 1 <= this.multipv && this.localAnalysis) {
-                this.vpvlines[i] = patch(this.vpvlines[i], h(`div#pv${i + 1}.pv`, [h('pvline', h('pvline', '-'))]));
+                this.vpvlines[i] = patch(this.vpvlines[i], h(`div#pv${i + 1}.pv`, [pvLinePending()]));
             } else {
                 this.vpvlines[i] = patch(this.vpvlines[i], h(`div#pv${i + 1}`));
             }
@@ -1363,14 +1363,14 @@ export class AnalysisController extends GameController {
                 }
             }
             if (pvSan !== emptySan) {
-                pvSan = h('pv-san', { on: { click: () => this.makePvMove(ceval.p as string) } }, pvSan);
+                pvSan = pvLine(() => this.makePvMove(ceval.p as string), pvSan);
                 this.pvView(
                     pvlineIdx,
                     h('pvline', [this.multipv > 1 && this.localAnalysis ? h('strong', scoreStr) : '', pvSan]),
                 );
             }
         } else if (ceval === undefined) {
-            this.pvView(pvlineIdx, h('pvline', this.localAnalysis ? h('pvline', '-') : ''));
+            this.pvView(pvlineIdx, this.localAnalysis ? pvLinePending() : h('pvline', ''));
         }
 
         // Render gauge and main score value for first PV line only

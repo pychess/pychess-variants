@@ -14,7 +14,7 @@ import { variantsIni } from '../../variantsIni';
 import { povChances } from '../../analysis/winningChances';
 import { alertDialog } from '../../alertDialog';
 import { NumberSettings } from '../../settings';
-import { slider } from '../../view';
+import { pvLine, pvLinePending, slider } from '../../view';
 import { Ceval } from '../../messages';
 import { MsgAnalysis } from '../../analysis/analysisType';
 import { BugBoardName } from '../../types';
@@ -364,7 +364,7 @@ export class EngineController {
             const lines = this.pvlines[board];
             for (let i = maxMultiPv - 1; i >= 0; i--) {
                 if (i + 1 <= this.multipv && this.engineOn) {
-                    lines[i] = patch(lines[i], h(`div#pv-${board}-${i + 1}.pv`, [h('pvline', h('pvline', '-'))]));
+                    lines[i] = patch(lines[i], h(`div#pv-${board}-${i + 1}.pv`, [pvLinePending()]));
                 } else {
                     lines[i] = patch(lines[i], h(`div#pv-${board}-${i + 1}`));
                 }
@@ -669,11 +669,7 @@ export class EngineController {
         if (ceval?.p !== undefined) {
             const variation = this.renderVariation(boardInAnalysis.fullfen, ceval.p as string);
             if (variation.length > 0) {
-                const pvSan = h(
-                    'pv-san',
-                    { on: { click: () => this.makePvMove(ceval.p as string, boardInAnalysis) } },
-                    variation,
-                );
+                const pvSan = pvLine(() => this.makePvMove(ceval.p as string, boardInAnalysis), variation);
                 this.pvView(
                     boardInAnalysis.boardName,
                     pvlineIdx,
@@ -686,10 +682,10 @@ export class EngineController {
                 /* Not even the first ply converted. The row is BLANKED rather than left alone:
                    left alone it keeps a variation from an earlier depth, which reads as current
                    and is the more misleading of the two. */
-                this.pvView(boardInAnalysis.boardName, pvlineIdx, h('pvline', this.engineOn ? h('pvline', '-') : ''));
+                this.pvView(boardInAnalysis.boardName, pvlineIdx, this.engineOn ? pvLinePending() : h('pvline', ''));
             }
         } else {
-            this.pvView(boardInAnalysis.boardName, pvlineIdx, h('pvline', this.engineOn ? h('pvline', '-') : ''));
+            this.pvView(boardInAnalysis.boardName, pvlineIdx, this.engineOn ? pvLinePending() : h('pvline', ''));
         }
 
         // Render gauge, arrow and main score value for first PV line only

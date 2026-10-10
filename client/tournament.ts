@@ -800,7 +800,8 @@ export class TournamentController implements ChatController {
     private onMsgGetGames(msg: MsgGetGames) {
         const oldStats = document.getElementById('stats') as Element;
         oldStats.innerHTML = '';
-        patch(oldStats, h('div#stats.box', [h('tbody', this.renderStats(msg))]));
+        // Live, so a screen reader hears the player's summary when a row opens it.
+        patch(oldStats, h('div#stats.box', { attrs: { 'aria-live': 'polite' } }, [h('tbody', this.renderStats(msg))]));
 
         const oldGames = document.getElementById('games') as Element;
         oldGames.innerHTML = '';
@@ -1055,16 +1056,25 @@ export class TournamentController implements ChatController {
 
     private renderDuels(duels: Duel[]) {
         return duels.map(duel =>
-            h('a', { attrs: { href: '/' + duel.id } }, [
-                h('line.a', [
-                    h('strong', [userLink(duel.wp, [displayUsername(duel.wp)], { className: 'user-link' })]),
-                    h('span', [h('em.rating', duel.br), h('em.rank', '#' + duel.bk)]),
-                ]),
-                h('line.b', [
-                    h('span', [h('em.rank', '#' + duel.wk), h('em.rating', duel.wr)]),
-                    h('strong', [userLink(duel.bp, [displayUsername(duel.bp)], { className: 'user-link' })]),
-                ]),
-            ]),
+            h(
+                'a',
+                {
+                    attrs: {
+                        href: '/' + duel.id,
+                        'aria-label': `${_('Open game')}: ${displayUsername(duel.wp)} – ${displayUsername(duel.bp)}`,
+                    },
+                },
+                [
+                    h('line.a', [
+                        h('strong', [userLink(duel.wp, [displayUsername(duel.wp)], { className: 'user-link' })]),
+                        h('span', [h('em.rating', duel.br), h('em.rank', '#' + duel.bk)]),
+                    ]),
+                    h('line.b', [
+                        h('span', [h('em.rank', '#' + duel.wk), h('em.rating', duel.wr)]),
+                        h('strong', [userLink(duel.bp, [displayUsername(duel.bp)], { className: 'user-link' })]),
+                    ]),
+                ],
+            ),
         );
     }
 
@@ -1260,7 +1270,7 @@ export function tournamentView(model: PyChessModel): VNode[] {
         h('div.tour-table', [
             h('div#summarybox'),
             h('div#top-game'),
-            h('div#player', [h('div#stats.box'), h('table#games.box')]),
+            h('div#player', [h('div#stats.box', { attrs: { 'aria-live': 'polite' } }), h('table#games.box')]),
             h('div.duels'),
         ]),
         h('under-chat#spectators'),

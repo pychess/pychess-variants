@@ -4104,6 +4104,17 @@ img.logo {
   padding: 1rem;
 }
 
+/* As a native <dialog> (the round-robin scheduler), without the browser's own frame and shade. */
+dialog.modal-overlay {
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: none;
+}
+dialog.modal-overlay::backdrop {
+  background: transparent;
+}
+
 .modal-overlay[style*="block"] {
   display: flex;
 }
@@ -4348,18 +4359,24 @@ img.logo {
   padding: 1rem;
 }
 
-.alert-dialog-wrap {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.alert-dialog-root.alert-dialog-native[open] {
+  display: block;
+  width: min(420px, calc(100vw - 2rem));
+  height: fit-content;
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
 }
 
-.alert-dialog-backdrop {
-  position: absolute;
-  inset: 0;
+.alert-dialog-native::backdrop {
   background: rgba(0, 0, 0, 0.45);
+}
+
+.alert-dialog-native .alert-dialog-content {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .alert-dialog-content {

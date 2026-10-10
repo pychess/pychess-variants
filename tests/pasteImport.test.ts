@@ -122,6 +122,13 @@ function latestAlertText(): string {
 
 beforeAll(async () => {
     (global as any).XMLHttpRequest = FakeXMLHttpRequest;
+    // jsdom has no native modal dialogs; alertDialog needs these two.
+    HTMLDialogElement.prototype.showModal = function (this: HTMLDialogElement) {
+        this.setAttribute('open', '');
+    };
+    HTMLDialogElement.prototype.close = function (this: HTMLDialogElement) {
+        this.removeAttribute('open');
+    };
 
     warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 

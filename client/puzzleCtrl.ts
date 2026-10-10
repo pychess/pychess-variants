@@ -467,8 +467,25 @@ export class PuzzleController extends AnalysisController {
                         h('p', _('Vote to load the next one!')),
                     ]),
                     h('div.puzzle_vote_buttons.enabled', [
-                        h('div.vote.vote-up.icon.icon-thumbs-o-up', { on: { click: () => this.postVote(true) } }),
-                        h('div.vote.vote-down.icon.icon-thumbs-o-up', { on: { click: () => this.postVote(false) } }),
+                        // Named by emoji: a screen reader says "thumbs up" in the reader's own language.
+                        h('a.vote.vote-up.icon.icon-thumbs-o-up', {
+                            attrs: { href: '#', 'aria-label': '👍' },
+                            on: {
+                                click: (e: Event) => {
+                                    e.preventDefault();
+                                    this.postVote(true);
+                                },
+                            },
+                        }),
+                        h('a.vote.vote-down.icon.icon-thumbs-o-up', {
+                            attrs: { href: '#', 'aria-label': '👎' },
+                            on: {
+                                click: (e: Event) => {
+                                    e.preventDefault();
+                                    this.postVote(false);
+                                },
+                            },
+                        }),
                     ]),
                 ]),
                 h('div.more', [
