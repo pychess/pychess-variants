@@ -681,9 +681,9 @@ export class LobbyController {
         return h('dialog#id01.modal', [
             h('form.modal-content', [
                 h('span#closecontainer', [
-                    h('span.close', {
+                    h('button.close', {
                         on: { click: this.closeSeekDialog },
-                        attrs: { 'data-icon': 'j' },
+                        attrs: { type: 'button', 'data-icon': 'j', 'aria-label': _('Cancel') },
                         props: { title: _('Cancel') },
                     }),
                 ]),
@@ -1337,7 +1337,7 @@ export class LobbyController {
                 on: { click: () => this.onClickSeek(seek) },
             },
             [
-                h('td', [this.colorIcon(seek.color)]),
+                h('td', [this.seekAction(seek, displayName)]),
                 h('td', [this.challengeIcon(seek), this.seekTitle(seek), this.user(seek)]),
                 h('td', seek.rating),
                 h('td', timeControlStr(seek.base, seek.inc, seek.byoyomi, seek.day)),
@@ -1386,6 +1386,19 @@ export class LobbyController {
             }
             this.doSend({ type: 'accept_seek', seekID: seek['seekID'], player: this.username });
         }
+    }
+
+    // The row's keyboard control. It has no handler: Enter or Space clicks it, and the click reaches
+    // the row's own, so mouse and keyboard take one path.
+    private seekAction(seek: Seek, displayName: string): VNode {
+        const time = timeControlStr(seek.base, seek.inc, seek.byoyomi, seek.day);
+        const label =
+            seek.user === this.username
+                ? `${_('Cancel')}: ${time}, ${displayName}`
+                : `${_('Join')}: ${displayUsername(seek.user)}, ${time}, ${displayName}`;
+        return h('button.seek-action', { attrs: { type: 'button', 'aria-label': label } }, [
+            this.colorIcon(seek.color),
+        ]);
     }
 
     private colorIcon(color: string) {
@@ -2078,29 +2091,29 @@ export function lobbyView(model: PyChessModel): VNode[] {
     let tabs = [];
     tabs.push(
         h(
-            'span',
-            { attrs: { role: 'tab', 'aria-selected': false, 'aria-controls': 'panel-1', id: 'tab-1', tabindex: '-1' } },
+            'button.site-tab',
+            { attrs: { role: 'tab', 'aria-selected': false, 'aria-controls': 'panel-1', id: 'tab-1', type: 'button' } },
             _('Lobby'),
         ),
     );
     tabs.push(
         h(
-            'span',
-            { attrs: { role: 'tab', 'aria-selected': false, 'aria-controls': 'panel-2', id: 'tab-2', tabindex: '-1' } },
+            'button.site-tab',
+            { attrs: { role: 'tab', 'aria-selected': false, 'aria-controls': 'panel-2', id: 'tab-2', type: 'button' } },
             _('Correspondence'),
         ),
     );
     if (corrGames.length > 0) {
         tabs.push(
             h(
-                'span',
+                'button.site-tab',
                 {
                     attrs: {
                         role: 'tab',
                         'aria-selected': false,
                         'aria-controls': 'panel-3',
                         id: 'tab-3',
-                        tabindex: '-1',
+                        type: 'button',
                     },
                 },
                 [
@@ -2113,14 +2126,14 @@ export function lobbyView(model: PyChessModel): VNode[] {
     if (!anonUser) {
         tabs.push(
             h(
-                'span',
+                'button.site-tab',
                 {
                     attrs: {
                         role: 'tab',
                         'aria-selected': false,
                         'aria-controls': 'panel-4',
                         id: 'tab-4',
-                        tabindex: '-1',
+                        type: 'button',
                     },
                 },
                 _('Auto pairing'),
@@ -2129,7 +2142,7 @@ export function lobbyView(model: PyChessModel): VNode[] {
     }
 
     let containers = [];
-    containers.push(h('div', { attrs: { role: 'tablist', 'aria-label': 'Seek Tabs' } }, tabs));
+    containers.push(h('div', { attrs: { role: 'tablist' } }, tabs));
     containers.push(
         h(
             'div.seek-container',

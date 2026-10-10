@@ -16,6 +16,8 @@
    on the rule in `site.css`. `mouseleave` closes a latched menu so a click followed by a mouse-out
    behaves the way hovering always did. */
 
+import { registerHeaderDropdown } from './headerPanel';
+
 const SECTION = '.topnav section';
 const BUTTON = '.nav-section';
 
@@ -32,34 +34,24 @@ export function initTopNavDisclosures(root: ParentNode = document): () => void {
     const all = buttons(root);
     if (all.length === 0) return () => {};
 
-    const closeAll = (except?: HTMLElement) =>
-        all.forEach(b => {
-            if (b !== except) setOpen(b, false);
-        });
+    // Click outside and Escape are the shared header dismissal's.
+    all.forEach(button =>
+        registerHeaderDropdown({
+            root: button.parentElement!,
+            button,
+            isOpen: () => button.getAttribute('aria-expanded') === 'true',
+            close: () => setOpen(button, false),
+        }),
+    );
 
-    // ONE DELEGATED LISTENER, not one per section: the same shape as `initLoginDropdown`, and it
-    // gives the outside-click close for free — anything that is not a section button closes
-    // everything, including a click on a link inside a menu on its way to navigating.
+    // ONE DELEGATED LISTENER, not one per section: opening one menu closes the others.
     const onClick = (e: Event) => {
         const target = e.target as HTMLElement | null;
         const button = target?.closest<HTMLElement>(`${SECTION} > ${BUTTON}`) ?? null;
-        if (button === null) {
-            closeAll();
-            return;
-        }
+        if (button === null) return;
         const wasOpen = button.getAttribute('aria-expanded') === 'true';
-        closeAll(button);
+        all.forEach(b => setOpen(b, false));
         setOpen(button, !wasOpen);
-    };
-
-    // Escape closes and hands focus back to the button that owned the menu, so a reader does not
-    // lose its place — the same courtesy `initLoginDropdown` pays at main.ts:471-472.
-    const onKeydown = (e: KeyboardEvent) => {
-        if (e.key !== 'Escape') return;
-        const open = all.find(b => b.getAttribute('aria-expanded') === 'true');
-        if (open === undefined) return;
-        setOpen(open, false);
-        open.focus();
     };
 
     const leaveHandlers = all.map(button => {
@@ -70,11 +62,9 @@ export function initTopNavDisclosures(root: ParentNode = document): () => void {
     });
 
     document.addEventListener('click', onClick);
-    document.addEventListener('keydown', onKeydown);
 
     return () => {
         document.removeEventListener('click', onClick);
-        document.removeEventListener('keydown', onKeydown);
         leaveHandlers.forEach(off => off());
     };
 }

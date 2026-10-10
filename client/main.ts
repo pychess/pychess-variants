@@ -69,7 +69,7 @@ import { initVariantAuthors } from './variantAuthors';
 import { initSearchBarDismissal } from './searchBar';
 import { timelinePageView } from './timeline';
 import { initAdminSystemMessages } from './adminSystemMessages';
-import { hydrateHeaderPanel } from './headerPanel';
+import { hydrateHeaderPanel, registerHeaderDropdown } from './headerPanel';
 
 // redirect to correct URL except Heroku preview/dev apps
 if (
@@ -340,9 +340,11 @@ function start() {
     initUblogMarkdown();
     initUblogEditor();
 
-    (document.querySelector('.hamburger') as HTMLElement).addEventListener('click', () => {
+    const hamburger = document.querySelector('.hamburger') as HTMLElement;
+    hamburger.addEventListener('click', () => {
         document.querySelectorAll('.topnav a').forEach(nav => nav.classList.toggle('navbar-show'));
-        (document.querySelector('.hamburger') as HTMLElement).classList.toggle('is-active');
+        const open = hamburger.classList.toggle('is-active');
+        hamburger.setAttribute('aria-expanded', String(open));
     });
 
     renderTimeago();
@@ -406,13 +408,19 @@ function start() {
         notifyPanel = hydrateHeaderPanel(notifyPanel, notifyView());
     }
 
-    document.addEventListener('click', function (event) {
-        if (!settingsPanel.contains(event.target as Node)) hideSettings();
-        if (model['anon'] !== 'True') {
-            if (!challengePanel.contains(event.target as Node)) hideChallenge();
-            if (!notifyPanel.contains(event.target as Node)) hideNotify();
-        }
-    });
+    // Click outside and Escape are the shared header dismissal's.
+    const registerPanel = (root: HTMLElement, buttonId: string, panelId: string, close: () => void) =>
+        registerHeaderDropdown({
+            root,
+            button: document.getElementById(buttonId) as HTMLElement,
+            isOpen: () => document.getElementById(panelId)?.style.display === 'flex',
+            close,
+        });
+    registerPanel(settingsPanel, 'btn-settings', 'settings', hideSettings);
+    if (model['anon'] !== 'True') {
+        registerPanel(challengePanel, 'btn-challenge', 'challenge-app', hideChallenge);
+        registerPanel(notifyPanel, 'btn-notify', 'notify-app', hideNotify);
+    }
 
     maybeShowGameCategoryIntro();
     initCommunityVariantFavorites(model.assetURL);
@@ -448,34 +456,23 @@ function initLoginDropdown() {
                     loginBtn.setAttribute('aria-expanded', (!isOpen).toString());
                 }
             }
-            return;
-        }
-
-        // Close dropdown when clicking outside
-        const loginDropdown = document.querySelector('.login-dropdown.open') as HTMLElement;
-        if (loginDropdown && !loginDropdown.contains(target)) {
-            loginDropdown.classList.remove('open');
-            const loginBtn = loginDropdown.querySelector('.login-btn') as HTMLButtonElement;
-            if (loginBtn) {
-                loginBtn.setAttribute('aria-expanded', 'false');
-            }
         }
     });
 
-    // Handle escape key
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') {
-            const loginDropdown = document.querySelector('.login-dropdown.open') as HTMLElement;
-            if (loginDropdown) {
-                loginDropdown.classList.remove('open');
-                const loginBtn = loginDropdown.querySelector('.login-btn') as HTMLButtonElement;
-                if (loginBtn) {
-                    loginBtn.setAttribute('aria-expanded', 'false');
-                    loginBtn.focus();
-                }
-            }
-        }
-    });
+    // Click outside and Escape are the shared header dismissal's.
+    const dropdown = document.querySelector('.login-dropdown') as HTMLElement | null;
+    const button = dropdown?.querySelector('.login-btn') as HTMLButtonElement | null;
+    if (dropdown && button) {
+        registerHeaderDropdown({
+            root: dropdown,
+            button,
+            isOpen: () => dropdown.classList.contains('open'),
+            close: () => {
+                dropdown.classList.remove('open');
+                button.setAttribute('aria-expanded', 'false');
+            },
+        });
+    }
 
     // Provider-neutral /login redirects here so all callers can use the same chooser.
     if (window.location.hash === '#login') {

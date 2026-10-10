@@ -482,7 +482,7 @@ div.seeks {
   grid-area: app;
   border-radius: 3px;
 }
-span[role=tab], div.seeks-table thead {
+span[role=tab], button.site-tab, div.seeks-table thead {
   font-family: var(--font-sans);
 }
 .seeks [data-icon]:before {
@@ -904,10 +904,13 @@ ul.guide li {
     height: initial;
     transform: translateX(-100%);
   }
+  /* Off-screen alone would leave the closed menu's links in the Tab order and the reader's tree;
+     visibility follows the slide, so they still animate out before they go. */
   .topnav a {
     transform: translateX(-100%);
-    transition: transform 200ms;
+    transition: transform 200ms, visibility 200ms;
     width: 20rem;
+    visibility: hidden;
   }
   .hamburger {
     display: block;
@@ -916,6 +919,7 @@ ul.guide li {
     background-color: var(--bg-color0);
   }
   .topnav a.navbar-show {
+    visibility: visible;
     transform: translateX(calc(0% + 64px));
     color: var(--font-color);
     background-color: var(--bg-color0);
@@ -2104,8 +2108,21 @@ table.seeks {
   border-bottom: 1px solid var(--chat-entry-border-top);
   z-index: 1;
 }
-.seeks tbody tr:hover {
+.seeks tbody tr:hover,
+.seeks tbody tr:has(.seek-action:focus-visible) {
   background-color: rgba(var(--rusty-rgb), 0.5);
+}
+/* The colour icon is the row's keyboard control; as a button it must look exactly as it did. */
+.seeks td button.seek-action {
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  cursor: pointer;
 }
 .catalogued-seek-name {
   display: none;
@@ -2263,8 +2280,10 @@ input {
   border-radius: 7px;
 }
 
-/* The Close Button (x) */
+/* The Close Button (x) — a button now, so without the browser's own border and padding */
 .close {
+  border: none;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2279,7 +2298,7 @@ input {
 }
 
 .close:hover,
-.close:focus {
+.close:focus-visible {
   cursor: pointer;
   color: #fff;
   background: var(--bad);
@@ -2355,7 +2374,7 @@ button[disabled] i {
   background-color: var(--green-hover);
 }
 
-.btn-controls button:focus {
+.btn-controls button:focus:not(:focus-visible) {
   outline: none;
 }
 .btn-controls button::-moz-focus-inner {
@@ -2446,7 +2465,7 @@ button.icon.icon-plus-square {
 button.icon.icon-plus-square:hover {
   opacity: 1;
 }
-button.icon:focus {
+button.icon:focus:not(:focus-visible) {
   outline: none;
 }
 button.icon::-moz-focus-inner {
@@ -3365,11 +3384,13 @@ vari-move {
   height: 15px;
   border-radius: 10px;
   background: var(--toggle-bg);
-  outline: none;
   /*  -webkit-transition: .2s;*/
   /*transition: opacity .2s;*/
   padding: 0.6em 0em;
   cursor: pointer;
+}
+.slider:focus:not(:focus-visible) {
+  outline: none;
 }
 
 .slider::-webkit-slider-thumb {
@@ -3954,6 +3975,9 @@ div[role=tabpanel] textarea {
     background-color: var(--bg-color);
     border: none;
     resize: none;
+}
+/* The ring only when focus came from the keyboard; a text field always counts as such. */
+div[role=tabpanel] textarea:focus:not(:focus-visible) {
     outline: none;
 }
 div[role=tablist] {
@@ -3962,7 +3986,18 @@ div[role=tablist] {
     justify-content: center;
     align-items: flex-start;
 }
-span[role=tab] {
+/* Tabs are buttons, for Tab and Enter/Space with no script; they must look as the spans did. */
+button.site-tab {
+    background: none;
+    border: none;
+    border-radius: 0;
+    margin: 0;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    color: inherit;
+}
+span[role=tab], button.site-tab {
     flex: 1 1 0;
     text-align: center;
     padding: 0.4em 0.1em;
@@ -3970,13 +4005,13 @@ span[role=tab] {
     position: relative;
     transition: color .25s,border-color .25s;
 }
-span[aria-selected=true], div[role=tablist] span:hover::after {
+span[aria-selected=true], button.site-tab[aria-selected=true], div[role=tablist] span:hover::after, div[role=tablist] button.site-tab:hover::after {
     color: var(--rusty);
     border-color: var(--rusty);
     border-bottom: 2px solid var(--rusty);
     transform: scale(1);
 }
-div > span[role=tab]::after {
+div > span[role=tab]::after, div > button.site-tab::after {
     content: '';
     background: var(--rusty);
     height: 2px;

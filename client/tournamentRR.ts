@@ -1370,11 +1370,13 @@ export class TournamentRRController implements ChatController {
                 [
                     h('div.rr-modal-content.rr-arr-modal', [
                         h('div.rr-arr-header', [
-                            h('span.close', {
+                            h('button.close', {
                                 on: { click: () => this.closeArrangement() },
                                 attrs: {
+                                    type: 'button',
                                     'data-icon': 'j',
                                     title: _('Cancel'),
+                                    'aria-label': _('Cancel'),
                                 },
                             }),
                             h('h3', `${_('Game scheduling')} • ${_('Round')} ${cell.round}`),

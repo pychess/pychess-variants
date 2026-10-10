@@ -255,7 +255,7 @@ export function notifyView() {
         const counter = document.querySelector('#btn-notify .data-count') as HTMLElement | null;
         if (counter) counter.setAttribute('data-count', `${unread}`);
         const button = document.getElementById('btn-notify') as HTMLElement | null;
-        if (button) button.setAttribute('aria-label', `Notifications: ${unread}`);
+        if (button) button.setAttribute('aria-label', `${_('Notifications')}: ${unread}`);
         notifyAppEl = patch(notifyAppEl, h('div#notify-app', renderMessages(messages)));
     }
 
@@ -324,7 +324,7 @@ export function notifyView() {
     }
 
     return h('div#notify-panel', [
-        h('button#btn-notify', { on: { click: toggleNotify }, attrs: { 'aria-label': `Notifications: ${unread}`, 'aria-expanded': 'false', 'aria-controls': 'notify-app' } }, [
+        h('button#btn-notify', { on: { click: toggleNotify }, attrs: { 'aria-label': `${_('Notifications')}: ${unread}`, 'aria-expanded': 'false', 'aria-controls': 'notify-app' } }, [
             h('div.icon.icon-bell-o.data-count', { attrs: { 'data-count': 0 } }),
         ]),
         h('div#notify-app'),

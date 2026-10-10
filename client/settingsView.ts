@@ -32,7 +32,7 @@ export function settingsView(modelVariant: string) {
 }
 
 function settingsButton() {
-    return h('button#btn-settings', { on: { click: toggleSettings }, attrs: { 'aria-label': 'Settings', 'aria-expanded': 'false', 'aria-controls': 'settings' } }, [
+    return h('button#btn-settings', { on: { click: toggleSettings }, attrs: { 'aria-label': _('Settings'), 'aria-expanded': 'false', 'aria-controls': 'settings' } }, [
         h('div.icon.icon-cog'),
     ]);
 }

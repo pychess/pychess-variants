@@ -318,9 +318,19 @@ export function createMovelistButtons(ctrl: GameController) {
 
     if ('localEngine' in ctrl) {
         buttons.push(
-            h('button#bars', { on: { click: () => ctrl.toggleSettings() }, props: { title: _('Menu') } }, [
-                h('i.icon.icon-bars', hidden()),
-            ]),
+            h(
+                'button#bars',
+                {
+                    on: { click: () => ctrl.toggleSettings() },
+                    props: { title: _('Menu') },
+                    attrs: {
+                        'aria-expanded': String(
+                            document.querySelector<HTMLElement>('div.analysis-settings')?.style.display === 'flex',
+                        ),
+                    },
+                },
+                [h('i.icon.icon-bars', hidden())],
+            ),
         );
     } else {
         if (ctrl.corr && ctrl.variant.name !== 'fogofwar') {

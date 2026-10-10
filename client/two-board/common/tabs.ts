@@ -113,7 +113,6 @@ export class TabbedPanels {
                     {
                         attrs: {
                             id: panelId(t, p),
-                            tabindex: String(t),
                             ...this.roleAttrs(t),
                         },
                         // A detached part is always shown. Among the attached, the first is the
@@ -132,7 +131,7 @@ export class TabbedPanels {
 
         this.tabVnodes = panels.map((panel, t) =>
             h(
-                'span',
+                'button.site-tab',
                 {
                     attrs: {
                         role: 'tab',
@@ -140,7 +139,7 @@ export class TabbedPanels {
                         // an id-reference LIST: a tab controls every one of its parts
                         'aria-controls': panel.parts.map((_part, p) => panelId(t, p)).join(' '),
                         id: tabId(t),
-                        tabindex: String(t),
+                        type: 'button',
                     },
                     // A DETACHED TAB IS HIDDEN, NOT OMITTED. Rendering the strip as a shorter list
                     // would renumber every tab after it, and an id is generated from a tab's index

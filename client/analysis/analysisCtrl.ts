@@ -340,7 +340,7 @@ export class AnalysisController extends GameController {
         if (analysisTabs) setAriaTabClick('analysis_tab', analysisTabs);
 
         if (this.analysisContext.capabilities.analysisTabs && analysisTabs) {
-            const initialEl = analysisTabs.querySelector<HTMLElement>('[tabindex="0"]');
+            const initialEl = analysisTabs.querySelector<HTMLElement>('[data-initial="true"]');
             if (initialEl) {
                 initialEl.setAttribute('aria-selected', 'true');
                 const controls = initialEl.getAttribute('aria-controls');
@@ -672,10 +672,12 @@ export class AnalysisController extends GameController {
             toolsEl.style.display = 'flex';
             settingsEl.style.display = 'none';
             menuEl.classList.toggle('active', false);
+            menuEl.setAttribute('aria-expanded', 'false');
         } else {
             toolsEl.style.display = 'none';
             settingsEl.style.display = 'flex';
             menuEl.classList.toggle('active', true);
+            menuEl.setAttribute('aria-expanded', 'true');
         }
     }
 

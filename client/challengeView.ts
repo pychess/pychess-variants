@@ -124,7 +124,7 @@ export function challengeView() {
         if (counter) counter.setAttribute('data-count', `${count}`);
         const button = document.getElementById('btn-challenge') as HTMLElement | null;
         if (button) {
-            const label = `Challenges: ${count}`;
+            const label = `${_('Challenges')}: ${count}`;
             button.setAttribute('aria-label', label);
             button.setAttribute('title', label);
         }
@@ -297,8 +297,8 @@ export function challengeView() {
         h(
             'button#btn-challenge',
             { on: { click: toggleChallenge }, attrs: {
-                    'aria-label': 'Challenges: 0',
-                    title: 'Challenges: 0',
+                    'aria-label': `${_('Challenges')}: 0`,
+                    title: `${_('Challenges')}: 0`,
                     'aria-expanded': 'false',
                     'aria-controls': 'challenge-app',
                 } },

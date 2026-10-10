@@ -7,6 +7,7 @@ import { VARIANTS } from '../variants';
 import { gaugeSideColors } from '../variantColor';
 import { analysisSettings } from './analysisSettings';
 import { BoardSummaryView } from '../accessibility/boardSummary';
+import { pageHeading, srHeading } from '../view';
 
 export type AnalysisPageParts = {
     side: VNode | VNode[];
@@ -42,6 +43,7 @@ export function renderAnalysisPage(model: PyChessModel, parts: AnalysisPageParts
            belonged to no region at all. The round pages have had `main` all along
            (`main.ts:212`). */
         h('main.analysis-app', [
+            pageHeading(),
             h('aside.sidebar-first', parts.side),
             h(`selection#mainboard.${variant.boardFamily}.${variant.pieceFamily}.${variant.ui.boardMark}`, [
                 parts.boardTop ?? h('div#anal-clock-top'),
@@ -93,6 +95,7 @@ export function analysisTools(isOngoingGame: boolean = false, afterMoves?: VNode
                   ]),
               ]),
         isOngoingGame ? '' : h('div.pvbox', [h('div#pv1'), h('div#pv2'), h('div#pv3'), h('div#pv4'), h('div#pv5')]),
+        srHeading('h2', _('Moves')),
         h('div.movelist-block', [h('div#movelist')]),
         h('div#movelist-footer'),
         ...afterMovesNodes,

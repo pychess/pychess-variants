@@ -5,7 +5,7 @@ import { AnalysisController } from './analysisCtrl';
 import { gameInfo } from '../gameInfo';
 import { selectVariant, VARIANTS, validVariant } from '../variants';
 import { renderTimeago } from '../datetime';
-import { spinner } from '../view';
+import { spinner, srHeading } from '../view';
 import { PyChessModel } from '../types';
 import { analysisContext, type AnalysisContext } from './analysisContext';
 import { renderAnalysisPage } from './analysisPage';
@@ -25,7 +25,7 @@ function runGround(vnode: VNode, model: PyChessModel, onReady?: (ctrl: AnalysisC
 
 function analysisSide(model: PyChessModel, context: AnalysisContext) {
     if (!context.analysisBoard) {
-        return [gameInfo(model), h('div#roundchat')];
+        return [gameInfo(model), srHeading('h2', _('Chat')), h('div#roundchat')];
     }
 
     const setVariant = (isInput: boolean) => {
@@ -125,14 +125,14 @@ export function analysisUnderboard(
     if (!isOngoingGame) {
         tabs.push(
             h(
-                'span',
+                'button.site-tab',
                 {
                     attrs: {
                         role: 'tab',
                         'aria-selected': false,
                         'aria-controls': 'panel-1',
                         id: 'tab-1',
-                        tabindex: '-1',
+                        type: 'button',
                     },
                 },
                 _('Computer analysis'),
@@ -141,14 +141,14 @@ export function analysisUnderboard(
         if (model.rated === '1') {
             tabs.push(
                 h(
-                    'span',
+                    'button.site-tab',
                     {
                         attrs: {
                             role: 'tab',
-                            'aria-selected': true,
+                            'aria-selected': false,
                             'aria-controls': 'panel-2',
                             id: 'tab-2',
-                            tabindex: '-1',
+                            type: 'button',
                         },
                     },
                     _('Move times'),
@@ -158,14 +158,15 @@ export function analysisUnderboard(
         if (model.ct) {
             tabs.push(
                 h(
-                    'span',
+                    'button.site-tab',
                     {
                         attrs: {
                             role: 'tab',
                             'aria-selected': false,
                             'aria-controls': 'panel-3',
                             id: 'tab-3',
-                            tabindex: tabindexCt,
+                            type: 'button',
+                            'data-initial': String(tabindexCt === '0'),
                         },
                     },
                     _('Crosstable'),
@@ -176,14 +177,15 @@ export function analysisUnderboard(
         }
         tabs.push(
             h(
-                'span',
+                'button.site-tab',
                 {
                     attrs: {
                         role: 'tab',
                         'aria-selected': false,
                         'aria-controls': 'panel-4',
                         id: 'tab-4',
-                        tabindex: tabindexPgn,
+                        type: 'button',
+                        'data-initial': String(tabindexPgn === '0'),
                     },
                 },
                 _('FEN & PGN'),
@@ -192,7 +194,7 @@ export function analysisUnderboard(
     }
 
     return [
-        h('div.analysis-tabs', { attrs: { role: 'tablist', 'aria-label': 'Analysis Tabs' } }, tabs),
+        h('div.analysis-tabs', { attrs: { role: 'tablist', 'aria-label': _('Analysis') } }, tabs),
         h(
             'div.chart-container',
             { attrs: { id: 'panel-1', role: 'tabpanel', tabindex: '-1', 'aria-labelledby': 'tab-1' } },

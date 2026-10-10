@@ -12,6 +12,7 @@ import { trackSquareUnit } from '../squareUnit';
 import { boardZoom } from '@/boardSettings';
 import { TabbedPanels } from '../common/tabs';
 import { BoardSummaryView } from '../../accessibility/boardSummary';
+import { pageHeading, srHeading } from '../../view';
 import { registerStandingTab } from '../common/toolsPlacement';
 
 // The partner board's position in the tab list below — FIRST. Named because two places need it and
@@ -233,6 +234,7 @@ export function roundView(model: PyChessModel): VNode[] {
     spectatorsView.countIn(roundTabs, INFO_TAB, _('Info'));
 
     return [
+        pageHeading(),
         h(
             'div.round-app.bug',
             {
@@ -357,7 +359,11 @@ export function roundView(model: PyChessModel): VNode[] {
                     // parts rather than one of them, and it takes the place the
                     // presets vacate at the same moment.
                     h('div.bug-gameover'),
-                    h('div.bug-round-tools-bar', [roundTabs.tabList(), h('div#game-controls')]),
+                    h('div.bug-round-tools-bar', [
+                        roundTabs.tabList(),
+                        srHeading('h2', _('Actions')),
+                        h('div#game-controls'),
+                    ]),
                 ]),
                 // h('div.material.material-bottom.' + variant.pieceFamily + '.disabled'),
             ],

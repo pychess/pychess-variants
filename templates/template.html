@@ -3,12 +3,12 @@
     <header>
         <a id="zen-button"></a>
         <div class="site-title-nav">
-            <div class="hamburger hamburger--vortex">
-                <div class="hamburger-box">
-                    <div class="hamburger-inner"></div>
-                </div>
-            </div>
-            <nav class="topnav">
+            <button type="button" class="hamburger hamburger--vortex" aria-label="{% trans %}Menu{% endtrans %}" aria-expanded="false" aria-controls="site-nav">
+                <span class="hamburger-box">
+                    <span class="hamburger-inner"></span>
+                </span>
+            </button>
+            <nav class="topnav" id="site-nav">
                 <a class="nav-link active home" href="/">PyChess{% if dev %}<span>DEV</span>{% endif %}</a>
                 <section>
                     <button type="button" class="nav-link nav-section" aria-expanded="false" aria-controls="nav-play">{% trans %}Play{% endtrans %}</button>
@@ -74,7 +74,7 @@
             <form autocomplete="off" class="search-bar">
                 <div class="search-icon"></div>
                 <div class="input">
-                    <input id="search-input" type="text" placeholder="Search" aria-label="Search users">
+                    <input id="search-input" type="text" placeholder="{% trans %}Search{% endtrans %}" aria-label="{% trans %}Search{% endtrans %}">
                 </div>
                 <div id="ac-result"></div>
             </form>
@@ -133,19 +133,19 @@
             </div>
             {% endif %}
             {% if admin and not anon %}
-            <a id="btn-mod" class="mod-link" href="/admin" aria-label="Administration" title="Administration">
+            <a id="btn-mod" class="mod-link" href="/admin" aria-label="{% trans %}Administration{% endtrans %}" title="{% trans %}Administration{% endtrans %}">
                 <div class="icon icon-warning data-count" data-count="{{ mod_report_score }}"></div>
             </a>
             {% endif %}
             {% if not anon %}
             <div id="challenge-panel">
-                <button id="btn-challenge" aria-label="Challenges: 0" title="Challenges: 0" aria-expanded="false" aria-controls="challenge-app">
+                <button id="btn-challenge" aria-label="{% trans %}Challenges{% endtrans %}: 0" title="{% trans %}Challenges{% endtrans %}: 0" aria-expanded="false" aria-controls="challenge-app">
                     <div class="icon icon-crossedswords data-count" data-count="0"></div>
                 </button>
                 <div id="challenge-app"></div>
             </div>
             <div id="notify-panel">
-                <button id="btn-notify" aria-label="Notifications: 0" aria-expanded="false" aria-controls="notify-app">
+                <button id="btn-notify" aria-label="{% trans %}Notifications{% endtrans %}: 0" aria-expanded="false" aria-controls="notify-app">
                     <div class="icon icon-bell-o data-count" data-count="0"></div>
                 </button>
                 <div id="notify-app"></div>
@@ -155,7 +155,7 @@
             <div id="notify-panel"></div>
             {% endif %}
             <div id="settings-panel">
-                <button id="btn-settings" aria-label="Settings" aria-expanded="false" aria-controls="settings">
+                <button id="btn-settings" aria-label="{% trans %}Settings{% endtrans %}" aria-expanded="false" aria-controls="settings">
                     <div class="icon icon-cog"></div>
                 </button>
                 <div id="settings"></div>
