@@ -89,6 +89,12 @@ class FsfBuiltinMetadataTestCase(TestCase):
         self.assertEqual(_fsf_builtin_synced_fields(doc)["pieceFamilyOverride"], "amazons")
         self.assertNotIn("amazons", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
 
+    def test_opulent_is_seeded_with_its_complete_piece_family(self) -> None:
+        doc = _build_fsf_builtin_doc("opulent", FSF_CATALOGUED_BUILTIN_VARIANTS["opulent"])
+        self.assertEqual(doc["pieceFamilyOverride"], "opulent")
+        self.assertEqual(_fsf_builtin_synced_fields(doc)["pieceFamilyOverride"], "opulent")
+        self.assertEqual(set(doc["pieces"]), {"p", "r", "n", "b", "q", "k", "a", "c", "w", "l"})
+
     def test_joust_is_seeded_with_past_walling_input(self) -> None:
         metadata = FSF_CATALOGUED_BUILTIN_VARIANTS["joust"]
         self.assertTrue(metadata["rulesArrowing"])

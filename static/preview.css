@@ -482,6 +482,12 @@ label.piece.piece0.courier {
 label.piece.piece1.courier {
     background-image: url('images/pieces/disguised/w.svg');
 }
+label.piece.piece0.opulent {
+    background-image: url('images/pieces/alfaerie/wknightwazir.svg');
+}
+label.piece.piece1.opulent {
+    background-image: url('images/pieces/disguised/w.svg');
+}
 label.piece.piece0.shako {
     background-image: url('images/pieces/merida/shako/wC.svg');
 }

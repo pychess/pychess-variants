@@ -28,6 +28,7 @@ const variantNames = [
     'testmakrukwall',
     'testdecimalshogiimagelayer',
     'testamazonspieces',
+    'testopulentpieces',
 ];
 
 function register(meta: CataloguedVariantClientDocument) {
@@ -169,6 +170,32 @@ customPiece2 = m:DK`,
 
     expect(variant.pieceFamily).toBe('courier');
     expect(boardSettings.pieceCSS(variant.pieceFamily, variant)).toBe('courier');
+});
+
+test('catalogued Opulent defaults to its complete Alfaerie piece set and keeps letter pieces available', () => {
+    const variant = register({
+        name: 'testopulentpieces',
+        displayName: 'Opulent Chess',
+        source: 'fairy-stockfish-builtin',
+        fsfBuiltinVariant: 'opulent',
+        ini: '',
+        baseVariant: 'grand',
+        startFen: 'rw6wr/clbnqknbla/pppppppppp/10/10/10/10/PPPPPPPPPP/CLBNQKNBLA/RW6WR w - - 0 1',
+        width: 10,
+        height: 10,
+        pieces: ['p', 'r', 'n', 'b', 'q', 'k', 'a', 'c', 'w', 'l'],
+        kingRoles: ['k'],
+        promotionRoles: ['p'],
+        promotionOrder: ['q', 'r', 'b', 'a', 'c', 'n', 'w', 'l'],
+        pieceFamilyOverride: 'opulent',
+    });
+
+    expect(variant.pieceFamily).toBe('opulent');
+    expect(PIECE_FAMILIES.opulent.pieceCSS).toEqual(['opulent', 'disguised']);
+    expect(boardSettings.pieceCSS(variant.pieceFamily, variant)).toBe('opulent');
+
+    boardSettings.getSettings('PieceStyle', variant.pieceFamily, '', variant).value = 1;
+    expect(boardSettings.pieceCSS(variant.pieceFamily, variant)).toBe('disguised');
 });
 
 test('catalogued Amazons offers classic, arrow, and disguised piece styles with correct wall handling', () => {
