@@ -1374,10 +1374,12 @@ async def play_move(
         await round_broadcast(game, board_response, channels=app_state.game_channels)
 
         if game.tournamentId is not None:
-            tournament = app_state.tournaments[game.tournamentId]
+            # Arena games can continue after the finished tournament is evicted.
+            tournament = app_state.tournaments.get(game.tournamentId)
             if (
-                (tournament.top_game is not None)
+                tournament is not None
                 and tournament.status == T_STARTED
+                and tournament.top_game is not None
                 and tournament.top_game.id == gameId
             ):
                 await tournament.broadcast(board_response)

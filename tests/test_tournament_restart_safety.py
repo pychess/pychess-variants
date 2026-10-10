@@ -2,11 +2,12 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, patch
 
 from clock import CorrClock
-from const import CASUAL, FLAG, STARTED
+from const import CASUAL, FLAG, STARTED, T_FINISHED
 from game import Game
 from glicko2.glicko2 import new_default_perf_map
 from newid import id8
 from pychess_global_app_state_utils import get_app_state
+from tournament.arena import ArenaTournament
 from tournament.auto_play_tournament import ArenaTestTournament
 from tournament.tournament import upsert_tournament_to_db
 from tournament_test_base import TournamentTestCase
@@ -53,6 +54,87 @@ class TournamentRestartSafetyTestCase(TournamentTestCase):
         )
         await insert_game_to_db(game, app_state)
         return game
+
+    async def test_move_without_cached_tournament_still_broadcasts_to_tv(self):
+        app_state = get_app_state(self.app)
+        game = await self.new_tournament_game()
+        app_state.games[game.id] = game
+        app_state.tv = game.id
+
+        with (
+            patch.object(game.wplayer, "send_game_message", new_callable=AsyncMock) as white_send,
+            patch.object(game.bplayer, "send_game_message", new_callable=AsyncMock) as black_send,
+            patch("utils.round_broadcast", new_callable=AsyncMock) as round_send,
+            patch.object(app_state.lobby, "lobby_broadcast", new_callable=AsyncMock) as tv_send,
+        ):
+            await server_play_move(
+                app_state, game.wplayer, game, "e2e4", clocks=[59_000, 60_000], ply=1
+            )
+
+        self.assertEqual(game.ply, 1)
+        self.assertEqual(game.status, STARTED)
+        white_send.assert_awaited_once()
+        black_send.assert_awaited_once()
+        round_send.assert_awaited_once()
+        tv_send.assert_any_await(round_send.await_args.args[1])
+        doc = await app_state.db.game.find_one({"_id": game.id})
+        assert doc is not None
+        self.assertEqual(len(doc["m"]), 1)
+
+    async def test_game_end_without_cached_tournament_saves_result_without_errors(self):
+        app_state = get_app_state(self.app)
+        game = await self.new_tournament_game()
+        app_state.games[game.id] = game
+
+        with self.assertNoLogs("game", level="ERROR"):
+            await game.game_ended(game.wplayer, "resign")
+
+        doc = await app_state.db.game.find_one({"_id": game.id})
+        assert doc is not None
+        self.assertEqual(game.result, "0-1")
+        self.assertEqual(doc["s"], game.status)
+        self.assertEqual(doc["fx"], 2)
+
+    async def test_late_arena_result_does_not_change_finished_standings(self):
+        app_state = get_app_state(self.app)
+        tid = id8()
+        self.tournament = ArenaTournament(
+            app_state,
+            tid,
+            variant="chess",
+            rated=False,
+            before_start=0,
+            minutes=10,
+            with_clock=False,
+        )
+        app_state.tournaments[tid] = self.tournament
+        await upsert_tournament_to_db(self.tournament, app_state)
+        white = self.add_user(f"late-white-{id8()}")
+        black = self.add_user(f"late-black-{id8()}")
+        await self.tournament.join(white)
+        await self.tournament.join(black)
+        await self.tournament.start(datetime.now(UTC))
+        _, games = await self.tournament.create_new_pairings([white, black])
+        game = games[0]
+        await self.tournament.finish()
+        self.assertEqual(self.tournament.status, T_FINISHED)
+        standings = list(self.tournament.leaderboard.items())
+        tournament_doc = await app_state.db.tournament.find_one({"_id": tid})
+        player_docs = await app_state.db.tournament_player.find({"tid": tid}).to_list(None)
+
+        with self.assertNoLogs("game", level="ERROR"):
+            await server_play_move(
+                app_state, game.wplayer, game, "e2e4", clocks=[59_000, 60_000], ply=1
+            )
+            await game.game_ended(game.bplayer, "resign")
+
+        self.assertEqual(list(self.tournament.leaderboard.items()), standings)
+        self.assertEqual(await app_state.db.tournament.find_one({"_id": tid}), tournament_doc)
+        self.assertEqual(
+            await app_state.db.tournament_player.find({"tid": tid}).to_list(None), player_docs
+        )
+        self.assertEqual(self.tournament.nb_games_finished, 0)
+        self.assertTrue(all(not player.points for player in self.tournament.players.values()))
 
     async def test_non_tournament_casual_games_keep_takeback_clock_policy(self):
         app_state = get_app_state(self.app)

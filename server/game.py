@@ -1111,7 +1111,10 @@ class Game:
                 try:
                     # In case of server restart we have to wait for loading ongoing tournaments
                     await self.app_state.tournaments_loaded.wait()
-                    await self.app_state.tournaments[self.tournamentId].game_update(self)
+                    # Games may finish after their arena has ended and left the cache.
+                    tournament = self.app_state.tournaments.get(self.tournamentId)
+                    if tournament is not None:
+                        await tournament.game_update(self)
                 except Exception:
                     log.exception("Exception in tournament game_update()")
 
