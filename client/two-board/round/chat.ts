@@ -1,4 +1,5 @@
 import { h } from 'snabbdom';
+import { presetLabel } from './chatPresets';
 
 import { patch } from '@/document';
 import { RoundControllerBughouse } from '@/two-board/round/roundCtrl';
@@ -59,7 +60,8 @@ export function chatMessageBug(ply: number, ctrl: RoundControllerBughouse, x: St
                     h(
                         'div.bugchat.' + m,
                         {
-                            attrs: { title: lastMoveSan },
+                            // The icon is drawn by CSS, so it needs a name to be read at all.
+                            attrs: { title: lastMoveSan, role: 'img', 'aria-label': presetLabel(ctrl.variant, m) ?? m },
                             on: {
                                 click: () => {
                                     onchatclick(ply, ctrl);

@@ -6,6 +6,7 @@ import { aliceBoardFen } from '../client/aliceBoard';
 
 jest.unstable_mockModule('../client/chat', () => ({
     chatMessage: jest.fn(),
+    replayingChat: jest.fn(),
 }));
 
 const { GameController } = await import('../client/gameCtrl');

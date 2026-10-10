@@ -81,6 +81,9 @@ function ctrlStub(
     ctrl.base = 5;
     ctrl.inc = 3;
     ctrl.level = 1;
+    // Each clock also reports to its board's screen-reader summary, which these tests do not inspect.
+    const board = () => ({ boardSummary: { setClock: () => {} } });
+    Object.assign(ctrl, { boardA: board(), boardB: board() });
     ctrl.createSeatWidgets();
     ctrl.wireClockDifferences();
     return ctrl;

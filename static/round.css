@@ -181,6 +181,14 @@ div.dcontrols {
     border: none;
     padding: 1px;
 }
+div.dcontrols button {
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+    font-family: inherit;
+    line-height: inherit;
+}
 div.dcontrols .text {
     align-self: center;
     text-align: center;

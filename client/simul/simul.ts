@@ -6,7 +6,7 @@ import { getLastMoveFen, getVariantByKey, isCataloguedVariant, splitVariantKey, 
 import { PyChessModel } from '../types';
 import { patch } from '../document';
 import { boardSettings } from '../boardSettings';
-import { chatMessage, chatView, ChatController } from '../chat';
+import { chatMessage, chatView, ChatController, replayingChat } from '../chat';
 import { newWebsocket } from '@/socket/webSocketUtils';
 import { displayUsername, userLink } from '../user';
 import { sizeMiniBoardHost } from '../miniBoard';
@@ -400,9 +400,10 @@ export class SimulController implements ChatController {
     onMsgFullChat(msg: MsgFullChat) {
         const messages = document.getElementById('messages');
         if (messages) {
+            replayingChat('lobbychat');
             patch(messages, h('div#messages-clear'));
             const cleared = document.getElementById('messages-clear');
-            if (cleared) patch(cleared, h('div#messages'));
+            if (cleared) patch(cleared, h('div#messages', { attrs: { role: 'none' } }));
         }
         msg.lines.forEach(line => this.onMsgChat(line));
     }

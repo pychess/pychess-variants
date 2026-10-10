@@ -2,12 +2,28 @@ import { h, VNode } from 'snabbdom';
 import * as cg from 'chessgroundx/types';
 import * as util from 'chessgroundx/util';
 
-import { _ } from '@/i18n';
+import { _, ngettext } from '@/i18n';
 import { patch } from '@/document';
 import { ranksUCI } from '@/chess';
 import { Variant } from '@/variants';
 import { BoardName } from '@/types';
 import { pieceName } from '@/pieceNames';
+
+/** A clock reading in words, at the precision the clock shows: "29 minutes 36 seconds". */
+export function spokenTime(millis: number): string {
+    const total = Math.max(0, Math.floor(millis / 1000));
+    const days = Math.floor(total / 86400);
+    const hours = Math.floor((total % 86400) / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    const seconds = total % 60;
+    const parts: string[] = [];
+    if (days > 0) parts.push(ngettext('%1 day', '%1 days', days));
+    if (hours > 0) parts.push(ngettext('%1 hour', '%1 hours', hours));
+    if (days === 0 && minutes > 0) parts.push(ngettext('%1 minute', '%1 minutes', minutes));
+    if (days === 0 && hours === 0 && (seconds > 0 || parts.length === 0))
+        parts.push(ngettext('%1 second', '%1 seconds', seconds));
+    return parts.join(' ');
+}
 
 // How urgently a page's live regions speak: a round interrupts, analysis waits for a pause.
 export type Politeness = 'assertive' | 'polite';
@@ -44,6 +60,7 @@ export class BoardSummaryView {
     private boardState: cg.BoardState | undefined;
     private lastMove: string | undefined;
     private status: string | undefined;
+    private clocks: Partial<Record<cg.Color, string>> = {};
 
     constructor(
         private readonly variant: Variant,
@@ -58,6 +75,14 @@ export class BoardSummaryView {
     setPosition(boardState: cg.BoardState, lastMove: string | undefined): void {
         this.boardState = boardState;
         this.lastMove = lastMove;
+        this.redraw();
+    }
+
+    // Called on every clock repaint, so it redraws only when the spoken time changes.
+    setClock(color: cg.Color, millis: number): void {
+        const text = spokenTime(millis);
+        if (this.clocks[color] === text) return;
+        this.clocks[color] = text;
         this.redraw();
     }
 
@@ -140,6 +165,15 @@ export class BoardSummaryView {
             ...(this.variant.pocket ? byColor(_('Pockets'), color => this.pocketByColor(color)) : []),
             h(section, _('Last move')),
             h('p', { attrs: region }, this.lastMove ?? _('Initial position')),
+            // role="timer" is never announced as it changes; the time is read when the reader gets there.
+            ...(Object.keys(this.clocks).length === 0
+                ? []
+                : [
+                      h(section, _('Time')),
+                      ...COLORS.filter(color => this.clocks[color] !== undefined).map(color =>
+                          h('p', { attrs: { role: 'timer' } }, `${this.colorName(color)}: ${this.clocks[color]}`),
+                      ),
+                  ]),
             ...(this.status === undefined
                 ? []
                 : [h(section, _('Status')), h('p', { attrs: { role: 'status', ...region } }, this.status)]),

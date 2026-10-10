@@ -116,7 +116,11 @@ export function chatView(ctrl: ChatController, chatType: string, opts: ChatViewO
                   }),
               ])
             : null,
-        h(`ol#${chatType}-messages`, [h('div#messages')]),
+        // A list a reader can step through, whose new messages are read out when the reader is
+        // free, as lichess does. The inner div only collects the items, so it is no list level.
+        h(`ol#${chatType}-messages`, { attrs: { 'aria-live': 'polite', 'aria-relevant': 'additions' } }, [
+            h('div#messages', { attrs: { role: 'none' } }),
+        ]),
         h('input#chat-entry', {
             props: {
                 type: 'text',
@@ -128,7 +132,7 @@ export function chatView(ctrl: ChatController, chatType: string, opts: ChatViewO
             attrs: {
                 maxlength: 140,
                 // autofocus: "true",
-                'aria-label': 'Chat input',
+                'aria-label': _('Chat'),
             },
             on: { keypress: onKeyPress },
         }),
@@ -148,6 +152,14 @@ export function chatView(ctrl: ChatController, chatType: string, opts: ChatViewO
 //     chatMessage('', '…', 'bugroundchat', undefined, idx, this)
 // where the `undefined` only existed to step over a `time` they had no value for on
 // the way to arguments that were never read.
+/** Chat history resent on load or reconnect is not news: the list stays silent while it refills. */
+export function replayingChat(chatType: string): void {
+    const list = document.getElementById(chatType + '-messages');
+    if (!list) return;
+    list.setAttribute('aria-live', 'off');
+    setTimeout(() => list.setAttribute('aria-live', 'polite'), 1000);
+}
+
 export function chatMessage(user: string, message: string, chatType: string, time?: number) {
     if (shouldSkipMessage(message)) return;
 
