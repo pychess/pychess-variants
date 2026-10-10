@@ -5,9 +5,7 @@ description = "Chess variants server"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    # 3.14.2/3.14.3 reject a compressed data frame after the first
-    # WebSocket control frame due to a regression in aio-libs/aiohttp#12988.
-    "aiohttp==3.14.1",
+    "aiohttp==3.14.4",
     "aiohttp-cors==0.8.1",
     "aiohttp-jinja2==1.6",
     "aiohttp-session==2.12.1",
