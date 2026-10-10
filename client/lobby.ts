@@ -2210,7 +2210,7 @@ export function lobbyView(model: PyChessModel): VNode[] {
         h('div#variants-catalog'),
         // The buttons that start a game, plus the online counters. "New game" is what the region is
         // FOR; the counters are incidental to it.
-        h('aside.sidebar-second', { attrs: { 'aria-label': _('New game') } }, [
+        h('aside.sidebar-second', { attrs: { 'aria-label': _('Create a game') } }, [
             h('div.seekbuttons'),
             h('div.lobby-count', [
                 h('a', { attrs: { href: '/players' } }, [h('counter#u_cnt')]),

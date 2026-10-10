@@ -5,7 +5,7 @@
 {# NAMED, because this page has TWO asides and `<aside>` carries `complementary` implicitly:
    unnamed, a landmark list read "complementary, complementary". The table below is headed
    "Online" and dominates the region; the tournament links above it are secondary. #}
-<aside class="flat-bg" aria-label="{% trans %}Players online{% endtrans %}">
+<aside class="flat-bg" aria-label="{% trans %}Online{% endtrans %}">
     {% if admin %}
     <a class="allplayers-button" href="{{ home }}/allplayers">{% trans %}All players{% endtrans %}</a><br>
     {% endif %}
@@ -42,7 +42,7 @@
     </table>
 </aside>
 {# The per-variant top-score cards. #}
-<aside class="flat-bg" aria-label="{% trans %}Leaderboards{% endtrans %}">
+<aside class="flat-bg" aria-label="{% trans %}Leaderboard{% endtrans %}">
     <div class="highscore">
         {% for key in highscore %}
         <div class="card">
