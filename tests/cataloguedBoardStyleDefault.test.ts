@@ -22,6 +22,7 @@ const variantNames = [
     'testshogiboardpreview',
     'testyarishogiboardoverride',
     'testclientvariantboarddefault',
+    'judkins',
 ];
 const originalIntersectionObserver = window.IntersectionObserver;
 
@@ -80,6 +81,39 @@ test('clientVariant can provide board defaults without changing engine inheritan
 
     expect(cataloguedCompatibleBoardFamily(meta)).toBe('shogi9x9');
     expect(variant.boardFamily).toBe('shogi9x9');
+});
+
+test('Judkins uses a 6x6 shogi board and all standard shogi piece styles', () => {
+    const variant = register({
+        name: 'judkins',
+        displayName: 'Judkins Shogi',
+        source: 'fairy-stockfish-builtin',
+        fsfBuiltinVariant: 'judkins',
+        ini: '',
+        baseVariant: '',
+        clientVariant: 'shogi',
+        boardFamilyOverride: 'shogi6x6',
+        startFen: 'rbnsgk/5p/6/6/P5/KGSNBR[-] w 0 1',
+        width: 6,
+        height: 6,
+        pieces: ['k', 'g', 'r', 'b', 's', 'n', 'p'],
+        kingRoles: ['k'],
+        pocketRoles: ['p', 'n', 's', 'g', 'b', 'r'],
+        captureToHand: true,
+        promotionType: 'shogi',
+        promotionRoles: ['p', 'n', 's', 'b', 'r'],
+        promotionOrder: ['+', ''],
+    });
+
+    expect(variant.boardFamily).toBe('shogi6x6');
+    expect(variant.board.dimensions).toEqual({ width: 6, height: 6 });
+    expect(boardSettings.boardCSS(variant.boardFamily, variant)).toBe('judkins.svg');
+    expect(variant.pieceFamily).toBe('shogi');
+    expect(variant.pieceCSSExclude).toEqual([]);
+    expect(variant.promotion.order).toEqual(['+', '']);
+    expect(variant.promotion.roles).toContain('n-piece');
+    expect(variant.pocket?.roles.white).toContain('n-piece');
+    expect(variant.rules.defaultTimeControl).toBe('byoyomi');
 });
 
 test('an explicit board family override takes precedence over base-variant detection', () => {

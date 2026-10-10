@@ -185,6 +185,7 @@ CATALOGUED_BOARD_FAMILY_DIMENSIONS: dict[str, tuple[int, int]] = {
     "shogi9x9": (9, 9),
     "shogi7x7": (7, 7),
     "shogi7x9": (7, 9),
+    "shogi6x6": (6, 6),
     "shogi5x5": (5, 5),
     "shogi5x6": (5, 6),
     "shogi3x4": (3, 4),
@@ -453,6 +454,21 @@ FSF_CATALOGUED_BUILTIN_VARIANTS: Mapping[str, Mapping[str, Any]] = {
         "baseVariant": "",
         "clientVariant": "chess",
         "rulesArrowing": True,
+    },
+    "judkins": {
+        "displayName": "Judkins Shogi",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Judkins_shogi"),
+        "baseVariant": "",
+        "clientVariant": "shogi",
+        "boardFamilyOverride": "shogi6x6",
+        "captureToHand": True,
+        "promotionType": "shogi",
+        "promotionRoles": ("p", "n", "s", "b", "r"),
+        "promotionOrder": ("+", ""),
+        "showPromoted": True,
+        "legalMovesNeedHistory": True,
+        "nFoldIsDraw": True,
     },
     "kinglet": {
         "displayName": "Kinglet",
@@ -960,14 +976,6 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
         "baseVariant": "",
         "clientVariant": "chess",
         "reviewNotes": "Asymmetric goal variant; review result handling and piece identities.",
-    },
-    "judkins": {
-        "displayName": "Judkins Shogi",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Judkins_shogi"),
-        "baseVariant": "",
-        "clientVariant": "shogi",
-        "reviewNotes": "Shogi-family drops/promotions; review piece assets and byo UI.",
     },
     "karouk": {
         "displayName": "Kar Ouk",
@@ -4456,7 +4464,8 @@ def _fsf_metadata_string_list(metadata: Mapping[str, Any], key: str) -> list[str
     result: list[str] = []
     for item in items:
         item = item.strip().lower()
-        if not item or item in seen:
+        # An empty promotion suffix is the explicit "do not promote" choice.
+        if (not item and key != "promotionOrder") or item in seen:
             continue
         seen.add(item)
         result.append(item)
@@ -4612,6 +4621,7 @@ def _build_fsf_builtin_doc(
         client_variant=str(metadata.get("clientVariant") or ""),
         premove_variant=str(metadata.get("premoveVariant") or ""),
         piece_family_override=str(metadata.get("pieceFamilyOverride") or ""),
+        board_family_override=str(metadata.get("boardFamilyOverride") or ""),
     )
     doc["references"] = references
     doc["rulesIni"] = str(metadata.get("rulesIni") or "").strip()
@@ -4637,6 +4647,7 @@ def _fsf_builtin_synced_fields(doc: Mapping[str, Any]) -> dict[str, Any]:
         "clientVariant",
         "premoveVariant",
         "pieceFamilyOverride",
+        "boardFamilyOverride",
         "enabled",
         "startFen",
         "width",

@@ -39,3 +39,4 @@ class CataloguedVariantBoardFamilyOverrideTestCase(unittest.TestCase):
     def test_matching_board_family_dimensions_are_accepted(self):
         _ensure_board_family_dimensions("makruk8x8", 8, 8)
         _ensure_board_family_dimensions("shogi7x9", 7, 9)
+        _ensure_board_family_dimensions("shogi6x6", 6, 6)
