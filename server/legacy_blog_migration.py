@@ -11,7 +11,7 @@ from ublog import slugify_title
 
 OFFICIAL_TAGS = {"Announcement", "Tournament"}
 DATE_FORMATS = ("%Y-%m-%d", "%Y.%m.%d")
-GITHUB_STATIC_PREFIX = "https://github.com/gbtami/pychess-variants/blob/master/static/"
+GITHUB_STATIC_PREFIX = "https://github.com/pychess/pychess-variants/blob/master/static/"
 BREAK_TAG_RE = re.compile(r"^<\s*/?\s*br\s*/?\s*>$", re.IGNORECASE)
 MARKDOWN_IMAGE_RE = re.compile(r"!\[[^\]]*\]\(([^)]+)\)")
 IMG_SRC_RE = re.compile(r"""<img[^>]+src=['"]([^'"]+)['"][^>]*>""", re.IGNORECASE)

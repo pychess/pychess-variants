@@ -1,6 +1,6 @@
-# ![Bughouse](https://raw.githubusercontent.com/gbtami/pychess-variants/master/static/icons/Bughouse.svg) 四狂象棋 | Bughouse
+# ![Bughouse](https://raw.githubusercontent.com/pychess/pychess-variants/master/static/icons/Bughouse.svg) 四狂象棋 | Bughouse
 
-![Boards](https://github.com/gbtami/pychess-variants/blob/master/static/images/bugboards.png)
+![Boards](https://github.com/pychess/pychess-variants/blob/master/static/images/bugboards.png)
 
 四狂象棋（Bughouse）是一种 2v2 的国际象棋变种。同一队的两个玩家别持黑棋和白棋，与另一队的两个玩家进行国际象棋的对战（A白-B黑，A黑-B白）。除下面的规则以外，其余规则与国际象棋一致。
 

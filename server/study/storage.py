@@ -7,7 +7,6 @@ from datetime import UTC, datetime
 from inspect import isawaitable
 from typing import Any, Literal, cast
 
-from bson import BSON
 from fairy import FairyBoard
 
 from study.annotations import StudyAnnotations
@@ -24,6 +23,7 @@ from study.constants import (
     STUDY_TOPIC_MAX_LENGTH,
     STUDY_TOPIC_MIN_LENGTH,
 )
+from study.document import encode_chapter
 from study.models import (
     Study,
     StudyChapter,
@@ -549,13 +549,15 @@ def _clean_name(value: object, *, fallback: str, max_length: int) -> str:
     return name[:max_length]
 
 
-def _ensure_chapter_size(chapter: StudyChapter) -> None:
+async def _ensure_chapter_size(chapter: StudyChapter) -> dict[str, object]:
     try:
-        encoded_size = len(BSON.encode(chapter.to_document()))
+        encoded = await encode_chapter(chapter, include_document=True)
     except Exception as exc:
         raise StudyStorageError("Study chapter could not be encoded") from exc
-    if encoded_size > STUDY_CHAPTER_MAX_BSON_BYTES:
+    if encoded.size > STUDY_CHAPTER_MAX_BSON_BYTES:
         raise StudyStorageError("Study chapter is too large")
+    assert encoded.document is not None
+    return encoded.document
 
 
 async def studies_for_owner(app_state: Any, owner: str, *, limit: int = 100) -> list[Study]:
@@ -933,11 +935,11 @@ async def create_study_from_draft(
             draft.name, fallback="Chapter 1", max_length=STUDY_CHAPTER_NAME_MAX_LENGTH
         ),
     )
-    _ensure_chapter_size(chapter)
+    chapter_document = await _ensure_chapter_size(chapter)
     study = replace(study, current_chapter=chapter.id)
     await app_state.db.study.insert_one(study.to_document())
     try:
-        await app_state.db.study_chapter.insert_one(chapter.to_document())
+        await app_state.db.study_chapter.insert_one(chapter_document)
         await refresh_study_search_tokens(app_state, study.id)
     except Exception:
         await app_state.db.study.delete_one({"_id": study.id, "owner": owner})
@@ -1064,8 +1066,8 @@ async def clone_study(
                 tags=original.tags,
                 now=now,
             )
-            _ensure_chapter_size(chapter)
-            await app_state.db.study_chapter.insert_one(chapter.to_document())
+            chapter_document = await _ensure_chapter_size(chapter)
+            await app_state.db.study_chapter.insert_one(chapter_document)
             if first_chapter is None:
                 first_chapter = chapter
 
@@ -1118,8 +1120,8 @@ async def add_chapter_from_draft(
             draft.name, fallback=f"Chapter {order}", max_length=STUDY_CHAPTER_NAME_MAX_LENGTH
         ),
     )
-    _ensure_chapter_size(chapter)
-    await app_state.db.study_chapter.insert_one(chapter.to_document())
+    chapter_document = await _ensure_chapter_size(chapter)
+    await app_state.db.study_chapter.insert_one(chapter_document)
     now = datetime.now(UTC)
     study_update: dict[str, object] = {
         "$set": {"updatedAt": now},
@@ -1162,6 +1164,7 @@ async def add_chapters_from_drafts(
     )
     start_order = int(last["order"]) + 1 if last is not None else 1
     chapters: list[StudyChapter] = []
+    documents: list[dict[str, object]] = []
     for offset, draft in enumerate(drafts):
         order = start_order + offset
         chapter = await make_chapter(
@@ -1184,14 +1187,13 @@ async def add_chapters_from_drafts(
                 draft.name, fallback=f"Chapter {order}", max_length=STUDY_CHAPTER_NAME_MAX_LENGTH
             ),
         )
-        _ensure_chapter_size(chapter)
+        chapter_document = await _ensure_chapter_size(chapter)
         chapters.append(chapter)
+        documents.append(chapter_document)
 
     ids = [chapter.id for chapter in chapters]
     try:
-        await app_state.db.study_chapter.insert_many(
-            [chapter.to_document() for chapter in chapters]
-        )
+        await app_state.db.study_chapter.insert_many(documents)
         now = datetime.now(UTC)
         study_update: dict[str, object] = {
             "$set": {"updatedAt": now},
@@ -1680,9 +1682,9 @@ async def clear_chapter_annotations(app_state: Any, study: Study, chapter: Study
         revision=chapter.revision + 1,
         updated_at=datetime.now(UTC),
     )
-    _ensure_chapter_size(candidate)
+    chapter_document = await _ensure_chapter_size(candidate)
     update: dict[str, object] = {
-        "$set": {"root": root.to_document(), "updatedAt": candidate.updated_at},
+        "$set": {"root": chapter_document["root"], "updatedAt": candidate.updated_at},
         "$inc": {"revision": 1},
     }
     if chapter.server_eval is not None:
@@ -1718,8 +1720,8 @@ async def clear_chapter_variations(app_state: Any, study: Study, chapter: StudyC
         revision=chapter.revision + 1,
         updated_at=now,
     )
-    _ensure_chapter_size(candidate)
-    set_fields: dict[str, object] = {"root": root.to_document(), "updatedAt": now}
+    chapter_document = await _ensure_chapter_size(candidate)
+    set_fields: dict[str, object] = {"root": chapter_document["root"], "updatedAt": now}
     if next_conceal_ply != chapter.conceal_ply:
         set_fields["concealPly"] = next_conceal_ply
     await app_state.db.study_chapter.update_one(

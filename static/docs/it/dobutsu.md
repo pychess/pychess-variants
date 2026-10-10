@@ -1,7 +1,7 @@
 
-# ![Dobutsu Shogi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Dobutsu.svg) Dobutsu 
+# ![Dobutsu Shogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/Dobutsu.svg) Dobutsu
 
-![Dobutsu](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Dobutsu.png)
+![Dobutsu](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Dobutsu.png)
 
 Lo Shogi Dobutsu (どうぶつしょうぎ, "scacchi animali") è una piccola variante dello shogi per bambini. È stato inventato dalla giocatrice professionista di shogi Madoka Kitao (北尾 まどか, Kitao Madoka), in parte per attirare giovani ragazze al gioco. Si gioca su una scacchiera 3×4 e generalmente segue le regole dello shogi standard, con alcune eccezioni descritte di seguito.
 
@@ -13,7 +13,7 @@ Come nello Shogi, i pezzi che vengono catturati vanno nella propria tasca. Invec
 
 A differenza dello Shogi, solo un pezzo può promuovere: il Pulcino (Pedone) promuove a Gallina (Tokin) quando raggiunge l'ultima traversa. 
 
-![Hen](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Hen.png)
+![Hen](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Hen.png)
 
 La Gallina può muoversi di uno spazio ortogonalmente in qualsiasi direzione come la Giraffa. Inoltre, può muoversi diagonalmente in avanti di una casa.
 

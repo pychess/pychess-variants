@@ -1,6 +1,6 @@
-# ![Shinobi chess+](https://github.com/gbtami/pychess-variants/blob/master/static/icons/shinobi.svg) 新忍者象棋 | Shinobi Chess+
+# ![Shinobi chess+](https://github.com/pychess/pychess-variants/blob/master/static/icons/shinobi.svg) 新忍者象棋 | Shinobi Chess+
 
-![Shinobi+](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Shinobiplus.png)
+![Shinobi+](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Shinobiplus.png)
 
 忍者象棋是 2021 年由 Couch Tomato 与 Fables 推出的游戏，也是非对称棋组变体系列的第四款。游戏的背景设定为王国的军队（黑）入侵了樱流忍者（Sakura Clan）的领土（粉）而展开的战斗。忍者方一开始子力较弱，但能快速召集友军支援与防御。忍者方开始时握有大量后备子力在手中，可打入到自己的领土（前四行）。此外，忍者方的棋子在达到最后两行之后可升变，类似于日本将棋的规则。但是与将棋不同的是，吃掉的棋子不可再打入。
 
@@ -27,7 +27,7 @@
 
 ### 兵长 | Captain (C)
 
-![Captain](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ClanCaptain.png)
+![Captain](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ClanCaptain.png)
 
 开局时，忍者方拥有一个兵长。兵长也可由兵升变得到。
 兵长的移动和王完全相同，即八方一格。
@@ -35,7 +35,7 @@
 
 ### 忍者 | Ninja (J)
 
-![Ninja](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Ninja.png)
+![Ninja](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Ninja.png)
 
 忍者可以看成是国际象棋象和马的结合，即斜走不限，或者跳马步。这个棋子在许多象棋变种(如Grand Chess)中称为大主教(ArchBishop)。忍者是忍者一方的最强棋子，他拥有很灵活的机动性，能轻易绕过对方防线。忍者能单独对角格的王形成威胁。忍者的棋子强度略弱于后。
 
@@ -43,7 +43,7 @@
 
 ### 龙王 | Dragon (D)
 
-![Dragon](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Dragon.png)
+![Dragon](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Dragon.png)
 
 龙王可以直走任意格数，或斜走一格。与将棋的的龙王完全相同。龙王比忍者弱，但比车（飞车）略强。
 
@@ -51,7 +51,7 @@
 
 ### 妖狐 | Fox (F)
 
-![Fox](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Fox.png)
+![Fox](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Fox.png)
 
 妖狐可以斜走任意格数，或直走一格。这与将棋的龙马完全相同。妖狐比忍者稍弱，但比车（飞车）强。
 
@@ -59,7 +59,7 @@
 
 ### 香车 | Lance (L)
 
-![Lance](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Lance.png)
+![Lance](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Lance.png)
 
 香车只可向前走任意步数，与将棋的香车完全相同。开局时，忍者方手里有一枚香车，这枚香车可以借助打入，实行串打战术。请注意，香车不能后退，所以打入时请务必思考谨慎。开局的香车灵活性较差，但是也能有效控制他们所在的列。
 
@@ -70,7 +70,7 @@
 
 ### 桂马 | Wooden Horse (H)
 
-![Wooden Horse](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Horse.png)
+![Wooden Horse](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Horse.png)
 
 桂马走法和马相似，但只能向前跳跃，如同将棋的桂马。忍者方开局有一枚桂马在手中，桂马的走法结合打入，使得它能够有效捉双。但是桂马不可后退，因此它的打入也需要谨慎思考。
 
@@ -80,7 +80,7 @@
 
 ### 僧兵 | Monk (M)
 
-![Monk](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Monk.png)
+![Monk](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Monk.png)
 
 僧兵的移动为斜向一格。忍者方开局手里有一个僧兵。
 

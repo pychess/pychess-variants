@@ -1,6 +1,6 @@
-# ![Xiangfu](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Xiangfu.svg) 功夫棋 | Xiang Fu
+# ![Xiangfu](https://github.com/pychess/pychess-variants/blob/master/static/icons/Xiangfu.svg) 功夫棋 | Xiang Fu
 
-![Xiangfu](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Xiangfu.png)
+![Xiangfu](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Xiangfu.png)
 功夫棋（Xiang Fu）是首届 Pychess 设计大赛的冠军作品，作者为 Eventlesstew。
 作者在网球棋（Chennis）的基础上，加入了中国功夫的元素。加入一个“擂台”区域，为双方将帅的行动范围，同时在外围使用远距离棋子配合作战。
 
@@ -16,7 +16,7 @@
 
 ### 将/帅 | Champion/King (K)
 
-![King](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/XiangfuKing.png)
+![King](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/XiangfuKing.png)
 
 将帅的走法与国际象棋的王相同，为八方 1 格。
 **双王规则：**
@@ -27,43 +27,43 @@
 
 ### 学徒/徒 | Pupil/Commoner (G)
 
-![Commoner](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/XiangfuCommoner.png)
+![Commoner](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/XiangfuCommoner.png)
 
 学徒，简称徒，走法也是八方 1 格。
 学徒仅能由吃掉的对方的将（帅）之后转化而来，打入在场上后不视为王。
 
 ### 马兵/马 | Horse (N)
 
-![Horse](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/XiangfuHorse.png)
+![Horse](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/XiangfuHorse.png)
 
 马兵，简称马，走法和象棋的马完全相同。
 
 ### 战车/车 | Chariot (R)
 
-![Rook](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/XiangfuRook.png)
+![Rook](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/XiangfuRook.png)
 
 战车，简称车，走法和象棋的车完全相同。
 
 ### 炮 | Cannon (C)
 
-![Cannon](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/XiangfuCannon.png)
+![Cannon](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/XiangfuCannon.png)
 
 炮的走法和象棋的炮完全相同。
 
 ### 象兵/象 | Mahout/Elephant rider (M)
 
-![Mahout](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/XiangfuMahout.png)
+![Mahout](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/XiangfuMahout.png)
 
 象兵，简称象，走法为八方走 2 格，不能越子。
 
 ### 武僧/僧 | Bishop (B)
 
-![Bishop](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/XiangfuBishop.png)
+![Bishop](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/XiangfuBishop.png)
 
 武僧，简称僧，走法为斜走任意步数，不能越子。与国际象棋主教相同。
 
 ### 弩 | Crossbow (W)
 
-![Crossbow](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/XiangfuCrossbow.png)
+![Crossbow](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/XiangfuCrossbow.png)
 
 弩为斜走的炮。它可以斜走任意步数，吃子必须跳过一个棋子。

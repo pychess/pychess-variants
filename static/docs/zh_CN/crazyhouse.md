@@ -1,4 +1,4 @@
-# ![Crazyhouse](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Crazyhouse.svg) 双狂象棋 | Crazyhouse
+# ![Crazyhouse](https://github.com/pychess/pychess-variants/blob/master/static/icons/Crazyhouse.svg) 双狂象棋 | Crazyhouse
 
 双狂象棋（Crazyhouse），为四狂象棋(Bughouse)的两人版，是种可将吃掉的敌方的棋子打入回棋盘，转化为己方使用的国际象棋变体(如同将棋)。它行棋激烈，变化复杂，有许多全新的局面，喜欢国际象棋和将棋的朋友非常值得一试。
 

@@ -1,4 +1,4 @@
-# ![Horde960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Horde960.svg) 人海象棋 960 | Horde 960
+# ![Horde960](https://github.com/pychess/pychess-variants/blob/master/static/icons/Horde960.svg) 人海象棋 960 | Horde 960
 
 该玩法是人海象棋的任意制玩法。
 您只需在人海象棋中勾选“960模式”游玩此玩法。

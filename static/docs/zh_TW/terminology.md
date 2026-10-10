@@ -78,25 +78,25 @@ byo-yomi還可以有外加。例如，如果有 3 段(period)外加，那玩家�
 
 **捉雙** - 同時攻擊兩子。在所有變體中，馬最常用來捉雙。在有「打入」規則的變體中，車和主教、角行也能捉雙，尤其是主教。
 
-![捉雙示例](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Fork.png)
+![捉雙示例](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Fork.png)
 
 **牽制** - 攻擊一個不能移動的棋子，否則它會暴露它後面更高價值的棋子（通常是國王）。
 
-![牽制示例](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Pin.png)
+![牽制示例](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Pin.png)
 
 **串打** - 類似於牽制，但受攻擊的兩子並排在一條直線上。受攻擊的一方只能選擇一子逃離。
 
-![串打示例](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Skewer.png)
+![串打示例](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Skewer.png)
 
 **閃擊** - 閃開一子使其後原本被阻擋的棋子可以發動攻擊，同時閃開的棋子又可以攻擊到另一棋子，稱為「閃擊」。閃擊在西洋棋中尤為長見。
 
-![閃擊](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Discovery.png)
+![閃擊](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Discovery.png)
 
 在此情況下，移動騎士讓城堡攻擊國王，同時騎士也威脅到黑后。由於黑方必須移動王，因此白方可以吃掉皇后。
 
 **犧牲** - 為了得到更好的盤勢而做出犧牲。
 
-![犧牲示例](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Sacrifice.png)
+![犧牲示例](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Sacrifice.png)
 
 在這個例子中，如果白方后吃了黑方的馬，它也會被兵吃掉。但這就讓騎士可以跳進去將死國王（紅色箭頭）。
 

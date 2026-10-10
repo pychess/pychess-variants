@@ -4,7 +4,7 @@
 //       and see if there is any duplication or the ones that are here should be split or any other improvement that might be needed or better organization can be found
 import * as cg from 'chessgroundx/types';
 
-import { BoardName } from './types';
+import { BoardName, BugBoardName } from './types';
 
 export type Clocks = [number, number];
 
@@ -39,6 +39,7 @@ export interface Step {
     movetimeB?: number;
     plyA?: number;
     plyB?: number;
+    ts?: number;
 }
 
 export interface StepChat {
@@ -74,6 +75,20 @@ export interface MsgFullChat {
     lines: MsgChat[];
 }
 
+export interface GameDisplayHistory {
+    variant: string;
+    chess960: boolean;
+    moves: string[];
+    showPromoted: boolean;
+    countStarted: number;
+    usi: boolean;
+    clocksWhite?: number[];
+    clocksBlack?: number[];
+    analysis?: Array<Ceval | null>;
+    countIntervals?: Array<[number, number]>;
+    jieqiCovered?: Record<string, string>;
+}
+
 export interface MsgBoard {
     gameId: string;
     fen: string;
@@ -90,6 +105,8 @@ export interface MsgBoard {
     uci_usi: string;
     result: string;
     steps: Step[];
+    history?: GameDisplayHistory;
+    twoBoardHistory?: TwoBoardDisplayHistory;
     berserk: { w: boolean; b: boolean };
     jieqiCaptures?: string[];
     // Per-move captured fake identities for Jieqi; only populated for the viewer during play.
@@ -100,6 +117,14 @@ export interface MsgBoard {
     clocksB?: Clocks; // different than last stp clock - includes correction for the color whose turn it is with elapsed time on server since last move
 
     takeback?: boolean;
+}
+
+export interface TwoBoardDisplayHistory {
+    variant: string;
+    chess960: boolean;
+    moves: string[];
+    boards: BugBoardName[];
+    metadata: Array<Pick<Step, 'clocks' | 'clocksB' | 'ts' | 'analysis' | 'chat'>>;
 }
 
 export interface Ceval {

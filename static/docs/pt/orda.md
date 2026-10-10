@@ -1,8 +1,8 @@
-# ![Orda chess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/orda.svg) Orda Chess
+# ![Orda chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/orda.svg) Orda Chess
 
-![Orda](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Orda.png)
+![Orda](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Orda.png)
 
-![Legend](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/OrdaLegend.png)
+![Legend](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/OrdaLegend.png)
 
 A Orda Chess é uma variante de Xadrez criada em 2020 por Couch Tomato. A ideia desta variante foi a criação de um verdadeiro jogo de Xadrez assimétrico com dois exércitos diferentes. O Xadrez de Ralph Betza com diferentes exércitos serviu de inspiração para tal, mas o objetivo aqui foi de simplificar com o Xadrez. Nesta variante, a ideia usada foi de ter um exército baseado nos movimentos do Cavalo, onde a maior parte das peças têm a caracteristica de se moverem como tal. Dada a ideia do Cavalo, a variante foi modelada com base no exército Mongol tendo o obtido o nome de "Horde" (do inglês, multidão, horda). De notar que a Orda foi uma estrutura militar da população dos Estepes (wiki), que deu o nome à palavra inglesa "Horde"(multidão). O exército original do Xadrez tem como nome o Reino (Kingdom) ao contrário deste. Esta variante, de acordo com a inteligência artificial é muito equilibrada (ainda mais do que o Xadrez normal), com um recorde perto de 50-50 de vitória tanto para o Kingdom(Reino) como para a Horde(Multidão).
  
@@ -32,28 +32,28 @@ Alguns detalhes e diagramas de cada peça estão representados abaixo. Os pontos
  
 ### Yurt (Y)
 
-![Yurt](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Yurt.png)
+![Yurt](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Yurt.png)
  
 O Yurt move-se e captura uma casa na diagonal ou uma casa em frente. Este é o mesmo que um General Prateado em Shogi ou o Bispo/Khon em Makruk. Só existe um Yurt, que começa na casa da Dama, mas ao contrário da Dama, esta é uma peça bem menor, a mais fraca em termos de valor excluindo o Peão. No entanto não se deve desprezá-la, pois esta é uma das poucas peças da Horde que capturam e se movimentam da mesma maneira. As outras duas peças assim são o Khan(Rei) e o Kheshig, sendo ambas as peças mais valiosas. Dai, o Yurt tem um objetivo unico de dar suporte aos Peões ou outras peças sem medo de ser ameaçada. Um Yurt é uma casa ambulante dos Mongóis e dos Turcos provenientes dos Estepes da Ásia. O seu movimento limitado mas importante para o suporte ao exército é refletido nesta peça.
 
 
 ### Kheshig (H)
 
-![Kheshig](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Kheshig.png)
+![Kheshig](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Kheshig.png)
 
 O Kheshig é uma peça híbrida que se move e captura como um Rei e um Cavalo. Este tipo de peça é geralmente denominada de Centauro. Os Kheshigs começam nas casas dos Cavalos, mas ao contrário do Cavalo, esta é a peça mais poderosa da Horde. Pode ser considerada um general que lidera o seu próprio exército nos flancos. É aconselhado a manter os Kheshigs seguros atrás do exército antes do meio-jogo por causa da sua elevada importância no exército da Horde no fim-de-jogo.
 Os Kheshigs forma guardas imperiais do exército real da Mongólia. É extremamente dificil para o Kingdom(reino) dar Xeque-Mate ao Khan(Rei) sem eliminar um dos Kheshigs em primeiro lugar, o que é apropriado ao seu papel.  
 
 ### Cavalo-Arqueiro (A)
 
-![Horse Archer](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archer.png)
+![Horse Archer](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archer.png)
  
 O Cavalo-Arqueiro, ou simplesmente chamado de Arqueiro, é uma peça única "semi-híbrida" que se movimenta e ataca de maneira diferente. O Arqueiro movimenta-se como um Cavalo mas captura como um Bispo. Pelo facto do Arqueiro não estar preso à cor da sua casa, este é mais valioso do que o Bispo.
 Os Arqueiros são uma das duas componentes principais da cavalaria Mongol, e funcionam como uma cavalaria rápida. A sua velocidade e proeza como arqueiros a cavalo fizeram destes uma ameaça única. A sua capacidade de se posicionarem rapidamente para um ataque de raio-X ou de tácticas de Garfo faz com que eles sejam uma grande ameaça para o Kingdom(reino).
  
 ### Lança (L)
 
-![Lancer](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Lancer.png)
+![Lancer](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Lancer.png)
  
 A Lança é uma peça única "semi-híbrida" que se movimenta e ataca de maneira diferente. A Lança movimenta-se como um Cavalo mas captura como uma Torre. Pelo facto da Lança não ser tão móvil como a Torre, esta é considerada inferior à Torre. E isto se torna mais visível no fim-de-jogo, pelo facto de não se poder mover ao longo do tabuleiro rapidamente como a Torre. O seu valor é comparável ao do Cavalo-Arqueiro.
 As Lanças são uma das duas componentes principais da cavalria Mongol, sendo estas parte da cavalaria pesada. Mesmo sendo mais fracas do que a Torre, a sua habilidade de entrar em jogo mais rapidamente cria uma vantagem ao lado da Horde(multidão) que o jogador deve usufruir.
@@ -110,7 +110,7 @@ Algumas aberturas em particular são usadas em várias partidas. Aqui estão qua
 2. e4 Kg7
 3. (Bd3 ou Nf3) ...
 
-![Benko's Castle](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/BenkoCastle.png)
+![Benko's Castle](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/BenkoCastle.png)
 
 *Fortaleza de Benko após 2... Kg7*
 
@@ -131,6 +131,6 @@ Algumas aberturas em particular são usadas em várias partidas. Aqui estão qua
 4. b3 Kf7
 5. c4
 
-![Stockfish Defense Queenside Push](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/QueensidePush.png)
+![Stockfish Defense Queenside Push](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/QueensidePush.png)
 
 *Defesa Stockfish- Pressão no lado da Dama após 5. c4*

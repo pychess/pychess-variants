@@ -159,7 +159,7 @@ export function aboutView(model: PyChessModel): VNode[] {
             ]),
             h('p', [
                 _('The source code of the server is available on '),
-                h('a', { attrs: { href: 'https://github.com/gbtami/pychess-variants' } }, 'GitHub.'),
+                h('a', { attrs: { href: 'https://github.com/pychess/pychess-variants' } }, 'GitHub.'),
             ]),
             h('hr'),
             h('p', [

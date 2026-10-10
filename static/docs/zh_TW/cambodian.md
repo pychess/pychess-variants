@@ -1,6 +1,6 @@
-# ![Cambodian](https://github.com/gbtami/pychess-variants/blob/master/static/icons/cambodian.svg) 高棉象棋
+# ![Cambodian](https://github.com/pychess/pychess-variants/blob/master/static/icons/cambodian.svg) 高棉象棋
 
-![Cambodian Board](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
+![Cambodian Board](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 
 高棉象棋(高棉語: អុក)是泰國象棋的變體。
 

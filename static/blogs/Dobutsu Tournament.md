@@ -12,7 +12,7 @@
 </div>
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/icons/Dobutsu.svg" width="150" height="150">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/icons/Dobutsu.svg" width="150" height="150">
 </p>
 <br>
 
@@ -26,5 +26,5 @@ Time Control: 3+10(b) <b> <p>
 </p>
 <p align="center"> Have fun! <p> 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/icons/Dobutsu.svg" width="25" height="25">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/icons/Dobutsu.svg" width="25" height="25">
 </p>

@@ -70,24 +70,24 @@ As partidas feitas de uma só vez usam um relógio principal definido de 1 minut
 
 **Garfo** - Atacar duas peças ao mesmo tempo. Os Cavalos são quem efetuam mais esta tática em todas as variantes. Nas variantes de colocação, as Torres e os Bispos também são capazes de tal tática.
 
-![Fork example](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Fork.png)
+![Fork example](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Fork.png)
 
 **Espeto** - Atacar uma peça que não se pode mover, caso contrário irá expor um ataque a uma mais valiosa (na maioria das vezes o Rei)
 
-![Pin example](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Pin.png)
+![Pin example](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Pin.png)
 
 **Raio-X** - Semelhante ao espeto, mas ataca duas peças na mesma linha de fogo estando a mais valiosa na frente. A peça mais valiosa é obrigada assim a se mover, permitindo ao atacante capturar a segunda peça exposta.
 
-![Skewer example](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Skewer.png)
+![Skewer example](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Skewer.png)
 
 **Ataque por Descoberta** - Uma das peças poderia porventura atacar a peça adversária, mas está bloqueado por uma peça que é sua. Movendo a peça que está a bloquear (e ao mesmo tempo ameaçando a peça adversária), irá abrir esta peça e começar um ataque, isto é geralmente chamado de ataques por descoberta. Ataques por descoberta existem em grande quantidade no Xiangqi.
 
-![Discovered attack example](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Discovery.png)
+![Discovered attack example](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Discovery.png)
 
 Nesta situação, movendo o Cavalo para ameaçar a Dama também faz com abra Xeque ao Rei pela Torre. Pelo facto das Pretas terem de responder ao Xeque, as Brancas podem capturar a Dama. Se ao trocarmos a posição da Dama Preta e o Rei, o resultado final seria o mesmo (as Pretas iriam perder a Dama)
 
 **Sacrifício** - Oferecer material a fim de obter uma posição melhor.
 
-![Sacrifice example](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Sacrifice.png)
+![Sacrifice example](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Sacrifice.png)
 
 Neste exemplo, se a Dama capturar o Cavalo Preto, esta pode ser recapturada facilmente por um Peão. No entanto isto abrirá caminho para o Cavalo dar Xeque-Mato (Seta vermelha). A Dama foi sacrificada para um objetivo maior.

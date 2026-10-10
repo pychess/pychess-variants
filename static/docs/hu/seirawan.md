@@ -1,4 +1,4 @@
-# ![Seirawan sakk ikon](https://github.com/gbtami/pychess-variants/blob/master/static/icons/schess.svg) S-sakk (Seirawan-sakk, SHARPER sakk) (S-chess)
+# ![Seirawan sakk ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/schess.svg) S-sakk (Seirawan-sakk, SHARPER sakk) (S-chess)
 
 Az S-sakkot Yasser Seirawan és Bruce Harper alkotta meg 2007-ben. A standard sakkhoz hasonlóan ezt is 8x8-as táblán játsszák, de két új bábu is bekerült a játékba.
 
@@ -6,7 +6,7 @@ Az S-sakkot Yasser Seirawan és Bruce Harper alkotta meg 2007-ben. A standard sa
 
 ### Sólyom
 
-![Sólyom ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Hawk.png)
+![Sólyom ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Hawk.png)
 
 A sólyom két bábu kombinálásával jött létre: futó és huszár. Ennek a két bábunak a lépéslehetőségeivel rendelkezik.
 
@@ -16,7 +16,7 @@ A játszmák során **H** betűvel jegyezzük, ami az angol **Hawk** szó rövid
 
 ### Elefánt
 
-![Elefánt ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantSeirawan.png)
+![Elefánt ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantSeirawan.png)
 
 Az elefánt két bábu kombinálásával jött létre: bástya és huszár. Ennek a két bábunak a lépéslehetőségeivel rendelkezik.
 

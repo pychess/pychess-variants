@@ -28,7 +28,7 @@ Es el más fuerte disponible en este sitio, pero no representa Fairy-Stockfish a
 
 *¡Encontré un bug! ¿Dónde lo reporto?*
 
-[**Crea una incidencia**](https://github.com/gbtami/pychess-variants/issues/new). De un modo u otro, debe terminar registrado el registro de incidencias de Github. Idealmente, intenta encontrar una forma de reproducir el bug e inclúyela en tu descripción (si es necesario, incluye el navegador y sistema operativo). Si no estás en Github, también puedes mencionarlo en Discord y alguien lo podrá registrar por ti.
+[**Crea una incidencia**](https://github.com/pychess/pychess-variants/issues/new). De un modo u otro, debe terminar registrado el registro de incidencias de Github. Idealmente, intenta encontrar una forma de reproducir el bug e inclúyela en tu descripción (si es necesario, incluye el navegador y sistema operativo). Si no estás en Github, también puedes mencionarlo en Discord y alguien lo podrá registrar por ti.
 
 ## Variantes
 
@@ -102,7 +102,7 @@ Puramente a través de donaciones. ¡Puedes [ser un Mecenas](https://www.pychess
 
 *¿Puedo contribuir?*
 
-¡Por supuesto que puedes! Pychess es open source. Por favor comunica tus sugerencias en [Github](https://github.com/gbtami/pychess-variants) o [Discord](https://discord.gg/aPs8RKr)
+¡Por supuesto que puedes! Pychess es open source. Por favor comunica tus sugerencias en [Github](https://github.com/pychess/pychess-variants) o [Discord](https://discord.gg/aPs8RKr)
 
 
 

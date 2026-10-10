@@ -90,18 +90,20 @@ async def validate_study_variant_import_without_mutating_server(
     variant: str,
     variant_ini: str,
     initial_fen: str,
-    move_tree: tuple[tuple[str, str | None, str], ...],
 ) -> None:
-    """Validate an untrusted embedded Study snapshot outside the serving process."""
+    """Validate an untrusted embedded Study snapshot/root outside the server process.
+
+    Move-tree legality is already validated by ffish.js before bulk Study import. Keep
+    the isolated server-side admission check focused on the untrusted INI and initial
+    FEN so a rejected snapshot cannot mutate the long-lived pyffish registry.
+    """
 
     snapshot_name = extract_variant_name(variant_ini)
     if snapshot_name != variant:
         raise ValueError("Study variant snapshot name does not match chapter variant")
     alias = _snapshot_alias(variant_ini)
     aliased_ini = replace_variant_section_name(variant_ini, alias)
-    await check_catalogued_ini_tree_without_mutating_server(
-        aliased_ini, alias, initial_fen, move_tree
-    )
+    await check_catalogued_ini_tree_without_mutating_server(aliased_ini, alias, initial_fen, ())
 
 
 @contextmanager

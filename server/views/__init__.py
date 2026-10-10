@@ -25,6 +25,7 @@ from const import (
     HTTP_ANON_USER,
     STARTED,
 )
+from csrf import ensure_csrf_token
 from fairy import BLACK, WHITE
 from json_utils import json_dumps
 from preferences import (
@@ -116,6 +117,7 @@ async def get_user_context(request: web.Request) -> tuple[User, ViewContext]:
     session = await aiohttp_session.get_session(request)
     session_user_value = session.get("user_name")
     session_user = session_user_value if isinstance(session_user_value, str) else None
+    csrf_token = ensure_csrf_token(session) if session else ""
 
     if session_user is not None:
         session["last_visit"] = datetime.now(UTC).isoformat()
@@ -235,6 +237,7 @@ async def get_user_context(request: web.Request) -> tuple[User, ViewContext]:
         "view_css": ("round" if view == "tv" else view) + ".css",
         "anon": user.anon,
         "username": user.username,
+        "csrf_token": csrf_token,
         "piece_sets": piece_sets,
         "simuling": SIMULING,
         "admin": _is_admin_username(user.username),
@@ -357,7 +360,13 @@ def add_game_context(
     context["initialFen"] = game.initial_fen
 
     user_color = WHITE if user == game.wplayer else BLACK if user == game.bplayer else None
-    context["board"] = json_dumps(game.get_board(full=True, persp_color=user_color))
+    if game.server_variant.two_boards:
+        board_response = game.get_board(full=True, persp_color=user_color, client_history=True)
+    else:
+        if TYPE_CHECKING:
+            assert isinstance(game, Game)
+        board_response = game.get_board(full=True, persp_color=user_color, client_history=True)
+    context["board"] = json_dumps(board_response)
 
     if game.server_variant.two_boards:
         if TYPE_CHECKING:

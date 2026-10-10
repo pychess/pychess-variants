@@ -1,4 +1,4 @@
-# ![960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/960.svg) 菲舍爾任意制象棋 (Chess960)
+# ![960](https://github.com/pychess/pychess-variants/blob/master/static/icons/960.svg) 菲舍爾任意制象棋 (Chess960)
 
 菲舍爾任意制象棋，是由前西洋棋世界冠軍鮑比·菲舍爾（Bobby Fischer）在以不違反原先西洋棋的邏輯及平衡下，將固有體系完整地置入一個更廣闊的大體系中為前提，提出了一種西洋棋變體。他認為這種棋可讓棋手不再背頌複雜的佈局變例，而單純較量計算能力。
 

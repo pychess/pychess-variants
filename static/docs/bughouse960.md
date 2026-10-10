@@ -1,4 +1,4 @@
-# ![Bughouse960](https://raw.githubusercontent.com/gbtami/pychess-variants/master/static/icons/Bughouse960.svg) Bughouse960
+# ![Bughouse960](https://raw.githubusercontent.com/pychess/pychess-variants/master/static/icons/Bughouse960.svg) Bughouse960
 
 Bughouse960 is a custom variant combining the rules of Bughouse with the random placement of Chess 960. The same rules apply to both games. As this is considered a derivative of Bughouse, please check the Bughouse rules in its separate guide. 960 rules are as below for a reminder.
 

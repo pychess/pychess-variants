@@ -5,6 +5,8 @@ from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
+from account_api import erase_account
+from admin import unban
 from aiohttp.test_utils import AioHTTPTestCase
 from bot_accounts import BOT_TOKEN_SCOPE, create_bot_token
 from forum.constants import ERASED_POST_TEXT, ERASED_POST_USER
@@ -25,8 +27,12 @@ class AccountApiTestCase(AioHTTPTestCase):
     async def tearDownAsync(self):
         await self.client.close()
 
-    def set_session_user(self, username: str) -> None:
-        session_data = {"session": {"user_name": username}, "created": int(time.time())}
+    def set_session_user(self, username: str, auth_version: int = 0) -> None:
+        self.client.session.cookie_jar.clear()
+        session_data = {
+            "session": {"user_name": username, "auth_version": auth_version},
+            "created": int(time.time()),
+        }
         self.client.session.cookie_jar.update_cookies({"AIOHTTP_SESSION": json.dumps(session_data)})
 
     @staticmethod
@@ -337,6 +343,31 @@ class AccountApiTestCase(AioHTTPTestCase):
         self.assertNotIn("Inbox threads", body)
         self.assertIn("Public game archives are handled separately", body)
 
+    async def test_cross_site_delete_account_is_blocked_before_mutation(self):
+        app_state = get_app_state(self.app)
+        user = User(app_state, username="alice")
+        app_state.users[user.username] = user
+        await app_state.db.user.insert_one(
+            {"_id": "alice", "username_lower": "alice", "enabled": True}
+        )
+
+        self.set_session_user("alice")
+        response = await self.client.post(
+            "/account/delete",
+            data={"confirm_username": "alice", "understand": "on"},
+            headers={
+                "Origin": "https://attacker.test",
+                "Sec-Fetch-Site": "cross-site",
+            },
+            allow_redirects=False,
+        )
+
+        self.assertEqual(response.status, 403)
+        doc = await app_state.db.user.find_one({"_id": "alice"})
+        self.assertIsNotNone(doc)
+        self.assertTrue(doc.get("enabled", False))
+        self.assertTrue(user.enabled)
+
     async def test_close_account_disables_user(self):
         app_state = get_app_state(self.app)
         user = User(app_state, username="alice")
@@ -490,13 +521,7 @@ class AccountApiTestCase(AioHTTPTestCase):
             }
         )
 
-        self.set_session_user("alice")
-        response = await self.client.post(
-            "/account/delete",
-            data={"confirm_username": "alice", "understand": "on"},
-            allow_redirects=False,
-        )
-        self.assertEqual(response.status, 302)
+        await erase_account(app_state, user)
 
         team = await app_state.db.team.find_one({"_id": "owned-team"})
         self.assertFalse(team.get("enabled", True))
@@ -550,16 +575,41 @@ class AccountApiTestCase(AioHTTPTestCase):
         async def observe_cleanup(_app_state, cleanup_user, _now):
             enabled_during_cleanup.append(cleanup_user.enabled)
 
-        self.set_session_user("alice")
         with patch("account_api._scrub_delete_owned_data", side_effect=observe_cleanup):
-            response = await self.client.post(
-                "/account/delete",
-                data={"confirm_username": "alice", "understand": "on"},
-                allow_redirects=False,
-            )
+            await erase_account(app_state, user)
 
-        self.assertEqual(response.status, 302)
         self.assertEqual([False], enabled_during_cleanup)
+
+    async def test_account_erasure_preserves_session_revocation_generation(self):
+        app_state = get_app_state(self.app)
+        user = User(app_state, username="alice", auth_version=7)
+        app_state.users[user.username] = user
+        await app_state.db.user.insert_one(
+            {
+                "_id": "alice",
+                "enabled": True,
+                "security": {
+                    "sessionVersion": 7,
+                    "ipHashes": ["private"],
+                    "otherSignal": "private",
+                },
+            }
+        )
+        with patch("account_api._scrub_delete_owned_data", AsyncMock()):
+            await erase_account(app_state, user)
+        doc = await app_state.db.user.find_one({"_id": "alice"})
+        self.assertEqual({"sessionVersion": 8}, doc["security"])
+        self.assertEqual(8, user.auth_version)
+
+        self.assertTrue(await unban(app_state, "alice"))
+        del app_state.users["alice"]
+        for version in (0, 1, 7):
+            with self.subTest(version=version):
+                self.client.session.cookie_jar.clear()
+                self.set_session_user("alice", auth_version=version)
+                response = await self.client.get("/account", allow_redirects=False)
+                self.assertEqual(302, response.status)
+                self.assertEqual("/login", response.headers["Location"])
 
     async def test_delete_account_scrubs_personal_fields(self):
         app_state = get_app_state(self.app)
@@ -857,13 +907,7 @@ class AccountApiTestCase(AioHTTPTestCase):
             ],
         )
 
-        self.set_session_user("alice")
-        response = await self.client.post(
-            "/account/delete",
-            data={"confirm_username": "alice", "understand": "on"},
-            allow_redirects=False,
-        )
-        self.assertEqual(response.status, 302)
+        await erase_account(app_state, user)
 
         doc = await app_state.db.user.find_one({"_id": "alice"})
         self.assertIsNotNone(doc)
@@ -983,13 +1027,7 @@ class AccountApiTestCase(AioHTTPTestCase):
         )
         await set_study_visibility(app_state, public, "public")
 
-        self.set_session_user("alice")
-        response = await self.client.post(
-            "/account/delete",
-            data={"confirm_username": "alice", "understand": "on"},
-            allow_redirects=False,
-        )
-        self.assertEqual(response.status, 302)
+        await erase_account(app_state, user)
 
         self.assertIsNone(await app_state.db.study.find_one({"_id": private.id}))
         self.assertIsNone(await app_state.db.study_chapter.find_one({"_id": private_chapter.id}))

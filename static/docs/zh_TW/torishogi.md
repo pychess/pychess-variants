@@ -1,8 +1,8 @@
-# ![Tori Shogi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/ToriShogi.svg) 禽將棋
+# ![Tori Shogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/ToriShogi.svg) 禽將棋
 
 |   |   |
 --- | ---
-![International Set](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/ToriIntl.png) | ![Traditional Set](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/ToriKanji.png)
+![International Set](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/ToriIntl.png) | ![Traditional Set](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/ToriKanji.png)
 
 禽將棋是十八世紀時，將棋九世名人大橋宗英發明的日本將棋變體，棋子皆以飛禽為名。現流行於歐美。
 
@@ -35,13 +35,13 @@
 
 ### 鵬
 
-![Phoenix](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Phoenix.png) 
+![Phoenix](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Phoenix.png)
 
 等同於玉將，可向八方走一格。若被將死則輸掉遊戲。
 
 ### 燕
 
-![Swallow](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Swallow.png)
+![Swallow](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Swallow.png)
 
 可向前走一格。
 
@@ -49,7 +49,7 @@
 
 ### 鷹
 
-![Falcon](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Falcon.png)
+![Falcon](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Falcon.png)
 
 可朝後方以外的方向走一格。由於可以同時攻擊多方，常用於將死。
 
@@ -57,19 +57,19 @@
 
 ### 鶴
 
-![Crane](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Crane.png)
+![Crane](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Crane.png)
 
 可朝前方、後方三格走一步。
 
 ## ⅄型
 
-![Upside-down Y pieces](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/UpsidedownYPieces.png) 
+![Upside-down Y pieces](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/UpsidedownYPieces.png)
 
 **⅄**型棋子的走法類似倒過來的英文字母**Y**。
 
 ### 雉
 
-![Pheasant](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Pheasant.png)
+![Pheasant](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Pheasant.png)
 
 可向前向跳二格(不會被前方棋子阻擋)，或向後斜向走一格。
 
@@ -77,7 +77,7 @@
 
 |   |   |
 --- | ---
-![LeftQuail](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/LeftQuail.png) | ![RightQuail](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/RightQuail.png)
+![LeftQuail](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/LeftQuail.png) | ![RightQuail](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/RightQuail.png)
 
 鶉依據配置於左右兩側而走法不同，棋上會標明左或右字。
 
@@ -90,18 +90,18 @@
 
 ### 鵝與雕
 
-![Promoted pieces](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/PromotedPieces.png) 
+![Promoted pieces](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/PromotedPieces.png)
 
 
 ### 鵝
 
-![Goose](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Goose.png)
+![Goose](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Goose.png)
 
 為燕的升變，可向斜前方、後方跳兩格。由於步伐大，它所能到達的位置很少。
 
 ### 雕
 
-![Eagle](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Eagle.png) 
+![Eagle](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Eagle.png)
 
 為鷹的升變。除保留原本走法外，可以向斜前與後方自由行走，或向斜後方走最多兩格。
 
@@ -163,7 +163,7 @@
 
 若直接將鶴往前一步，對方可以將燕打入在雉前，而你無法防守。
 
-![弱點](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/ToriWeakSpots.png)
+![弱點](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/ToriWeakSpots.png)
 
 這些點是弱點，請記住這些點並用鵬或鷹保護，這樣鶴就不必一直守住這些點！
 
@@ -181,17 +181,17 @@
 
 * 使用燕子深入敵陣攻擊時請小心，如果進入對方下二線，**它會被強迫升變成鵝**！
 
-(順序圖)![別做這種傻事!](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/ToriGooseMistake.png) 
+(順序圖)![別做這種傻事!](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/ToriGooseMistake.png)
 
 ### 邊緣攻擊
 
 邊緣攻擊是發動攻擊的好方法。如上所述，你可以犧牲一隻燕子來推進自己的燕子，以奪取敵方的鶉(將燕打在鶉前方)。下面是成功進行邊緣攻擊時的順序圖(由左至右)：
 
-![Edge Sequence!](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/ToriEdgeSequence.png) 
+![Edge Sequence!](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/ToriEdgeSequence.png)
 
 由於鶉無處可緅，因此它只能選擇換子: 把燕吃掉，再被對方的鶉吃。
 
-![Edge Sequence!](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/ToriFailedEdgeAttack.png) 
+![Edge Sequence!](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/ToriFailedEdgeAttack.png)
 
 但這只有在鶉無處可動的情況下成立，如果鶉斜後方是空的，那它還是可以往那邊撤退。
 

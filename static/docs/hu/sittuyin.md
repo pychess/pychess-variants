@@ -1,6 +1,6 @@
-# ![Sittuyin ikon](https://github.com/gbtami/pychess-variants/blob/master/static/icons/sittuyin.svg) Sittuyin (Burmai sakk)
+# ![Sittuyin ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/sittuyin.svg) Sittuyin (Burmai sakk)
 
-![Sittuyin ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/Sittuyin.png?raw=true)
+![Sittuyin ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Sittuyin.png?raw=true)
 
 A sittuyin (စစ်တုရင်), avagy a burmai sakk egy klasszikus táblajáték, mely Mianmarban őshonos, és habár az ország északnyugati területein még mindig sokan játsszák, mára a nyugati sakk beárnyékolta népszerűségét. A játék kissé lassabb tempójú, de jó lehetőséget ad arra, hogy türelmet gyakoroljunk és a stratégiai gondolkodásunkat fejlesszük.
 
@@ -28,19 +28,19 @@ Ez a szabály arra ösztönzi a vesztére álló játékos, hogy meneküljön a 
 
 ### Király
 
-![Király ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/King.png?raw=true) 
+![Király ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/King.png?raw=true)
 
 A király ugyanúgy lép és üt, mint a sakkban: egyet bármelyik irányba.
 
 ### Vezér
 
-![Vezér ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/General.png?raw=true)
+![Vezér ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/General.png?raw=true)
 
 A vezér itt sokkal gyengébb bábu, mint a sakkban, mert csak egy mezőt tud lépni átlóban. Értéke nagyjából 1,5 - 2 gyalognak felel meg. A vezér megfelelő a támadások vezetésére és hasznos lehet az ellenfél fenyegetésére. Ha a vezér leütésre került, egy gyalog átváltoztatásával újabb vezér szerezhető.
 
 ### Elefánt
 
-![Elefánt ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/Elephant.png?raw=true)
+![Elefánt ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Elephant.png?raw=true)
 
 Az elefánt egy mezőt léphet átlósan, vagy egy mezőt előre (mint a sógiban az ezüsttábornok). Erős bábu arra, hogy az ellőtte lévő mezőket kontrollálja, de a király védelmezésére is megfelelő lehet.
 
@@ -48,19 +48,19 @@ Az elefánt itt értékesebb, mint a vezér, de általánosságban elmondható, 
 
 ### Ló
 
- ![Ló ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/Horse.png?raw=true)
+ ![Ló ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Horse.png?raw=true)
 
 A ló ugyanúgy mozog, mint a sakkban (L-alakzatban és képes átugrani a köztes bábukat). Értékes és erős, központi figura.
 
 ### Szekér (Bástya)
 
- ![Szekér ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/Chariot.png?raw=true)
+ ![Szekér ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Chariot.png?raw=true)
 
 A szekér ugyanúgy mozog, mint a sakkban a bástya (akárhány mezőt vízszintesen vagy függőlegesen). Erős vezér hiányában a bástya a domináns egység.
 
 ### Gyalog
 
-![Gyalog ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/Pawn.png?raw=true)
+![Gyalog ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Pawn.png?raw=true)
 
 A gyalog (eredeti fordításban: hűbérúr) ugyanúgy lép, mint a sakkban (egyet előre), és úgy is üt (átlóban előre egyet), azonban első lépésben nem léphet kettőt.
 

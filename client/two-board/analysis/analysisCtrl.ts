@@ -1,3 +1,4 @@
+import { materializeTwoBoardHistory } from '../common/gameHistory';
 import * as cg from 'chessgroundx/types';
 
 import { uci2LastMove } from '../../chess';
@@ -232,6 +233,7 @@ export default class AnalysisControllerBughouse extends TwoBoardController {
 
     private onMsgBoard = (msg: MsgBoard) => {
         if (msg.gameId !== this.gameId) return;
+        msg = materializeTwoBoardHistory(msg, this.boardA.ffish);
 
         this.result = msg.result;
         this.status = msg.status;

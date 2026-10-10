@@ -1,6 +1,6 @@
-# ![gothic](https://github.com/gbtami/pychess-variants/blob/master/static/icons/capablanca.svg) Gothic Chess
+# ![gothic](https://github.com/pychess/pychess-variants/blob/master/static/icons/capablanca.svg) Gothic Chess
 
-![Gothic setup](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Gothic.png)
+![Gothic setup](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Gothic.png)
 
 O Gothic Chess foi criado por Ed Trice em 2000. Em 2019, foi mudado o nome para Trice's Chess (Xadrez de Trice). Esta variante usa um tabuleiro de 10x8 e as mesmas peças do Capablanca Chess, mas em posições iniciais diferentes.
 
@@ -13,11 +13,11 @@ A Variante é jogada num tabuleiro de 10x8, com filas adicionais para as novas p
 
 ### Arcebispo
 
-![Archbishop](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
+![Archbishop](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
 
 Várias representações do Arcebispo. (De notar que o para o Seirawan Chess é usado o Falcão)
 
-![Archbishop moves](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
+![Archbishop moves](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
 
 O Arcebispo (A) é uma peça composta pela combinação dos movimentos do **Bispo** e do **Cavalo**. Em termos de peças heterodoxas de xadrez, esta é geralmente reconhecida como a Princesa, mas também tem é denominada de várias maneiras em variantes diferentes.
 
@@ -30,11 +30,11 @@ O Arcebispo é considerado um pouco mais valioso do que uma Torre, mas menos do 
 
 ### Chanceler
 
-![Chancellor](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
+![Chancellor](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
 
 Várias representações do Chanceler. (De notar que o para o Seirawan Chess é usado o Elefante
 
-![Chancellor moves](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
+![Chancellor moves](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
 
 O Chanceler (C) é uma peça composta pela combinação dos movimentos da **Torre** e do **Cavalo**. Em termos de peças heterodoxas de xadrez, esta é geralmente reconhecida como a Imperatriz, mas também tem é denominada de várias maneiras em variantes diferentes. 
 

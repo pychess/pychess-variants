@@ -1,6 +1,6 @@
-# ![Janggi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Janggi.svg) Janggi
+# ![Janggi](https://github.com/pychess/pychess-variants/blob/master/static/icons/Janggi.svg) Janggi
 
-![Boards](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Boards.png)
+![Boards](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Boards.png)
 
 *Janggi* (장기, pronounced like “*chahng-ghee*”), or Korean Chess, is a classic board game native to Korea. The game is derived from Xiangqi and is very similar to it.
 
@@ -43,41 +43,41 @@ Several pieces have special moves utilizing the diagonals in either palace, whic
 
 ### King
 
-![Kings](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Kings.png) 
+![Kings](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Kings.png)
 
 The **King** (also known by its Chinese name, the **general**) is restricted to the palace and can move within lines of the palace. This means that when the King is in the center, it has 8 possible moves. However, on any other spot in the Palace, it only has 3 moves.
 
 *Special rule:* When a King faces the other King, this causes *bikjang*. The next player must then move his king out of the way or else the game is ended. See rules below regarding bikjang.
 
-![King and advisor](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Palace.png)
+![King and advisor](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Palace.png)
 
 ### Advisor
 
-![Advisors](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Advisors.png) 
+![Advisors](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Advisors.png)
 
 The **Advisor** (also known by its Western name, the **guard**) moves exactly like the King, which is one space along lines within the palace. Like the King, the Advisor is confined to the palace.
 
 ### Horse
 
- ![Horses](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Horses.png)
+ ![Horses](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Horses.png)
  
- ![Horse movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/HorseDiagram.png)
+ ![Horse movement](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/HorseDiagram.png)
 
 The **Horse** (also called by its Western name, the **knight**) moves almost exactly like a chess knight. However, instead of the usual “two steps orthogonally, then one to the side” teaching, it’s better to think of it as *one step orthogonally, then diagonally forward in either direction*, like a Y shape. The reason for this is that the horse **can be blocked** if a piece is adjacent to it. That will block off the two endpoints of that Y. Therefore, there can be situations where two horses are targeting each other, but only one can attack while the other is blocked. Strong moves take advantage of blocking the horse and limiting its movement.
 
 ### Elephant
 
- ![Elephants](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Elephants.png)
+ ![Elephants](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Elephants.png)
  
- ![Elephant movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/ElephantDiagram.png)
+ ![Elephant movement](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/ElephantDiagram.png)
 
 The **Elephant** is much different than its xiangqi counterpart. Movement is similar to the horse in that it moves in a Y-shaped pattern. While the horse moves one step orthogonally and then one step further diagonally, the elephant moves one step orthogonally and then *two* steps diagonally. The elephant, like the horse, can be blocked on any intervening point along this path.
 
 ### Chariot
 
- ![Chariots](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Chariots.png)
+ ![Chariots](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Chariots.png)
  
- ![Chariot movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/ChariotDiagram.png)
+ ![Chariot movement](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/ChariotDiagram.png)
 
 The **Chariot** (also called by its Western name, the **rook**) moves exactly like a chess rook: any number of squares orthogonally. This is the most valuable piece in the game, excluding the king.
 
@@ -85,9 +85,9 @@ The **Chariot** (also called by its Western name, the **rook**) moves exactly li
 
 ### Cannon
 
-![Cannons](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Cannons.png)
+![Cannons](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Cannons.png)
 
-![Cannon movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/CannonDiagram.png)
+![Cannon movement](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/CannonDiagram.png)
 
 The **Cannon** is slightly different than its xiangqi counterpart. It moves orthogonally like the chariot, but it needs an intervening piece (called a "screen") to hop over first. It can then capture the next piece along the same line. Unlike xiangqi, the Cannon cannot move without a screen.
 
@@ -97,9 +97,9 @@ The **Cannon** is slightly different than its xiangqi counterpart. It moves orth
 
 ### Pawn
 
-![Pawns](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Pawns.png)
+![Pawns](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Pawns.png)
 
-![Pawn movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/PawnDiagram.png)
+![Pawn movement](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/PawnDiagram.png)
 
 The **Pawn** (also called by its Chinese name, the **soldier**) moves and captures by moving forward or sideways one square. This is different than the xiangqi pawn, which needed to cross the river first to move sideways.
 
@@ -170,11 +170,11 @@ Aside from the rules above...
 
 * Pawn structure is very important. Because pawns can move sideways, they're strongest when protecting each other in pairs. A line of three pawns is a poor formation (because they're stretched out thin). Also because of this, it's not advised to advance pawns if possible.
 
-![Bad Pawn Formations](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/BadPawns.png)
+![Bad Pawn Formations](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/BadPawns.png)
 
 * Regarding the choice of horse-elephant positioning in setup, one way to think about it is how your elephants are positioned, and this has significant implications for the opening. An elephant on the outer position is able to move toward the center between two pawns. However, an elephant in the inner position is blocked by the pawns (although it does protect them).
 * Continuing from this, the positioning of your elephant determines which **edge file to open up**. For example, when playing a setup where the left elephant can advance (and the opponent's opposite elephant is also on the outside), you want to move your left edge pawn to the side, opening up the chariot's file. The reason for this is that now the opponent's edge pawn cannot move, so if you attack the cannon file pawn with your elephant, if his edge pawn defends, he would lose his chariot. Note that if the opponent instead had two inner elephants, then you would instead open up the opposite edge.
 
-![Activating the elephant and chariot](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/ActiveElephant.png)
+![Activating the elephant and chariot](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/ActiveElephant.png)
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/KDkF2dEt41g" frameborder="0" allowfullscreen></iframe>

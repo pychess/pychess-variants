@@ -1,4 +1,4 @@
-# ![dragon](https://github.com/gbtami/pychess-variants/blob/master/static/icons/dragon.svg) 龙象棋 | Dragon Chess
+# ![dragon](https://github.com/pychess/pychess-variants/blob/master/static/icons/dragon.svg) 龙象棋 | Dragon Chess
 
 龙象棋是一种国际象棋变体，由特级大师 Miguel Illescas 设计.
 
@@ -6,6 +6,6 @@
 
 ### 龙 | Dragon (D)
 
-![Dragon](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ArchbishopDragon.png)
+![Dragon](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ArchbishopDragon.png)
 
 龙的走法为国际象棋的象+马组合。

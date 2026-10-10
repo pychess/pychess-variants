@@ -1,6 +1,6 @@
-# ![Cambodian](https://github.com/gbtami/pychess-variants/blob/master/static/icons/cambodian.svg) Ouk Chatrang
+# ![Cambodian](https://github.com/pychess/pychess-variants/blob/master/static/icons/cambodian.svg) Ouk Chatrang
 
-![Cambodian Board](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
+![Cambodian Board](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 
 El ajedrez camboyano, también conocido como "Ok" (Khmer: អុក) o "Ouk Chatrang" es una variante del Makruk (ajedrez tailandés) jugada en Camboya.
 

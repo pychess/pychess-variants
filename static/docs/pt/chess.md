@@ -1,6 +1,6 @@
-# ![Chess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/chess.svg) Xadrez
+# ![Chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/chess.svg) Xadrez
 
-![Chess board](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Chess.png?raw=true)
+![Chess board](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chess.png?raw=true)
 
 Se conheces as regras do Xadrez, então provavelmente não vieste aqui para aprender as regras deste. Desfruta das variantes!
 

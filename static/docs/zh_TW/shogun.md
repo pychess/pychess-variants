@@ -1,6 +1,6 @@
-# ![Shogun](https://github.com/gbtami/pychess-variants/blob/master/static/icons/shogun.svg) 幕府棋
+# ![Shogun](https://github.com/pychess/pychess-variants/blob/master/static/icons/shogun.svg) 幕府棋
 
-![Shogun](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ShogunPromotions3.png)
+![Shogun](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ShogunPromotions3.png)
 
 幕府棋是一種國際象棋變體，在2019-2020被Couch Tomato推出。雖然這種變體是融西洋棋於將其的規則，原意
 是用跟通常的方式引進仙靈棋子（大主教和首相）。比如說，保持8x8棋盤而非讓它擴大，這樣不會減損小棋子的價值。另外我們希望避免S-chess的凌亂棋盤。思想演變到讓小棋子在對方底線之前升變為仙靈棋。後來“打入“也加入規則為了增加攻擊性的選擇而抵消防禦性質由於升變的威脅。兵棋和馬的獨特升變以及王后的降至也加入規則為了完成主題和對稱性。
@@ -25,31 +25,31 @@
 
 ### 大主教 | 副官 | 公主 Archbishop (A)
 
-![Archbishop](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ArchbishopShogun.png)
+![Archbishop](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ArchbishopShogun.png)
 
 國際象棋變體中的一種常見的仙靈棋子。再此遊戲中，它升級從象而合併馬的移動。因此，只有它能單人匹馬把王將死。
 
 ### 首相 | Mortar (M)
 
-![Mortar](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Mortar.png)
+![Mortar](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Mortar.png)
 
 首相也是常見。再次遊戲中，它升級從車而合併馬的移動。
 
 ### 將軍 | General | Centaur (G)
 
-![General](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/General.png)
+![General](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/General.png)
 
 將軍的移動如馬或王的走法。
 
 ### 隊長 | Captain (C)
 
-![Captain](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Captain.png)
+![Captain](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Captain.png)
 
 隊長升級從兵而走法跟王一樣。與眾不同，許多隊長可能同時存在，因為它的身份是小棋子。
 
 ### 士 | Duchess | Ferz (F) 
 
-![Duchess](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Duchess.png)
+![Duchess](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Duchess.png)
 
 士升變到王后，它只能在後被吃掉之後能存在與棋手手中的士。士的移動為斜向一格。別忘記，士不能升為後，如果棋手已經擁有一枚後（在幕府棋中，一夫多妻是非法的!）。
 

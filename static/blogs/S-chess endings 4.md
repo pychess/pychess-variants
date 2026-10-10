@@ -10,12 +10,12 @@
 </br>
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/pexels-renato-conti-2677849.jpg" alt="">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/pexels-renato-conti-2677849.jpg" alt="">
 </p>
 
 My article this month is dedicated to Noam D. Elkies. He inspired me greatly by cooking my Elephant study. In my first Endgame article I gave the following study and comments: "What is interesting is that the Elephant can win against the Rook without necessarily "forcing" the defender to the last rank. The diagram position features the pattern that I have in mind:
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings4/diagram1.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings4/diagram1.png" width="336" height="336">
 
 Study Seirawan 2007
 
@@ -35,7 +35,7 @@ Noam however was not finished. Once again we start with the original study and h
 
 "Meanwhile, while pondering the position again a day or two later, I noticed that White seems to win after all with a different checking sequence: **1.Ec2+** **Ka4** **2.Ec5+!** **Kb4** (or _2...Ka3_ _3.Ec4+_ transposing)
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings4/diagram2.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings4/diagram2.png" width="336" height="336">
 
 **3.Ee4+!** Now **3...Ka3** allows **4.Ec4+** **Ka2** **5.Ec2+**, when Black no longer has the stalemate trick and is either fatally forked after: **5...Kb1** **6.Ed2+** or mated after: **5...Rb2** **6.Ec3+** **Ka1** **7.Ea3+!** (_Ec1+?_) **Ra2** **8.Eb3**, checkmate. While **3...Kb5** allows the familiar fork **4.Ed4+**, and **3...Ka5** **4 Ec4+**, gives Black the Hobson's choice between the same fork and **4...Ka6** **5 Ec5+**, winning.
 
@@ -43,7 +43,7 @@ As you can imagine I was elated with the cooks as well as the save! The study ha
 
 "I suspect now that this King + Elephant versus King + Rook ending must be generally won by the Elephant side, because even without the White King there are so many forking possibilities. An amusing example:"
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings4/diagram3.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings4/diagram3.png" width="336" height="336">
 
 Study Noam D. Elkies 2007
 

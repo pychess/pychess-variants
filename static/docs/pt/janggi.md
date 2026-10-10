@@ -1,6 +1,6 @@
-# ![Janggi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Janggi.svg) Janggi
+# ![Janggi](https://github.com/pychess/pychess-variants/blob/master/static/icons/Janggi.svg) Janggi
 
-![Boards](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Boards.png)
+![Boards](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Boards.png)
 
 *Janggi* (장기, “*chahng-ghee*”), ou Xadrez Coreano, é um jogo de tabuleiro clássico proveniente da Coreira. Este jogo é derivado do Xiangqi e é extremamente semelhante a este.
 
@@ -28,41 +28,41 @@ Algumas peças têm movimentos especiais usando as diagonais dentro de qualquer 
 
 ### Rei
 
-![Kings](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Kings.png) 
+![Kings](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Kings.png)
 
 O **Rei** (também conhecido por **general** o seu nome chinês) está restringido apenas ao palácio e pode-se mover dentro das linhas do mesmo. Isto significa que, quando o Rei está no centro, este tem 8 possíveis lances. No entanto, em qualquer outro sítio dentro do Palácio, só tem 3 lances possíveis.
 
 *Regra especial:* Quando um Rei se encontra na mesma linha de fogo do outro Rei, isto é chamado de *bikjang*. O outro jogador terá então de mover o seu Rei para fora desta linha ou jogo se dará por terminado. Veja as regras abaixo que explicam o bikjang.
 
-![King and advisor](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Palace.png)
+![King and advisor](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Palace.png)
 
 ### Assistente
 
-![Advisors](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Advisors.png) 
+![Advisors](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Advisors.png)
 
 O **Assistente** (também conhecido como **guarda** o seu nome ocidental) move-se exactamente como o Rei, isto é um espaço por cada linha dentro do Palácio. Tal como o Rei, o Assistente está restringido ao Palácio.
 
 ### Cavalo
 
- ![Horses](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Horses.png)
+ ![Horses](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Horses.png)
  
- ![Horse movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/HorseDiagram.png)
+ ![Horse movement](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/HorseDiagram.png)
 
 O **Cavalo** move-se exatamente como o cavalo do Xadrez. No entanto em vez do pensamento normal "dois passos na ortogonal, e um para o lado", é melhor pensarmos como se fosse *um passo na ortogonal, diagonal para a frente em qualquer direção*, em forma de Y. Isto porque o Cavalo **pode ser bloqueado** se tiver uma peça adjacente a esta. Isto irá bloquear o caminho aos dois pontos finais deste Y. Caso este que pode levar a situações em que dois Cavalos se estão a atacar mutuamente, mas apenas um deles pode atacar enquanto o outro está bloqueado. Bons lances tomam partido do bloqueio do Cavalo e limitam o seu movimento. 
 
 ### Elefante
 
- ![Elephants](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Elephants.png)
+ ![Elephants](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Elephants.png)
  
- ![Elephant movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/ElephantDiagram.png)
+ ![Elephant movement](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/ElephantDiagram.png)
 
 O **Elefante** é muito diferente do descrito em Xiangqi. O seu movimento é semelhante ao do Cavalo pelo facto de se mover em forma de Y. Enquanto o cavalo se move um passo na ortogonal e um passo na diagonal, o elefante move-se um passo na ortogonal e após isto *dois* passos na diagonal. O Elefante, tal como o Cavalo pode ser bloqueado por qualquer peça no seu caminho.
 
 ### Biga
 
- ![Chariots](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Chariots.png)
+ ![Chariots](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Chariots.png)
  
- ![Chariot movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/ChariotDiagram.png)
+ ![Chariot movement](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/ChariotDiagram.png)
 
 A **Biga** (também conhecida como **Torre** o seu nome ocidental) move-se exatamente como a torre do Xadrez: qualquer número de linhas na ortogonal. Esta é a peça mais valiosa do jogo, excluindo o Rei.
 
@@ -70,9 +70,9 @@ A **Biga** (também conhecida como **Torre** o seu nome ocidental) move-se exata
 
 ### Canhão
 
-![Cannons](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Cannons.png)
+![Cannons](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Cannons.png)
 
-![Cannon movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/CannonDiagram.png)
+![Cannon movement](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/CannonDiagram.png)
 
 O **Canhão** é um bocado diferente do Xiangqi. Move-se na ortogonal como a Biga, no entanto este precisa de um interveniente (chamada a "mira") a fim de pular esta peça. Após isto, o canhão pode capturar qualquer peça que esteja nesta linha de fogo. Ao contrário do Xiangqi, o Canhão não se pode movimentar sem mira.
 
@@ -82,9 +82,9 @@ O **Canhão** é um bocado diferente do Xiangqi. Move-se na ortogonal como a Big
 
 ### Peão
 
-![Pawns](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Pawns.png)
+![Pawns](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Pawns.png)
 
-![Pawn movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/PawnDiagram.png)
+![Pawn movement](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/PawnDiagram.png)
 
 O **Peão** (também denominado de **soldado** o seu nome chinês) movimenta-se e captura uma casa em frente ou numa casa em cada lado. Este é diferente do Peão em Xiangqi, que necessita atravessar o Rio primeiro antes de se mover para os lados.
 
@@ -162,9 +162,9 @@ Além das regras acima descritas...
 
 * A estrutura dos Peões é muito importante. Porque os peões conseguem se mover para os lados, estes são os melhores a proteger outros em pares. A linha de três peões é uma formação fraca (porque estes ficam restringidos). Por cause disto não é aconselhável avançar peões se possível.
 
-![Bad Pawn Formations](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/BadPawns.png)
+![Bad Pawn Formations](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/BadPawns.png)
 
 * Relativamente à escolha da posição dos Cavalos e Elefantes, uma forma de pensar será como os seus Elefantes estão posicionados, e isto tem grande impacto na abertura. Um elefante próximo da beira é capaz de se mover para o centro entre dois Peões. No entanto, um elefanto próximo do centro é bloqueado por peões (no entanto é capaz de os proteger).
 * Após isto, a posição do teu elefante determina qual a **beira a ser aberta**. Por exemplo, quando se joga uma posição onde o elefante da esquerda pode avançar (e o elefante do adversário também está na beira), irás querer avançar o teu peão da esquerda para o lado, abrindo assim a coluna da Biga/Torre, porque se o Peão adversário defender, este irá perder a sua Biga/Torre. De notar que se o adversário tivesse dois elefantes próximos do centro, então irás querer abrir a beira do outro lado. 
 
-![Activating the elephant and chariot](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/ActiveElephant.png)
+![Activating the elephant and chariot](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/ActiveElephant.png)

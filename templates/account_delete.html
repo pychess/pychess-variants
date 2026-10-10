@@ -12,20 +12,13 @@
     are archived, and authored team updates are erased. Public game archives may remain for
     integrity and anti-abuse reasons.
     </p>
-    <form class="account-action__form" method="post" action="/account/delete">
-        <div class="account-action__field">
-            <label class="account-action__label" for="account-delete-confirm-username">Type your username to confirm</label>
-            <input id="account-delete-confirm-username" class="account-action__input" type="text" name="confirm_username" required>
-        </div>
-        <label class="account-action__check">
-            <input type="checkbox" name="understand" required>
-            I understand this action is not reversible.
-        </label>
-        <div class="account-action__actions">
-            <button class="account-action__button account-action__button--danger" type="submit">Delete my account</button>
-            <a class="account-action__button account-action__button--secondary" href="/account/close">Need a reversible close only?</a>
-        </div>
-    </form>
+    <p>Account deletion is handled by site admins so that we can verify your identity before irreversible erasure.
+    <a href="/contact">Contact site admins</a> and include your PyChess username to request deletion.
+    Being signed in or approving an OAuth sign-in does not by itself authorize deletion.</p>
+    <div class="account-action__actions">
+        <a class="account-action__button" href="/contact">Request account deletion</a>
+        <a class="account-action__button account-action__button--secondary" href="/account/close">Need a reversible close only?</a>
+    </div>
 </section>
 </div>
 </main>

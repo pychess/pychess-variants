@@ -1,6 +1,6 @@
-# ![Chess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/chess.svg) Chess
+# ![Chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/chess.svg) Chess
 
-![Chess board](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Chess.png?raw=true)
+![Chess board](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chess.png?raw=true)
 
 If you are familiar with chess, then you probably didn't come here to learn the rules of chess. Please try some variants!
 

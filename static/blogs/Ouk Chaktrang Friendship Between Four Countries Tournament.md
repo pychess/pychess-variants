@@ -12,7 +12,7 @@
 </div>
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/four-countries.jpg" width="640">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/four-countries.jpg" width="640">
 </p>
 
 Hello everyone,
@@ -26,8 +26,8 @@ In addition, this tournament also serves as an introduction to the Ouk Chaktrang
 As of today, 30 November 2022, the tournament has concluded. In terms of the individual results, the Cambodian champion [Bora Chheav](/@/CAM_Bora_Chheav) secured the 1st place with his spectacular performance, winning five of his seven games and drawing the other two. Meanwhile, Thailand's Makruk Grandmasters [Worathep Timsri](/@/THA_Worathep_Timsri) and [Warot Kananub](/@/THA_Warot_Kananub) grabbed the 2nd and 3rd place with their amazing skills. However, in terms of team results, Team Thailand, getting the same score as Team Cambodia, has edged the 1st place by number of wins, the first tiebreak.
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/four-countries-score-individual.png" width="450">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/four-countries-score-team.png" width="450">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/four-countries-score-individual.png" width="450">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/four-countries-score-team.png" width="450">
 </p>
 
 [Scoresheet](https://docs.google.com/spreadsheets/d/1UP32OrT7hPqe_yzHBWQKOpMBMd5mL70oQ1adPVkcsQ0)
@@ -82,5 +82,5 @@ Round 7
 [Phan Trọng Bình vs Warot Kananub](https://www.pychess.org/yqR0Og7I)  
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/icons/cambodian.svg" width="25" height="25">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/icons/cambodian.svg" width="25" height="25">
 </p>

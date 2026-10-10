@@ -267,7 +267,7 @@ class StudyWebsocketTestCase(unittest.IsolatedAsyncioTestCase):
         chapter_doc = await self.db.study_chapter.find_one({"_id": CHAPTER_ID})
         assert chapter_doc is not None
         chapter = StudyChapter.from_document(chapter_doc)
-        stale_token = chapter_snapshot_token(chapter)
+        stale_token = await chapter_snapshot_token(chapter)
         # Snapshot verification must cover persisted content that is allowed to
         # change without the collaborative mutation revision (Fishnet analysis is
         # the production example).
@@ -276,7 +276,7 @@ class StudyWebsocketTestCase(unittest.IsolatedAsyncioTestCase):
         )
         current_doc = await self.db.study_chapter.find_one({"_id": CHAPTER_ID})
         assert current_doc is not None
-        expected = chapter_snapshot_token(StudyChapter.from_document(current_doc))
+        expected = await chapter_snapshot_token(StudyChapter.from_document(current_doc))
         current_study = await load_study(cast(Any, self.app_state), STUDY_ID)
         assert current_study is not None
         expected_room = study_snapshot_token(
@@ -341,7 +341,7 @@ class StudyWebsocketTestCase(unittest.IsolatedAsyncioTestCase):
         study = await load_study(cast(Any, self.app_state), STUDY_ID)
         assert study is not None
         previews = await chapter_previews(cast(Any, self.app_state), STUDY_ID)
-        chapter_token = chapter_snapshot_token(chapter)
+        chapter_token = await chapter_snapshot_token(chapter)
         room_token = study_snapshot_token(study, previews)
 
         await self.db.study_chapter.update_one({"_id": CHAPTER_ID}, {"$set": {"mode": "practice"}})
@@ -350,13 +350,13 @@ class StudyWebsocketTestCase(unittest.IsolatedAsyncioTestCase):
         changed_chapter = StudyChapter.from_document(changed_doc)
         changed_previews = await chapter_previews(cast(Any, self.app_state), STUDY_ID)
 
-        self.assertNotEqual(chapter_token, chapter_snapshot_token(changed_chapter))
+        self.assertNotEqual(chapter_token, await chapter_snapshot_token(changed_chapter))
         self.assertNotEqual(room_token, study_snapshot_token(study, changed_previews))
 
     async def test_chapter_sync_detects_room_change_without_chapter_change(self) -> None:
         chapter_doc = await self.db.study_chapter.find_one({"_id": CHAPTER_ID})
         assert chapter_doc is not None
-        chapter_token = chapter_snapshot_token(StudyChapter.from_document(chapter_doc))
+        chapter_token = await chapter_snapshot_token(StudyChapter.from_document(chapter_doc))
         study = await load_study(cast(Any, self.app_state), STUDY_ID)
         assert study is not None
         old_room_token = study_snapshot_token(

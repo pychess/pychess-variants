@@ -1,4 +1,4 @@
-# ![Crazyhouse](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Crazyhouse.svg) Crazyhouse
+# ![Crazyhouse](https://github.com/pychess/pychess-variants/blob/master/static/icons/Crazyhouse.svg) Crazyhouse
 
 O Crazyhouse é uma variante de Xadrez muito popular onde as peças capturadas podem ser colocadas de volta no tabuleiro como suas (tal como no Shogi). Isto leva a que este seja um jogo diferente do Xadrez normal. O lado competitivo também existe no Crazyhouse.
 

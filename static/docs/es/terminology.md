@@ -70,24 +70,24 @@ Las partidas jugadas de una vez usan un reloj principalmente que normalmente va 
 
 **Ataque doble ("Fork")** - Atacar dos piezas al mismo tiempo. Los Caballos suelen hacer este tipo de táctica en todas las variantes. En variantes de soltar, las Torres y Alfiles también son un poco más capaces de hacer ataques dobles, sobre todo los Alfiles.
 
-![Ejemplo de ataque doble](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Fork.png)
+![Ejemplo de ataque doble](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Fork.png)
 
 **Clavada** - Atacar una pieza de tal forma que no se puede mover, pues de hacerlo expondría a otra pieza más valiosa detrás (normalmente el Rey).
 
-![Ejemplo de clavada](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Pin.png)
+![Ejemplo de clavada](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Pin.png)
 
 **Enfilada** - Similar a una clavada, se trata de atacar dos piezas en una misma línea, pero con la pieza más valiosa enfrente. La pieza más valiosa es forzada a moverse, permitiendo al atacante capturar la segunda pieza ahora expuesta.
 
-![Ejemplo de enfilada](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Skewer.png)
+![Ejemplo de enfilada](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Skewer.png)
 
 **Ataque descubierto** - Una de tus piezas estaría atacando a una pieza enemiga desde su posición, pero el ataque está bloqueado por una pieza propia. Moviendo esta pieza que bloquea (normalmente generando con ella una segunda amenaza), se abre el ataque de la primera, y se denomina ataque descubierto o ataque a la descubierta. Los ataques a la descubierta son especialmente frecuentes en Xiangqi.
 
-![Ejemplo de ataque descubierto](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Discovery.png)
+![Ejemplo de ataque descubierto](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Discovery.png)
 
 En esta situación, mover el Caballo para amenazar a la Dama también descubre un jaque al Rey con la Torre. Dado que las Negras deben responder al jaque, las Blancas serán capaces de capturar la Dama.
 
 **Sacrificio** - Perder material a cambio de obtener una ventaja en la posición.
 
-![Ejemplo de sacrificio](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Sacrifice.png)
+![Ejemplo de sacrificio](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Sacrifice.png)
 
 En este ejemplo, si la Dama Blanca captura al Caballo Negro, puede ser capturada fácilmente por un Peón. Sin embargo, esto permitiría al Caballo dar jaque mate (flecha Roja). La Dama ha sido sacrificada para obtener una recompensa mayor.

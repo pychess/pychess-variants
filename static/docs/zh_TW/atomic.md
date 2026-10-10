@@ -1,4 +1,4 @@
-# ![Atomic](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Atomic.svg) 核象棋 Atomic
+# ![Atomic](https://github.com/pychess/pychess-variants/blob/master/static/icons/Atomic.svg) 核象棋 Atomic
 
 _還在慢慢將軍?用炸的炸死對方的王!_
 

@@ -1,6 +1,6 @@
-# ![capablanca](https://github.com/gbtami/pychess-variants/blob/master/static/icons/capablanca.svg) Scacchi Capablanca
+# ![capablanca](https://github.com/pychess/pychess-variants/blob/master/static/icons/capablanca.svg) Scacchi Capablanca
 
-![Capablanca setup](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Capablanca.png)
+![Capablanca setup](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Capablanca.png)
 
 Gli scacchi Capablanca (o scacchi di Capablanca) furono creati dal campione del mondo di scacchi José Raúl Capablanca negli anni ´20. Si gioca su una scacchiera 10 x 8 e aggiunge due nuovi pezzi ibridi.
 
@@ -14,11 +14,11 @@ Ci sono alcune varianti che hanno posizioni di partenza diverse. Per esempio, su
 
 ### Cardinale
 
-![Archbishop](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
+![Archbishop](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
 
 Vari simboli utilizzati per il Cardinale. (Nota che il Falco è utilizzato solo per gli scacchi Seiwaran)
 
-![Archbishop moves](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
+![Archbishop moves](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
 
 Il Cardinale (in notazione inglese "A") è un pezzo ibrido che unisce le mosse dell'**Alfiere** e del **Cavallo**. Un nome generico con cui è conosciuto questo pezzo eterodosso nell'ambito delle varianti è "principessa" ma si può trovare con molti altri nomi.
 
@@ -30,11 +30,11 @@ Il Cardinale è considerato un po' più forte di una Torre, ma di minore valore 
 
 ### Maresciallo
 
-![Chancellor](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
+![Chancellor](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
 
 Vari simboli utilizzati per il Maresciallo. (Nota che l'Elefante è utilizzato solo per gli scacchi Seiwaran)
 
-![Chancellor moves](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
+![Chancellor moves](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
 
 Il Maresciallo (in notazione inglese "C") è un pezzo ibrido che unisce le mosse della **Torre** e del **Cavallo**. Nel contesto delle varianti, questo pezzo eterodosso è conosciuto come "imperatrice" ma si può trovare con molti altri nomi.
 

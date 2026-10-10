@@ -1,6 +1,6 @@
-# ![Ataxx](https://github.com/gbtami/pychess-variants/blob/master/static/icons/ataxx.svg) Ataxx
+# ![Ataxx](https://github.com/pychess/pychess-variants/blob/master/static/icons/ataxx.svg) Ataxx
 
-![Ataxx Board](https://github.com/gbtami/pychess-variants/blob/master/static/images/Ataxx.png?raw=true)
+![Ataxx Board](https://github.com/pychess/pychess-variants/blob/master/static/images/Ataxx.png?raw=true)
 
 Ataxx is a strategy video game published in arcades by Leland Corporation in 1990. Two players compete on a seven-by-seven square grid. The object of the game is for a player to have a majority of the pieces on the board at the end of the game, by converting as many of their opponent's pieces as possible. In a single-player game, the opponents are "bio-invaders from a different dimension."
 

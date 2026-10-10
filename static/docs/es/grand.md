@@ -1,7 +1,7 @@
 
-# ![Grand](https://github.com/gbtami/pychess-variants/blob/master/static/icons/grand.svg) Grand Chess
+# ![Grand](https://github.com/pychess/pychess-variants/blob/master/static/icons/grand.svg) Grand Chess
 
-![Grand Chess setup](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Grand.png)
+![Grand Chess setup](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Grand.png)
 
 Grand Chess fue creado por Christian Freeling en 1984 y es una de las variantes de ajedrez con mejor reputación de acuerdo al sitio *Chess Variants*
 
@@ -20,11 +20,11 @@ A mayores de las piezas y posición inicial, hay otras tres diferencias signitic
 
 ### Cardenal
 
-![Cardenal](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
+![Cardenal](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
 
 Varios símbolos son usados para el Cardenal. (Nótese que el Halcón solo se usa en el ajedrez Seirawan)
 
-![Movimientos del Cardenal](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
+![Movimientos del Cardenal](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
 
 El Cardenal (A en notación inglesa) es una pieza híbrida que combina los movimientos del **Alfil** y el **Caballo**. En el ámbito de las piezas de fantasía, esta pieza se conoce con el nombre genérico de Princesa, pero tiene también otras denominaciones en diferentes variantes.
 
@@ -36,11 +36,11 @@ Se considera que el valor del Cardenal es ligeramente superior al de una Torre, 
 
 ### Mariscal
 
-![Mariscal](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
+![Mariscal](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
 
 Varios símbolos son usados para el Mariscal. (Nótese que el Elefante solo se usa en el ajedrez Seirawan)
 
-![Movimientos del Mariscal](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
+![Movimientos del Mariscal](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
 
 El Mariscal (C en notación inglesa) es una pieza híbrida que combina los movimientos de la **Torre** y el **Caballo**. En el ámbito de las piezas de fantasía, esta pieza se conoce con el nombre genérico de Emperatriz, pero tiene también otras denominaciones en diferentes variantes.
 

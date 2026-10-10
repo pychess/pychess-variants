@@ -1,4 +1,4 @@
-# ![Hoppelpoppel](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Hoppelpoppel.svg) Hoppel-Poppel
+# ![Hoppelpoppel](https://github.com/pychess/pychess-variants/blob/master/static/icons/Hoppelpoppel.svg) Hoppel-Poppel
 
 Hoppel-Poppel es una modesta variante originaria de Alemania.
 

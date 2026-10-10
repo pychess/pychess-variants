@@ -1,4 +1,4 @@
-# ![960 ikon](https://github.com/gbtami/pychess-variants/blob/master/static/icons/960.svg) Sakk960 (Chess960)
+# ![960 ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/960.svg) Sakk960 (Chess960)
 
 A Sakk960, vagy más néven *Fischer random sakk* egy sakkváltozat, amit Bobby Fischer hozott létre azért, hogy a játékot még inkább variálhatóvá tegye és hogy az ne függjön annyira a megnyitások memorizálásától. Ez a variáns igazán jól megkülönbözteti azokat a játékosokat, akik magas szintre fejlesztették a stratégiai és taktikai tudásukat, azoktól, akik leginkább a megnyitások memorizálására támaszkodnak. Összesen 960-féle megengedett alapállás létezik, ezért használják erre a sakkváltozatra a Sakk960 megnevezést.
 

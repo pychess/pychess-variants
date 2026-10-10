@@ -95,6 +95,8 @@ VARIANT_NAME_ERROR = (
     "and contain only lowercase letters, digits, hyphens, and underscores."
 )
 PYCHESS_PIECES_METADATA_KEY = "pychesspieces"
+# XBoard/WinBoard presentation and protocol settings do not change gameplay.
+CATALOGUED_NON_RULE_OPTIONS = frozenset({"varianttemplate", "piecetochartable", "pocketsize"})
 CATALOGUED_PIECE_FAMILY_OVERRIDES = frozenset(
     {
         "amazons",
@@ -183,6 +185,7 @@ CATALOGUED_BOARD_FAMILY_DIMENSIONS: dict[str, tuple[int, int]] = {
     "shogi9x9": (9, 9),
     "shogi7x7": (7, 7),
     "shogi7x9": (7, 9),
+    "shogi6x6": (6, 6),
     "shogi5x5": (5, 5),
     "shogi5x6": (5, 6),
     "shogi3x4": (3, 4),
@@ -451,6 +454,21 @@ FSF_CATALOGUED_BUILTIN_VARIANTS: Mapping[str, Mapping[str, Any]] = {
         "baseVariant": "",
         "clientVariant": "chess",
         "rulesArrowing": True,
+    },
+    "judkins": {
+        "displayName": "Judkins Shogi",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Judkins_shogi"),
+        "baseVariant": "",
+        "clientVariant": "shogi",
+        "boardFamilyOverride": "shogi6x6",
+        "captureToHand": True,
+        "promotionType": "shogi",
+        "promotionRoles": ("p", "n", "s", "b", "r"),
+        "promotionOrder": ("+", ""),
+        "showPromoted": True,
+        "legalMovesNeedHistory": True,
+        "nFoldIsDraw": True,
     },
     "kinglet": {
         "displayName": "Kinglet",
@@ -958,14 +976,6 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
         "baseVariant": "",
         "clientVariant": "chess",
         "reviewNotes": "Asymmetric goal variant; review result handling and piece identities.",
-    },
-    "judkins": {
-        "displayName": "Judkins Shogi",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Judkins_shogi"),
-        "baseVariant": "",
-        "clientVariant": "shogi",
-        "reviewNotes": "Shogi-family drops/promotions; review piece assets and byo UI.",
     },
     "karouk": {
         "displayName": "Kar Ouk",
@@ -1535,6 +1545,40 @@ def extract_variant_base_name(ini: str) -> str:
 
     suffix = matches[0].suffix.strip()
     return suffix[1:].strip() if suffix.startswith(":") else ""
+
+
+def _ensure_catalogued_rule_changes(ini: str) -> None:
+    """Reject cosmetic aliases of playable site variants before loading or saving them.
+
+    This checks for gameplay overrides, not semantic equivalence of arbitrary
+    rules. Engine variants not yet offered on the site may still be introduced
+    through an inherited definition.
+    """
+    base = extract_variant_base_name(ini)
+    playable_names = {
+        variant.uci_variant: variant.translated_name
+        for variant in ServerVariants
+        if not variant.chess960
+    }
+    playable_names.update(
+        {
+            name: str(metadata["displayName"])
+            for name, metadata in FSF_CATALOGUED_BUILTIN_VARIANTS.items()
+        }
+    )
+    display_name = playable_names.get(base)
+    if display_name is None:
+        return
+
+    for line in ini.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith(("#", ";", "[")):
+            continue
+        key, separator, _value = stripped.partition("=")
+        if separator and key.strip().casefold() not in CATALOGUED_NON_RULE_OPTIONS:
+            return
+
+    raise web.HTTPBadRequest(text=f"This variant is already playable on PyChess as {display_name}.")
 
 
 def replace_variant_section_name(ini: str, new_name: str) -> str:
@@ -4125,6 +4169,11 @@ async def check_catalogued_variant_rules(request: web.Request) -> web.Response:
 
     name = extract_variant_name(ini)
     catalogued_pychess_piece_roles(ini)
+    existing = app_state.catalogued_variants.get(current_name) if current_name else None
+    if existing is None or _strip_pychess_pieces_metadata(ini) != _strip_pychess_pieces_metadata(
+        str(existing.get("ini") or "")
+    ):
+        _ensure_catalogued_rule_changes(ini)
     await ensure_catalogued_variant_name_available(app_state, name, current_name=current_name)
     start_fen = await check_catalogued_ini_without_mutating_server(ini, name)
     return json_response({"ok": True, "name": name, "startFen": start_fen})
@@ -4415,7 +4464,8 @@ def _fsf_metadata_string_list(metadata: Mapping[str, Any], key: str) -> list[str
     result: list[str] = []
     for item in items:
         item = item.strip().lower()
-        if not item or item in seen:
+        # An empty promotion suffix is the explicit "do not promote" choice.
+        if (not item and key != "promotionOrder") or item in seen:
             continue
         seen.add(item)
         result.append(item)
@@ -4571,6 +4621,7 @@ def _build_fsf_builtin_doc(
         client_variant=str(metadata.get("clientVariant") or ""),
         premove_variant=str(metadata.get("premoveVariant") or ""),
         piece_family_override=str(metadata.get("pieceFamilyOverride") or ""),
+        board_family_override=str(metadata.get("boardFamilyOverride") or ""),
     )
     doc["references"] = references
     doc["rulesIni"] = str(metadata.get("rulesIni") or "").strip()
@@ -4596,6 +4647,7 @@ def _fsf_builtin_synced_fields(doc: Mapping[str, Any]) -> dict[str, Any]:
         "clientVariant",
         "premoveVariant",
         "pieceFamilyOverride",
+        "boardFamilyOverride",
         "enabled",
         "startFen",
         "width",
@@ -4715,6 +4767,7 @@ async def upload_catalogued_variant(request: web.Request) -> web.Response:
     # Check uniqueness before asking FSF to load the config. load_variant_config()
     # is intentionally global and should not be called for a duplicate upload.
     name = extract_variant_name(ini)
+    _ensure_catalogued_rule_changes(ini)
     await ensure_catalogued_variant_name_available(app_state, name)
     ensure_catalogued_display_name_available(display_name, variant_name=name)
     await check_catalogued_ini_without_mutating_server(ini, name)
@@ -5401,6 +5454,8 @@ async def update_catalogued_variant(request: web.Request) -> web.Response:
     fsf_rules_changed = _strip_pychess_pieces_metadata(ini) != _strip_pychess_pieces_metadata(
         existing_ini
     )
+    if fsf_rules_changed or new_name != old_name:
+        _ensure_catalogued_rule_changes(ini)
     if (fsf_rules_changed or new_name != old_name) and await _has_games(app_state, old_name):
         raise web.HTTPConflict(
             text="This variant already has games. Its rules are locked; clone it to make a changed version."
@@ -5601,6 +5656,7 @@ async def clone_catalogued_variant(request: web.Request) -> web.Response:
     if _is_fsf_builtin_catalogued_doc(doc):
         raise web.HTTPConflict(text="Fairy-Stockfish built-in catalogue entries cannot be cloned.")
 
+    _ensure_catalogued_rule_changes(str(doc["ini"]))
     await _ensure_catalogued_variant_quota(app_state, username)
 
     for n in range(2, 100):

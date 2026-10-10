@@ -1,6 +1,6 @@
-# ![Sittuyin](https://github.com/gbtami/pychess-variants/blob/master/static/icons/sittuyin.svg) Sittuyin
+# ![Sittuyin](https://github.com/pychess/pychess-variants/blob/master/static/icons/sittuyin.svg) Sittuyin
 
-![Sittuyin](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/Sittuyin.png?raw=true)
+![Sittuyin](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Sittuyin.png?raw=true)
 
 *Sittuyin*, or Burmese Chess is a classic board game native to Myanmar and is very similar to Makruk. The game is played in Myanmar, and although western chess is more popular there, there are efforts to revitalize the game. The pieces have the same movements as Makruk (Thai Chess), but the rules are slightly different. The game is plenty of fun in its own right, with its own balance/dynamics. The slightly slower pace can provide a good way to cultivate patience and hone strategic thinking.
 
@@ -17,13 +17,13 @@ The general rules are extremely similar to Chess, so this guide will focus on th
 
 ### King
 
-![King](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/King.png?raw=true) 
+![King](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/King.png?raw=true)
 
 The king moves exactly the same as in chess.
 
 ### General
 
-![General](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/General.png?raw=true)
+![General](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/General.png?raw=true)
 
 Unlike the queen in chess, the general is a relatively weak piece that only moves one space diagonally. Additional generals are gained through pawn promotion.
 
@@ -35,7 +35,7 @@ For the disadvantaged side, a general is a good decoy that must be trapped and c
 
 ### Elephant
 
-![Elephant](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/Elephant.png?raw=true)
+![Elephant](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Elephant.png?raw=true)
 
 The elephant moves one step diagonally or one step forward, just like the silver general in shogi.
 
@@ -47,7 +47,7 @@ Elephants can sometimes prove slow/awkward to maneuver or retreat. It is therefo
 
 ### Horse
 
- ![Horse](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/Horse.png?raw=true)
+ ![Horse](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Horse.png?raw=true)
 
 The horse moves exactly the same as a knight in chess.
 
@@ -55,7 +55,7 @@ The horses are not "minor pieces" in Sittuyin. They are major forces. Centralize
 
 ### Chariot
 
- ![Chariot](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/Chariot.png?raw=true)
+ ![Chariot](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Chariot.png?raw=true)
 
 The chariot moves exactly the same as a rook in chess.
 
@@ -63,7 +63,7 @@ In the absence of mighty chess queens, the chariots dominate the board. Lateral 
 
 ### Feudal lord
 
-![Pawn](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/Pawn.png?raw=true)
+![Pawn](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Pawn.png?raw=true)
 
 The pawn, or feudal lord, moves and attacks the same as a pawn in chess. However, there is no double-step first move. 
 

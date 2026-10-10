@@ -716,11 +716,11 @@ export function initTournamentForm(): void {
     }
     form.addEventListener('submit', async event => {
         event.preventDefault();
-        const submitter = form.querySelector("button[type='submit'], .submit") as HTMLButtonElement | null;
+        const submitter = event.submitter instanceof HTMLButtonElement ? event.submitter : null;
         if (submitter) submitter.disabled = true;
         try {
-            const response = await fetch(form.action, {
-                method: form.method || 'POST',
+            const response = await fetch(submitter?.getAttribute('formaction') || form.action, {
+                method: submitter?.getAttribute('formmethod') || form.method || 'POST',
                 body: new FormData(form),
                 credentials: 'same-origin',
             });

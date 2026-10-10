@@ -206,6 +206,7 @@ class PychessGlobalAppState:
     tourney_calendar: list[TournamentCalendarEvent] | None
 
     def __init__(self, app: web.Application):
+        from server_metrics import FullMetricsSnapshot
         from typedefs import db_key
 
         startup = StartupTimer(log, "PychessGlobalAppState.__init__")
@@ -215,6 +216,7 @@ class PychessGlobalAppState:
             self.anon_as_test_users = app[anon_as_test_users_key]
 
             self.shutdown = False
+            self.full_metrics_snapshot = FullMetricsSnapshot()
             self.tournaments_loaded = asyncio.Event()
             self.correspondence_games_loaded = asyncio.Event()
 
@@ -243,6 +245,10 @@ class PychessGlobalAppState:
             self.study_analysis_request_lock = asyncio.Lock()
             self.study_socket_users: dict[str, dict[WebSocketResponse, str]] = {}
             self.background_tasks: set[asyncio.Task[Any]] = set()
+            # Serialize the tiny admission window for realtime game creation.
+            # This prevents two concurrent accepts/AI starts/pairings from both
+            # observing a player as free and creating overlapping live games.
+            self.realtime_game_creation_lock = asyncio.Lock()
             self.game_remove_tasks: dict[str, asyncio.Task[None]] = {}
             self.tournament_remove_tasks: dict[str, asyncio.Task[None]] = {}
             self.tournament_cache_access: dict[str, float] = {}
@@ -294,6 +300,9 @@ class PychessGlobalAppState:
             # fishnet active workers
             self.workers = set()
             self.fishnet_worker_last_seen: dict[str, float] = {}
+            # Optional engine capabilities are timestamped independently because
+            # multiple worker processes may share the same fishnet API key.
+            self.fishnet_worker_capability_last_seen: dict[tuple[str, str], float] = {}
             # fishnet works
             self.fishnet_works = {}
             # Per-work custom variants.ini payloads by sha256. Built-in engine
@@ -432,6 +441,20 @@ class PychessGlobalAppState:
                     from catalogued_variants import init_catalogued_variants
 
                     await init_catalogued_variants(self)
+
+            with startup.phase("load Alice-Stockfish bot account"):
+                alice_stockfish_doc = await self.db.user.find_one({"_id": "Alice-Stockfish"})
+                if alice_stockfish_doc is not None and alice_stockfish_doc.get("title") == "BOT":
+                    alice_stockfish = await self.users.get("Alice-Stockfish")
+                    self.create_background_task(
+                        BOT_task(alice_stockfish, self),
+                        name="BOT-Alice-Stockfish",
+                    )
+                else:
+                    log.debug(
+                        "Alice-Stockfish BOT account is unavailable; Alice AI games will "
+                        "fall back to Random-Mover"
+                    )
 
             # RR arrangement documents refer to challenge invite ids. Restore persisted
             # seeks first so tournament load can distinguish a live graceful-restart

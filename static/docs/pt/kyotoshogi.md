@@ -1,6 +1,6 @@
-# ![Kyoto](https://github.com/gbtami/pychess-variants/blob/master/static/icons/KyotoShogi.svg) Kyoto Shogi
+# ![Kyoto](https://github.com/pychess/pychess-variants/blob/master/static/icons/KyotoShogi.svg) Kyoto Shogi
 
-![Kyoto Shogi](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Kyoto.png)
+![Kyoto Shogi](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Kyoto.png)
 
 O Kyoto shogi é uma variante de Shogi num tabuleiro de 5x5, mas é um bocado diferente do Shogi normal. Foi criado por Tamiya Katsuya em 1976. A grande diferença é que a cada jogada, as peças mudam-se para outras completamente diferentes. A maior parte das combinações entre as peças são piadas relativamente a Kyoto. Por exemplo, o lance (kyo) é adicionado a tokin (to), o que forma a palavra "Kyoto."
 

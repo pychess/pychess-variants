@@ -10,7 +10,7 @@
 </br>
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/ShoShogi.png" width="300" height="150" alt="">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/ShoShogi.png" width="300" height="150" alt="">
 </p>
 
 After our **The Winner Is** post announcing Xiangfu, we kept adding features at full speed.  

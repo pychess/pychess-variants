@@ -29,19 +29,30 @@ class StudyImportTestCase(unittest.IsolatedAsyncioTestCase):
         )
 
     @staticmethod
-    def _node(node_id: str, move: str, *, parent_id: str | None = None, order: int = 0):
+    def _node(
+        node_id: str,
+        move: str,
+        *,
+        parent_id: str | None = None,
+        order: int = 0,
+        variant: str = "chess",
+        initial_fen: str | None = None,
+    ):
+        # Bulk import trusts the browser-normalized chess data. Mirror the client
+        # importer here instead of relying on the server to replay and repair it.
+        board = FairyBoard(variant, initial_fen=initial_fen)
+        san = board.get_san(move)
+        board.push(move)
+        fields = board.fen.split()
         return {
             "id": node_id,
             "parentId": parent_id,
             "order": order,
             "move": move,
-            # These client-computed fields are intentionally wrong. The server import
-            # builder must replay the move and replace them authoritatively.
-            "fen": "client supplied",
-            "turnColor": "white",
-            "check": True,
-            "san": "wrong",
-            "sanSAN": "wrong",
+            "fen": board.fen,
+            "turnColor": "white" if fields[1] == "w" else "black",
+            "check": board.is_checked(),
+            "san": san,
         }
 
     def _chapter(self, move: str, *, name: str, node_id: str) -> dict[str, object]:
@@ -81,7 +92,7 @@ class StudyImportTestCase(unittest.IsolatedAsyncioTestCase):
         ):
             return await study_import_pgn(cast(Any, request))
 
-    async def test_imports_multiple_normalized_chapters_after_server_replay(self) -> None:
+    async def test_imports_multiple_normalized_chapters_from_client(self) -> None:
         response = await self._request(
             {
                 "chapters": [
@@ -114,7 +125,7 @@ class StudyImportTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(imported_comment["x"], "Mary")
         self.assertEqual(imported_comment["y"], "mary")
 
-    async def test_import_persists_parsed_evaluation_after_server_replay(self) -> None:
+    async def test_import_persists_client_parsed_evaluation(self) -> None:
         chapter = self._chapter("e2e4", name="Evaluated", node_id="Node000010")
         tree = cast(dict[str, object], chapter["tree"])
         nodes = cast(list[dict[str, object]], tree["nodes"])
@@ -143,8 +154,13 @@ class StudyImportTestCase(unittest.IsolatedAsyncioTestCase):
         assert study_doc is not None
         self.assertEqual(study_doc["currentChapter"], self.initial_chapter.id)
 
-    async def test_rejects_illegal_later_chapter_without_partial_import(self) -> None:
-        invalid = self._chapter("e2e5", name="Illegal", node_id="Node000004")
+    async def test_rejects_invalid_later_chapter_without_partial_import(self) -> None:
+        invalid = self._chapter("e2e4", name="Invalid", node_id="Node000004")
+        invalid_tree = cast(dict[str, object], invalid["tree"])
+        invalid_nodes = cast(list[dict[str, object]], invalid_tree["nodes"])
+        # Chess legality belongs to the client for bulk import, but cheap payload
+        # consistency remains server-owned. The FEN says Black is to move.
+        invalid_nodes[0]["turnColor"] = "white"
         response = await self._request(
             {
                 "chapters": [
@@ -157,6 +173,42 @@ class StudyImportTestCase(unittest.IsolatedAsyncioTestCase):
         result = json.loads(response.body)
         self.assertIn("Imported chapter 2", result["error"])
         self.assertEqual(await self.db.study_chapter.count_documents({"studyId": self.study.id}), 1)
+
+    async def test_imports_alice_chapter_with_mirror_board_fen(self) -> None:
+        # Position after 1.e4 d6 2.Bc4 Qxd2, immediately before 3.Bb5#.
+        # Alice FEN uses ``|`` inside the placement field to mark pieces that
+        # currently occupy the mirror board. pyffish-alice is authoritative for
+        # this syntax; generic first-class FEN character checks must not reject it.
+        initial_fen = "rnb1kbnr/ppp1pppp/3|p4/8/2|B1|P3/8/PPP|q1PPP/RNBQK1NR w KQkq - 0 3"
+        chapter = {
+            "name": "Alice mate",
+            "variant": "alice",
+            "chess960": False,
+            "initialFen": initial_fen,
+            "orientation": "white",
+            "description": "",
+            "tags": {"Event": "Alice Chess"},
+            "tree": {
+                "nodes": [
+                    self._node(
+                        "NodeAlice1",
+                        "c4b5",
+                        variant="alice",
+                        initial_fen=initial_fen,
+                    )
+                ]
+            },
+        }
+
+        response = await self._request({"chapters": [chapter]})
+        self.assertEqual(response.status, 200)
+
+        doc = await self.db.study_chapter.find_one({"studyId": self.study.id, "name": "Alice mate"})
+        assert doc is not None
+        self.assertEqual(doc["initialFen"], initial_fen)
+        node = next(value for key, value in doc["root"].items() if key != "_")
+        self.assertEqual(node["m"], "c4b5")
+        self.assertEqual(node["s"], "Bb5#")
 
     async def test_accepts_embedded_custom_variant_snapshot_without_live_catalog_entry(
         self,

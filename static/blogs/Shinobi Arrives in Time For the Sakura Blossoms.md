@@ -11,12 +11,12 @@
 </br>
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/icons/shinobi.svg" width="150" height="150">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/icons/shinobi.svg" width="150" height="150">
 </p>
 <br>
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Shinobi.png" width="492" height="589">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Shinobi.png" width="492" height="589">
 </p>
 <br>
 
@@ -27,7 +27,7 @@ Instead, I figure I can give a brief history of the game's creation, something t
 Later, the idea kept swirling in my head despite not being able to playtest it, and I mentally drafted an idea of the game. Originally the theme for the new army was tentatively going to be a "rebel army," which would thematically tie into the ability to drop a bunch of weak pieces all over the place. As the game shaped more, the weak pieces that I used were adopted from Shogi, as they were the most obvious. Similarly, the mechanism for promotion sounded more like Shogi. At this point, I couldn't ignore the homage to Shogi, and I went with a ninja theme, which still makes for sneaky drop-happy army. The titular ninja became the name of the Clan's strongest piece, the archbishop. Actually, I think the name ninja is much better than an archbishop! You can imagine a ninja hopping around (like its horse movement) or charging at an angle with a swift sword strike (bishop movement).
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Ninja.png" width="492" height="492">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Ninja.png" width="492" height="492">
 </p>
 <br>
 
@@ -39,4 +39,4 @@ On another note, as I was alluding to earlier, I think this may be my last varia
 
 Anyways, I hope everyone enjoys Shinobi! Tomato out.
 
-![Shinobi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/shinobi.svg)  *whoosh*
+![Shinobi](https://github.com/pychess/pychess-variants/blob/master/static/icons/shinobi.svg)  *whoosh*

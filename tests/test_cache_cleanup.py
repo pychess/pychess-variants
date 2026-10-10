@@ -16,7 +16,7 @@ from ai import bot_game_tasks
 from aiohttp.test_utils import AioHTTPTestCase
 from clock import BOT_FIRST_MOVE_TIMEOUT, Clock, CorrClock
 from compress import R2C
-from const import ABORTED, BLOCK, CASUAL, FOLLOW, MAX_USER_BLOCK, T_FINISHED
+from const import ABORTED, BLOCK, CASUAL, FOLLOW, MAX_USER_BLOCK, STARTED, T_FINISHED
 from fairy import FairyBoard
 from game import Game
 from mongomock_motor import AsyncMongoMockClient
@@ -433,6 +433,97 @@ class CacheCleanupTestCase(AioHTTPTestCase):
             self.assertTrue(task.done())
         finally:
             ai.BOT_QUEUE_POLL_SECS = original_poll
+
+    async def test_random_mover_selects_current_moves_after_waiting_for_game_lock(self):
+        app_state = get_app_state(self.app)
+        human = User(app_state, username="bot-race-human")
+        app_state.users[human.username] = human
+        bot = app_state.users["Random-Mover"]
+        game = Game(app_state, "bot-lock-race", "chess", "", human, bot, rated=False)
+        app_state.games[game.id] = game
+        bot.game_queues[game.id] = asyncio.Queue()
+        waiting = asyncio.Event()
+        moved = asyncio.Event()
+        attempted_moves = []
+
+        class ObservedLock(asyncio.Lock):
+            async def __aenter__(self):
+                waiting.set()
+                return await super().__aenter__()
+
+        game.move_lock = ObservedLock()
+        await game.move_lock.acquire()
+
+        async def observed_play_move(app_state, user, game, move):
+            attempted_moves.append(move)
+            try:
+                await utils.play_move(app_state, user, game, move)
+            finally:
+                moved.set()
+
+        # Prefer a White move when given the old list, making the race fail
+        # deterministically instead of depending on random.choice().
+        def choose_move(moves):
+            return "d2d4" if "d2d4" in moves else moves[0]
+
+        task = None
+        try:
+            with (
+                patch("ai.play_move", side_effect=observed_play_move),
+                patch("ai.random.choice", side_effect=choose_move),
+            ):
+                await bot.event_queue.put(game.game_start)
+                task = await asyncio.wait_for(self._wait_for_bot_task(game.id), timeout=1)
+                # Bots also receive their own gameState events. Such an event
+                # can be consumed while the next human move holds the lock.
+                await bot.game_queues[game.id].put(game.game_state)
+                await asyncio.wait_for(waiting.wait(), timeout=1)
+                await game.play_move("e2e4", clocks=[300000, 300000], ply=1)
+                current_moves = game.board.legal_moves()
+                game.move_lock.release()
+                await asyncio.wait_for(moved.wait(), timeout=1)
+
+                self.assertEqual(len(attempted_moves), 1)
+                self.assertIn(attempted_moves[0], current_moves)
+                self.assertEqual(game.ply, 2)
+                self.assertEqual(game.status, STARTED)
+                self.assertEqual(game.result, "*")
+        finally:
+            if game.move_lock.locked():
+                game.move_lock.release()
+            game.status = ABORTED
+            await bot.game_queues[game.id].put(game.game_end)
+            if task is not None:
+                await asyncio.wait_for(task, timeout=1)
+
+    async def test_random_mover_ignores_opponent_turn_before_reading_legal_moves(self):
+        app_state = get_app_state(self.app)
+        human = User(app_state, username="bot-turn-human")
+        app_state.users[human.username] = human
+        bot = app_state.users["Random-Mover"]
+        game = Game(app_state, "bot-opponent-turn", "chess", "", human, bot, rated=False)
+        app_state.games[game.id] = game
+        bot.game_queues[game.id] = asyncio.Queue()
+        processed = asyncio.Event()
+
+        class ObservedLock(asyncio.Lock):
+            async def __aexit__(self, *args):
+                await super().__aexit__(*args)
+                processed.set()
+
+        game.move_lock = ObservedLock()
+        await bot.event_queue.put(game.game_start)
+        task = await asyncio.wait_for(self._wait_for_bot_task(game.id), timeout=1)
+        try:
+            with patch.object(game.board, "legal_moves") as legal_moves:
+                await bot.game_queues[game.id].put(game.game_state)
+                await asyncio.wait_for(processed.wait(), timeout=1)
+                legal_moves.assert_not_called()
+                self.assertEqual(game.ply, 0)
+        finally:
+            game.status = ABORTED
+            await bot.game_queues[game.id].put(game.game_end)
+            await asyncio.wait_for(task, timeout=1)
 
     async def test_bot_task_ignores_invalid_event_queue_json(self):
         app_state = get_app_state(self.app)

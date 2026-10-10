@@ -176,6 +176,7 @@ class User:
         tournament_points: float = 0,
         forum_posts: int = 0,
         variant_count: int = 0,
+        auth_version: int = 0,
     ) -> None:
         self.app_state: PychessGlobalAppState = app_state
         self.bot: bool = bot
@@ -192,6 +193,7 @@ class User:
         }
         self.oauth_id: str = oauth_id
         self.oauth_provider: str = oauth_provider
+        self.auth_version: int = auth_version
         self.created_at: datetime = (
             datetime(MINYEAR, 1, 1, tzinfo=UTC)
             if created_at is None
@@ -216,6 +218,9 @@ class User:
 
         self.ready_for_auto_pairing: bool = False
         self.lobby_sockets: set[WebSocketResponse] = set()
+        # Every browser-authenticated websocket is also registered here by
+        # process_ws(), so logout can revoke already-open channels atomically.
+        self.authenticated_sockets: set[WebSocketResponse] = set()
         self.tournament_sockets: dict[
             str, set[WebSocketResponse | None]
         ] = {}  # {tournamentId: set()}
@@ -442,6 +447,7 @@ class User:
     def update_online(self) -> None:
         self.online = (
             len(self.game_sockets) > 0
+            or len(self.authenticated_sockets) > 0
             or len(self.lobby_sockets) > 0
             or len(self.challenge_channels) > 0
             or len(self.tournament_sockets) > 0

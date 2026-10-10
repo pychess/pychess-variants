@@ -1,7 +1,7 @@
 
-# ![Dobutsu Shogi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Dobutsu.svg) Dobutsu Shogi
+# ![Dobutsu Shogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/Dobutsu.svg) Dobutsu Shogi
 
-![Dobutsu](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Dobutsu.png)
+![Dobutsu](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Dobutsu.png)
 
 O Dobutsu Shogi (どうぶつしょうぎ, "xadrez zoológico") é uma variante de shogi pequena feita para crianças. Foi inventada pela jogadora de shogi profissional Madoka Kitao (北尾 まどか, Kitao Madoka), parcialmente feito para atrair crianças para o jogo. Esta variante é jogada num tabuleiro 3x4 e segue as regras normais do Shogi tradicional com algumas exceções descritas abaixo.
 
@@ -13,7 +13,7 @@ Como em Shogi, as peças capturadas irão pertencer agora ao jogador que as capt
 
 Ao contrário do Shogi, apenas uma peça pode ser promovida: O Pinto (Peão) é promovido a uma Galinha (Tokin) quando alcança a última fila.
 
-![Hen](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Hen.png)
+![Hen](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Hen.png)
 
 A Galinha pode-se movimentar uma casa na ortogonal em qualquer direção como a girafa. Além disso também se pode movimentar na diagonal uma casa (apenas para a sua frente).
 

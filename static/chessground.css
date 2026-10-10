@@ -67,6 +67,15 @@
 .cg-wrap.cg-260-360.mini {
   --mini-board-width: 192px;
 }
+/* 6x6 shogi */
+.cg-wrap.cg-312 {
+    padding-bottom: calc(360 * 100% / 312);
+    --cg-board-files: 6;
+    --cg-board-ranks: 6;
+}
+.cg-wrap.cg-312.mini {
+  --mini-board-width: 192px;
+}
 /* 5x5 */
 .cg-wrap.cg-260 {
     padding-bottom: calc(450 * 100% / 390);
@@ -194,6 +203,10 @@ cg-board square {
   width: 20%;
   height: 20%;
 }
+.cg-312 cg-board square {
+  width: calc(100% / 6);
+  height: calc(100% / 6);
+}
 .cg-156 cg-board square{
   width: 33.33%;
   height: 25%;
@@ -291,6 +304,10 @@ cg-board square.current-premove {
 .cg-wrap.cg-260 piece {
   width: 20%;
   height: 20%;
+}
+.cg-wrap.cg-312 piece {
+  width: calc(100% / 6);
+  height: calc(100% / 6);
 }
 .cg-wrap.cg-156 piece {
   width: 33.33%;

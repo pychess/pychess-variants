@@ -1,6 +1,6 @@
-# ![Grand ikon](https://github.com/gbtami/pychess-variants/blob/master/static/icons/grand.svg) Grand sakk (Grand Chess)
+# ![Grand ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/grand.svg) Grand sakk (Grand Chess)
 
-![Grand Chess ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Grand.png)
+![Grand Chess ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Grand.png)
 
 A Grand sakk (szó szerinti fordításban: "Nagy sakk") egy sakkváltozat, amit Christian Freeling játéktervezéssel is foglalkozó matematikus alkotott meg 1984-ben.
 
@@ -18,11 +18,11 @@ Jelentős különbségek a standard sakkhoz képest:
 
 ### Bíboros
 
-![Bíboros bábuk](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
+![Bíboros bábuk](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
 
 Többféle figurával is szokták ábrázolni (a sólyom csak egy másik variánsban, az S-sakkban van).
 
-![Bíboros ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
+![Bíboros ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
 
 A bíboros (angolul: *Cardinal*) a huszár és a futó kombinációja. A bíboros az egyedüli bábu, amely képes egymagában mattot adni.
 
@@ -32,11 +32,11 @@ A játszmák során **A** betűvel jegyezzük, ami az angol Archbishop szó röv
 
 ### Marsall
 
-![Marsall bábuk](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
+![Marsall bábuk](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
 
 Többféle figurával is szokták ábrázolni (az elefánt csak egy másik variánsban, az S-sakkban van).
 
-![Marsall ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
+![Marsall ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
 
 A marsall (angolul: *Marshal*) a huszár és a bástya kombinációja.
 

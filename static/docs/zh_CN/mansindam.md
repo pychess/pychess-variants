@@ -1,86 +1,86 @@
-# ![Mansindam](https://github.com/gbtami/pychess-variants/blob/master/static/icons/mansindam.svg) 万神谈 | Mansindam
+# ![Mansindam](https://github.com/pychess/pychess-variants/blob/master/static/icons/mansindam.svg) 万神谈 | Mansindam
 
 _一种结合了强力棋子和打入玩法的棋类游戏。_
 
-![Mansindam](https://github.com/gbtami/pychess-variants/blob/master/static/images/MansindamGuide/board.png)
+![Mansindam](https://github.com/pychess/pychess-variants/blob/master/static/images/MansindamGuide/board.png)
 
-![Mansindam](https://github.com/gbtami/pychess-variants/blob/master/static/images/MansindamGuide/promotions.png)
+![Mansindam](https://github.com/pychess/pychess-variants/blob/master/static/images/MansindamGuide/promotions.png)
 
 ## 棋子
 所有的棋子在升变时，都附加八方1格的走法。
 
 ### 步兵/Pawn(P) 
-![Pawn](https://github.com/gbtami/pychess-variants/blob/master/static/images/MansindamGuide/pawn.png)
+![Pawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MansindamGuide/pawn.png)
 
 步兵，简称步，仅可向前走吃1格。升级为哨兵。
 
 ### 哨兵/Guard(G)
-![Guard](https://github.com/gbtami/pychess-variants/blob/master/static/images/MansindamGuide/guard.png)
+![Guard](https://github.com/pychess/pychess-variants/blob/master/static/images/MansindamGuide/guard.png)
 
 哨兵可以八方走吃1格。
 
 ### 骑士/Knight(N)
-![Knight](https://github.com/gbtami/pychess-variants/blob/master/static/images/MansindamGuide/knight.png)
+![Knight](https://github.com/pychess/pychess-variants/blob/master/static/images/MansindamGuide/knight.png)
 
 骑士，简称骑，走法与国际象棋马完全相同。升级成卫士。
 
 ### 卫士/Centaur(E)
-![Centaur](https://github.com/gbtami/pychess-variants/blob/master/static/images/MansindamGuide/centaur.png)
+![Centaur](https://github.com/pychess/pychess-variants/blob/master/static/images/MansindamGuide/centaur.png)
 
 卫士，简称卫。走法在国际象棋马基础上，增加八方1格。
 
 ### 角行/Bishop(B)
-![Bishop](https://github.com/gbtami/pychess-variants/blob/master/static/images/MansindamGuide/bishop.png)
+![Bishop](https://github.com/pychess/pychess-variants/blob/master/static/images/MansindamGuide/bishop.png)
 
 角行，简称角。可以斜走任意距离，与将棋角行相同。升级成龙马。
 
 ### 龙马/Archer(H)
-![Archer](https://github.com/gbtami/pychess-variants/blob/master/static/images/MansindamGuide/archer.png)
+![Archer](https://github.com/pychess/pychess-variants/blob/master/static/images/MansindamGuide/archer.png)
 
 龙马，简称马。除了斜走不限之外，还可以八方1格。与将棋龙马相同。
 
 ### 方行/Rook(R)
-![Rook](https://github.com/gbtami/pychess-variants/blob/master/static/images/MansindamGuide/rook.png)
+![Rook](https://github.com/pychess/pychess-variants/blob/master/static/images/MansindamGuide/rook.png)
 
 方行，简称方。可以直走任意距离，与车和将棋的飞车相同。升级成龙王。
 
 ### 龙王/Tiger(T) 
-![Tiger](https://github.com/gbtami/pychess-variants/blob/master/static/images/MansindamGuide/tiger.png)
+![Tiger](https://github.com/pychess/pychess-variants/blob/master/static/images/MansindamGuide/tiger.png)
 
 龙王，简称龙，除了直走不限之外，还可以八方1格。与将棋的龙王相同。
 
 ### 猊下/Cardinal(C)
-![Cardinal](https://github.com/gbtami/pychess-variants/blob/master/static/images/MansindamGuide/cardinal.png)
+![Cardinal](https://github.com/pychess/pychess-variants/blob/master/static/images/MansindamGuide/cardinal.png)
 
 猊下，简称猊，走法兼具国际象棋象和马的走法。升级为圣下。
 
 ### 圣下/Rhino(I)
-![Rhino](https://github.com/gbtami/pychess-variants/blob/master/static/images/MansindamGuide/rhino.png)
+![Rhino](https://github.com/pychess/pychess-variants/blob/master/static/images/MansindamGuide/rhino.png)
 
 圣下，简称圣，走法为国际象棋象、马、王的结合。
 
 ### 首相/Marshal(M)
-![Marshal](https://github.com/gbtami/pychess-variants/blob/master/static/images/MansindamGuide/marshal.png)
+![Marshal](https://github.com/pychess/pychess-variants/blob/master/static/images/MansindamGuide/marshal.png)
 
 首相，简称首，走法兼具国际象棋车和马的走法。升级为名相。
 
 ### Myeong(名)/Ship(S)
-![Ship](https://github.com/gbtami/pychess-variants/blob/master/static/images/MansindamGuide/ship.png)
+![Ship](https://github.com/pychess/pychess-variants/blob/master/static/images/MansindamGuide/ship.png)
 
 名相，简称名，走法为国际象棋车、马、王的结合。
 
 ### 奔王/Queen(Q)
-![Queen](https://github.com/gbtami/pychess-variants/blob/master/static/images/MansindamGuide/queen.png)
+![Queen](https://github.com/pychess/pychess-variants/blob/master/static/images/MansindamGuide/queen.png)
 
 奔王，简称奔，走法与国际象棋后相同。不升级。
 
 ### 天马/Angel(A)
-![Angel](https://github.com/gbtami/pychess-variants/blob/master/static/images/MansindamGuide/angel.png)
+![Angel](https://github.com/pychess/pychess-variants/blob/master/static/images/MansindamGuide/angel.png)
 
 天马，简称天，走法为国际象棋的后和马的结合。不升级。
 
 ### 阳、阴/King(K)
-![King](https://github.com/gbtami/pychess-variants/blob/master/static/images/MansindamGuide/king.png)
+![King](https://github.com/pychess/pychess-variants/blob/master/static/images/MansindamGuide/king.png)
 
 阳和阴，为双方的王，走法与国际象棋的王完全相同。也可以使用玉表示。
 

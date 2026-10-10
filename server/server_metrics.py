@@ -9,13 +9,16 @@ import sys
 import time
 from asyncio import Event, Queue, Task
 from collections import defaultdict
-from collections.abc import Iterable, Mapping
+from collections.abc import AsyncIterator, Iterable, Mapping
 from datetime import UTC, datetime
+from itertools import chain
 from typing import TYPE_CHECKING, Any, TypedDict, cast
 
+import msgspec
 import pyffish as sf
 from aiohttp import web
 from aiohttp.web_response import StreamResponse
+from bson import Int64
 from bug.game_bug import GameBug
 from catalogued_betza import (
     _cached_betza_svg,
@@ -45,6 +48,82 @@ if TYPE_CHECKING:
     from pychess_global_app_state import PychessGlobalAppState
 
 log = logging.getLogger(__name__)
+
+
+FULL_METRICS_CACHE_SECONDS = 60.0
+METRICS_BATCH_SIZE = 128
+METRICS_SLICE_SECONDS = 0.005
+
+
+class SnapshotBudget:
+    """Yield between small batches without inspecting live objects in another thread."""
+
+    def __init__(self):
+        self.deadline = time.monotonic() + METRICS_SLICE_SECONDS
+
+    async def checkpoint(self) -> None:
+        if time.monotonic() >= self.deadline:
+            await asyncio.sleep(0)
+            self.deadline = time.monotonic() + METRICS_SLICE_SECONDS
+
+
+async def _batched(items: Iterable[Any], budget: SnapshotBudget) -> AsyncIterator[Any]:
+    for index, item in enumerate(items):
+        if index % METRICS_BATCH_SIZE == 0:
+            await budget.checkpoint()
+        yield item
+
+
+def _metrics_json_hook(value: object) -> int:
+    # Keep the existing JSON transport's support for legacy MongoDB integer values.
+    if isinstance(value, Int64):
+        return int(value)
+    raise TypeError(f"Unsupported metrics value: {type(value).__name__}")
+
+
+class FullMetricsSnapshot:
+    """One app-owned collection task and one bounded, encoded snapshot cache."""
+
+    def __init__(self):
+        self.task: asyncio.Task[bytes] | None = None
+        self.body: bytes | None = None
+        self.expires_at = 0.0
+        self.inspected = False
+
+    async def get(
+        self, app_state: PychessGlobalAppState, request: web.Request, need_inspect: bool
+    ) -> bytes:
+        while True:
+            if (
+                self.body is not None
+                and time.monotonic() < self.expires_at
+                and (self.inspected or not need_inspect)
+            ):
+                return self.body
+            if self.task is None:
+                self.body = None
+                self.task = app_state.create_background_task(
+                    self._collect(app_state, request, need_inspect), name="full-metrics-snapshot"
+                )
+                self.task.add_done_callback(self._clear_task)
+            # A disconnected requester must not cancel work shared by other callers.
+            # Inspect requests wait for a normal collection before upgrading it.
+            await asyncio.shield(self.task)
+
+    async def _collect(
+        self, app_state: PychessGlobalAppState, request: web.Request, need_inspect: bool
+    ) -> bytes:
+        metrics = await _full_metrics(app_state, request, need_inspect)
+        # Only detached JSON data crosses the thread boundary, never app/heap objects.
+        body = await asyncio.to_thread(msgspec.json.encode, metrics, enc_hook=_metrics_json_hook)
+        self.body = body
+        self.inspected = need_inspect
+        self.expires_at = time.monotonic() + FULL_METRICS_CACHE_SECONDS
+        return body
+
+    def _clear_task(self, task: asyncio.Task[bytes]) -> None:
+        if self.task is task:
+            self.task = None
 
 
 def _seek_expire_sort_key(seek: Seek) -> float:
@@ -156,9 +235,30 @@ def _proc_status_memory_kib() -> dict[str, int]:
     return values
 
 
+def _peak_rss_kib(ru_maxrss: int, platform: str) -> int:
+    """Convert ``getrusage().ru_maxrss`` to kibibytes.
+
+    macOS is the odd one out: its ``getrusage(2)`` reports bytes, whereas Linux
+    and the BSDs report kibibytes (compare ``ru_maxrss`` in ``man 2 getrusage``
+    on FreeBSD with the macOS manual page). Normalizing here keeps
+    ``peak_rss_kib`` comparable with ``rss_kib`` and the procfs values, which are
+    always kibibytes.
+    """
+    return ru_maxrss // 1024 if platform == "darwin" else ru_maxrss
+
+
 def process_memory_stats() -> dict[str, float | int]:
-    """Return Linux RSS/swap breakdown alongside inexpensive Python runtime counters."""
-    peak_rss_kib = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+    """Return an RSS/swap breakdown alongside inexpensive Python runtime counters.
+
+    ``peak_rss_kib`` is available on every platform providing ``resource``. The
+    per-segment fields (``virtual_memory_kib``, ``anonymous_rss_kib``,
+    ``file_rss_kib``, ``shared_rss_kib``) and the swap counter come from Linux
+    procfs: without ``/proc``, as on macOS, they stay ``0`` and ``rss_kib`` falls
+    back to ``peak_rss_kib``, so it is a peak rather than a current reading.
+    """
+    peak_rss_kib = _peak_rss_kib(
+        int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss), sys.platform
+    )
     status_memory = _proc_status_memory_kib()
     rss_kib = status_memory.get("VmRSS", peak_rss_kib)
     swap_kib = status_memory.get("VmSwap", 0)
@@ -234,6 +334,7 @@ def _state_summary(
         "user_puzzle_perf_entries": sum(len(user.pperfs) for user in app_state.users.values()),
         "games": len(app_state.games),
         "seeks": len(app_state.seeks),
+        "lobby_connections": len(app_state.lobby.lobbysockets),
         "invites": len(app_state.invites),
         "tournaments": len(app_state.tournaments),
         **tournament_stats,
@@ -433,45 +534,48 @@ def inspect_referrer(ref: object) -> None:
         log.info(f"  Other referrer: {ref}")
 
 
-# Helper function to calculate deep memory size
-def get_deep_size(obj: object, seen: set[int] | None = None) -> int:
-    """Recursively calculate the memory size of an object."""
-    if seen is None:
-        seen = set()
-    obj_id = id(obj)
-    if obj_id in seen:
-        return 0
-    seen.add(obj_id)
+async def get_deep_size(obj: object, budget: SnapshotBudget | None = None) -> int:
+    """Measure the existing container-based deep size, yielding during traversal.
 
-    size = sys.getsizeof(obj)
-
-    if isinstance(obj, dict):
-        size += sum(get_deep_size(k, seen) + get_deep_size(v, seen) for k, v in obj.items())
-    elif isinstance(obj, Iterable) and not isinstance(obj, (str, bytes, bytearray)):
-        size += sum(get_deep_size(item, seen) for item in obj)
-
+    Snapshot each container's children before yielding so game/socket mutations
+    cannot invalidate an iterator. Model attributes are not recursively traversed,
+    matching the previous diagnostic's size convention.
+    """
+    budget = budget or SnapshotBudget()
+    seen: set[int] = set()
+    pending = [iter((obj,))]
+    size = 0
+    visited = 0
+    while pending:
+        if visited % METRICS_BATCH_SIZE == 0:
+            await budget.checkpoint()
+        visited += 1
+        try:
+            current = next(pending[-1])
+        except StopIteration:
+            pending.pop()
+            continue
+        obj_id = id(current)
+        if obj_id in seen:
+            continue
+        seen.add(obj_id)
+        size += sys.getsizeof(current)
+        if isinstance(current, dict):
+            pending.append(iter(chain.from_iterable(tuple(current.items()))))
+        elif isinstance(current, Iterable) and not isinstance(current, (str, bytes, bytearray)):
+            pending.append(iter(tuple(current)))
     return size
 
 
-def memory_stats(
-    top_n: int = 20, need_inspect: bool | str | None = False
+async def memory_stats(
+    top_n: int = 20, need_inspect: bool = False, *, budget: SnapshotBudget | None = None
 ) -> tuple[list[AllocationStat], list[TaskInfo], list[QueueInfo], dict[str, int]]:
-    """
-    Collects memory usage statistics for the top N object types in the Python heap.
-    - Performs garbage collection to clean up unreferenced objects.
-    - Uses gc.get_objects() to retrieve all tracked objects.
-    - Computes count and total deep size (using get_deep_size) for each type.
-    - Returns a list of dictionaries sorted by total deep size in descending order.
+    """Inspect tracked objects cooperatively, without forcing garbage collection.
 
-    Note: Deep size calculation is more accurate for nested structures but can be slower
-    due to recursive traversal. For large object graphs, this may impact performance.
-    In an aiohttp server, run this in an executor to avoid blocking the event loop, e.g.:
-
-    from concurrent.futures import ThreadPoolExecutor
-    executor = ThreadPoolExecutor()
-    stats = await loop.run_in_executor(executor, memory_stats)
+    gc.get_objects() itself is one native call; the much longer Python traversal
+    yields in bounded batches. Tasks and queues are inspected on their event loop.
     """
-    gc.collect()  # Clean up garbage before measuring
+    budget = budget or SnapshotBudget()
 
     objects: list[object] = gc.get_objects()
 
@@ -480,7 +584,9 @@ def memory_stats(
     tasks: list[TaskInfo] = []
     queues: list[QueueInfo] = []
 
-    for obj in objects:
+    for index, obj in enumerate(objects):
+        if index % METRICS_BATCH_SIZE == 0:
+            await budget.checkpoint()
         if isinstance(obj, MONITORED_TYPES):
             obj_type = type(obj).__name__
             type_info[obj_type]["count"] += 1
@@ -528,7 +634,7 @@ def memory_stats(
                     }
                 )
             else:
-                type_info[obj_type]["size"] += get_deep_size(obj)
+                type_info[obj_type]["size"] += await get_deep_size(obj, budget)
 
     type_counts = {obj_type: info["count"] for obj_type, info in type_info.items()}
 
@@ -566,23 +672,28 @@ async def metrics_handler(request: web.Request) -> web.StreamResponse:
 
     token = auth[auth.find("Bearer") + 7 :]
     if URI != LOCALHOST and token != PYCHESS_MONITOR_TOKEN:
-        log.error("Invalid pychess-metrics token! %s", token)
+        log.error("Invalid pychess-metrics token!")
         raise web.HTTPNotFound()
 
     app_state = get_app_state(request.app)
     if request.rel_url.query.get("summary", "").casefold() == "true":
         return json_response(_lightweight_metrics(app_state, request))
 
-    active_connections = app_state.lobby.lobbysockets
-
-    need_inspect = request.rel_url.query.get("inspect")
-
-    # Take snapshot
-    start = time.process_time()
-    top_stats, tasks, queues, type_counts = memory_stats(
-        15, need_inspect and need_inspect == "True"
+    need_inspect = request.rel_url.query.get("inspect", "").casefold() == "true"
+    body = await app_state.full_metrics_snapshot.get(app_state, request, need_inspect)
+    return web.Response(
+        body=body, content_type="application/json", headers={"Cache-Control": "no-store"}
     )
-    log.debug("Running memory_stats() time: %s", (time.process_time() - start))
+
+
+async def _full_metrics(
+    app_state: PychessGlobalAppState, request: web.Request, need_inspect: bool
+) -> dict[str, object]:
+    active_connections = app_state.lobby.lobbysockets
+    budget = SnapshotBudget()
+    start = time.process_time()
+    top_stats, tasks, queues, type_counts = await memory_stats(15, need_inspect, budget=budget)
+    log.debug("Running memory_stats() CPU time: %s", time.process_time() - start)
 
     # Prepare object details
     now = datetime.now(UTC)
@@ -619,8 +730,8 @@ async def metrics_handler(request: web.Request) -> web.StreamResponse:
             "remove_anon_task": _task_state(user.remove_anon_task),
             "game_queues": len(user.game_queues) if user.bot else "",
         }
-        for username, user in sorted(
-            app_state.users.items(), key=lambda x: x[1].last_seen, reverse=True
+        async for username, user in _batched(
+            sorted(app_state.users.items(), key=lambda x: x[1].last_seen, reverse=True), budget
         )
     ]
     seeks: list[dict[str, object]] = [
@@ -635,8 +746,11 @@ async def metrics_handler(request: web.Request) -> web.StreamResponse:
             "day": seek.day,
             "rated": seek.rated,
         }
-        for seek_id, seek in sorted(
-            app_state.seeks.items(), key=lambda x: _seek_expire_sort_key(x[1]), reverse=True
+        async for seek_id, seek in _batched(
+            sorted(
+                app_state.seeks.items(), key=lambda x: _seek_expire_sort_key(x[1]), reverse=True
+            ),
+            budget,
         )
     ]
     games: list[dict[str, object]] = [
@@ -646,11 +760,13 @@ async def metrics_handler(request: web.Request) -> web.StreamResponse:
             "status": game.status,
             "players": (game.wplayer.username, game.bplayer.username),
         }
-        for game_id, game in sorted(app_state.games.items(), key=lambda x: x[1].date, reverse=True)
+        async for game_id, game in _batched(
+            sorted(app_state.games.items(), key=lambda x: x[1].date, reverse=True), budget
+        )
     ]
     connections: list[dict[str, str]] = [
         {"id": username, "timestamp": datetime.now(UTC).isoformat()}
-        for username in app_state.lobby.lobbysockets
+        async for username in _batched(tuple(app_state.lobby.lobbysockets), budget)
     ]
 
     user_objects_total = type_counts.get("User", 0)
@@ -682,7 +798,7 @@ async def metrics_handler(request: web.Request) -> web.StreamResponse:
     anon_blocker_tournament_sockets = 0
     anon_blocker_simul_sockets = 0
 
-    for user in app_state.users.values():
+    async for user in _batched(tuple(app_state.users.values()), budget):
         if (not user.anon) or reserved(user.username):
             continue
 
@@ -795,7 +911,7 @@ async def metrics_handler(request: web.Request) -> web.StreamResponse:
     anon_users.sort(key=lambda row: cast(datetime, row["last_seen"]), reverse=True)
 
     started_games_no_round_sockets: list[dict[str, object]] = []
-    for game_id, game in app_state.games.items():
+    async for game_id, game in _batched(tuple(app_state.games.items()), budget):
         if game.status != STARTED:
             continue
 
@@ -843,7 +959,9 @@ async def metrics_handler(request: web.Request) -> web.StreamResponse:
             "clock_task": _task_state(tournament.clock_task),
             "created_at": tournament.created_at,
         }
-        for tournament_id, tournament in app_state.tournaments.items()
+        async for tournament_id, tournament in _batched(
+            tuple(app_state.tournaments.items()), budget
+        )
     ]
     tournament_rows.sort(key=lambda row: cast(datetime, row["created_at"]), reverse=True)
 
@@ -861,7 +979,7 @@ async def metrics_handler(request: web.Request) -> web.StreamResponse:
             "clock_task": _task_state(simul.clock_task),
             "created_at": simul.created_at,
         }
-        for simul_id, simul in app_state.simuls.items()
+        async for simul_id, simul in _batched(tuple(app_state.simuls.items()), budget)
     ]
     simul_rows.sort(key=lambda row: cast(datetime, row["created_at"]), reverse=True)
 
@@ -876,7 +994,7 @@ async def metrics_handler(request: web.Request) -> web.StreamResponse:
             "stale_reissues": work.get("stale_reissue_count", 0),
             "abort_count": work.get("abort_count", 0),
         }
-        for work_id, work in app_state.fishnet_works.items()
+        async for work_id, work in _batched(tuple(app_state.fishnet_works.items()), budget)
     ]
     fishnet_work_rows.sort(key=lambda row: cast(int, row["age_secs"]), reverse=True)
 
@@ -922,25 +1040,29 @@ async def metrics_handler(request: web.Request) -> web.StreamResponse:
     ]
 
     # Calculate memory sizes
-    user_memory_size = get_deep_size(app_state.users) / 1024  # Convert to KB
-    game_memory_size = get_deep_size(app_state.games) / 1024  # Convert to KB
+    user_memory_size = await get_deep_size(app_state.users, budget) / 1024  # Convert to KB
+    game_memory_size = await get_deep_size(app_state.games, budget) / 1024  # Convert to KB
     task_memory_size = sum([sys.getsizeof(obj) for obj in tasks]) / 1024  # Convert to KB
     queue_memory_size = sum([sys.getsizeof(obj) for obj in queues]) / 1024  # Convert to KB
-    conn_memory_size = get_deep_size(active_connections) / 1024  # Convert to KB
-    anon_user_memory_size = get_deep_size(anon_users) / 1024
-    started_game_no_socket_memory_size = get_deep_size(started_games_no_round_sockets) / 1024
-    anon_summary_memory_size = get_deep_size(anon_summary) / 1024
-    registered_summary_memory_size = get_deep_size(registered_summary) / 1024
-    tournament_memory_size = get_deep_size(app_state.tournaments) / 1024
-    simul_memory_size = get_deep_size(app_state.simuls) / 1024
-    fishnet_work_memory_size = get_deep_size(app_state.fishnet_works) / 1024
-    cache_memory_size = get_deep_size(cache_rows) / 1024
-    state_memory_size = get_deep_size(state_summary) / 1024
-    stream_memory_size = get_deep_size(stream_summary) / 1024
+    conn_memory_size = await get_deep_size(active_connections, budget) / 1024  # Convert to KB
+    anon_user_memory_size = await get_deep_size(anon_users, budget) / 1024
+    started_game_no_socket_memory_size = (
+        await get_deep_size(started_games_no_round_sockets, budget) / 1024
+    )
+    anon_summary_memory_size = await get_deep_size(anon_summary, budget) / 1024
+    registered_summary_memory_size = await get_deep_size(registered_summary, budget) / 1024
+    tournament_memory_size = await get_deep_size(app_state.tournaments, budget) / 1024
+    simul_memory_size = await get_deep_size(app_state.simuls, budget) / 1024
+    fishnet_work_memory_size = await get_deep_size(app_state.fishnet_works, budget) / 1024
+    cache_memory_size = await get_deep_size(cache_rows, budget) / 1024
+    state_memory_size = await get_deep_size(state_summary, budget) / 1024
+    stream_memory_size = await get_deep_size(stream_summary, budget) / 1024
 
     metrics: dict[str, object] = {
         "active_connections": len(active_connections),
         "timestamp": datetime.now(UTC).isoformat(),
+        "mode": "full",
+        "heap_gc_collected": False,
         "top_allocations": [
             {
                 "type": stat["type"],
@@ -971,7 +1093,7 @@ async def metrics_handler(request: web.Request) -> web.StreamResponse:
         },
         "object_sizes": {
             "users": user_memory_size,
-            "seeks": get_deep_size(app_state.seeks) / 1024,
+            "seeks": await get_deep_size(app_state.seeks, budget) / 1024,
             "games": game_memory_size,
             "tasks": task_memory_size,
             "queues": queue_memory_size,
@@ -1010,4 +1132,4 @@ async def metrics_handler(request: web.Request) -> web.StreamResponse:
     }
     log.debug("Collecting all metrics time: %s", (time.process_time() - start))
 
-    return json_response(metrics)
+    return metrics

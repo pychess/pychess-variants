@@ -1,4 +1,4 @@
-# ![Crazyhouse960 ikon](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Crazyhouse960.svg) Crazyhouse 960
+# ![Crazyhouse960 ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/Crazyhouse960.svg) Crazyhouse 960
 
 Crazyhouse 960 egy sakkváltozat, ami a Crazyhouse behozási szabályait kombinálja a Sakk960 ( más néven *Fischer random sakk*) szabályaival (véletlenszerűen összekevert bábuk).
 

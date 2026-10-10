@@ -1,6 +1,6 @@
-# ![Chennis](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Chennis.svg) 网球棋
+# ![Chennis](https://github.com/pychess/pychess-variants/blob/master/static/icons/Chennis.svg) 网球棋
 
-![Chennis](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChennisGuide/Chennis.png)
+![Chennis](https://github.com/pychess/pychess-variants/blob/master/static/images/ChennisGuide/Chennis.png)
 
 ## 背景
 
@@ -10,7 +10,7 @@
 
 游戏分黑白双方，白棋先走。所有的棋子（王除外）都有两种形态，每次行动之后都必须变换成另一种形态。在游戏界面上，即将变换成的棋子会以红色/蓝色提示。
 
-![Piece Swaps](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChennisGuide/Swap.png)
+![Piece Swaps](https://github.com/pychess/pychess-variants/blob/master/static/images/ChennisGuide/Swap.png)
 
 当你吃掉对方棋子时，那个被吃的棋子会返回你的手中，类似将棋的驹台。这些棋子可供打入，与将棋的打入相同。但是，你可以在打入时**自由选择以哪一形态进入棋盘**。例如：对于“车-兵”棋子，您可以任选它是当作车打入，还是当作兵打入。
 
@@ -18,7 +18,7 @@
 
 网球棋的棋盘为7x7，如下图：
 
-![Chak](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChennisGuide/ChennisCourt.png)
+![Chak](https://github.com/pychess/pychess-variants/blob/master/static/images/ChennisGuide/ChennisCourt.png)
 
 所有棋子（王除外）可以在棋盘任意位置行动。棋盘分为四个区域，和双方王的行动范围有关：
 
@@ -49,27 +49,27 @@
 
 ### 卒 | Soldier (S)
 
-![Soldier](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChennisGuide/Soldier.png)
+![Soldier](https://github.com/pychess/pychess-variants/blob/master/static/images/ChennisGuide/Soldier.png)
 
 卒可以向前、左、右行动一格。它是象的对应形态。
 
 ### 警卫 | Mayor (M)
 
-![Mayor](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChennisGuide/Mayor.png)
+![Mayor](https://github.com/pychess/pychess-variants/blob/master/static/images/ChennisGuide/Mayor.png)
 
 警卫走法和王一样，即八方行动一格。它是马的对应形态。
 
 ### 士 | Ferz (F)
 
-![Ferz](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChennisGuide/Ferz.png)
+![Ferz](https://github.com/pychess/pychess-variants/blob/master/static/images/ChennisGuide/Ferz.png)
 
 士可以斜走一格。它是炮的对应形态。
 
 ### 炮 | Cannon (C)
 
-![Cannon Move](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChennisGuide/CannonMove.png)
+![Cannon Move](https://github.com/pychess/pychess-variants/blob/master/static/images/ChennisGuide/CannonMove.png)
 
-![Cannon Attack](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChennisGuide/CannonAttack.png)
+![Cannon Attack](https://github.com/pychess/pychess-variants/blob/master/static/images/ChennisGuide/CannonAttack.png)
 
 炮的走法和中国象棋相同，即直行任意距离，隔一子吃子。它是士的对应形态。
 

@@ -11,6 +11,10 @@ from aiohttp import web
 from aiohttp.client_exceptions import ClientConnectionResetError
 from aiohttp_sse import sse_response
 from aiohttp_swagger3 import swagger_doc
+from catalogued_variants import (
+    CATALOGUED_VARIANT_COLLECTION,
+    register_historical_catalogued_variant_doc,
+)
 from compress import C2R, decode_move_standard
 from const import (
     CATEGORY_VARIANT_SETS,
@@ -65,6 +69,8 @@ GameDoc = TypedDict(
     {
         "_id": str,
         "v": str,
+        "vini": str,
+        "vd": str,
         "r": str,
         "z": int,
         "us": list[str],
@@ -160,8 +166,8 @@ async def variant_counts_aggregation(
 
     if humans:
         match_cond["$and"] = [
-            {"us.0": {"$nin": ["Fairy-Stockfish", "Random-Mover"]}},
-            {"us.1": {"$nin": ["Fairy-Stockfish", "Random-Mover"]}},
+            {"us.0": {"$nin": ["Fairy-Stockfish", "Alice-Stockfish", "Random-Mover"]}},
+            {"us.1": {"$nin": ["Fairy-Stockfish", "Alice-Stockfish", "Random-Mover"]}},
         ]
 
     if len(match_cond) > 0:
@@ -433,6 +439,33 @@ def _apply_category_filter(
     return {"$and": [filter_cond, {"v": {"$in": list(allowed_codes)}}]}
 
 
+async def _resolve_user_game_variant(app_state: PychessGlobalAppState, doc: GameDoc) -> str | None:
+    code = doc["v"]
+    variant = C2V.get(code)
+    if variant is not None:
+        return variant
+
+    # Archived variants are absent from the live catalogue. Restore historical
+    # metadata without making them available for new games.
+    historical_doc = (
+        doc
+        if doc.get("vini")
+        else await app_state.db[CATALOGUED_VARIANT_COLLECTION].find_one({"_id": code})
+    )
+    if historical_doc is not None:
+        try:
+            register_historical_catalogued_variant_doc(historical_doc)
+        except Exception:
+            log.exception("Failed to restore variant %r for user game %s", code, doc["_id"])
+        else:
+            variant = C2V.get(code)
+            if variant is not None:
+                return variant
+
+    log.error("get_user_games() KeyError. Unknown variant %r", code)
+    return None
+
+
 @swagger_doc("docs/api/get_user_games.yaml")
 async def get_user_games(request: web.Request) -> web.StreamResponse:
     app_state = get_app_state(request.app)
@@ -489,12 +522,10 @@ async def get_user_games(request: web.Request) -> web.StreamResponse:
             cursor.sort("d", -1).skip(int(page_num) * GAME_PAGE_SIZE).limit(GAME_PAGE_SIZE)
         doc: GameDoc
         async for doc in cursor:
-            try:
-                variant = C2V[doc["v"]]
-                doc["v"] = variant
-            except KeyError:
-                log.error("get_user_games() KeyError. Unknown variant %r", doc["v"])
+            variant = await _resolve_user_game_variant(app_state, doc)
+            if variant is None:
                 continue
+            doc["v"] = variant
 
             doc["r"] = C2R[doc["r"]]
             doc["wt"] = (

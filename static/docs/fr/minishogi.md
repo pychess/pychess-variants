@@ -1,7 +1,7 @@
 
-# ![Minishogi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/minishogi.svg) Mini-shogi
+# ![Minishogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/minishogi.svg) Mini-shogi
 
-![Minishogi](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Minishogi.png)
+![Minishogi](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Minishogi.png)
 
 Le mini-shogi est le jeu de shogi adapté pour un shogiban de 5x5. Le jeu fut inventé (ou réinventé) vers 1970 par le japonais Kusumoto Shigenobu.
 

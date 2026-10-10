@@ -10,6 +10,7 @@ import { _, ngettext } from './i18n';
 import { patch } from './document';
 import { boardSettings } from './boardSettings';
 import { Clock } from './clock';
+import { materializeGameHistory } from './analysis/gameHistory';
 import { sound } from './sound';
 import { redirectFirst } from './tournamentAlerts';
 import { fogFen } from './variants';
@@ -294,6 +295,7 @@ export class RoundController extends GameController {
                 false,
                 undefined,
                 this.patrons[0],
+                this.variant.name,
             ),
         );
         this.vplayer1 = patch(
@@ -307,6 +309,7 @@ export class RoundController extends GameController {
                 false,
                 undefined,
                 this.patrons[1],
+                this.variant.name,
             ),
         );
 
@@ -662,6 +665,7 @@ export class RoundController extends GameController {
                 false,
                 undefined,
                 this.patrons[this.flipped() ? 1 : 0],
+                this.variant.name,
             ),
         );
         this.vplayer1 = patch(
@@ -675,6 +679,7 @@ export class RoundController extends GameController {
                 false,
                 undefined,
                 this.patrons[this.flipped() ? 0 : 1],
+                this.variant.name,
             ),
         );
 
@@ -1050,8 +1055,10 @@ export class RoundController extends GameController {
         window.location.assign(this.home + '/tournament/' + this.tournamentId);
     };
 
-    private pauseTournament = () => {
-        window.location.assign(this.home + '/tournament/' + this.tournamentId + '/pause');
+    private pauseTournament = async () => {
+        const url = this.home + '/tournament/' + this.tournamentId;
+        const response = await window.fetch(url + '/pause', { method: 'POST' });
+        if (response.ok) window.location.assign(url);
     };
 
     private backToSimul = () => {
@@ -1172,19 +1179,20 @@ export class RoundController extends GameController {
             } else {
                 window.location.assign(this.home + '/tv');
             }
-            // TODO: reuse current websocket to fix https://github.com/gbtami/pychess-variants/issues/142
+            // TODO: reuse current websocket to fix https://github.com/pychess/pychess-variants/issues/142
             // this.doSend({ type: "game_user_connected", username: this.username, gameId: msg.gameId });
         }
     };
 
     onMsgBoard(msg: MsgBoard) {
         if (msg.gameId !== this.gameId) return;
+        msg = materializeGameHistory(msg, this.ffish, this.notationAsObject);
         this.positionId = msg.positionId;
 
         // console.log("got board msg:", msg);
         let latestPly;
         if (this.spectator) {
-            // Fix https://github.com/gbtami/pychess-variants/issues/687
+            // Fix https://github.com/pychess/pychess-variants/issues/687
             latestPly = this.ply === -1 || msg.ply === this.ply + 1;
         } else {
             latestPly = this.ply === -1 || msg.ply >= this.ply + 1; // when receiving a board msg with full list of moves (aka steps) after reconnecting
@@ -1553,7 +1561,7 @@ export class RoundController extends GameController {
             }
 
             // Prevent sending "flag" message by opp clock via flagCallback
-            // fixes https://github.com/gbtami/pychess-variants/issues/1588
+            // fixes https://github.com/pychess/pychess-variants/issues/1588
             this.turnColor = this.oppcolor;
 
             if (this.clockOn) this.clocks[oppclock].start();
@@ -1850,7 +1858,7 @@ export class RoundController extends GameController {
             }
         }
         // We always need this to get possible moves made while our websocket connection was established
-        // fixes https://github.com/gbtami/pychess-variants/issues/962
+        // fixes https://github.com/pychess/pychess-variants/issues/962
         this.doSend({ type: 'board', gameId: this.gameId });
     };
 

@@ -1,4 +1,4 @@
-# ![Placement](https://github.com/gbtami/pychess-variants/blob/master/static/icons/placement.svg) Placement Chess (Bronstein chess, Pre-Chess, Shuffle-Chess)
+# ![Placement](https://github.com/pychess/pychess-variants/blob/master/static/icons/placement.svg) Placement Chess (Bronstein chess, Pre-Chess, Shuffle-Chess)
 
 O jogador de Xadrez Pal Benko atribui a ideia de "Pré-Xadrez" ou "Baralho-de-Xadrez" a David Bronstein.
 

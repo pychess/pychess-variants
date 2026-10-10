@@ -64,24 +64,24 @@ A játékidő meghatározása azt a cél szolgálja, hogy a játék ne nyúljon 
 
 **Villa (Fork)** - Más néven kettős támadás. Leginkább a huszár (ló) támad egyszerre két bábut, de még a gyalog is képes lehet rá.
 
-![Villa ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Fork.png)
+![Villa ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Fork.png)
 
 **Kötés (Pin)** - Amikor egy bábu ütésben van, de nem léphet el, mert azután üthetővé válna a mögötte lévő, értékesebb bábu. Gyakran a királyt védő bábuknál fordul elő. Csak a vonal bábuk (bástya, futó, vezér) képesek kötést előidézni.
 
-![Kötés ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Pin.png)
+![Kötés ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Pin.png)
 
 **Áthatoló kettős támadás (Skewer)** - Hasonló a kötéshez, de itt az értékesebb bábu áll a kevésbé értékes bábu előtt, ezért a játékosnak el kell vele lépnie, így az addig védett (kevésbé értékes) bábu üthetővé válik.
 
-![Skewer example](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Skewer.png)
+![Skewer example](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Skewer.png)
 
 **Felfedett támadás (Discovered Attack)** - Amikor egy bábu üthetne, de egy másik, saját bábu az útjában áll. Amikor ezzel a másik bábuval ellépünk, akkor a korábban ütni nem képes bábunak utat nyitunk. 
 
 A képen látható példa: a huszárral ellépve a bástya számára szabaddá válik az út, a király pedig sakkban lesz (ez a *felfedett sakk*). A huszár pedig olyan mezőre érkezik, ahonnan a vezér ütésben van (és leütésre is kerül a következő lépésben).
 
-![Felfedett támadás ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Discovery.png)
+![Felfedett támadás ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Discovery.png)
 
 **Áldozat (Sacrifice)** - Anyagi veszteség (valamelyik bábu feláldozása) a jobb pozíció megszerzésének érdekében.
 
 A képen látható példa: ha a vezér üti a sötét huszárját, akkor utána a gyalog könnyen leütheti a vezért. Viszont a világos huszár a vezér korábbi helyére tud majd lépni, amivel mattot ad a királynak. A világos játékos feláldozta a vezért egy jobb (nyerő) pozíció miatt.
 
-![Áldozat ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Sacrifice.png)
+![Áldozat ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Sacrifice.png)

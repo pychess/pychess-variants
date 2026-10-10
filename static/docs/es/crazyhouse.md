@@ -1,4 +1,4 @@
-# ![Crazyhouse](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Crazyhouse.svg) Crazyhouse
+# ![Crazyhouse](https://github.com/pychess/pychess-variants/blob/master/static/icons/Crazyhouse.svg) Crazyhouse
 
 Crazyhouse es una variante popular de ajedrez donde las piezas capturadas pueden ser "soltadas" de nuevo en el tablero como piezas propias (al igual que en Shogi). Esto lleva a un juego muy diferente del ajedrez estándar. Existe también una esfera competitiva de Crazyhouse.
 

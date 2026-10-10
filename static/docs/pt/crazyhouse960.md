@@ -1,4 +1,4 @@
-# ![Crazyhouse960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Crazyhouse960.svg) Crazyhouse 960
+# ![Crazyhouse960](https://github.com/pychess/pychess-variants/blob/master/static/icons/Crazyhouse960.svg) Crazyhouse 960
 
 O Crazyhouse 960 é uma variante personalizada que segue as regras do Crazyhouse com a disposição aleatória do Chess960(Xadrez de Fischer). São aplicadas as regras de ambos os jogos. Por esta ser considerada uma variante de Crazyhouse, por favor dê uma leitura nas regras do Crazyhouse disponibilizadas num guia em separado. As regras do Chess960 São disponibilizadas abaixo como um memorando.
 

@@ -1,4 +1,4 @@
-# ![Seirawan](https://github.com/gbtami/pychess-variants/blob/master/static/icons/schess.svg) S-chess (Seirawan Chess, SHARPER Chess)
+# ![Seirawan](https://github.com/pychess/pychess-variants/blob/master/static/icons/schess.svg) S-chess (Seirawan Chess, SHARPER Chess)
 
 O S-Chess foi criado por Yasser Seirawan e Bruce Harper em 2007. Esta variante é feita num tabuleiro 8x8 mas tem a particularidade de ter duas novas peças híbridas a partir de colocação (as peças são colocadas no tabuleiro substituindo casas que ficam vazias na primeira linha após um lance)
 
@@ -12,7 +12,7 @@ Os Peões podem ser promovidos a Elefantes e Falcões.
 
 ### Falcão
 
-![Hawk](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Hawk.png)
+![Hawk](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Hawk.png)
 
 O Falcão (H) é uma peça composta pela combinação dos movimentos do **Bispo** e do **Cavalo**. Em termos de peças heterodoxas de xadrez, esta é geralmente reconhecida como a Princesa, mas também tem é denominada de várias maneiras em variantes diferentes.
 
@@ -22,7 +22,7 @@ O Falcão é considerado um pouco mais valioso do que uma Torre, mas menos do qu
 
 ### Elephant
 
-![Elephant](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantSeirawan.png)
+![Elephant](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantSeirawan.png)
 
 O Elefante (E)  uma peça composta pela combinação dos movimentos da **Torre** e do **Cavalo**. Em termos de peças heterodoxas de xadrez, esta é geralmente reconhecida como a Imperatriz, mas também tem é denominada de várias maneiras em variantes diferentes.
 

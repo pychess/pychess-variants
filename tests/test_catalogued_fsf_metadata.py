@@ -32,6 +32,7 @@ class FsfBuiltinMetadataTestCase(TestCase):
             "giveaway": ("", "antichess"),
             "janus": ("", "capablanca"),
             "joust": ("", "chess"),
+            "judkins": ("", "shogi"),
             "kinglet": ("extinction", "chess"),
             "losers": ("", "antichess"),
             "modern": ("", "capablanca"),
@@ -58,7 +59,6 @@ class FsfBuiltinMetadataTestCase(TestCase):
             "chessgi": ("loop", "crazyhouse"),
             "euroshogi": ("", "shogi"),
             "gorogoro": ("", "shogi"),
-            "judkins": ("", "shogi"),
             "mini": ("", "minishogi"),
             "okisakishogi": ("", "shogi"),
         }
@@ -97,6 +97,22 @@ class FsfBuiltinMetadataTestCase(TestCase):
         self.assertTrue(doc["rulesArrowing"])
         self.assertTrue(_fsf_builtin_synced_fields(doc)["rulesArrowing"])
         self.assertNotIn("joust", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
+
+    def test_judkins_is_seeded_with_shogi_promotions_and_board(self) -> None:
+        doc = _build_fsf_builtin_doc("judkins", FSF_CATALOGUED_BUILTIN_VARIANTS["judkins"])
+        self.assertEqual((doc["width"], doc["height"]), (6, 6))
+        self.assertEqual(doc["ini"], "")
+        self.assertEqual(doc["boardFamilyOverride"], "shogi6x6")
+        self.assertEqual(_fsf_builtin_synced_fields(doc)["boardFamilyOverride"], "shogi6x6")
+        self.assertEqual(set(doc["pieces"]), {"p", "n", "s", "g", "b", "r", "k"})
+        self.assertEqual(set(doc["pocketRoles"]), {"p", "n", "s", "g", "b", "r"})
+        self.assertTrue(doc["captureToHand"])
+        self.assertEqual(doc["promotionType"], "shogi")
+        self.assertEqual(doc["promotionRoles"], ["p", "n", "s", "b", "r"])
+        self.assertEqual(doc["promotionOrder"], ["+", ""])
+        self.assertTrue(doc["legalMovesNeedHistory"])
+        self.assertTrue(doc["nFoldIsDraw"])
+        self.assertNotIn("judkins", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
 
     def test_chigorin_is_not_seeded_until_side_specific_promotions_are_supported(self) -> None:
         self.assertNotIn("chigorin", FSF_CATALOGUED_BUILTIN_VARIANTS)

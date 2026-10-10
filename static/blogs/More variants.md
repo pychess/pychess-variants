@@ -10,7 +10,7 @@
 </br>
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/Mansindam.jpg" width="300" height="150">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/Mansindam.jpg" width="300" height="150">
 </p>
 
 We're pleased to announce that we've had another break from our variant moratorium to introduce THREE new variants! You may have seen these on the site, but in case you haven't been paying attention, here they are!

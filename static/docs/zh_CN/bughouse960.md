@@ -1,4 +1,4 @@
-# ![Bughouse960](https://raw.githubusercontent.com/gbtami/pychess-variants/master/static/icons/Bughouse960.svg) Bughouse960
+# ![Bughouse960](https://raw.githubusercontent.com/pychess/pychess-variants/master/static/icons/Bughouse960.svg) Bughouse960
 
 Bughouse960 是四狂象棋（Bughouse）的960玩法。由于这视为四狂象棋的变体，因此请先熟悉四狂象棋的规则，
 

@@ -1,5 +1,5 @@
 
-# ![Manchu Chess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Manchu.svg) Manchu Chess
+# ![Manchu Chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/Manchu.svg) Manchu Chess
 
 O Xadrez Manchu (Chinês: 满洲棋; pinyin: *Mǎnzhōuqí*) também conhecido como Yitong ou Xadrez Yitong (Chinês: 一统棋; pinyin: *Yìtǒngqí*), é uma variante assimétrica de Xiangqi. Foi criado durante a dinastia de Qing pelos "Bannermen"(Militares de Bandeira) e foi uma das variantes mais populares entre estes.
 

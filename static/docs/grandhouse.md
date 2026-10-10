@@ -1,4 +1,4 @@
-# ![Grandhouse](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Grandhouse.svg) Grandhouse
+# ![Grandhouse](https://github.com/pychess/pychess-variants/blob/master/static/icons/Grandhouse.svg) Grandhouse
 
 Grandhouse is a custom variant combining the rules of Grand chess with the drop rules of Crazyhouse. The same rules apply to both games. Crazyhouse and Grandhouse rules are provided below.
 
@@ -31,11 +31,11 @@ In addition to the pieces and setup, there are three other significant differenc
 
 ### Cardinal
 
-![Cardinal](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
+![Cardinal](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
 
 Various symbols used for the cardinal. (Note that the hawk is only for Seiwaran Chess).
 
-![Cardinal moves](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
+![Cardinal moves](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
 
 The cardinal (A in Pychess, for archbishop) is a compound piece combining the moves of the **bishop** and **knight**. In terms of fairy pieces, this is generically known as the princess, but also has other names in different variants.
 
@@ -47,11 +47,11 @@ The value of a cardinal is considered slightly better than a rook, but less than
 
 ### Marshal
 
-![Marshal](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
+![Marshal](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
 
 Various symbols used for the marshal. (Note that the elephant is only for Seiwaran Chess).
 
-![Marshal moves](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
+![Marshal moves](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
 
 The marshal (C in Pychess, for chancellor) is a compound piece combining the moves of the **rook** and the **knight**. In terms of fairy pieces, this is generically known as the empress, but also has other names in different variants. 
 

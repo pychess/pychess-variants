@@ -73,6 +73,27 @@ def daily_puzzle_category(key: str) -> str:
     return GAME_CATEGORY_ALL
 
 
+def forget_daily_puzzle_references(app_state, puzzle_id: str) -> list[str]:
+    """Drop every daily puzzle entry pointing at a puzzle that no longer exists.
+
+    A deleted puzzle must not stay wired into the daily rotation: the lobby
+    would serialize a null puzzle and the puzzle page would 404. Only the
+    in-memory cache is touched here; the returned keys are the documents the
+    caller has to remove from the ``dailypuzzle`` collection as well.
+    """
+    daily_puzzle_ids = app_state.daily_puzzle_ids
+    stale_keys = [key for key, value in daily_puzzle_ids.items() if value == puzzle_id]
+    for key in stale_keys:
+        del daily_puzzle_ids[key]
+    return stale_keys
+
+
+async def drop_stale_daily_puzzle_keys(app_state, puzzle_id: str) -> None:
+    """Forget a deleted puzzle in both the daily cache and the database."""
+    for key in forget_daily_puzzle_references(app_state, puzzle_id):
+        await app_state.db.dailypuzzle.delete_one({"_id": key})
+
+
 async def rename_puzzle_fields(db):
     log.info("-----------------------------------------")
     log.info("Starting puzzle field rename migration...")
@@ -148,11 +169,26 @@ async def get_daily_puzzle(request):
     game_category = effective_game_category(session, current_user)
     key = daily_puzzle_key(today, game_category)
 
-    if key in daily_puzzle_ids:
-        puzzle = await get_puzzle(request, daily_puzzle_ids[key])
-    elif game_category == GAME_CATEGORY_ALL and today in daily_puzzle_ids:
-        puzzle = await get_puzzle(request, daily_puzzle_ids[today])
-    else:
+    puzzle = None
+    cached_keys = [key]
+    if game_category == GAME_CATEGORY_ALL and today in daily_puzzle_ids:
+        cached_keys.append(today)
+    for cached_key in cached_keys:
+        # Read the id before awaiting: a concurrent request cleaning up the same
+        # dangling entry would otherwise drop the key while we are suspended.
+        cached_puzzle_id = daily_puzzle_ids.get(cached_key)
+        if cached_puzzle_id is None:
+            continue
+        cached_puzzle = await get_puzzle(request, cached_puzzle_id)
+        if cached_puzzle is not None:
+            puzzle = cached_puzzle
+            break
+        # The cached daily puzzle was deleted. Forget the dangling entries so a
+        # replacement is chosen below instead of returning None, which would be
+        # serialized into the lobby as a null puzzle and break the whole page.
+        await drop_stale_daily_puzzle_keys(app_state, cached_puzzle_id)
+
+    if puzzle is None:
         user = app_state.users["PyChess"]
 
         # skip previous daily puzzles
@@ -272,6 +308,9 @@ async def puzzle_complete(request):
     rated = post_data["rated"] == "true"
 
     puzzle_data = await get_puzzle(request, puzzleId)
+    if puzzle_data is None:
+        # The puzzle was deleted while the page was open. Nothing to rate.
+        return json_response({})
     puzzle = Puzzle(app_state.db, puzzle_data)
 
     await puzzle.set_played()

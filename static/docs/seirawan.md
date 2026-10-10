@@ -1,4 +1,4 @@
-# ![Seirawan](https://github.com/gbtami/pychess-variants/blob/master/static/icons/schess.svg) S-chess (Seirawan Chess, SHARPER Chess)
+# ![Seirawan](https://github.com/pychess/pychess-variants/blob/master/static/icons/schess.svg) S-chess (Seirawan Chess, SHARPER Chess)
 
 S-chess was created by Yasser Seirawan and Bruce Harper in 2007. The game is played on an 8x8 board but adds a twist by adding two new hybrid pieces through the process of gating (introducing the pieces onto the board by replacing vacancies in the back rank). 
 
@@ -14,7 +14,7 @@ Pawns can also promote to elephants and hawks.
 
 ### Hawk
 
-![Hawk](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Hawk.png)
+![Hawk](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Hawk.png)
 
 The hawk (H) is a compound piece combining the moves of the **bishop** and **knight**. In terms of fairy pieces, this is generically known as the princess, but also has other names in different variants.
 
@@ -24,7 +24,7 @@ The value of a hawk is considered slightly better than a rook, but less than the
 
 ### Elephant
 
-![Elephant](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantSeirawan.png)
+![Elephant](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantSeirawan.png)
 
 The elephant (E) is a compound piece combining the moves of the **rook** and the **knight**. In terms of fairy pieces, this is generically known as the empress, but also has other names in different variants. 
 

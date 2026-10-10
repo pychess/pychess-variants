@@ -10,7 +10,7 @@
 </br>
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/puzzles.jpg" width="300" height="150">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/puzzles.jpg" width="300" height="150">
 </p>
 
 We are pleased to announce several new features to PyChess! If you scroll down a bit in the lobby, you can see a couple of our major entries. Most notably, the new puzzle features. We now have puzzles from many different variants, with interesting positions selected from games accumulated on our site. Puzzles were then verified by several of our members. Many thanks to our members, especially ubdip, visualdennis, e-pluszak, and nishikata for their assistance on this! Feel free to jump in and try to solve as many puzzles as you can! Note that not all variants have puzzles at the moment. More will be added over time. If you would like to help with the process or report any bugs or odd puzzles, please let us know on Discord or Github.

@@ -1,3 +1,4 @@
+import { materializeTwoBoardHistory } from '../common/gameHistory';
 import * as Mousetrap from 'mousetrap';
 import * as cg from 'chessgroundx/types';
 import * as util from 'chessgroundx/util';
@@ -1228,6 +1229,7 @@ export class RoundControllerBughouse extends TwoBoardController implements ChatC
     onMsgBoard = (msg: MsgBoard) => {
         console.log(msg);
         if (msg.gameId !== this.gameId) return;
+        msg = materializeTwoBoardHistory(msg, this.boardA.ffish);
 
 
         /* IS THIS THE WHOLE GAME, OR ONE MOVE? ASKED OF THE MESSAGE, NOT OF OUR OWN HISTORY.

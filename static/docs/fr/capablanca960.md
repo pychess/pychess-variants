@@ -1,4 +1,4 @@
-# ![Caparandom](https://github.com/gbtami/pychess-variants/blob/master/static/icons/caparandom.svg) Caparandom
+# ![Caparandom](https://github.com/pychess/pychess-variants/blob/master/static/icons/caparandom.svg) Caparandom
 
 Capablanca960 est une variante du jeu d'échecs. Ce sont les échecs Capablanca, avec une position initiale aléatoire, dans l'esprit du Chess960. Les mêmes règles s'appliquent. Comme Capablanca960 est dérivé des échecs Capablanca, se reporter à son guide pour les règles. Les règles particulières provenant du Chess960 sont reproduites ci-dessous.
 

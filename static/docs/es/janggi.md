@@ -1,6 +1,6 @@
-# ![Janggi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Janggi.svg) Janggi
+# ![Janggi](https://github.com/pychess/pychess-variants/blob/master/static/icons/Janggi.svg) Janggi
 
-![Tableros](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Boards.png)
+![Tableros](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Boards.png)
 
 *Janggi* (장기, pronunciado como “*yang-ji*”), o Ajedrez Coreano, es un juego de tablero clásico procedente de Corea. El juego es derivado del Xiangqi y es muy similar a él.
 
@@ -30,41 +30,41 @@ Muchas piezas tienen movimientos especiales utilizando las diagonales en cada pa
 
 ### Rey
 
-![Reyes](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Kings.png) 
+![Reyes](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Kings.png)
 
 El **Rey** (también conocido por su nombre chino, el **general**) está restringido a su palacio y puede mover en las líneas del palacio. Esto significa que cuando el Rey está en el centro, tiene 8 posibles movimientos. Pero en cualquier otro lugar del palacio tiene solamente 3 movimientos.
 
 *Reglas especiales:* Cuando un Rey se enfrenta al otro Rey, esto causa *bikjang*. El siguiente jugador debe apartar su rey o si no la partida terminará. Véanse más abajo las reglas de los bikjang.
 
-![Rey y consejero](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Palace.png)
+![Rey y consejero](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Palace.png)
 
 ### Consejero
 
-![Consejeros](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Advisors.png) 
+![Consejeros](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Advisors.png)
 
 El **Consejero** (también conocido por su nombre occidental, el **Guardián**) mueve exactamente como el Rey, es decir un espacio por las líneas del palacio. Al igual que el Rey, el Consejero está confinado en el palacio.
 
 ### Caballo
 
- ![Caballos](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Horses.png)
+ ![Caballos](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Horses.png)
  
- ![Movimiento del Caballo](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/HorseDiagram.png)
+ ![Movimiento del Caballo](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/HorseDiagram.png)
 
 El **Caballo** mueve casi exactamente igual que un Caballo de ajedrez. Sin embargo, en lugar de las típicas "dos casillas ortogonalmente y una casilla hacia un lado", es mejor pensar en ello como *un paso ortogonal, y luego otro diagonalmente hacia adelante en cualquier dirección*, como formando una Y. La razón para ello es que el Caballo **puede ser bloqueado** si una pieza se encuentra adyacente a él. Dicha pieza bloqueará ambos extremos de la Y. Por lo tanto, puede haber situaciones donde 2 Caballos se amenazan mutuamente pero solo uno puede atacar mientras que el otro está bloqueado. Hay jugadas fuertes que aprovechan el bloqueo de un Caballo y limitan sus movimientos.
 
 ### Elefante
 
- ![Elefantes](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Elephants.png)
+ ![Elefantes](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Elephants.png)
  
- ![Movimiento del Elefante](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/ElephantDiagram.png)
+ ![Movimiento del Elefante](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/ElephantDiagram.png)
 
 El **Elefante** es muy diferente de su contraparte en el xiangqi. El movimiento es similar al del Caballo en el sentido de que mueve según un patrón en Y. Mientras que el Caballo mueve una casilla ortogonalmente y otra más en diagonal, el Elefante mueve una casilla ortogonal y luego *dos* casillas en diagonal. El Elefante, al igual que el cabllo, puede ser bloqueado en cualquier punto a lo largo de su camino.
 
 ### Carruaje
 
- ![Carruajes](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Chariots.png)
+ ![Carruajes](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Chariots.png)
  
- ![Movimiento del Carruaje](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/ChariotDiagram.png)
+ ![Movimiento del Carruaje](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/ChariotDiagram.png)
 
 El **Carruaje** (también conocido por su nombre occidental, la **Torre**) se mueve exactamente igual que una Torre de ajedrez: cualquier número de casillas ortogonalmente. Esta es la pieza más valiosa del juego, excluyendo al rey.
 
@@ -72,9 +72,9 @@ El **Carruaje** (también conocido por su nombre occidental, la **Torre**) se mu
 
 ### Cañón
 
-![Cañones](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Cannons.png)
+![Cañones](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Cannons.png)
 
-![Movimiento del Cañón](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/CannonDiagram.png)
+![Movimiento del Cañón](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/CannonDiagram.png)
 
 El **Cañón** es ligeramente diferente que su contraparte en xiangqi. Se mueve ortogonalmente como el Carruaje, pero necesita la intervención de otra pieza (denominada una "pantalla") para poder impulsarse. Puede entonces capturar la siguiente pieza en la misma línea. A diferencia del xiangqi, el Cañón no se puede mover sin una pantalla.
 
@@ -84,9 +84,9 @@ El **Cañón** es ligeramente diferente que su contraparte en xiangqi. Se mueve 
 
 ### Peón
 
-![Peones](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Pawns.png)
+![Peones](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Pawns.png)
 
-![Movimiento del Peón](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/PawnDiagram.png)
+![Movimiento del Peón](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/PawnDiagram.png)
 
 El **Peón** (también conocido por su nombre chino, el **Soldado**) se mueve y captura hacia adelante o a los lados una casilla. Esto es diferente del peón de xiangqi, que necesita cruzar el río para poder mover hacia los lados.
 
@@ -165,9 +165,9 @@ Aparte de las reglas mencionadas arriba...
 
 * La estructura de peones es muy importante. Dado que los peones se pueden mover hacia los lados, son más fuertes cuando se protegen unos a otros en pares. Una línea de tres peones es una formación pobre. Debido a ello, no es recomendable avanzar peones en general.
 
-![Formaciones de Peones Malas](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/BadPawns.png)
+![Formaciones de Peones Malas](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/BadPawns.png)
 
 * Respecto al proceso de escoger la disposición Caballo-Elefante al comienzo, una forma de verlo es enfocarse en cómo tus Elefantes están posicionados, y ello tiene implicaciones significativas para la apertura. Un Elefante en una posición exterior puede moverse hacia el centro entre dos peones. sin embargo, un Elefante en una posición interior está bloqueado por peones (aunque los protege).
 * Continuando con el mismo tema, la disposición de tu Elefante determina qué **columna del borde abrir**. Por ejemplo, cuando jugamos con una disposición donde el Elefante izquierdo puede avanzar (y el correspondiente Elefante del rival está también en el exterior), es deseable mover el peón del borde izquierdo del tablero, abriendo la columna del Carruaje. La razón para ello es que ahora el correspondiente peón del rival no se puede mover, así que si atacas a dicho peón con tu Elefante, si ese peón se defiende, tu rival perdería su Carruaje. Nótese que si el rival tuviese dos Elefantes interiores, entonces sería deseable abrir el borde contrario.
 
-![Activando el Elefante y Carruaje](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/ActiveElephant.png)
+![Activando el Elefante y Carruaje](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/ActiveElephant.png)

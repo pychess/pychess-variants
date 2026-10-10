@@ -10,8 +10,6 @@ from typing import TYPE_CHECKING
 from compress import C2R, R2C
 from const import (
     CASUAL,
-    MATE,
-    POCKET_PATTERN,
     RATED,
     STARTED,
 )
@@ -21,11 +19,18 @@ from glicko2.glicko2 import gl2
 from newid import new_id
 from pychess_global_app_state import PychessGlobalAppState
 from seek import ANON_RESTRICTED_SEEK_MESSAGE, is_anon_restricted_seek
-from utils import remove_seek, round_broadcast, sanitize_fen
+from utils import (
+    REALTIME_GAME_IN_PROGRESS_MESSAGE,
+    realtime_game_conflict,
+    remove_seek,
+    round_broadcast,
+    sanitize_fen,
+)
 from variants import C2V, GRANDS
 from websocket_utils import ws_send_json_many
 
 from bug.game_bug import GameBug
+from bug.history import replay_history
 
 if TYPE_CHECKING:
     from user import User
@@ -134,213 +139,41 @@ async def load_game_bug_from_doc(
     if (mlist or game.tournamentId is not None) and doc["s"] > STARTED:
         game.saved = True
 
-    if "a" in doc:
+    if doc.get("a"):
         game.steps[0]["analysis"] = doc["a"][0]
+    root_chat = (doc.get("c") or {}).get("m0")
+    if root_chat is not None:
+        game.steps[0]["chat"] = [
+            {"message": entry["m"], "username": entry["u"], "time": entry["t"]}
+            for entry in root_chat
+        ]
 
-    base_clock_time = (game.base * 1000 * 60) + (0 if game.base > 0 else game.inc * 1000)
-
-    # NO `insert(0, base_clock_time)` HERE, and that is the difference from the one-board path.
-    #
-    # `server/utils.py` prepends the base because `game.py` STRIPS it on save (`self.clocks_w[1:]`).
-    # Bughouse never strips: `game_bug.py` writes `ply_clocks` whole, and that list is seeded with a
-    # `[base, base]` entry in `GameBugClocks.__init__` before any move. So `doc["cw"][0]` is already
-    # the starting time, and prepending another gave every array TWO of them — which showed on the
-    # analysis page as two consecutive plies where no clock had moved, and shifted every later ply.
-    #
-    # Read-side fix by choice: the stored documents are left exactly as they are, so every game ever
-    # played stays readable and starts being read correctly. See the change
-    # `bughouse-clock-record-investigation`.
-    #
-    # Defaulted BEFORE the lookups, not inside them. The loop below reads these arrays
-    # unconditionally, so a document without clock history — anything created before per-ply
-    # persistence, or an in-progress game whose writer never ran — used to raise NameError here and
-    # be swallowed by the loop's `except`, which is a game that silently loads with no moves.
-    clocktimes_w = [base_clock_time]
-    clocktimes_b = [base_clock_time]
-    clocktimes_wB = [base_clock_time]
-    clocktimes_bB = [base_clock_time]
-
-    if "cw" in doc:
-        clocktimes_w = doc["cw"] if len(doc["cw"]) > 0 else [base_clock_time]
-        clocktimes_b = doc["cb"] if len(doc["cb"]) > 0 else [base_clock_time]
-
-    if "cwB" in doc:
-        clocktimes_wB = doc["cwB"] if len(doc["cwB"]) > 0 else [base_clock_time]
-        clocktimes_bB = doc["cbB"] if len(doc["cbB"]) > 0 else [base_clock_time]
-
-    # The live clock state, rebuilt as the plies are replayed. `last_move_clocks[board][colour]` is
-    # the remaining time for that seat as of its own last move, and it is the ONLY clock value the
-    # server treats as authoritative — the per-ply arrays hold four numbers of which three are the
-    # mover's stale view of seats it does not own. Taking each seat's own last entry therefore
-    # reconstructs exactly the four numbers the running game held.
-    restored_last_move_clocks = {
-        "a": list(game.gameClocks.last_move_clocks["a"]),
-        "b": list(game.gameClocks.last_move_clocks["b"]),
-    }
-    # Epoch-ns of the last move on each board, which is when that board's current turn began.
-    restored_last_move_ts: dict[str, int] = {}
-    # PLAIN INTS, NOT WHAT THE DRIVER HANDS BACK. `save_game()` writes `time_ns()` values, which are
-    # too large for BSON's 32-bit int, so MongoDB stores them as `NumberLong` and the driver returns
-    # `bson.Int64`. Every consumer below puts one in a step, and a step's `ts` reaches the client:
-    # `msgspec`'s encoder — which the whole server sends websocket JSON through — has no `enc_hook`
-    # and refuses anything it does not know, so a bughouse game REBUILT FROM ITS DOCUMENT raised
-    # `TypeError: Encoding objects of type Int64 is unsupported` on the first message carrying a
-    # step. In the cache the same values are plain ints and nothing fails, which is why only a
-    # restarted server or an evicted game showed it.
-    doc_ts = [int(t) for t in (doc.get("ts") or [])]
-
-    board_ply = {"a": 0, "b": 0}
-    last_move, last_move_b = "", ""
-    for ply, move in enumerate(mlist):
-        try:
-            board_name = (
-                "a" if doc["o"][ply] == 0 else "b"
-            )  # todo why am i not storing a/b instead of 0/1. either that or compress to bits maybe
-            last_move, last_move_b = (
-                move if board_name == "a" else last_move,
-                move if board_name == "b" else last_move_b,
-            )
-
-            if move[1:2] != "@":
-                last_move_captured_role = game.boards[board_name].piece_to_partner(move)
-                # Add the captured piece to the partner pocked
-                if last_move_captured_role is not None:
-                    partner_board = "b" if board_name == "a" else "a"
-                    game.boards[partner_board].fen = POCKET_PATTERN.sub(
-                        r"[\1%s]" % last_move_captured_role, game.boards[partner_board].fen
-                    )
-
-            san = game.boards[board_name].get_san(move)
-
-            if doc["s"] != MATE and san.endswith("#"):
-                san = san.replace("#", "+")
-
-            game.boards[board_name].push(move)
-
-            if board_name == "a":
-                game.checkA = game.boards[board_name].is_checked()
-            else:
-                game.checkB = game.boards[board_name].is_checked()
-
-            # turnColor = "black" if game.board.color == BLACK else "white" todo: should i use board at all here? i mean adding a second one - maybe for fen ahd and check - but still can happen on client as well
-            turn_color = "white" if (board_ply[board_name] + 1) % 2 == 0 else "black"
-
-            # No matter on which board the ply is happening i always need both fens and moves for both boards.
-            # This way when jumping to a ply in the middle of the list i can setup both boards and highlight both last moves
-            step = {
-                "fen": game.fen.split(" | ")[0],
-                "fenB": game.fen.split(" | ")[1],
-                "move": last_move,
-                "moveB": last_move_b,
-                "boardName": board_name,
-                "san": san,
-                "turnColor": turn_color,
-                "check": game.checkA if board_name == "a" else game.checkB,
-            }
-
-            # `ply + 1`, because the two lists count differently. `ply` enumerates `mlist`, which
-            # is `doc["m"]` and holds one entry per MOVE — the same convention as `doc["o"]`,
-            # indexed with this very counter two lines up. The clock arrays hold one entry per ply
-            # PLUS the seeded `[base, base]` at index 0, so the clock recorded after move `ply`
-            # lives at `ply + 1`. Indexing them alike made every step carry the previous move's
-            # clocks, which is the second half of the two-ply shift (the first was a duplicated
-            # base, removed above).
-            #
-            # The step being built is appended below and becomes `game.steps[ply + 1]`, since
-            # `GameBug.__init__` has already put the initial position at `steps[0]`. So this reads
-            # `clocktimes[ply + 1]` into `steps[ply + 1]`: index for index, which is what makes a
-            # rebuilt game identical to the same game served from memory.
-            # DEPRECATED CONTENT, correct INDEXING. Only the entry belonging to this ply's mover is
-            # authoritative; the other three are the mover's stale view of seats it does not own
-            # (see `game_bug_clocks.update_clocks`). They are passed through unchanged so old games
-            # keep reading as they always did — the analysis page derives what it displays from the
-            # mover values alone, in `analysisClock.reconstructMainlineClocks`.
-            step["clocks"] = [
-                clocktimes_w[ply + 1]
-                if ply + 1 < len(clocktimes_w) and clocktimes_w[ply + 1]
-                else None,
-                clocktimes_b[ply + 1]
-                if ply + 1 < len(clocktimes_b) and clocktimes_b[ply + 1]
-                else None,
+    final_fen = doc.get("f")
+    if doc["s"] > STARTED and isinstance(final_fen, str) and "|" in final_fen:
+        # A finished archive needs only its final authoritative state on the server.
+        # Native history replay is reserved for explicit backend consumers.
+        game._history_doc = {
+            key: doc[key]
+            for key in ("o", "s", "a", "c", "cw", "cb", "cwB", "cbB", "ts")
+            if key in doc
+        }
+        game._history_moves = mlist
+        for board_name, fen in zip(("a", "b"), final_fen.split("|"), strict=True):
+            board = game.boards[board_name]
+            board.fen = fen.strip()
+            board.move_stack = [
+                move
+                for index, move in enumerate(mlist)
+                if ("a" if doc["o"][index] == 0 else "b") == board_name
             ]
-            step["clocksB"] = [
-                clocktimes_wB[ply + 1]
-                if ply + 1 < len(clocktimes_wB) and clocktimes_wB[ply + 1]
-                else None,
-                clocktimes_bB[ply + 1]
-                if ply + 1 < len(clocktimes_bB) and clocktimes_bB[ply + 1]
-                else None,
-            ]
-
-            # Record this seat's own clock, which is the authoritative entry for this ply. The
-            # mover is white on a board's 1st, 3rd, 5th... move, so the parity of that board's
-            # counter — read BEFORE it is incremented below — gives the colour that just moved.
-            mover_color = WHITE if board_ply[board_name] % 2 == 0 else BLACK
-
-            # THE MAP THAT LETS A RESENT MOVE BE IGNORED, REBUILT RATHER THAN LOST.
-            #
-            # `play_move()` consults `lastmovePerBoardAndUser[board][username]` to recognise a move
-            # a player has already made, which is what a reconnect payload resends. It lives only
-            # in memory, so a restarted server used to answer the same resend differently: not with
-            # the quiet "already played" of branch 1.2.3.2, but by handing the move to the engine,
-            # which refuses it because the position already contains it, and then resyncing that
-            # client — branch 1.2.3.4. Both endings leave the client in step, which is why the
-            # scenario bed passes either way; what could not stand is that the answer depended on
-            # nothing but whether the server happened to have restarted.
-            #
-            # THE SEAT IS DERIVED THE SAME WAY `play_move()` DERIVES IT, from the colour to move on
-            # that board — here from this board's ply parity, which is the same fact one move
-            # earlier. Assigned on every ply because only the last one per player survives, which
-            # is exactly what the map holds.
-            mover = (
-                (game.wplayerA if mover_color == WHITE else game.bplayerA)
-                if board_name == "a"
-                else (game.wplayerB if mover_color == WHITE else game.bplayerB)
-            )
-            game.lastmovePerBoardAndUser[board_name][mover.username] = move
-
-            mover_clocks = step["clocks"] if board_name == "a" else step["clocksB"]
-            if mover_clocks[mover_color] is not None:
-                restored_last_move_clocks[board_name][mover_color] = mover_clocks[mover_color]
-            if ply + 1 < len(doc_ts):
-                restored_last_move_ts[board_name] = doc_ts[ply + 1]
-
-            # REBUILT STEPS MUST CARRY `ts`, because `save_game()` reads `x["ts"]` for every step
-            # when it writes the game's ending. A restored game whose steps lacked it died with
-            # `KeyError: 'ts'` inside `game_ended()`, so the result never reached the document.
-            # Unreachable until now: a restored in-progress game used to be marked `saved`, so
-            # `save_game()` returned before it could get here. Defaulted to 0 rather than omitted,
-            # for documents written before `ts` was persisted per ply.
-            step["ts"] = doc_ts[ply + 1] if ply + 1 < len(doc_ts) else 0
-
-            board_ply[board_name] += 1
-
-            game.steps.append(step)
-
-            if "a" in doc:
-                try:
-                    game.steps[-1]["analysis"] = doc["a"][ply + 1]
-                except IndexError:
-                    log.error("IndexError %s %s %s", ply, move, san)
-
-        except Exception:
-            log.exception(
-                "ERROR: Exception in load_game() %s %s %s %s %s",
-                game_id,
-                variant,
-                doc.get("if"),
-                move,
-                list(mlist),
-            )
-            break
-
-    if len(game.steps) > 1:
-        move = (
-            game.steps[-1]["move"]
-            if game.steps[-1]["boardName"] == "a"
-            else game.steps[-1]["moveB"]
-        )
-        game.lastmove = move  # TODO: msg.lastmove where this value goes is totally redundant imho
+            board.ply = len(board.move_stack)
+            board.color = WHITE if board.fen.split()[1] == "w" else BLACK
+        game.checkA = game.boards["a"].is_checked()
+        game.checkB = game.boards["b"].is_checked()
+        game.lastmove = mlist[-1] if mlist else None
+    else:
+        # Active games and archives without a stored final position require replay.
+        restored_last_move_clocks, restored_last_move_ts = replay_history(game, doc, mlist)
 
     level = doc.get("x")
     game.date = doc["d"]
@@ -396,25 +229,6 @@ async def load_game_bug_from_doc(
     if doc.get("by") is not None:
         game.imported_by = doc.get("by")
 
-    if doc.get("c") is not None:
-        chat = doc.get("c")
-        for key in chat:
-            try:
-                idx = int(key.replace("m", ""))
-                game.steps[idx]["chat"] = []
-                for c in chat[key]:
-                    game.steps[idx]["chat"].append(
-                        {"message": c["m"], "username": c["u"], "time": c["t"]}
-                    )
-            except Exception:
-                log.exception(
-                    "ERROR: Exception in load_game() chat parsing %s %s %s",
-                    game_id,
-                    variant,
-                    doc.get("c"),
-                )
-                break
-
     if game.status > STARTED:
         # Finished bughouse games loaded from DB should not keep their clock
         # tasks running; cancel them immediately to prevent leaks.
@@ -450,14 +264,19 @@ async def new_game_bughouse(app_state: PychessGlobalAppState, seek_id, game_id=N
         (seek.player1, seek.bugPlayer1) if color == "b" else (seek.player2, seek.bugPlayer2)
     )
 
-    if game_id is not None:
-        # game invitation
-        del app_state.invites[game_id]
-    else:
-        game_id = await new_id(None if app_state.db is None else app_state.db.game)
-
-    # print("new_game", game_id, seek.variant, seek.fen, wplayer, bplayer, seek.base, seek.inc, seek.level, seek.rated, seek.chess960)
+    await app_state.realtime_game_creation_lock.acquire()
     try:
+        conflict = realtime_game_conflict(app_state, (wplayer, bplayer, bug_wplayer, bug_bplayer))
+        if conflict is not None:
+            return {"type": "error", "message": REALTIME_GAME_IN_PROGRESS_MESSAGE}
+
+        if game_id is not None:
+            # game invitation
+            app_state.invites.pop(game_id, None)
+        else:
+            game_id = await new_id(None if app_state.db is None else app_state.db.game)
+
+        # print("new_game", game_id, seek.variant, seek.fen, wplayer, bplayer, seek.base, seek.inc, seek.level, seek.rated, seek.chess960)
         if TYPE_CHECKING:
             assert seek.chess960 is not None
         any_bot_player = wplayer.bot or bplayer.bot or bug_wplayer.bot or bug_bplayer.bot
@@ -484,6 +303,7 @@ async def new_game_bughouse(app_state: PychessGlobalAppState, seek_id, game_id=N
             create=True,
             new_960_fen_needed_for_rematch=seek.reused_fen,
         )
+        app_state.games[game_id] = game
     except Exception:
         log.exception(
             "Creating new BugHouse game %s failed! %s 960:%s FEN:%s %s+%s vs %s+%s",
@@ -499,7 +319,8 @@ async def new_game_bughouse(app_state: PychessGlobalAppState, seek_id, game_id=N
 
         remove_seek(app_state.seeks, seek)
         return {"type": "error", "message": "Failed to create game"}
-    app_state.games[game_id] = game
+    finally:
+        app_state.realtime_game_creation_lock.release()
 
     remove_seek(app_state.seeks, seek)
 
@@ -585,6 +406,13 @@ async def join_seek_bughouse(
     app_state: PychessGlobalAppState, user, seek_id, game_id=None, join_as="any"
 ):
     seek = app_state.seeks[seek_id]
+
+    conflict = realtime_game_conflict(
+        app_state,
+        (seek.player1, seek.player2, seek.bugPlayer1, seek.bugPlayer2, user),
+    )
+    if conflict is not None:
+        return {"type": "error", "message": REALTIME_GAME_IN_PROGRESS_MESSAGE}
 
     log.info(
         "+++ BUGHOUSE Seek %s joined by %s FEN:%s 960:%s",

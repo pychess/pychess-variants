@@ -170,12 +170,10 @@
 
 .ublog-page .ublog-post__image,
 .ublog-page .ublog-post-image {
+  display: block;
   width: 100%;
   max-width: 100%;
-  aspect-ratio: 26 / 9;
-  max-height: min(56vh, 32rem);
-  height: 100%;
-  object-fit: cover;
+  height: auto;
   border-radius: 8px 8px 0 0;
   margin-bottom: 0;
 }

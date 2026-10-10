@@ -1,4 +1,4 @@
-# ![Grandhouse](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Grandhouse.svg) Grandhouse
+# ![Grandhouse](https://github.com/pychess/pychess-variants/blob/master/static/icons/Grandhouse.svg) Grandhouse
 
 Grandhouse es una variante personalizada que combina las reglas del ajedrez Grand con las reglas de "soltar" piezas de Crazyhouse. Las mismas reglas se aplican en ambos juegos. Dado que se considera una variante derivada del Grand, por favor consulta las reglas de Grand en su propia guía. Las reglas de Crazyhouse se incluyen a continuación como referencia.
 

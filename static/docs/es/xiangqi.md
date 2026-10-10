@@ -1,6 +1,6 @@
-# ![Xiangqi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/xiangqi.svg) Xiangqi
+# ![Xiangqi](https://github.com/pychess/pychess-variants/blob/master/static/icons/xiangqi.svg) Xiangqi
 
-![Tableros](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Boards.png)
+![Tableros](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Boards.png)
 
 El *Xiangqi* (象棋, pronunciado como “*shiang-chi*”), o Ajedrez Chino, es un juego de tablero clásico procedente de China que se supone derivado del Chatturanga, el mismo ancestro que el Ajedrez, aunque algunos han teorizado lo opuesto. El juego es muy popular en China y Vietnam, y se ha dicho que es el juego más jugado en el mundo. El juego es muy similar al Ajedrez, pero guarda diversas diferencias.
 
@@ -26,25 +26,25 @@ Las piezas de Xiangqi han tenido dos nombres tradicionalmente: su denominación 
 
 ### Rey
 
-![Reyes](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Kings.png) 
+![Reyes](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Kings.png)
 
 El Rey (también conocido por su nombre Chino, el **General**) solamente puede mover una casilla ortogonalmente. A mayores, está confinado en el Palacio.
 
 *Regla especial*: Los Reyes no pueden estar enfrentados sin piezas de por medio. Se deben considerar piezas capaces de atacar al otro como si fuesen Torres (también denominados "Generales Voladores"). Esto es útil para preparar jaques mates en el final.
 
-![Movimiento de Rey y Consejero](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/KingAdvisorDiagram.png)
+![Movimiento de Rey y Consejero](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/KingAdvisorDiagram.png)
 
 ### Consejero
 
-![Consejeros](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Advisors.png) 
+![Consejeros](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Advisors.png)
 
 El **Consejero** (también conocido por su nombre occidental, el **Guardián** o menos frecuente **Ministro**) solamente puede mover una casilla a lo largo de las diagonales del palacio. Hay solamente cinco posiciones para un Consejero.
 
 ### Elefante
 
- ![Elefantes](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Elephants.png)
+ ![Elefantes](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Elephants.png)
  
- ![Movimiento del Elefante](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/ElephantDiagram.png)
+ ![Movimiento del Elefante](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/ElephantDiagram.png)
 
 El Elefante (raramente llamado por su nombre occidental, el **Alfil**) puede mover en diagonal exactamente dos casillas. Hay dos restricciones adicionales: 1) El Elefante puede ser bloqueado si hay una pieza en el medio. 2) El Elefante no puede cruzar el Río.
 
@@ -52,33 +52,33 @@ Como nota al margen, el carácter chino para el Elefante Rojo significa "Ministr
 
 ### Caballo
 
- ![Caballos](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Horses.png)
+ ![Caballos](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Horses.png)
  
- ![Movimiento del Caballo](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/HorseDiagram.png)
+ ![Movimiento del Caballo](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/HorseDiagram.png)
 
 El **Caballo** mueve casi exactamente igual que un Caballo de ajedrez. Sin embargo, en lugar de las típicas "dos casillas ortogonalmente y una casilla hacia un lado", es mejor pensar en ello como *un paso ortogonal, y luego otro diagonalmente hacia adelante en cualquier dirección*, como formando una Y. La razón para ello es que el Caballo **puede ser bloqueado** si una pieza se encuentra adyacente a él. Dicha pieza bloqueará ambos extremos de la Y. Por lo tanto, puede haber situaciones donde 2 Caballos se amenazan mutuamente pero solo uno puede atacar mientras que el otro está bloqueado. Hay jugadas fuertes que aprovechan el bloqueo de un Caballo y limitan sus movimientos.
 
 ### Carruaje
 
- ![Carruajes](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Chariots.png)
+ ![Carruajes](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Chariots.png)
  
- ![Movimiento del Carruaje](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/ChariotDiagram.png)
+ ![Movimiento del Carruaje](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/ChariotDiagram.png)
 
 El **Carruaje** (también conocido por su nombre occidental, la **Torre**, y raramente por su traducción moderna literal, **Coche**) se mueve exactamente igual que una Torre de ajedrez: cualquier número de casillas ortogonalmente. Esta es la pieza más valiosa del juego, excluyendo al rey.
 
 ### Cañón
 
-![Cañones](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Cannons.png)
+![Cañones](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Cannons.png)
 
-![Movimiento del Cañón](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/CannonDiagram.png)
+![Movimiento del Cañón](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/CannonDiagram.png)
 
 El Cañón es una pieza única en Xiangqi. Puede mover exactamente igual que el Carruaje. Sin embargo, para capturar necesita una pieza (amiga o enemiga) en medio, denominada pantalla.
 
 ### Peón
 
-![Peones](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Pawns.png)
+![Peones](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Pawns.png)
 
-![Movimiento del Peón](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/PawnDiagram.png)
+![Movimiento del Peón](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/PawnDiagram.png)
 
 The pawn (also called by its Chinese name, the **soldier**) moves and captures by moving forward one square. This is different than the chess pawn. The pointy hat in the internationalized piece is a reminder.
 El **Peón** (también conocido por su nombre chino, el **Soldado**) se mueve y captura hacia adelante una casilla. Esto es diferente del peón de Ajedrez. El sombrero puntiagudo en la pieza internacionalizada sirve de recordatorio.
@@ -152,13 +152,13 @@ La siguiente información es cortesía de [este sitio](http://www.shakki.info/en
 
 El movimiento de apertura más común es el Cañón central, que es un movimiento bastante obvio porque lanza una agresión por la columna central. Alrededor del 70% de las partidas comienzan de este modo, así que es probablemente el mejor modo de empezar a aprender el juego.
 
-![Apertura de Cañón](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/CannonOpening.png)
+![Apertura de Cañón](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/CannonOpening.png)
 
 Hay cuatro defensas muy populares, y una quinta que también mencionaremos.
 
 **1. Caballos pantalla / Defensa Dos caballos**
 
-![Caballos pantalla](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Screen_Horses.png)
+![Caballos pantalla](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Screen_Horses.png)
 
 Esta es la defensa más común. El objetivo por supuesto es tener ambos Caballos protegiendo el Peón central. Hay múltiples variaciones.
 
@@ -166,7 +166,7 @@ Esta es la defensa más común. El objetivo por supuesto es tener ambos Caballos
 
 Un Caballo se desarrolla normalmente, pero antes de que el otro sea desarrollado, un Cañón se mueve a una posición de "esquina de palacio" ("palcorner" en inglés, significando que va la esquina del palacio a su mismo lado), y después finalmente se mueve el segundo Caballo. Las Negras a continuación conectarán los Elefantes para completar la defensa. Es una apertura relativamente reciente.
 
-![Fan Gong Ma](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Fan_Gong_Ma.png)
+![Fan Gong Ma](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Fan_Gong_Ma.png)
 
 **3. Cañón en Misma Dirección**
 
@@ -178,7 +178,7 @@ Como la anterior, pero con el otro Cañón. La práctica moderna consiste en mov
 
 **5. Tigre en Tres Pasos**
 
-![Tigre en Tres Pasos](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Three_Step_Tiger.png)
+![Tigre en Tres Pasos](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Three_Step_Tiger.png)
 
 Las Negras desarrollan su Carruaje rápidamente moviendo su Cañón al borde del tablero. Una secuencia típica sería avanzar el Caballo primero, luego el Cañón al borde, y finalmente seguir con el Carruaje a la columna del Cañón.
 

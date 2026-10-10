@@ -1,4 +1,4 @@
-# ![Crazyhouse](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Crazyhouse.svg) Crazyhouse
+# ![Crazyhouse](https://github.com/pychess/pychess-variants/blob/master/static/icons/Crazyhouse.svg) Crazyhouse
 
 Le Crazyhouse est une variante des échecs occidentaux très populaire, où les pièces adverses capturées peuvent être parachutées sur l'échiquier en changeant de camp (comme au shogi). Ceci amène un jeu fort différent du jeu classique. Il existe une compétition de haut niveau au Crazyhouse.
 

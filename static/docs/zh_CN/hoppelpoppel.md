@@ -1,4 +1,4 @@
-# ![Hoppelpoppel](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Hoppelpoppel.svg) 跳跳国际象棋 | Hoppel-Poppel
+# ![Hoppelpoppel](https://github.com/pychess/pychess-variants/blob/master/static/icons/Hoppelpoppel.svg) 跳跳国际象棋 | Hoppel-Poppel
 
 跳跳国际象棋（Hoppel-Poppel）是一个国际象棋变体，来自德国。规则改动较少。Hoppel-Poppel 是德国的一种用前一天的土豆、烤生菜、泡菜打入鸡蛋煎炸而成的早点，与本棋的联系不详。 
 

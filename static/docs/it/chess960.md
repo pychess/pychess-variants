@@ -1,4 +1,4 @@
-# ![960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/960.svg) Scacchi960 (Scacchi Fischerandom)
+# ![960](https://github.com/pychess/pychess-variants/blob/master/static/icons/960.svg) Scacchi960 (Scacchi Fischerandom)
 
 Gli Scacchi960 sono stati creati da Bobby Fischer per rendere il gioco più vario e rimuovere molta della memorizzazione meccanica delle aperture a cui gli scacchi standard ti costringono. Questa è una delle varianti più popolari, e separa coloro che hanno veramente imparato la strategia e la tattica da quelli che si affidano alla memorizzazione delle linee di apertura.
 

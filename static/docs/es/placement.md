@@ -1,4 +1,4 @@
-# ![Placement](https://github.com/gbtami/pychess-variants/blob/master/static/icons/placement.svg) Ajedrez Placement (Ajedrez Bronstein, Pre-Ajedrez, Shuffle-Chess)
+# ![Placement](https://github.com/pychess/pychess-variants/blob/master/static/icons/placement.svg) Ajedrez Placement (Ajedrez Bronstein, Pre-Ajedrez, Shuffle-Chess)
 
 Pal Benko  atribuye la idea del "Pre-Ajedrez" o "Shuffle-Chess" a David Bronstein.
 

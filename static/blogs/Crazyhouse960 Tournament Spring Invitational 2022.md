@@ -11,14 +11,14 @@
     </div>
 </div>
 
-![One Flew Over the Cuckoo's Nest (1975)](https://github.com/gbtami/pychess-variants/blob/master/static/images/one-flew-over-the-cuckoos-nest.jpg)
+![One Flew Over the Cuckoo's Nest (1975)](https://github.com/pychess/pychess-variants/blob/master/static/images/one-flew-over-the-cuckoos-nest.jpg)
 (By the way, the image is from One Flew Over the Cuckoo's Nest (1975), highly recommended movie)
 
 Hello everyone,
 
 As of today, 2nd October 2022, i can proudly announce that we have finally completed our 6.5 months long journey of this mini Crazyhouse960 Tournament! :) Congrats to [@Mugwort](https://lichess.org/@/Mugwort) for the 1st place, [@LegionDestroyer](https://lichess.org/@/LegionDestroyer) for the 2nd place and FM [@Crazy_Eight](https://lichess.org/@/Crazy_Eight) for the 3rd place! Final standings can be seen here:
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/zh960invitational2022.jpg" width="899" height="387">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/zh960invitational2022.jpg" width="899" height="387">
 </p>
 
 Link to detailed scoresheet and pairings: [docs.google.com/spreadsheets/d/1rGd2vHveMtnvIoo4i0W9NxpKPMJUqFEo5rc9SsohoOI/edit#gid=0](https://docs.google.com/spreadsheets/d/1rGd2vHveMtnvIoo4i0W9NxpKPMJUqFEo5rc9SsohoOI/edit#gid=0)
@@ -35,5 +35,5 @@ Thanks everyone for participating and completing all of their matches once again
 [@mugwort](https://lichess.org/@/Mugwort) [@legiondestroyer](https://lichess.org/@/LegionDestroyer) [@crazy_eight](https://lichess.org/@/crazy_eight) [@ciw](https://lichess.org/@/ciw) [@the-lone-wolf](https://lichess.org/@/the-lone-wolf) [@blunderman1](https://lichess.org/@/blunderman1)
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/icons/Crazyhouse960.svg" width="25" height="25">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/icons/Crazyhouse960.svg" width="25" height="25">
 </p>

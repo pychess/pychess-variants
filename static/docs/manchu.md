@@ -1,5 +1,5 @@
 
-# ![Manchu Chess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Manchu.svg) Manchu Chess
+# ![Manchu Chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/Manchu.svg) Manchu Chess
 
 Manchu chess (Chinese: 满洲棋; pinyin: *Mǎnzhōuqí*), also known as Yitong or Yitong chess (Chinese: 一统棋; pinyin: *Yìtǒngqí*), is an asymmetric variant of Xiangqi. It was created during the Qing Dynasty by the Bannermen and was one of the most popular board games among them.
 

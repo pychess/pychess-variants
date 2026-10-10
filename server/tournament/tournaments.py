@@ -1770,6 +1770,8 @@ async def load_tournament(
         player_data = PlayerData(user.title, user.username, player_doc["r"], player_doc["pr"])
         tournament.register_player(user, player_data)
         player_data.id = player_doc["_id"]
+        # Legacy persisted memberships predate deployment of joinedAt.
+        player_data.joined_at = player_doc.get("joinedAt", tournament.starts_at)
         player_data.paused = player_doc["a"]
         player_data.withdrawn = withdrawn
         normalized_points: list[TournamentPoint] = []

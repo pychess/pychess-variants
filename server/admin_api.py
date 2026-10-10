@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import aiohttp_session
+from account_api import erase_account
 from admin import (
     ban,
     is_protected_username,
@@ -18,6 +19,7 @@ from public_chat_moderation import timeout_public_chat_user
 from pychess_global_app_state_utils import get_app_state
 from report_api import TIMEOUT_REASONS
 from request_utils import read_post_data
+from session_security import session_matches_user
 from settings import ADMINS
 
 MOD_LOG_COLLECTION = "mod_log"
@@ -27,6 +29,8 @@ MOD_ACTION_LABELS: dict[str, str] = {
     "shadowban": "Shadowban",
     "unshadowban": "Remove shadowban",
     "close_account": "Close account",
+    "delete_account": "Erase account (verified request)",
+    "account_erasure_requested": "Account erasure requested by admin",
     "reopen_account": "Reopen account",
     "grant_patron": "Grant patron",
     "revoke_patron": "Revoke patron",
@@ -46,13 +50,24 @@ MOD_ACTION_LABELS: dict[str, str] = {
     "simul_cancelled": "Cancel simul",
 }
 
-API_ACTIONS = {"timeout", "shadowban", "unshadowban", "close", "reopen", "patron", "unpatron"}
+API_ACTIONS = {
+    "timeout",
+    "shadowban",
+    "unshadowban",
+    "close",
+    "reopen",
+    "patron",
+    "unpatron",
+    "delete",
+}
 USER_LOG_ACTIONS = frozenset(
     {
         "chat_timeout",
         "shadowban",
         "unshadowban",
         "close_account",
+        "delete_account",
+        "account_erasure_requested",
         "reopen_account",
         "grant_patron",
         "revoke_patron",
@@ -136,7 +151,13 @@ async def admin_user_action(request: web.Request) -> web.Response:
         return _error("User not found", 404)
     user_doc = await app_state.db.user.find_one(
         {"_id": target},
-        projection={"enabled": 1, "shadowban": 1, "patron": 1, "chatTimeoutUntil": 1},
+        projection={
+            "enabled": 1,
+            "shadowban": 1,
+            "patron": 1,
+            "chatTimeoutUntil": 1,
+            "gdprErasedAt": 1,
+        },
     )
     if user_doc is None:
         return _error("User not found", 404)
@@ -156,6 +177,29 @@ async def admin_user_action(request: web.Request) -> web.Response:
 
     if is_protected_username(target):
         return _error("Protected accounts cannot be moderated here", 403)
+
+    if action == "delete":
+        data = await read_post_data(request)
+        form = data if data is not None else {}
+        if (
+            form.get("confirm_username") != target
+            or form.get("understand") != "on"
+            or form.get("verified_request") != "on"
+        ):
+            return _error(
+                "Confirm the exact username, irreversible erasure and verified owner request", 400
+            )
+        session = await aiohttp_session.get_session(request)
+        actor = await app_state.users.get(moderator)
+        if not session_matches_user(session, actor):
+            return _error("Session is no longer valid", 401)
+        if user_doc.get("gdprErasedAt"):
+            return _error("Account has already been erased", 409)
+        user = await app_state.users.get(target)
+        await record_mod_action(app_state, moderator, target, "account_erasure_requested")
+        await erase_account(app_state, user)
+        await record_mod_action(app_state, moderator, target, "delete_account")
+        return json_response({"ok": True, "username": target, "action": "delete_account"})
 
     if action == "timeout":
         live_user = app_state.users.data.get(target)

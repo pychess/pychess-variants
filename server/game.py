@@ -61,6 +61,7 @@ from typing_defs import (
     ClockValues,
     Crosstable,
     GameBoardResponse,
+    GameDisplayHistory,
     GameEndResponse,
     GameStep,
     GameSummaryJson,
@@ -1620,14 +1621,19 @@ class Game:
                 for ind, move in enumerate(mlist)
             )
         )
+        # Archived browser views no longer materialize steps. Stored analysis is
+        # sufficient to retain annotations in the existing server PGN response.
+        analysis = (
+            self.analysis
+            if len(self.steps) == 1 and self.analysis is not None and not self.usi_format
+            else [step.get("analysis") for step in self.steps]
+        )
         if not self.server_variant.two_boards and any(
-            step.get("analysis", {}).get("advice") for step in self.steps
+            row and row.get("advice") for row in analysis
         ):
             from game_analysis import annotated_game_moves
 
-            moves = annotated_game_moves(
-                mlist, self.board.initial_fen, [step.get("analysis") for step in self.steps]
-            )
+            moves = annotated_game_moves(mlist, self.board.initial_fen, analysis)
         no_setup = self.board.initial_fen == FairyBoard.start_fen("chess") and not self.chess960
         # Use lichess format for crazyhouse games to support easy import
         setup_fen = (
@@ -2051,15 +2057,59 @@ class Game:
                 self.board.jieqi_covered_pieces = replay_board.jieqi_covered_pieces
         # log.debug("create_steps() OK")
 
-    def get_board(self, full: bool = False, persp_color: int | None = None) -> GameBoardResponse:
+    def ensure_steps(self) -> None:
         if len(self.board.move_stack) > 0 and len(self.steps) == 1:
             self.create_steps()
+
+    def display_history(self) -> GameDisplayHistory:
+        """Pack finished-game display inputs without native engine replay."""
+        moves = list(self.board.move_stack)
+        variant = self.board.variant
+        if should_use_legacy_capablanca_replay(self.variant, variant, bool(self.chess960), moves):
+            variant = self.variant
+        history: GameDisplayHistory = {
+            "variant": variant,
+            "chess960": bool(self.chess960),
+            "moves": moves,
+            "showPromoted": self.board.show_promoted,
+            "countStarted": self.board.count_started,
+            "usi": self.usi_format,
+        }
+        if len(self.clocks_w) > 1 and not self.corr:
+            history["clocksWhite"] = list(self.clocks_w)
+            history["clocksBlack"] = list(self.clocks_b)
+        analysis = (
+            [step.get("analysis") for step in self.steps] if len(self.steps) > 1 else self.analysis
+        )
+        if analysis is not None:
+            history["analysis"] = analysis[:1] if self.usi_format else analysis
+        if self.mct is not None:
+            history["countIntervals"] = list(self.mct)
+        elif self.manual_count:
+            intervals = list(self.manual_count_toggled)
+            if self.board.count_started > 0:
+                intervals.append((self.board.count_started, self.board.ply + 1))
+            history["countIntervals"] = intervals
+        if self.board.jieqi_initial_covered_pieces is not None:
+            history["jieqiCovered"] = dict(self.board.jieqi_initial_covered_pieces)
+        return history
+
+    def get_board(
+        self,
+        full: bool = False,
+        persp_color: int | None = None,
+        *,
+        client_history: bool = False,
+    ) -> GameBoardResponse:
+        browser_replay = client_history and full and self.status > STARTED
+        if not browser_replay:
+            self.ensure_steps()
 
         fen, lastmove = self.board.fen, self.lastmove
 
         clocks: list[int | float]
         if full:
-            steps = self.steps
+            steps = [dict(self.steps[0])] if browser_replay else self.steps
 
             # To not touch self.clocks_w and self.clocks_b we are creating deep copy from clocks
             try:
@@ -2128,6 +2178,8 @@ class Game:
             "berserk": {"w": self.wberserk, "b": self.bberserk},
             "by": self.imported_by,
         }
+        if browser_replay:
+            response["history"] = self.display_history()
         if self.jieqi and self.jieqi_captures is not None:
             if self.status > STARTED:
                 # After game end, reveal captured covered identities to everyone.

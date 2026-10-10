@@ -1,9 +1,9 @@
 
-# ![Gorogoro](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Gorogoro.svg) Gorogoro+ | 五六將棋
+# ![Gorogoro](https://github.com/pychess/pychess-variants/blob/master/static/icons/Gorogoro.svg) Gorogoro+ | 五六將棋
 
 |   |   |
 --- | ---
-![Gorogoro](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Gorogoro1.png) | ![Gorogoro](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Gorogoro2.png)
+![Gorogoro](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Gorogoro1.png) | ![Gorogoro](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Gorogoro2.png)
 
 Gorogoro+ 是將棋的精簡版，棋盤大小改為 5x6 。Gorogoro ごろごろ在日文為狀聲詞，直譯為「呼嚕呼嚕」。
 

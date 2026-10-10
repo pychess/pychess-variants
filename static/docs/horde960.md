@@ -1,4 +1,4 @@
-# ![Horde960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Horde960.svg) Horde 960
+# ![Horde960](https://github.com/pychess/pychess-variants/blob/master/static/icons/Horde960.svg) Horde 960
 
 Horde 960 is a custom variant combining the rules of Horde with the random placement of Chess 960.
 

@@ -1,4 +1,4 @@
-# ![S-House](https://github.com/gbtami/pychess-variants/blob/master/static/icons/SHouse.svg) S-House
+# ![S-House](https://github.com/pychess/pychess-variants/blob/master/static/icons/SHouse.svg) S-House
 
 Az S-House egy sakkvariáns, ami az S-sakkot kombinálja a Crazyhouse behozási szabályaival. Mivel ez a játék az S-sakk egy változata, annak szabályai az arra vonatkozó leírásban megtalálhatók. A Crazyhouse szabályai emlékeztetőnek:
 

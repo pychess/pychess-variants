@@ -1,4 +1,4 @@
-# ![Capahouse960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Capahouse960.svg) Capahouse 960
+# ![Capahouse960](https://github.com/pychess/pychess-variants/blob/master/static/icons/Capahouse960.svg) Capahouse 960
 
 O Capahouse 960 é uma variante personalizada que segue as regras do Capablanca Chess, Crazyhouse e Chess960(Xadrez de Fischer). São aplicadas as regras dos três jogos. Por esta ser considerada uma variante de Capablanca Chess, por favor deia uma leitura nas regras do Capablanca Chess disponibilizadas num guia em separado. As regras do Chess960 e Crazy são disponibilizadas abaixo como um memorando.
 

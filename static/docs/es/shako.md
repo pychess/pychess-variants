@@ -1,6 +1,6 @@
-# ![Shako](https://github.com/gbtami/pychess-variants/blob/master/static/icons/shako.svg) Shako
+# ![Shako](https://github.com/pychess/pychess-variants/blob/master/static/icons/shako.svg) Shako
 
-![Shako](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Shako.png)
+![Shako](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Shako.png)
 
 El Shako es una variante de Ajedrez creada por Jean-Louis Cazaux. La partida se juega en un tablero de 10x10 e introduce dos nuevas piezas, el Cañón y el Elefante, ambas derivadas del Xiangqi (Ajedrez Chino). En sus propias palabras:
 
@@ -14,12 +14,12 @@ Las reglas son esencialmente las mismas que en Ajedrez, pero con dos nuevas piez
 
 ### Elephant
 
-![Elefante](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ShakoElephant.png)
+![Elefante](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ShakoElephant.png)
 
 El Elefante es similar al del Xiangqi. Sin embargo, hay una diferencia significativa. Mientras que en Xiangqi el Elefante solamente puede mover exactamente dos espacios en diagonal, el Elefante en Shako puede mover uno o dos espacios en diagonal. A mayores, puede saltar sobre la primera casilla en diagonal como si fuese un Caballo. Aunque tenga menos alcance que un Alfil, la habilidad de saltar aumenta su versatilidad.
 
 ### Cañón
 
-![Cañón](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Cannon.png)
+![Cañón](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Cannon.png)
 
 El Cañón funciona exactamente igual que en Xiangqi. Cuando se mueve, lo hace exactamente como una Torre. Sin embargo, cuando ataca, necesita saltar sobre otra pieza (una "pantalla") para poder atacar a la siguiente pieza que se encuentre más allá en la misma línea. En Shako, el Cañón es una de las piezas más débiles. Sin embargo, puede ser una pieza peligrosa que puede ser usada en una variedad de situaciones. Dada su necesidad de otras piezas para atacar, el Cañón es una pieza muy débil en los finales.

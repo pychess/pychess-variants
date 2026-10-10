@@ -19,6 +19,7 @@ from seek import (
     DIRECT_CHALLENGE_OFFLINE,
     resolve_decline_reason,
 )
+from session_security import session_expiry_timeout
 from sse_utils import SSEResponse, consume_sse_queue, enqueue_sse_payload, send_sse_payload
 from utils import join_seek, remove_seek
 
@@ -258,10 +259,15 @@ async def _consume_header_channels(
             try:
                 payload = await source.get()
             except asyncio.QueueShutDown:
+                # Any revoked source ends the whole multiplexed subscription.
+                # Wake the merged consumer so it reaches the handler's cleanup.
+                merged.shutdown(immediate=True)
                 return
 
             try:
                 await merged.put(json_dumps({"channel": channel, "payload": payload}))
+            except asyncio.QueueShutDown:
+                return
             finally:
                 source.task_done()
 
@@ -295,7 +301,7 @@ async def subscribe_header(request: web.Request) -> web.StreamResponse:
 
     response: web.StreamResponse = web.Response(status=200)
     try:
-        async with sse_response(request) as response:
+        async with session_expiry_timeout(session, user), sse_response(request) as response:
             await send_sse_payload(
                 response,
                 json_dumps(
@@ -341,7 +347,7 @@ async def subscribe_challenges(request: web.Request) -> web.StreamResponse:
     await reactivate_direct_challenges(app_state, session_user)
     response: web.StreamResponse = web.Response(status=200)
     try:
-        async with sse_response(request) as response:
+        async with session_expiry_timeout(session, user), sse_response(request) as response:
             await send_sse_payload(
                 response,
                 json_dumps(challenge_envelope(app_state, session_user)),

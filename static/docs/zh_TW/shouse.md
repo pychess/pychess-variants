@@ -1,4 +1,4 @@
-# ![S-House](https://github.com/gbtami/pychess-variants/blob/master/static/icons/SHouse.svg) 雙狂S-Chess | S-House
+# ![S-House](https://github.com/pychess/pychess-variants/blob/master/static/icons/SHouse.svg) 雙狂S-Chess | S-House
 
 S-House 結合了 S-Chess 和雙狂象棋的規則，請先熟悉兩者的規則。
 
@@ -21,7 +21,7 @@ S-House 結合了 S-Chess 和雙狂象棋的規則，請先熟悉兩者的規則
 
 ### 老鷹
 
-![Hawk](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Hawk.png)
+![Hawk](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Hawk.png)
 
 鷹的走法等於騎士加上主教。它是唯一可以直接將死對方王的棋
 鷹的價值一般認為比城堡高，但比大象和后低。
@@ -29,7 +29,7 @@ S-House 結合了 S-Chess 和雙狂象棋的規則，請先熟悉兩者的規則
 
 ### 大象
 
-![Elephant](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantSeirawan.png)
+![Elephant](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantSeirawan.png)
 
 大象的走法等同馬加上城堡，一般認為它的價值比鷹高，但是跟后相等或是低一些。
 

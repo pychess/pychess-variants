@@ -31,7 +31,7 @@ Stockfish 是最强的国际象棋引擎之一，而 [Fairy-Stockfish](https://g
 
 <details><summary>我找到了一个Bug，如何反馈?</summary>
 
-您可以在 github 上发表[issue](https://github.com/gbtami/pychess-variants/issues/new)，毕竟我们所有的工作都在 github 上进行。
+您可以在 github 上发表[issue](https://github.com/pychess/pychess-variants/issues/new)，毕竟我们所有的工作都在 github 上进行。
 如果可以的话，请尽可能附上网址与详细说明。如果你不会用 github，你可以在我们的 Discord 服务器上发布，就会有人将其放上去。 </details>
 
 ## 游戏相关
@@ -108,4 +108,4 @@ b 代表倒数计时，这与加时不同，只有特定变体会有(例如:将�
 
 <details><summary>我可以加入 Pychess 的行列吗?</summary>
 
-当然! Pychess 完全开源，在[Github](https://github.com/gbtami/pychess-variants)上你可以尽情创作修改，也可以加入我们[Discord](https://discord.gg/aPs8RKr)来和大家一起合作!</details>
+当然! Pychess 完全开源，在[Github](https://github.com/pychess/pychess-variants)上你可以尽情创作修改，也可以加入我们[Discord](https://discord.gg/aPs8RKr)来和大家一起合作!</details>

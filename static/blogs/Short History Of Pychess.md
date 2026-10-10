@@ -11,7 +11,7 @@
 </br>
 
 <p align="center">
-    <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/TomatoPlasticSet.svg" width="300" height="150">
+    <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/TomatoPlasticSet.svg" width="300" height="150">
 </p>
 Everything started with Lichess. We all love how Lichess has grown and gives us everything that chess players can imagine. However, some people still want more. There were requests to add [S-chess](https://lichess.org/forum/lichess-feedback/seirawan-chess), [Bughouse](https://lichess.org/forum/lichess-feedback/bughouse-team-up-with-a-friend), [Placement chess](https://lichess.org/forum/lichess-feedback/placement-chess-varient) and countless other chess variants to the site.
 

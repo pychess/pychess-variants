@@ -51,6 +51,7 @@ class RequestProtectionTestCase(AioHTTPTestCase):
         response = await self.client.post(
             "/pref/game-category",
             data={"game_category": "shogi"},
+            headers={"Origin": str(self.client.make_url("/")).rstrip("/")},
             allow_redirects=False,
         )
         self.assertEqual(response.status, 302)
@@ -82,6 +83,7 @@ class RequestProtectionTestCase(AioHTTPTestCase):
         response = await self.client.post(
             "/pref/game-category",
             data={"game_category": "shogi"},
+            headers={"Origin": str(self.client.make_url("/")).rstrip("/")},
             allow_redirects=False,
         )
         self.assertEqual(response.status, 302)
@@ -110,12 +112,15 @@ class RequestProtectionTestCase(AioHTTPTestCase):
         response = await self.client.post(
             "/pref/game-category",
             data={"game_category": "shogi"},
+            headers={"Origin": str(self.client.make_url("/")).rstrip("/")},
             allow_redirects=False,
         )
         self.assertEqual(response.status, 302)
 
         before = set(app_state.users)
-        ws = await self.client.ws_connect("/wsl")
+        ws = await self.client.ws_connect(
+            "/wsl", headers={"Origin": str(self.client.make_url("/")).rstrip("/")}
+        )
         try:
             created = [
                 app_state.users[name]
@@ -132,7 +137,9 @@ class RequestProtectionTestCase(AioHTTPTestCase):
         app_state = get_app_state(self.app)
         before = set(app_state.users)
 
-        ws = await self.client.ws_connect("/wsl")
+        ws = await self.client.ws_connect(
+            "/wsl", headers={"Origin": str(self.client.make_url("/")).rstrip("/")}
+        )
         try:
             created = [
                 name
@@ -160,7 +167,11 @@ class RequestProtectionTestCase(AioHTTPTestCase):
 
         resp = await self.client.get(
             "/wsl",
-            headers={"Connection": "Upgrade", "Upgrade": "websocket"},
+            headers={
+                "Connection": "Upgrade",
+                "Upgrade": "websocket",
+                "Origin": str(self.client.make_url("/")).rstrip("/"),
+            },
             allow_redirects=False,
         )
 

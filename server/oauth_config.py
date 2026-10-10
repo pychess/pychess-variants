@@ -1,10 +1,10 @@
 import os
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 
 class OAuthProviderConfig(TypedDict):
     client_id: str
-    client_secret: str
+    client_secret: NotRequired[str]
     oauth_authorize_url: str
     oauth_token_url: str
     scope: str
@@ -14,7 +14,6 @@ class OAuthProviderConfig(TypedDict):
 oauth_config: dict[str, OAuthProviderConfig] = {
     "lichess": {
         "client_id": os.getenv("LICHESS_CLIENT_ID", "pychess"),
-        "client_secret": os.getenv("CLIENT_SECRET", "secret"),
         "oauth_authorize_url": "https://lichess.org/oauth",
         "oauth_token_url": "https://lichess.org/api/token",
         "scope": "",
@@ -35,22 +34,6 @@ oauth_config: dict[str, OAuthProviderConfig] = {
         "oauth_token_url": "https://oauth2.googleapis.com/token",
         "scope": "https://www.googleapis.com/auth/userinfo.profile openid",
         "account_api_url": "https://www.googleapis.com/oauth2/v2/userinfo",
-    },
-    "microsoft": {
-        "client_id": os.getenv("MICROSOFT_CLIENT_ID", "pychess"),
-        "client_secret": os.getenv("MICROSOFT_CLIENT_SECRET", "secret"),
-        "oauth_authorize_url": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
-        "oauth_token_url": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-        "scope": "openid",
-        "account_api_url": "https://graph.microsoft.com/v1.0/me",
-    },
-    "facebook": {
-        "client_id": os.getenv("FACEBOOK_CLIENT_ID", "pychess"),
-        "client_secret": os.getenv("FACEBOOK_CLIENT_SECRET", "secret"),
-        "oauth_authorize_url": "https://www.facebook.com/dialog/oauth",
-        "oauth_token_url": "https://graph.facebook.com/oauth/access_token",
-        "scope": "user_link",
-        "account_api_url": "https://graph.facebook.com/me",
     },
     "discord": {
         "client_id": os.getenv("DISCORD_CLIENT_ID", "pychess"),

@@ -1,8 +1,8 @@
-# ![Khans chess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/khans.svg) 可汗象棋 | Khan's Chess
+# ![Khans chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/khans.svg) 可汗象棋 | Khan's Chess
 
-![Khans Chess](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Khans.png)
+![Khans Chess](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Khans.png)
 
-![Legend](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/KhansLegend.png)
+![Legend](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/KhansLegend.png)
 
 可汗象棋（Khan's Chess）是由 Couch Tomato 于 2023-2024 年设计的棋种，也是可汗西征棋的新版本。如同可汗西征棋一样，可汗象棋也是一个非对称的棋类游戏，国际象棋棋组对抗的是具有马的移动方式，但具有不同吃法的棋组。可汗象棋的设计动机主要和可汗西征棋设计之后，Fairy Stockfish 的不断发展有关，主要原因有二：（1）NNUE 神经网络的评估认为，可汗西征棋在高水平对局的平衡性并非之前认为的五五开；（2）可汗西征棋中依然使用了国际象棋的兵卒，需要替换成更符合主题背景的棋子。事实上，从游戏设计角度考虑，国际象棋的兵卒更像是一种适用于防御的单位，而可汗棋组更多的是需要引进高机动性的棋子以符合其风格。可汗棋组的背景是蒙古的游牧部落，他们通常以纯粹的骑兵作战和快速袭扰战术而闻名。而由于 Fairy Stockfish 经过更新拓展了功能，增加的兼容性，可以支持更多的自定义棋子。经过反复测试，可汗象棋在可汗西征棋的棋组基础上，用两种新棋子取代了原本的兵卒和穹庐——侦察骑兵（Scout）和可敦（Khatun，原意为可汗的正妻，因此用于对应国际象棋的后）。新的兵——侦察骑兵——改为布置在第二行而非第三行。经过 NNUE 测试， 游戏目前是平衡的。
 
@@ -35,7 +35,7 @@
 
 ### 侦察骑兵 | Scout (S)
 
-![Scout](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Scout.png)
+![Scout](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Scout.png)
  
 侦察骑兵的走法如图。它走马步，但只能向前，不能向后。因此，它只有四个方向移动。侦察骑兵吃子只能向前一格吃。它虽然攻击力不高，也不能像国际象棋的兵卒一样形成坚固的兵链，但是它具有快速的移动能力，升变的速度比国际象棋的兵快很多。
 
@@ -43,13 +43,13 @@
  
 ### 可敦 | Khatun (T)
 
-![Khatun](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Khatun.png)
+![Khatun](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Khatun.png)
  
 可敦走法和马相同，但吃法和王一样。它虽然属于弱子，但它在防守中能发挥很大作用。
 
 ### 怯薛 | Kheshig (H)
 
-![Kheshig](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Kheshig.png)
+![Kheshig](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Kheshig.png)
  
 怯薛的走法融合了马和王。怯薛一开始位于b8和g8，即原本「马」的位置。但它与马不同，它是可汗方的最强棋子。它可以看成是左右两个分队的指挥官。一般来说，开局最好是不要轻易出动，如同国际象棋的后开局不宜过早出动一样。
 Kheshig，中文译作怯薛、宿卫、禁卫。他们是蒙古帝国的精英怯薛军。作为怯薛的代表，怯薛在保护王的局面下非常有用。事实上，王国方很难在双怯薛的残局中取胜。
@@ -57,14 +57,14 @@ Kheshig，中文译作怯薛、宿卫、禁卫。他们是蒙古帝国的精英�
 
 ### 弓骑兵 | Horse Archer (A)
 
-![Horse Archer](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archer.png)
+![Horse Archer](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archer.png)
  
 弓骑兵属于走吃分离的棋子，移动走马步，但吃子时斜走不限格数，注意弓骑兵并非单色棋子，它比主教的强度略高。
 弓骑兵（或称骑射手）是蒙古军队中一个核心兵种，他们快速的机动性和强大的打击能力在战斗中对敌人是非常大的威胁。在本棋对局中，弓骑兵可以快速的实施捉双、牵制等战术以谋取优势。
  
 ### 枪骑兵 | Lancer (L)
 
-![Lancer](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Lancer.png)
+![Lancer](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Lancer.png)
  
 枪骑兵属于走吃分离的棋子，移动走马步，但吃子时直走不限格数，如同车。注意它不像车那样具有很高的机动性，因此价值比车偏低，在残局中枪骑兵的弱点更为明显。它的价值比弓骑兵略高。
 枪骑兵是蒙古军队中另一个核心兵种，即重骑兵。在本棋中，枪骑兵虽然不如车，但是他们可以较早地投入战场，扩大场面优势。

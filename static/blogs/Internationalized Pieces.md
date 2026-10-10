@@ -9,7 +9,7 @@
     <div class= "headline">My thought process on board game visual design</div>
 </div>
 
-![Internationalized Pieces](https://github.com/gbtami/pychess-variants/blob/master/static/images/Internationalized-Pieces.jpeg)
+![Internationalized Pieces](https://github.com/pychess/pychess-variants/blob/master/static/images/Internationalized-Pieces.jpeg)
 
 Note: this blog originally was posted at 2021.10.17 on lichess.org
 

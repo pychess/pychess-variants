@@ -1,4 +1,4 @@
-# ![Caparandom](https://github.com/gbtami/pychess-variants/blob/master/static/icons/caparandom.svg) Caparandom
+# ![Caparandom](https://github.com/pychess/pychess-variants/blob/master/static/icons/caparandom.svg) Caparandom
 
 **Caparandom**, originally named **Capablanca Random Chess (CRC)**, was designed by **Reinhard Scharnagl**. It combines the 10×8 board and compound pieces of Capablanca Chess with randomized starting positions. All normal Capablanca Chess rules apply except for the randomized back rank and the corresponding castling rules.
 
@@ -34,11 +34,11 @@ All other rules are as in Capablanca Chess.
 
 ### Archbishop
 
-![Archbishop](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
+![Archbishop](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
 
 Various symbols used for the archbishop. (Note that the hawk is only for Seirawan Chess).
 
-![Archbishop moves](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
+![Archbishop moves](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
 
 The archbishop (A) is a compound piece combining the moves of the **bishop** and **knight**. In terms of fairy pieces, this is generically known as the princess, but also has other names in different variants.
 
@@ -50,11 +50,11 @@ The value of an archbishop is considered slightly better than a rook, but less t
 
 ### Chancellor
 
-![Chancellor](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
+![Chancellor](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
 
 Various symbols used for the chancellor. (Note that the elephant is only for Seirawan Chess).
 
-![Chancellor moves](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
+![Chancellor moves](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
 
 The chancellor (C) is a compound piece combining the moves of the **rook** and the **knight**. In terms of fairy pieces, this is generically known as the empress, but also has other names in different variants.
 

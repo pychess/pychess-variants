@@ -1,6 +1,6 @@
-# ![Xiangqi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/xiangqi.svg) Xiangqi
+# ![Xiangqi](https://github.com/pychess/pychess-variants/blob/master/static/icons/xiangqi.svg) Xiangqi
 
-![Boards](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Boards.png)
+![Boards](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Boards.png)
 
 *Xiangqi* (象棋, soletrado como “*shyang-chee*”), ou Xadrez Chinês é um jogo clássico de tabuleiro proviente da China e julga-se ser descendente do Chatturanga, o mesmo antepassado do Xadrez, no entanto o mesmo se pode afirmar do oposto. Este jogo é muito popular na China e no Vietname, e já se afirmou que este é o jogo de tabuleiro mais popular no Mundo. O jogo em si é muito semelhante ao Xadrez, no entanto a sua jogabilidade é diferente.
 
@@ -26,25 +26,25 @@ As peças Xiangqi tradicionalmente já tiveram nomes diferentes: a sua traduçã
 
 ### Rei
 
-![Kings](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Kings.png) 
+![Kings](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Kings.png)
 
 O Rei (também conhecido pelo seu nome chinês, **general**) só se pode movimentar uma interseção na ortogonal (vertical e horizontal nunca na diagonal). Além disto, está restringido a estar dentro do Palácio.
 
 *Regra especial:* Ambos os reis não podem estar na mesma coluna sem peças entre estes ("Regra geral do cara-a-cara"). Pode considerar ambos aptos a atacar-se mutuamente como se fossem Torres (também chamado de "Generais Voadores"). Isto é útil a fim de preparar Xeque-Mate no fim-de-jogo.
 
-![King and advisor movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/KingAdvisorDiagram.png)
+![King and advisor movement](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/KingAdvisorDiagram.png)
 
 ### Assistente
 
-![Advisors](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Advisors.png) 
+![Advisors](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Advisors.png)
 
 O Assistente (também conhecido como **guarda** o seu nome Ocidental, e **ministro**) só se pode movimentar uma interseção dentro das diagonais do Palácio. Só existem cinco posições onde os Assistnetes podem estar.
 
 ### Elefante
 
- ![Elephants](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Elephants.png)
+ ![Elephants](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Elephants.png)
  
- ![Elephant movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/ElephantDiagram.png)
+ ![Elephant movement](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/ElephantDiagram.png)
 
 O Elefante (raramente chamado de **bispo** o seu nome Ocidental) pode-se mover duas interseções na diagonal. Existem mais duas restrições: 1) O Elefante pode ser bloqueado se tiver uma peça entre este e o destino. 2) Não pode ir para além do Rio.
 
@@ -52,34 +52,34 @@ Um pequeno detalhe, o caracter chinês do Elefante Vermelho significa “ministr
 
 ### Cavalo
 
- ![Horses](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Horses.png)
+ ![Horses](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Horses.png)
  
- ![Horse movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/HorseDiagram.png)
+ ![Horse movement](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/HorseDiagram.png)
 
 O **Cavalo** move-se exatamente como o cavalo do Xadrez. No entanto em vez do pensamento normal "dois passos na ortogonal, e um para o lado", é melhor pensarmos como se fosse *um passo na ortogonal, diagonal para a frente em qualquer direção*, em forma de Y. Isto porque o Cavalo **pode ser bloqueado** se tiver uma peça adjacente a esta. Isto irá bloquear o caminho aos dois pontos finais deste Y. Caso este que pode levar a situações em que dois Cavalos se estão a atacar mutuamente, mas apenas um deles pode atacar enquanto o outro está bloqueado. Bons lances tomam partido do bloqueio do Cavalo e limitam o seu movimento. 
 
 
 ### Biga
 
- ![Chariots](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Chariots.png)
+ ![Chariots](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Chariots.png)
  
- ![Chariot movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/ChariotDiagram.png)
+ ![Chariot movement](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/ChariotDiagram.png)
 
 A **Biga** (também conhecida como **Torre** o seu nome ocidental) move-se exatamente como a torre do Xadrez: qualquer número de linhas na ortogonal. Esta é a peça mais valiosa do jogo, excluindo o Rei.
 
 ### Canhão
 
-![Cannons](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Cannons.png)
+![Cannons](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Cannons.png)
 
-![Cannon movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/CannonDiagram.png)
+![Cannon movement](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/CannonDiagram.png)
 
 O Canhão é uma peça única do Xiangqi. Pode-se movimentar exatamente como uma Biga. No entanto para capturar outra, é necessário ter uma peça(adversária ou do mesmo lado) entre esta e o destino, geralmente chamada de "Mira".
 
 ### Peão
 
-![Pawns](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Pawns.png)
+![Pawns](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Pawns.png)
 
-![Pawn movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/PawnDiagram.png)
+![Pawn movement](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/PawnDiagram.png)
 
 O Peão (também conhecido por **soldado** o seu nome chinês) movimenta-se e captura uma iterseção em frente. Este é diferente do Peão do Xadrez. O chapéu pontiagudo na sua peça internacional torna-se um lembrete do seu movimento.
 
@@ -152,13 +152,13 @@ Estas informações foram obtidas [neste site](http://www.shakki.info/english/op
 
 O movimento mais comum na abertura é o de centralizar o Canhão, que é dos movimentos mais óbvios por abrir uma linha de ataque central. Aproximadamente 70% das partidas são iniciadas desta maneira, o que é considerada a melhor maneira de aprender o jogo.
 
-![Cannon opening](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/CannonOpening.png)
+![Cannon opening](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/CannonOpening.png)
 
 Existem quatro defesas populares na abertura, e uma quinta que também irá ser mencionada.
 
 **1. Cavalos-Mira / Defesa dos dois Cavalos**
 
-![Screen horses](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Screen_Horses.png)
+![Screen horses](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Screen_Horses.png)
 
 Esta é a defesa mais comum. O objetivo é de ter ambos os cavalos a protegerem os Peões do centro. Existem várias variantes.
 
@@ -166,7 +166,7 @@ Esta é a defesa mais comum. O objetivo é de ter ambos os cavalos a protegerem 
 
 Um dos Cavalos é desenvolvido normalmente, e antes que o outro entre em ação, o Canhão movimenta-se para uma posição de "Canhão de Canto" (Canhão no Canto do Palácio), e por fim movimenta-se o segundo cavalo para o seu sítio. As pretas mais tarde irão ligar os seus Elefantes para completar a defesa. Esta é uma abertura relativamente nova. 
 
-![Fan Gong Ma](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Fan_Gong_Ma.png)
+![Fan Gong Ma](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Fan_Gong_Ma.png)
 
 **3. Canhão na mesma linha de fogo**
 
@@ -178,7 +178,7 @@ Semelhante ao descrito acima, mas usando o canhão oposto. A ideia moderna é de
 
 **5. Tigre em três passos**
 
-![Three Step Tiger](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Three_Step_Tiger.png)
+![Three Step Tiger](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Three_Step_Tiger.png)
 
 As Pretas desenvolvem a sua Biga rapidamente movimentando o seu Canhão para o canto do tabuleiro. Uma jogada típica é de avançar os Cavalos primeiro e após isto os Canhões para o canto, e finalmente as Bigas para as colunas do Canhão.
 

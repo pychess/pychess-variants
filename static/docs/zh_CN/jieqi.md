@@ -1,5 +1,5 @@
 
-# ![Jieqi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Xiangqi.svg) 揭棋 | Jieqi
+# ![Jieqi](https://github.com/pychess/pychess-variants/blob/master/static/icons/Xiangqi.svg) 揭棋 | Jieqi
 
 揭棋是象棋的一种热门玩法，因其随机性和策略性的结合，在中国和越南地区广泛流行，有大量的玩家群体。
 

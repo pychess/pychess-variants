@@ -66,6 +66,75 @@ function parsedDocument(): ParsedStudyPgnDocument {
 }
 
 describe('Study PGN import core', () => {
+    test.each(['makruk', 'cambodian', 'makpong'])('retains promoted pawn FEN markers for %s', variant => {
+        const fen = '7k/8/P7/8/8/8/8/7K w - - 0 1';
+        const [chapter] = normalizeStudyPgnDocument(ffish, {
+            capabilities: complete,
+            games: [{ tags: { Variant: variant, FEN: fen }, children: [{ move: 'a6a7m', san: '' }] }],
+        });
+        expect(chapter.tree.nodes[0].fen.split(' ')[0]).toContain('M~');
+        const [restored] = normalizeStudyPgnDocument(ffish, {
+            capabilities: complete,
+            games: [{ tags: { Variant: variant, FEN: chapter.tree.nodes[0].fen }, children: [] }],
+        });
+        expect(restored.initialFen.split(' ')[0]).toContain('M~');
+    });
+
+    test('retains embedded snapshot promotion markers independently of the live variant', () => {
+        const ini = '[importpromoted:chess]\npieceDemotion = true\n';
+        const [chapter] = normalizeStudyPgnDocument(ffish, {
+            capabilities: complete,
+            games: [
+                {
+                    tags: {
+                        Variant: 'importpromoted',
+                        FEN: '7k/P7/8/8/8/8/8/7K w - - 0 1',
+                        PyChessVariantIniEncoding: 'base64',
+                        PyChessVariantIni: encodePgnUtf8Base64(ini),
+                    },
+                    children: [{ move: 'a7a8q', san: '' }],
+                },
+            ],
+        });
+        expect(chapter.tree.nodes[0].fen.split(' ')[0]).toContain('Q~');
+    });
+
+    test('keeps ordinary chess promotion FENs in the server format', () => {
+        const [chapter] = normalizeStudyPgnDocument(ffish, {
+            capabilities: complete,
+            games: [
+                {
+                    tags: { FEN: '7k/P7/8/8/8/8/8/7K w - - 0 1' },
+                    children: [{ move: 'a7a8q', san: '' }],
+                },
+            ],
+        });
+        expect(chapter.tree.nodes[0].fen.split(' ')[0]).toBe('Q6k/8/8/8/8/8/8/7K');
+    });
+
+    test.each([
+        ['shogi', 'SHOGI_HODGES_NUMBER'],
+        ['janggi', 'JANGGI'],
+        ['xiangqi', 'XIANGQI_WXF'],
+    ])('preserves display notation and PGN SAN for %s variations', (variant, notation) => {
+        const board = new ffish.Board(variant);
+        try {
+            const moves: string[] = board.legalMoves().split(' ').slice(0, 2);
+            const expected = moves.map(move => ({
+                san: board.sanMove(move, ffish.Notation[notation]),
+                sanSAN: board.sanMove(move),
+            }));
+            const [chapter] = normalizeStudyPgnDocument(ffish, {
+                capabilities: complete,
+                games: [{ tags: { Variant: variant }, children: moves.map(move => ({ move, san: '' })) }],
+            });
+            expect(chapter.tree.nodes.map(({ san, sanSAN }) => ({ san, sanSAN }))).toEqual(expected);
+            expect(expected.some(node => node.san !== node.sanSAN)).toBe(true);
+        } finally {
+            board.delete();
+        }
+    });
+
     test('refuses parsers that can silently lose PGN structure', () => {
         const parsed = parsedDocument();
         parsed.capabilities = { ...complete, recursiveVariations: false };

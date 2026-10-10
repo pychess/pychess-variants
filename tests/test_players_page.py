@@ -49,7 +49,9 @@ class PlayersPageAnonymousDisplayTestCase(AioHTTPTestCase):
         app_state = get_app_state(self.app)
         before = set(app_state.users)
 
-        ws = await self.client.ws_connect("/wsl")
+        ws = await self.client.ws_connect(
+            "/wsl", headers={"Origin": str(self.client.make_url("/")).rstrip("/")}
+        )
         try:
             created = [
                 name

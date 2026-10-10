@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 import aiohttp
 from aiohttp import web
 from broadcast import broadcast_streams
+from csrf import csrf_exempt
 from pychess_global_app_state_utils import get_app_state
 from request_utils import read_json_data, read_text_data
 from settings import DEV, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, URI
@@ -244,6 +245,7 @@ class Twitch:
             return uids
 
 
+@csrf_exempt
 async def twitch_request_handler(request: web.Request) -> web.Response:
     """Twitch POST request handler"""
     app_state = get_app_state(request.app)

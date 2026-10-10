@@ -1,6 +1,6 @@
-# ![Makruk ikon](https://github.com/gbtami/pychess-variants/blob/master/static/icons/makruk.svg) Makruk (Thai sakk)
+# ![Makruk ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/makruk.svg) Makruk (Thai sakk)
 
-![Makruk ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
+![Makruk ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 
 A *makruk*, avagy a thai sakk egy klasszikus táblajáték, mely Thaiföldön őshonos és a [csaturangából](https://hu.wikipedia.org/wiki/Csaturanga) eredeztethető, akárcsak a sakk.
 A játékot Kambodzsában is játsszák (apró szabálymódosításokkal), ott *Ouk Chatrang* vagy *Ok* néven ismert.
@@ -19,19 +19,19 @@ Zárójelben a bábuk eredeti neve.
 
 ### Király (*Kun*)
 
-![király ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/King.png?raw=true) 
+![király ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/King.png?raw=true)
 
 A király ugyanúgy lép és üt, mint a sakkban, azonban nem sáncolhat.
 
 ### Vezér (*Met*)
 
-![vezér ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Queen.png?raw=true)
+![vezér ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Queen.png?raw=true)
 
 A vezér itt sokkal gyengébb bábu, mint a sakkban, mert csak egy mezőt tud lépni átlóban. Értéke nagyjából 1,5 - 2 gyalognak felel meg. A vezér megfelelő a támadások vezetésére és hasznos lehet az ellenfél fenyegetésére.
 
 ### Futó (*Kon*)
 
-![futó ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Bishop.png?raw=true)
+![futó ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Bishop.png?raw=true)
 
 A futó egy mezőt léphet átlósan, vagy egy mezőt előre (mint a sógiban az ezüsttábornok).
 
@@ -41,19 +41,19 @@ A futó itt értékesebb, mint a vezér, de általánosságban elmondható, hogy
 
 ### Huszár (*Ma*)
 
- ![Huszár ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Knight.png?raw=true)
+ ![Huszár ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Knight.png?raw=true)
 
 A huszár ugyanúgy mozog, mint a sakkban (L-alakzatban és képes átugrani a köztes bábukat). Értékes és erős, központi figura.
 
 ### Bástya (*Rua*)
 
- ![Bástya ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Rook.png?raw=true)
+ ![Bástya ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Rook.png?raw=true)
 
 A bástya ugyanúgy mozog, mint a sakkban (akárhány mezőt vízszintesen vagy függőlegesen). Erős vezér hiányában a bástya a domináns egység.
 
 ### Gyalog (*Bia*)
 
-![Gyalog ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) ![Átváltoztatott gyalog ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true)
+![Gyalog ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) ![Átváltoztatott gyalog ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true)
 
 A gyalog ugyanúgy mozog, mint a sakkban (egyet előre), és úgy is üt (átlóban előre egyet). Nem léphet kettőt első lépésként. Amikor a gyalogok elérik a 6. sort (illetve a a másik oldalról a 3. sort), akkor átváltoznak és úgy lépnek/ütnek, mint a vezér (átlóban egyet).
 

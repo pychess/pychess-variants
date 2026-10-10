@@ -10,7 +10,7 @@
 </br>
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/community-variants.png" width="360" alt="PyChess Variants">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/community-variants.png" width="360" alt="PyChess Variants">
 </p>
 
 We are happy to announce one of the biggest PyChess features so far: **user-defined variants**.

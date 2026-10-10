@@ -33,7 +33,7 @@ Stockfish是最強的西洋棋軟體之一，而 [Fairy-Stockfish](https://githu
 
 <details><summary>我找到了一個Bug，可以怎麼辦?</summary>
 
-你可以在github上發表[issue](https://github.com/gbtami/pychess-variants/issues/new)，畢竟我們所有的工作都在github上進行。
+你可以在github上發表[issue](https://github.com/pychess/pychess-variants/issues/new)，畢竟我們所有的工作都在github上進行。
   
 如果可以的話，請儘可能附上網址與詳細說明。如果你不會用github，你可以在我們的Discord伺服器上發佈，就會有人將其放上去。</details>
 
@@ -109,6 +109,6 @@ b 代表倒數計時，這與加時不同，只有特定變體會有(例如:日�
 
 <details><summary>我可以加入Pychess的行列嗎?</summary>
 
-當然! Pychess 完全開源，在[Github](https://github.com/gbtami/pychess-variants)上你可以盡情創作修改，也可以加入我們[Discord](https://discord.gg/aPs8RKr)來和大家一起合作!</details>
+當然! Pychess 完全開源，在[Github](https://github.com/pychess/pychess-variants)上你可以盡情創作修改，也可以加入我們[Discord](https://discord.gg/aPs8RKr)來和大家一起合作!</details>
 
 

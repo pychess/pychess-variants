@@ -9,7 +9,7 @@
 </div>
 </br>
 
-![ALT server](https://github.com/gbtami/pychess-variants/blob/master/static/images/alt-server-boards.png)
+![ALT server](https://github.com/pychess/pychess-variants/blob/master/static/images/alt-server-boards.png)
 
 The developers of PyChess have a strong commitment to stability and quality. It is this happy circumstance that allows players to enjoy the rich features available on the site for a multitude of variants, and be confident that those features will work tomorrow, and the day after that. These features include tournaments, play against Fairy-Stockfish, an analysis board, post-game move-by-move analysis, a board editor, correspondence games, tactical puzzles, and more. Like other prominent open source software projects, these features require on-going maintenance effort simply to keep the site working, and often the more features, the more maintenance work required. For these reasons, the PyChess maintainers apply an understandably conservative approach to adding new features and variants.
 

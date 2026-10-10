@@ -1,7 +1,7 @@
 
-# ![Grand](https://github.com/gbtami/pychess-variants/blob/master/static/icons/grand.svg) Grand Chess
+# ![Grand](https://github.com/pychess/pychess-variants/blob/master/static/icons/grand.svg) Grand Chess
 
-![Grand Chess setup](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Grand.png)
+![Grand Chess setup](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Grand.png)
 
 O Grand Chess foi criado por Christian Freeling em 1984 e esta é uma das variantes mais prestigiadas de acordo com o website Chess Variants.
 
@@ -23,11 +23,11 @@ Além da posição inicial e das novas peças existem três diferenças de grand
 
 ### Cardeal
 
-![Cardinal](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
+![Cardinal](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
 
 Várias representações do Cardeal. (De notar que o para o Seirawan Chess é usado o Falcão)
 
-![Cardinal moves](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
+![Cardinal moves](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
 
 O Cardeal (A no Pychess, para Arcebispo) é uma peça composta pela combinação dos movimentos do **Bispo** e do **Cavalo**. Em termos de peças heterodoxas de xadrez, esta é geralmente reconhecida como a Princesa, mas também tem é denominada de várias maneiras em variantes diferentes.
 
@@ -40,11 +40,11 @@ O Cardeal é considerado um pouco mais valioso do que uma Torre, mas menos do qu
 
 ### Marechal
 
-![Marshal](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
+![Marshal](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
 
 Várias representações do Marechal. (De notar que o para o Seirawan Chess é usado o Elefante)
 
-![Marshal moves](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
+![Marshal moves](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
 
 O Marechal (C no Pychess, para Chancelor) é uma peça composta pela combinação dos movimentos da **Torre** e do **Cavalo**. Em termos de peças heterodoxas de xadrez, esta é geralmente reconhecida como a Imperatriz, mas também tem é denominada de várias maneiras em variantes diferentes.
 

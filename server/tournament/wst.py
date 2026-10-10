@@ -37,6 +37,7 @@ if TYPE_CHECKING:
     )
 from const import RR
 from pychess_global_app_state_utils import get_app_state
+from session_security import GAMEPLAY_EXPIRY_GRACE_KEY
 from settings import ADMINS
 from tournament_director import is_tournament_director
 from websocket_utils import get_user, process_ws, ws_send_json
@@ -345,7 +346,9 @@ async def handle_user_connected(
     app_state.tourneysockets[tournamentId][user.username] = user.tournament_sockets[tournamentId]
 
     now = datetime.now(UTC)
-    creator_can_manage = await creator_can_manage_tournament(app_state, tournament, user.username)
+    creator_can_manage = not ws.get(
+        GAMEPLAY_EXPIRY_GRACE_KEY, False
+    ) and await creator_can_manage_tournament(app_state, tournament, user.username)
     response: TournamentUserConnectedMessage = {
         "type": "tournament_user_connected",
         "username": user.username,

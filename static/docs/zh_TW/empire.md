@@ -1,6 +1,6 @@
-# ![Empire chess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/empire.svg) 帝國棋 | Empire Chess
+# ![Empire chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/empire.svg) 帝國棋 | Empire Chess
 
-![Empire](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Empire.png)
+![Empire](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Empire.png)
 
 是一種國際象棋變體，在2019-2020被Couch Tomato推出，非對稱性變體系列之四。強大的帝國(金方）聽說過以為在戰場上大權在握的女士，所以以為帝國國公提出了結婚。可惜，王國的國王反而娶了她。受辱的凱撒帶著軍隊出發去懲罰他們！
 
@@ -25,31 +25,31 @@
 下面是每個棋子的細節和圖示。綠色點代表走法，紅色點代表吃掉走法，黃色點代表都可
 
 ### 卒 | Soldier (S)
-![Soldier](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/EmpireSoldier.png)
+![Soldier](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/EmpireSoldier.png)
 
 卒正是像棋升變過的兵，可左右或往前走一步，不可升變。
 
 ### 國公 | Duke (D)
 
-![Duke](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Duke.png)
+![Duke](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Duke.png)
 
 國公是後對應。他可移動如後，但只能攻擊為一個王。這不代表他太弱了，在殘局中他可跟一枚棋子的幫助把王將死，甚至凱撒（因為王凱撒對峙）。
 
 ### 塔 | (T)
 
-![Siege Tower](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Tower.png)
+![Siege Tower](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Tower.png)
 
 塔有後的安然走法，為了攻擊有車的走法。算是一輛車加上象的安然走法。塔是帝國最強的棋子。
 
 ### 贏 (E)
 
-![Eagle](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Eagle.png)
+![Eagle](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Eagle.png)
 
 贏可如後移動，不過只可如馬攻擊。贏的價值跟馬差不多所以是帝國最差的棋子（兵和卒之外）。
 
 ### 主教 | Cardinal (C)
 
-![Cardinal](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Cardinal.png)
+![Cardinal](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Cardinal.png)
 
 主教可如後移動，不過只可如像攻擊。所以它算是一隻象加上一輛安然車的走法。因為不像象，他可換方格的顏色，他不比塔若多少，算是帝國威力排名第二。
 

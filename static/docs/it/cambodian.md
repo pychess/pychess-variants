@@ -1,6 +1,6 @@
-# ![Cambodian](https://github.com/gbtami/pychess-variants/blob/master/static/icons/cambodian.svg) Scacchi cambogiani (Ok, Ouk Chatrang)
+# ![Cambodian](https://github.com/pychess/pychess-variants/blob/master/static/icons/cambodian.svg) Scacchi cambogiani (Ok, Ouk Chatrang)
 
-![Cambodian Board](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
+![Cambodian Board](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 
 Gli scacchi cambogiani, conosciuti anche come "Ok" (Khmer: អុក) o "Ouk Chatrang" sono una variante del Makruk (scacchi thailandesi) giocata in Cambogia.
 

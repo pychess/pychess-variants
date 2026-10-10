@@ -1,4 +1,4 @@
-# ![Capahouse](https://github.com/gbtami/pychess-variants/blob/master/static/icons/CHouse.svg) Capahouse
+# ![Capahouse](https://github.com/pychess/pychess-variants/blob/master/static/icons/CHouse.svg) Capahouse
 
 Capahouse è una variante che combina le regole degli scacchi Capablanca con le regole di paracadutaggio di Crazyhouse. Le stesse regole si applicano a entrambi i giochi. Poiché questa variante è considerata un derivato degli scacchi Capablanca, si prega di controllare le regole Capablanca nella sua guida separata. Le regole di Crazyhouse sono riportate sotto come promemoria.
 

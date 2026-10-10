@@ -1,7 +1,7 @@
 
-# ![Gorogoro](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Gorogoro.svg) Gorogoro+
+# ![Gorogoro](https://github.com/pychess/pychess-variants/blob/master/static/icons/Gorogoro.svg) Gorogoro+
 
-![Gorogoro](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Gorogoro1.png) ![Gorogoro](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Gorogoro2.png)
+![Gorogoro](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Gorogoro1.png) ![Gorogoro](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Gorogoro2.png)
 
 Gorogoro+ es esencialmente shogi en un tablero de 5x6.
 

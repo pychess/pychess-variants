@@ -1775,6 +1775,68 @@ class TournamentPersistenceTestCase(TournamentTestCase):
             except asyncio.CancelledError:
                 pass
 
+    async def test_gameplay_grace_join_time_persists_and_only_withdrawn_rejoin_resets_it(self):
+        app_state = get_app_state(self.app)
+        original_join = datetime(2026, 1, 1, tzinfo=UTC)
+        for klass in (ArenaTestTournament, RRTestTournament, SwissTestTournament):
+            with self.subTest(system=klass.system):
+                tid = id8()
+                self.tournament = klass(app_state, tid, before_start=10, with_clock=False)
+                app_state.tournaments[tid] = self.tournament
+                await upsert_tournament_to_db(self.tournament, app_state)
+                player = User(app_state, username=f"{TEST_PREFIX}{id8()}", title="TEST")
+                app_state.users[player.username] = player
+                player.tournament_sockets[tid] = {None}
+                await self.tournament.join(player)
+                player_data = self.tournament.player_data_by_name(player.username)
+                player_data.joined_at = original_join
+                await self.tournament.db_update_player(player, "JOIN")
+
+                await self.tournament.pause(player)
+                await self.tournament.join(player)
+                self.assertEqual(original_join, player_data.joined_at)
+                _, restored = await self.reload_tournament(app_state.db_client, tid)
+                try:
+                    self.assertEqual(
+                        original_join, restored.player_data_by_name(player.username).joined_at
+                    )
+                finally:
+                    restored.clock_task.cancel()
+                    await asyncio.gather(restored.clock_task, return_exceptions=True)
+
+                await self.tournament.withdraw(player)
+                await self.tournament.join(player)
+                self.assertGreater(player_data.joined_at, original_join)
+                doc = await app_state.db.tournament_player.find_one(
+                    {"tid": tid, "uid": player.username}
+                )
+                self.assertEqual(
+                    player_data.joined_at.replace(
+                        microsecond=player_data.joined_at.microsecond // 1000 * 1000
+                    ),
+                    doc["joinedAt"],
+                )
+
+    async def test_legacy_tournament_membership_can_reload_without_join_time(self):
+        app_state = get_app_state(self.app)
+        tid = id8()
+        self.tournament = ArenaTestTournament(app_state, tid, before_start=10, with_clock=False)
+        app_state.tournaments[tid] = self.tournament
+        await upsert_tournament_to_db(self.tournament, app_state)
+        await self.tournament.join_players(1)
+        player = next(iter(self.tournament.players))
+        await app_state.db.tournament_player.update_one(
+            {"tid": tid, "uid": player.username}, {"$unset": {"joinedAt": ""}}
+        )
+        _, restored = await self.reload_tournament(app_state.db_client, tid)
+        try:
+            self.assertEqual(
+                restored.starts_at, restored.player_data_by_name(player.username).joined_at
+            )
+        finally:
+            restored.clock_task.cancel()
+            await asyncio.gather(restored.clock_task, return_exceptions=True)
+
     async def test_tournament_rejoin_persists_rating(self):
         app_state = get_app_state(self.app)
         tid = id8()

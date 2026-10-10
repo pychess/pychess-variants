@@ -15,7 +15,7 @@ Neither Queen nor Elephant can safely attack a Rook with their orthogonal moves.
 
 Since an Elephant alone cannot forcibly gain an isolated Rook or an isolated King, there is no way to progress if the Rook can cut off the strong King from its own. Like in the following position:
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEGT/KEKR.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEGT/KEKR.png" width="336" height="336">
 
 It is always tricky to interpret EGT statistics, because (especially with strong pieces) most positions are not tactically quiet and lead to immediate loss of one of the pieces. So that you are not really looking at the material balance of interest. Generally won end-games can best be recognized by looking at the fraction of losses when the weak side has the move. Having the move strongly reduces the probability that you will suffer an unavoidable material loss, even though there will still be some forks and skewers.
 

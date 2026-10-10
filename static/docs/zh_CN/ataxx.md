@@ -1,6 +1,6 @@
-# ![Ataxx](https://github.com/gbtami/pychess-variants/blob/master/static/icons/ataxx.svg) 同化棋 | Ataxx
+# ![Ataxx](https://github.com/pychess/pychess-variants/blob/master/static/icons/ataxx.svg) 同化棋 | Ataxx
 
-![Ataxx Board](https://github.com/gbtami/pychess-variants/blob/master/static/images/Ataxx.png?raw=true)
+![Ataxx Board](https://github.com/pychess/pychess-variants/blob/master/static/images/Ataxx.png?raw=true)
 
 同化棋 (Ataxx) 是一款 7×7 的棋盘游戏，双方在棋盘上互相转化对方的棋子，尽量占据更多的棋盘。原版的同化棋是一款电子游戏，由 Leland Corporation 于 1990 年发布。在原版的电子游戏里，单人模式的对手被设定为「来自异次元的入侵者」。
 

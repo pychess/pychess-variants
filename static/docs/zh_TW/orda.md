@@ -1,8 +1,8 @@
-# ![Orda chess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/orda.svg) 可汗西征棋 | Orda
+# ![Orda chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/orda.svg) 可汗西征棋 | Orda
 
-![Orda](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Orda.png)
+![Orda](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Orda.png)
 
-![Legend](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/OrdaLegend.png)
+![Legend](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/OrdaLegend.png)
 
 可汗西征棋是一種國際象棋變體，於2020由Couch Tomato推出。這次創造的是一個非對稱的變體，雙方使用不同的棋種。靈感來自Chess with different armies 的 Ralph Betza，走的是草原民族風格。仿照蒙古軍隊的特色，主題是「馬」的移動。事實上，Orda是一種蒙古軍事結構，意為皇室，而這也在英語中產生了一個新詞：Hordeーー遊牧民族。為了描繪拔都西征，敵對的軍隊是歐洲王室。遊戲本身極其平衡，甚至比國際象棋更平衡，雙方的勝率接近一半。
  
@@ -30,25 +30,25 @@
  
 ### 穹盧 | Yurt (Y)
 
-![Yurt](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Yurt.png)
+![Yurt](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Yurt.png)
  
 穹盧能移動到斜角方向或往正前方行走一格，猶如日本將其的銀將。穹盧一開始站在後的位置，不過不像後它很弱，即為輕子。但在他的小範圍之內，他的控制強度很高，因為沒有人想跟他換子。穹盧對蒙古人和突厥人來說是一種可移動的房屋，它們的重要性和小移動能力反應在這個棋子上。
 
 ### 禁衛 | Keshig (H)
 
-![Kheshig](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Kheshig.png)
+![Kheshig](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Kheshig.png)
 
 禁衛的移動融合馬和王的移動。禁衛一開始位於西洋棋「馬」的位置。不像馬，它是Horde的最強棋子。一般來說，因為它們比其他棋子重要，最好是不要輕易出動，因為開局的爭奪圍繞著小棋子，而如果禁衛因為被威脅而需要逃跑，你會因此而失先。禁衛本身是帝國的衛隊，所以在它們的守護下，王很難被將死。
 
 ### 射騎 | Horse Archer (A)
 
-![Horse Archer](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archer.png)
+![Horse Archer](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archer.png)
 
 射騎是一枚分化棋子，移動猶如馬，吃子猶如主教。因為它能換方格的顏色而控制比主教更多的方格，所以比主教強一點。射騎是蒙古軍隊中一個核心主力，他們的速度和威力帶來兇猛的威脅。
  
 ### 槍騎  | Lancer (L)
 
-![Lancer](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Lancer.png)
+![Lancer](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Lancer.png)
 
 槍騎是一枚分化棋子，移動猶如馬，吃子猶如車。它的價值比車偏低，因為它的移動較慢，特別是在殘局。它應該還比射騎強一點。雖然槍騎比車弱，他們的機動性更強。槍騎是蒙古軍隊中另一個核心主力，做為重騎兵。
  
@@ -100,7 +100,7 @@ c4 | 1% (1) | 100% | 0% | Kf7
 2. e4 Kg7
 3. (Bd3 or Nf3) ...
 
-![Benko's Castle](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/BenkoCastle.png)
+![Benko's Castle](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/BenkoCastle.png)
 
 *本科易位 2... Kg7*
 
@@ -121,6 +121,6 @@ c4 | 1% (1) | 100% | 0% | Kf7
 4. b3 Kf7
 5. c4
 
-![Stockfish Defense Queenside Push](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/QueensidePush.png)
+![Stockfish Defense Queenside Push](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/QueensidePush.png)
 
 *Stockfish Defense - 后翼推進，走5. c4*

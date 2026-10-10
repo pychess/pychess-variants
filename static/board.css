@@ -34,6 +34,9 @@
 .shogi5x5 cg-board {
     background-image: url('images/board/minishogi.svg');
 }
+.shogi6x6 cg-board {
+    background-image: url('images/board/judkins.svg');
+}
 .shogi3x4 cg-board {
     background-image: url('images/board/dobutsuboard.svg');
 }

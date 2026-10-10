@@ -1,6 +1,6 @@
 import { h, VNode } from 'snabbdom';
 
-import { aiLevel } from './result';
+import { aiDisplayName, aiLevel } from './result';
 import { _ } from './i18n';
 import { displayUsername, userLink } from './user';
 
@@ -17,8 +17,10 @@ export function player(
     online = false,
     root = 'round-' + id,
     patron = false,
+    variant = '',
 ): VNode {
-    const displayName = displayUsername(name);
+    const playerName = aiDisplayName(name, variant);
+    const displayName = displayUsername(playerName);
     return h(root, [
         h('div.player-data', [
             h('i-side#' + id + '.icon', {
@@ -32,9 +34,9 @@ export function player(
                 attrs: patron ? { title: _('PyChess Patron') } : {},
             }),
             h('player', [
-                userLink(name, [
+                userLink(playerName, [
                     title !== '' ? h('player-title', title + ' ') : '',
-                    displayName + aiLevel(name, level),
+                    displayName + aiLevel(playerName, level),
                 ]),
                 h('rating', title !== 'BOT' ? rating : ''),
             ]),

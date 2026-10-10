@@ -1,6 +1,6 @@
-# ![Sittuyin](https://github.com/gbtami/pychess-variants/blob/master/static/icons/sittuyin.svg) 緬甸象棋
+# ![Sittuyin](https://github.com/pychess/pychess-variants/blob/master/static/icons/sittuyin.svg) 緬甸象棋
 
-![Sittuyin](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/Sittuyin.png?raw=true)
+![Sittuyin](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Sittuyin.png?raw=true)
 
 **緬甸象棋**,是流行於緬甸的圖版遊戲，由印度的恰圖蘭卡演變而來，其發音「Sittuyin」，來自恰圖蘭卡的梵語音轉。緬甸象棋保留了恰圖蘭卡的思維與策略形式。遊戲本身十分有趣，步調稍慢，其原始的形式可以讓玩家體會古代象棋的獨特風格。主要盛行於緬甸地區(儘管當地更流行下西洋棋)。
 
@@ -17,13 +17,13 @@
 
 ### 國王
 
-![King](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/King.png?raw=true) 
+![King](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/King.png?raw=true)
 
 國王的移動就如西洋棋的國王，朝八方走一格。
 
 ### 士
 
-![General](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/General.png?raw=true)
+![General](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/General.png?raw=true)
 
 士，走法與中國象棋的士相同，移動為斜向四格。
 
@@ -33,7 +33,7 @@
 
 ### 象
 
-![Elephant](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/Elephant.png?raw=true)
+![Elephant](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Elephant.png?raw=true)
 
 象，走法同日本將棋的銀將、或緬甸象棋、馬來象棋的象，移動為斜向四格或直前一格。其為一枚強子，可以用來為其他棋子生根，也可以在國王旁保護。
  
@@ -41,7 +41,7 @@
 
 ### 馬
 
- ![Horse](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/Horse.png?raw=true)
+ ![Horse](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Horse.png?raw=true)
 
 馬走法與西洋棋的騎士相同，移動為跳躍至2x3的對角格，可以越子(沒有卡馬腳)。
 
@@ -49,7 +49,7 @@
 
 ### 車
 
- ![Chariot](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/Chariot.png?raw=true)
+ ![Chariot](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Chariot.png?raw=true)
 
 
 車走法與象棋的車相同，移動為直向任意格。無西洋棋的王車易位規則。
@@ -59,7 +59,7 @@
 
 ### 兵
 
-![Pawn](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/Pawn.png?raw=true)
+![Pawn](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Pawn.png?raw=true)
 
 兵走法與西洋棋的兵相類似，單純移動時直前進一步，但吃子時斜進一步。兵的第一步時不能走兩步，故無吃過路兵。
 

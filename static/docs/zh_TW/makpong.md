@@ -1,6 +1,6 @@
-# ![Makpong](https://github.com/gbtami/pychess-variants/blob/master/static/icons/makpong.svg) 防禦泰國象棋
+# ![Makpong](https://github.com/pychess/pychess-variants/blob/master/static/icons/makpong.svg) 防禦泰國象棋
 
-![Makpong Board](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
+![Makpong Board](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 
 防禦泰國象棋是用來防止和局的泰國象棋變體。主要在泰國得泰國象棋淘汰賽中使用。
 

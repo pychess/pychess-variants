@@ -1,7 +1,7 @@
 
-# ![Dobutsu Shogi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Dobutsu.svg) 動物棋
+# ![Dobutsu Shogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/Dobutsu.svg) 動物棋
 
-![Dobutsu](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Dobutsu.png)
+![Dobutsu](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Dobutsu.png)
 
 動物棋 (どうぶつしょうぎ) 是很可愛的棋種，用來教小朋友小棋。由女將棋職業棋士北尾圓(北尾 まどか, Kitao Madoka)發明,主要規則與將棋相同。棋子的走法就印在棋子上(那些小點點!)
 
@@ -17,7 +17,7 @@
 
 
 ### 母雞
-![Hen](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Hen.png)
+![Hen](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Hen.png)
 
 母雞的走法等同金將，除上下左右行走一格外，還可以朝前斜走一格，如同中文「甲」字。
 

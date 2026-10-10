@@ -1,4 +1,4 @@
-# ![Antichess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Antichess960.svg) Antichess 960
+# ![Antichess](https://github.com/pychess/pychess-variants/blob/master/static/icons/Antichess960.svg) Antichess 960
 
 Antichess 960 is a custom variant combining the rules of Antichess with the random placement of Chess 960.
 

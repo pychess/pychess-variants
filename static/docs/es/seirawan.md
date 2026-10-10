@@ -1,4 +1,4 @@
-# ![Seirawan](https://github.com/gbtami/pychess-variants/blob/master/static/icons/schess.svg) S-chess (Ajedrez Seirawan, Ajedrez SHARPER)
+# ![Seirawan](https://github.com/pychess/pychess-variants/blob/master/static/icons/schess.svg) S-chess (Ajedrez Seirawan, Ajedrez SHARPER)
 
 S-chess fue creado por Yasser Seirawan y Bruce Harper en 2007. El juego se desarrolla en un tablero de 8x8 pero añade un giro con dos nuevas piezas a través del proceso de embarque (introducir las piezas en el tablero reemplazando vacantes en la primera fila).
 
@@ -14,7 +14,7 @@ Los Peones solamente pueden promocionar a Elefantes o Halcones.
 
 ### Halcón
 
-![Halcón](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Hawk.png)
+![Halcón](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Hawk.png)
 
 El Halcón (H) es una pieza compuesta que combina los movimientos del **Alfil** y del **Caballo**. En el ámbito de las piezas de fantasía, esta pieza se conoce con el nombre genérico de Princesa, pero tiene también otras denominaciones en diferentes variantes.
 
@@ -24,7 +24,7 @@ El valor de un Halcón es considerado ligeramente mejor que una Torre, pero meno
 
 ### Elefante
 
-![Elefante](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantSeirawan.png)
+![Elefante](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantSeirawan.png)
 
 El Elefante (E) es una pieza compuesta que combina los movimientos del **Torre** y del **Caballo**. En el ámbito de las piezas de fantasía, esta pieza se conoce con el nombre genérico de Emperatriz, pero tiene también otras denominaciones en diferentes variantes.
 

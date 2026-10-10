@@ -1,6 +1,6 @@
-# ![Minixiangqi ikon](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Minixiangqi.svg) Minixiangqi (7x7-es kínai sakk)
+# ![Minixiangqi ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/Minixiangqi.svg) Minixiangqi (7x7-es kínai sakk)
 
-![Minixiangqi ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Minixiangqi.png)
+![Minixiangqi ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Minixiangqi.png)
 
 A minixiangqi lényegében egy kisebb, 7x7-es táblán játszott változata a xiangqinak. A játékot 1973-ban alkotta meg a japán Shigenobu Kusumoto.
 

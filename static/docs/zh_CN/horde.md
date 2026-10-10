@@ -1,10 +1,10 @@
-# ![Horde](https://github.com/gbtami/pychess-variants/blob/master/static/icons/horde.svg) 人海象棋 | Horde Chess
+# ![Horde](https://github.com/pychess/pychess-variants/blob/master/static/icons/horde.svg) 人海象棋 | Horde Chess
 
 _国际象棋，但是白棋在玩人海战术_
 
 该玩法为国际象棋的不对称玩法。白棋没有王，只有 36 枚兵。黑方则为国际象棋棋组。下图为开局时的摆子。
 
-![Horde](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/horde.png?raw=true)
+![Horde](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/horde.png?raw=true)
 
 
 ## 规则

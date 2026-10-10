@@ -28,7 +28,7 @@ It is the strongest available on this site, but does not represent Fairy-Stockfi
 
 <details><summary>I found a bug! Where do I report it?</summary>
 
-[Make an issue](https://github.com/gbtami/pychess-variants/issues/new). Ultimately it needs to be filed in the Github issue tracker. Ideally, try to find a way to reproduce this bug in your description (if necessary, include the browser and OS). If you're not on Github, you can also mention it on Discord, and someone else can file it.</details>
+[Make an issue](https://github.com/pychess/pychess-variants/issues/new). Ultimately it needs to be filed in the Github issue tracker. Ideally, try to find a way to reproduce this bug in your description (if necessary, include the browser and OS). If you're not on Github, you can also mention it on Discord, and someone else can file it.</details>
 
 ## Variants
 
@@ -86,7 +86,7 @@ No! That is done via OAuth and your password isn't revealed to Pychess, just lik
 
 <details><summary>What's the best way to contact the developers?</summary>
 
-The most reliable way is our [Discord](https://discord.gg/aPs8RKr), or you can open an issue on [GitHub](https://github.com/gbtami/pychess-variants/issues).</details>
+The most reliable way is our [Discord](https://discord.gg/aPs8RKr), or you can open an issue on [GitHub](https://github.com/pychess/pychess-variants/issues).</details>
 
 <details><summary>How is the site supported?</summary>
 
@@ -94,7 +94,7 @@ Purely through donations. You can [become a patron](https://www.pychess.org/patr
 
 <details><summary>Can I contribute?</summary>
 
-You sure can! Pychess is open source. Please communicate your suggestions by [Github](https://github.com/gbtami/pychess-variants) or [Discord](https://discord.gg/aPs8RKr). </details>
+You sure can! Pychess is open source. Please communicate your suggestions by [Github](https://github.com/pychess/pychess-variants) or [Discord](https://discord.gg/aPs8RKr). </details>
 
 
 

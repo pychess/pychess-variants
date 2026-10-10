@@ -1,4 +1,4 @@
-# ![Crazyhouse ikon](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Crazyhouse.svg) Crazyhouse
+# ![Crazyhouse ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/Crazyhouse.svg) Crazyhouse
 
 A Crazyhouse egy népszerű sakkvariáns, ahol a leütött bábuk saját bábuként visszahelyezhetők a táblára (mint a sógiban). Ez teljesen más játékhoz vezet, mint a standard sakk.
 

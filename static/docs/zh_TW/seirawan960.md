@@ -1,4 +1,4 @@
-# ![Seirawan960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/S960.svg) S-chess 960
+# ![Seirawan960](https://github.com/pychess/pychess-variants/blob/master/static/icons/S960.svg) S-chess 960
 
 S-chess 960 為 S-chess 加上 chess960(費舍爾隨機西洋棋棋)。
 

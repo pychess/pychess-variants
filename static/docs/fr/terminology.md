@@ -72,24 +72,24 @@ Les parties jouées en une session précisent souvent une durée de temps princi
 
 **Fourchette** -- Une double attaque d'une pièce sur deux pièces. Dans beaucoup de variantes, le cavalier est par excellence la pièce qui donne des fourchettes. Dans des variantes avec le parachutage, les fous et les tours sont aussi doués.
 
-![Fork example](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Fork.png)
+![Fork example](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Fork.png)
 
 **Clouage** -- L'attaque d'une pièce coureure sur une autre pièce, de telle sorte que la pièce attaquée ne peut s'échapper sans ouvrir la ligne d'attaque vers une pièce plus importante derrière (souvent le roi).
 
-![Pin example](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Pin.png)
+![Pin example](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Pin.png)
 
 **Enfilade** -- Comme un clouage, mais la pièce la plus importante est devant.
 
-![Skewer example](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Skewer.png)
+![Skewer example](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Skewer.png)
 
 **Attaque (à la) découverte** -- Une pièce coureure est empêchée d'attaquer une pièce adverse à cause d'une pièce alliée qui s'interpose. En déplaçant la pièce intervenant (qui elle-même pourrait menacer d'autres choses, par ailleurs), la ligne de la pièce coureure est ouverte et elle attaque la pièce adverse, d'où le nom (l'attaque était couverte ; on découvre l'attaque). Cette tactique arrive souvent au xiangqi.
 
-![Discovered attack example](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Discovery.png)
+![Discovered attack example](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Discovery.png)
 
 Dans cette situation, on bouge le cavalier afin de menacer la dame noire, en même temps en découvrant un échec sur le roi noir par la tour. Comme les noirs doivent répondre à l'échec, les blancs gagnent ainsi une dame.
 
 **Sacrifice** -- Une perte de matériel pour une compensation d'une autre sorte, souvent une meilleure position.
 
-![Sacrifice example](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Sacrifice.png)
+![Sacrifice example](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Sacrifice.png)
 
 Dans cet exemple, si la dame blanche prend le cavalier noir, elle sera attaquée par le pion noir. Toutefois, les blancs pourraient ensuite donner mat avec le cavalier (flèche rouge). La dame se serait sacrifiée pour une compensation beaucoup plus grande.

@@ -143,6 +143,122 @@ class WslCreateAiChallengeJanggiTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertIs(join_seek.await_args.args[1], random_mover)
         self.assertEqual(seek_ctor.call_args.kwargs["level"], 0)
 
+    async def test_alice_without_capable_fishnet_worker_forces_random_mover(self):
+        fairy_engine = SimpleNamespace(
+            online=True,
+            event_queue=SimpleNamespace(put=AsyncMock()),
+            game_queues={},
+            active_game_streams=set(),
+        )
+        random_mover = SimpleNamespace(
+            online=True,
+            event_queue=SimpleNamespace(put=AsyncMock()),
+            game_queues={},
+            active_game_streams=set(),
+        )
+        app_state = SimpleNamespace(
+            users={"Fairy-Stockfish": fairy_engine, "Random-Mover": random_mover},
+            games={"g1": SimpleNamespace(id="g1", variant="alice", game_start={"type": "gs"})},
+            db=None,
+        )
+        join_seek = AsyncMock(return_value={"type": "new_game", "gameId": "g1"})
+
+        with (
+            patch("wsl.send_game_in_progress_if_any", new=AsyncMock(return_value=False)),
+            patch("wsl.new_id", new=AsyncMock(return_value="seek1")),
+            patch("wsl.ws_send_json", new=AsyncMock()),
+            patch("wsl.join_seek", new=join_seek),
+            patch("wsl.Seek", return_value=object()),
+            patch("wsl.has_available_fishnet_worker", return_value=False) as availability,
+        ):
+            await handle_create_ai_challenge(
+                app_state, object(), DummyUser("tester"), create_ai_payload("alice")
+            )
+
+        availability.assert_called_once_with(app_state, variant="alice")
+        self.assertIs(join_seek.await_args.args[1], random_mover)
+
+    async def test_alice_with_capable_fishnet_worker_uses_alice_stockfish_bot(self):
+        fairy_engine = SimpleNamespace(
+            online=True,
+            event_queue=SimpleNamespace(put=AsyncMock()),
+            game_queues={},
+            active_game_streams=set(),
+        )
+        alice_engine = SimpleNamespace(
+            username="Alice-Stockfish",
+            bot=True,
+            online=True,
+            event_queue=SimpleNamespace(put=AsyncMock()),
+            game_queues={},
+            active_game_streams=set(),
+        )
+        random_mover = SimpleNamespace(
+            online=True,
+            event_queue=SimpleNamespace(put=AsyncMock()),
+            game_queues={},
+            active_game_streams=set(),
+        )
+        app_state = SimpleNamespace(
+            users={
+                "Fairy-Stockfish": fairy_engine,
+                "Alice-Stockfish": alice_engine,
+                "Random-Mover": random_mover,
+            },
+            games={"g1": SimpleNamespace(id="g1", variant="alice", game_start={"type": "gs"})},
+            db=None,
+        )
+        join_seek = AsyncMock(return_value={"type": "new_game", "gameId": "g1"})
+
+        with (
+            patch("wsl.send_game_in_progress_if_any", new=AsyncMock(return_value=False)),
+            patch("wsl.new_id", new=AsyncMock(return_value="seek1")),
+            patch("wsl.ws_send_json", new=AsyncMock()),
+            patch("wsl.join_seek", new=join_seek),
+            patch("wsl.Seek", return_value=object()),
+            patch("wsl.has_available_fishnet_worker", return_value=True) as availability,
+        ):
+            await handle_create_ai_challenge(
+                app_state, object(), DummyUser("tester"), create_ai_payload("alice")
+            )
+
+        availability.assert_called_once_with(app_state, variant="alice")
+        self.assertIs(join_seek.await_args.args[1], alice_engine)
+
+    async def test_alice_with_capable_worker_but_no_bot_account_forces_random_mover(self):
+        fairy_engine = SimpleNamespace(
+            online=True,
+            event_queue=SimpleNamespace(put=AsyncMock()),
+            game_queues={},
+            active_game_streams=set(),
+        )
+        random_mover = SimpleNamespace(
+            online=True,
+            event_queue=SimpleNamespace(put=AsyncMock()),
+            game_queues={},
+            active_game_streams=set(),
+        )
+        app_state = SimpleNamespace(
+            users={"Fairy-Stockfish": fairy_engine, "Random-Mover": random_mover},
+            games={"g1": SimpleNamespace(id="g1", variant="alice", game_start={"type": "gs"})},
+            db=None,
+        )
+        join_seek = AsyncMock(return_value={"type": "new_game", "gameId": "g1"})
+
+        with (
+            patch("wsl.send_game_in_progress_if_any", new=AsyncMock(return_value=False)),
+            patch("wsl.new_id", new=AsyncMock(return_value="seek1")),
+            patch("wsl.ws_send_json", new=AsyncMock()),
+            patch("wsl.join_seek", new=join_seek),
+            patch("wsl.Seek", return_value=object()),
+            patch("wsl.has_available_fishnet_worker", return_value=True),
+        ):
+            await handle_create_ai_challenge(
+                app_state, object(), DummyUser("tester"), create_ai_payload("alice")
+            )
+
+        self.assertIs(join_seek.await_args.args[1], random_mover)
+
     async def test_janggi_pending_setup_does_not_start_bot(self):
         bot_put = AsyncMock()
         engine = SimpleNamespace(
@@ -168,6 +284,7 @@ class WslCreateAiChallengeJanggiTestCase(unittest.IsolatedAsyncioTestCase):
                 "wsl.join_seek", new=AsyncMock(return_value={"type": "new_game", "gameId": "g1"})
             ),
             patch("wsl.Seek", return_value=object()),
+            patch("wsl.has_available_fishnet_worker", return_value=True),
         ):
             await handle_create_ai_challenge(
                 app_state, object(), DummyUser("tester"), create_ai_payload()
@@ -201,6 +318,7 @@ class WslCreateAiChallengeJanggiTestCase(unittest.IsolatedAsyncioTestCase):
                 "wsl.join_seek", new=AsyncMock(return_value={"type": "new_game", "gameId": "g1"})
             ),
             patch("wsl.Seek", return_value=object()),
+            patch("wsl.has_available_fishnet_worker", return_value=True),
         ):
             await handle_create_ai_challenge(
                 app_state, object(), DummyUser("tester"), create_ai_payload()

@@ -21,6 +21,7 @@ from forum.storage import recompute_categ_summary, recompute_topic_summary
 from login import logout
 from pychess_global_app_state_utils import get_app_state
 from request_utils import read_post_data
+from session_security import auth_version_from_user_document, authenticate_session
 from simul.simuls import erase_user_from_simuls
 from study.gdpr import erase_user_from_studies
 from team import remove_user_from_teams_on_account_disable
@@ -539,49 +540,49 @@ async def account_delete(request: web.Request) -> ViewContext:
 
 
 async def account_delete_post(request: web.Request) -> web.StreamResponse:
-    app_state, user, _ = await _require_logged_in_user(request)
-    post_data = await read_post_data(request)
-    if post_data is None:
-        return web.Response(status=204)
+    await _require_logged_in_user(request)
+    raise web.HTTPForbidden(text="Account deletion requires admin assistance. Contact site admins.")
 
-    confirm_username = str(post_data.get("confirm_username", "")).strip()
-    understand = str(post_data.get("understand", "")).strip().lower() in {
-        "on",
-        "true",
-        "1",
-        "yes",
-    }
-    if confirm_username != user.username or not understand:
-        raise web.HTTPBadRequest(text="Username confirmation and acknowledgement are required.")
 
+async def erase_account(app_state: Any, user: Any) -> None:
+    """Erase an account after an admin has independently verified its owner's request.
+
+    This is not a self-service HTTP handler. Authorization and target confirmation
+    belong to the admin API; logout revokes the target, never the admin's session.
+    """
     now = datetime.now(UTC)
     await app_state.db.user.update_one(
         {"_id": user.username},
-        {
-            "$set": {
-                "enabled": False,
-                "title": "",
-                "oauth_id": "",
-                "oauth_provider": "",
-                "lang": "en",
-                "theme": "dark",
-                "ct": "all",
-                "pmf": False,
-                "gdprErasedAt": now,
-                "closeType": "deleted",
-                "count": dict(DEFAULT_USER_COUNT),
-                "forumPosts": 0,
-                "tournamentPoints": 0,
-                "perfs": {},
-                "pperfs": {},
+        [
+            {
+                "$set": {
+                    "enabled": False,
+                    "title": "",
+                    "oauth_id": "",
+                    "oauth_provider": "",
+                    "lang": "en",
+                    "theme": "dark",
+                    "ct": "all",
+                    "pmf": False,
+                    "gdprErasedAt": now,
+                    "closeType": "deleted",
+                    "count": dict(DEFAULT_USER_COUNT),
+                    "forumPosts": 0,
+                    "tournamentPoints": 0,
+                    "perfs": {},
+                    "pperfs": {},
+                    # Erase identifying security data while preserving the current
+                    # generation atomically, including any concurrent revocation.
+                    "security": {"sessionVersion": {"$ifNull": ["$security.sessionVersion", 0]}},
+                },
             },
-            "$unset": {"security": ""},
-        },
+        ],
     )
     # Disable the shared live User before any potentially long GDPR discovery and
     # cleanup. Existing websocket handlers observe this immediately, and new
     # websocket handshakes are rejected by process_ws while authored data is erased.
     user.enabled = False
+    await logout(None, user)
     await _scrub_delete_owned_data(app_state, user, now)
     _clear_public_user_cache(app_state, user.username)
 
@@ -600,7 +601,6 @@ async def account_delete_post(request: web.Request) -> web.StreamResponse:
     user.pm_friends_only = False
 
     log.info("Account deleted (GDPR erase) for user %s", user.username)
-    return await logout(request)
 
 
 @aiohttp_jinja2.template("account_reopen.html")
@@ -708,7 +708,11 @@ async def account_reopen_post(request: web.Request) -> web.StreamResponse:
         cached_user.enabled = True
 
     _clear_public_user_cache(app_state, closed_username)
-    session["user_name"] = closed_username
+    authenticate_session(
+        session,
+        closed_username,
+        auth_version_from_user_document(user_doc),
+    )
     request[REQUEST_NEW_SESSION_KEY] = True
     session.pop("closed_account_user", None)
     return web.HTTPFound("/")

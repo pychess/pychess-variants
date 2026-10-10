@@ -1,6 +1,6 @@
-# ![ASEAN](https://github.com/gbtami/pychess-variants/blob/master/static/icons/ASEAN.svg) ASEAN Chess
+# ![ASEAN](https://github.com/pychess/pychess-variants/blob/master/static/icons/ASEAN.svg) ASEAN Chess
 
-![ASEAN Board](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/ASEAN.png?raw=true)
+![ASEAN Board](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/ASEAN.png?raw=true)
 
 *ASEAN Chess* is a Southeast Asian variant developed by the ASEAN-Chess Council in Bangkok on March 14, 2011 (ASEAN is the Association of Southeast Asian Nations, a regional economic union). The game is a variant of Makruk (Thai Chess) and essentially adopts the imagery as well as some rules to the standards of Western Chess and FIDE. As the game is closely related to International Chess, this guide will assume knowledge of the pieces of that game and will describe the pieces that are changed.
 
@@ -14,13 +14,13 @@ Two pieces are different from their Western Chess counterparts.
 
 #### Queen
 
-![Queen](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Duchess.png?raw=true) 
+![Queen](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Duchess.png?raw=true)
 
 The Queen can only move one space diagonally. This is much weaker than in International Chess. On a historical note, this was the original form of the Queen (Fers/Ferz).
 
 #### Bishop
 
-![Bishop](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/ASEANBishop.png?raw=true)
+![Bishop](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/ASEANBishop.png?raw=true)
 
 The Bishop moves one square diagonally or one square forward, just like the silver general in shogi.
 

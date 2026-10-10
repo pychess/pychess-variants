@@ -1,6 +1,6 @@
-# ![Shogun](https://github.com/gbtami/pychess-variants/blob/master/static/icons/shogun.svg) Ajedrez Shogun
+# ![Shogun](https://github.com/pychess/pychess-variants/blob/master/static/icons/shogun.svg) Ajedrez Shogun
 
-![Shogun](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ShogunPromotions3.png)
+![Shogun](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ShogunPromotions3.png)
 
 El Ajedrez Shogun es una variante de Ajedrez diseñada en 2019-2020 por Couch Toato. Mientras que el juego es una mezcla de Ajedrez occidental y Shogi, la idea original para el mismo era introducir las piezas híbridas (normalmente conocidas como Cardenal y Mariscal) de una forma distinta a la habitual en otras variantes. Por ejemplo, manteniendo un tablero de 8x8 en lugar de agrandar el tablero, de modo que el valor de las piezas menores no disminuye, o introduciéndolas en un tablero que no esté tan ocupado como en S-Chess. La idea evolucionó a introducir estas piezas a través de la promoción de piezas menores y Torre en una fila más cercana que la octava. Después, se introdujo la opción de soltar piezas para incrementar las capacidades ofensivas y así compensar la naturaleza defensiva introducida por la necesidad de protegerse de las promociones. Las promociones únicas de Peones y Caballos, así como incluso la degradación de la Dama fueron añadidas para completar el tema y la simetría.
 
@@ -33,31 +33,31 @@ Reglas menores adicionales a modo de aclaración:
 
 ### Cardenal (A)
 
-![Cardenal](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ArchbishopShogun.png)
+![Cardenal](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ArchbishopShogun.png)
 
 El Cardenal es una pieza híbrida que combina los movimientos del **Alfil** y el **Caballo**. En este juego, aparece cuando promocionamos un Alfil y se le añade el movimiento del Caballo. Debido a su movimiento especial, es la única pieza que puede dar jaque mate por sí sola.
 
 ### Mortero (M)
 
-![Mortero](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Mortar.png)
+![Mortero](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Mortar.png)
 
 El Mortero es una pieza híbrida conocida en otras variantes como Canciller o Mariscal, que combina los movimientos del **Torre** y el **Caballo**. En este juego, aparece cuando promocionamos una Torre y se le añade el movimiento del Caballo.
 
 ### General (G)
 
-![General](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/General.png)
+![General](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/General.png)
 
 El General es una pieza híbrida, normalmente conocida como Centauro. En este juego, aparece cuando promocionamos un Caballo y se le añade el movimiento del Rey.
 
 ### Capitán (C)
 
-![Capitán](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Captain.png)
+![Capitán](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Captain.png)
 
 El Capitán es la única promoción del Peón y mueve exactamente igual que un Rey. Capturar un Capitán no termina el juego. Además, a diferencia del resto de piezas promocionadas, puede haber múltiples Capitanes, ya que no es una pieza mayor.
 
 ### Duquesa (F)
 
-![Duquesa](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Duchess.png)
+![Duquesa](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Duchess.png)
 
 La Duquesa es la forma degradada de la Dama, y solo entra en juego cuando una Dama es capturada y pasa a ser una Duquesa en mano. La Duquesa mueve solamente un espacio en diagonal (mismo movimiento que lo que normalmente se denomina "Ferz", y de ahí que su abreviatura sea F). Recordemos que una Duquesa no puede promocionar a Dama cuando el jugador ya tiene una Dama en juego (la poligamia no está permitida en Ajedrez Shogun).
 

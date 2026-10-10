@@ -1,8 +1,8 @@
-# ![Ajedrez Orda](https://github.com/gbtami/pychess-variants/blob/master/static/icons/orda.svg) Ajedrez Orda
+# ![Ajedrez Orda](https://github.com/pychess/pychess-variants/blob/master/static/icons/orda.svg) Ajedrez Orda
 
-![Orda](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Orda.png)
+![Orda](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Orda.png)
 
-![Leyenda](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/OrdaLegend.png)
+![Leyenda](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/OrdaLegend.png)
 
 El Ajedrez Orda es una variante diseñada en 2020 por Couch Tomato. La idea del juego era create una variante puramente asimétrica de Ajedrez con dos ejércitos diferentes. El Ajedrez de Ralph Betza con Ejércitos Diferentes fue una inspiración, pero el objetivo era estar un poco más alineado con la temática de aquí. En este caso, el tema del nuevo ejército se basa en el movimiento del Caballo, dado que la mayoría de piezas se mueven coo el Caballo. Dada dicha temática relacionada con el Caballo, el juego fue modelado en base al ejército Mongol y nombrado Orda. De hecho, una Orda era una estructura militar para la gente de la estepa. El ejército original del Ajedrez es nombrado el Reino por contraposición. El juego es increíblemente equilibrado de acuerdo a la valoración del ordenador (incluso más que el Ajedrez estándar), con aproximadamente un ratio de victorias de 50%/50% para Reino y Orda.
  
@@ -32,28 +32,28 @@ A continuación se muestran detalles y diagramas de cada pieza. Los puntos verde
  
 ### Yurta (Y)
 
-![Yurta](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Yurt.png)
+![Yurta](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Yurt.png)
  
 La Yurta mueve y captura un espcio en diagonal y un espacio hacia adelante. Es similar al General de Plata del Shogi o el Alfil/Khon del Makruk. Solo hay una Yurta, que comienza la partida en la casilla de la Dama, pero a diferencia de la Dama, es una pieza mucho menor, la más débil del juego al margen de los Peones. No debe ser subestimada, sin embargo, ya que es una de las pocas piezas de Orda que puede mover y capturar del mismo modo. Las otras dos son el Khan y el Kheshig, que son las piezas más valiosas. Por lo tanto, la Yurta desempeña la especial labor de proteger a Peones y otras piezas sin miedo a represalias.
 Una Yurta es una casa móvil de los pueblos Mongol y Túrquico en las estepas de Asia. Su limitada movilidad pero importancia para proteger al ejército son reflejadas en esta pieza.
 
 ### Kheshig (H)
 
-![Kheshig](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Kheshig.png)
+![Kheshig](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Kheshig.png)
  
 El Kheshig es una pieza híbrida que mueve y captura como un Caballo y un Rey combinados. Este tipo de pieza es generalmente denominada centauro. El Kheshig comienza en el lugar del Caballo, pero a diferencia del Caballo, es la pieza más poderosa de la Orda. Podemos pensar en ella como un General que lidera su propia tropa en cada flanco. Generalmente  es preferible mantener a los Kheshigs a salvo en posiciones retrasadas durante las primeras fases de la partida, debido a su extremada importancia para la Orda en los finales.
 Los Kheshigs eran la guardia imperial de la realeza Mongol. Adecuadamente, es increíblemente difícil para el Reino dar jaque mate al Khan sin al menos eliminar uno de sus Kheshigs primero.
 
 ### Arquero (A)
 
-![Arquero](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archer.png)
+![Arquero](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archer.png)
  
 El Arquero, o Caballo Arquero, es una pieza semihíbrida única que mueve y ataca de formas diferentes. El Arquero se mueve como el Caballo pero captura como el Alfil. Dado que el Arquero no va por un único color, su valor es mayor que el de su contrapartida el Alfil.
 Los Arqueros eran uno de los dos componentes principales de la caballería Mongol, y funcionaban como caballería ligera. Su velocidad y gran habilidad como Arqueros montados les convertía en una amenaza única. Su habilidad para posicionarse rápidamente para una enfilada o double ataque les convierte en una amenaza muy peligrosa para el Reino.
  
 ### Lanza (L)
 
-![Lanza](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Lancer.png)
+![Lanza](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Lancer.png)
  
 La Lanza es una pieza única semihíbrida que mueve y ataca de formas diferentes. La lanza mueve como un Caballo pero captura como una Torre.  Dado que la Lanza no es tan móvil como la Torre, su valor es generalmente inferior al de la Torre, y esto se pronuncia más en el final, ya que no se puede mover por el tablero tan rápido como una Torre. Su valor es comparable al de un Arquero.
 Las lanzas eran uno de los componentes fundamentales de la caballería Mongol, funcionando como caballería pesada. A pesar de ser más débiles que la Torre, su habilidad para entrar en juego mucho antes en la partida es una ventaja que el jugador de Orda debería utilizar.
@@ -111,7 +111,7 @@ Algunas líneas particulares han sido también jugadas en múltiples partidas. A
 2. e4 Kg7
 3. (Bd3 or Nf3) ...
 
-![Enroque de Benko](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/BenkoCastle.png)
+![Enroque de Benko](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/BenkoCastle.png)
 
 *Enroque de Benko después de 2... Kg7*
 
@@ -132,6 +132,6 @@ Algunas líneas particulares han sido también jugadas en múltiples partidas. A
 4. b3 Kf7
 5. c4
 
-![Defensa Stockfish Avance de Flanco de Dama](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/QueensidePush.png)
+![Defensa Stockfish Avance de Flanco de Dama](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/QueensidePush.png)
 
 *Defensa Stockfish- Avance de Flanco de Dama después de 5. c4*

@@ -1,6 +1,6 @@
-# ![Ajedrez](https://github.com/gbtami/pychess-variants/blob/master/static/icons/chess.svg) Ajedrez
+# ![Ajedrez](https://github.com/pychess/pychess-variants/blob/master/static/icons/chess.svg) Ajedrez
 
-![Posición inicial](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Chess.png?raw=true)
+![Posición inicial](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chess.png?raw=true)
 
 Si conoces el ajedrez, entonces probablemente no has venido aquí para aprender las reglas del ajedrez. ¡Venga, prueba algunas variantes!
 

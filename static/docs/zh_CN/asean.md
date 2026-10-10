@@ -1,6 +1,6 @@
-# ![ASEAN](https://github.com/gbtami/pychess-variants/blob/master/static/icons/ASEAN.svg) 亚细安象棋 | ASEAN Chess
+# ![ASEAN](https://github.com/pychess/pychess-variants/blob/master/static/icons/ASEAN.svg) 亚细安象棋 | ASEAN Chess
 
-![ASEAN Board](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/ASEAN.png?raw=true)
+![ASEAN Board](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/ASEAN.png?raw=true)
 
 亚细安象棋(*ASEAN Chess*)（或称：现代泰国象棋、东盟象棋）是由东南亚国家联盟（东盟）象棋理事会在 2011 年 3 月基于泰国象棋制定的棋类游戏。ASEAN，全称为 Association of Southeast Asian Nations，即东南亚国家联盟，是由东南亚国家组成的经济体。亚细安象棋基于泰国象棋，并融合了 FIDE 标准的国际象棋棋子符号与部分规则。本文将列出与国际象棋不同的棋子走法与规则，与国际象棋相同的部分不再赘述。
 
@@ -14,13 +14,13 @@
 
 #### 后(Queen)
 
-![Queen](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Duchess.png?raw=true) 
+![Queen](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Duchess.png?raw=true)
 
 后的走法为斜走1格。这个走法与泰国象棋的士相同。这也意味着它属于弱子。在仙灵棋子中，这个棋子也被叫做 Ferz(Fers)。
 
 #### 象(Bishop)
 
-![Bishop](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/ASEANBishop.png?raw=true)
+![Bishop](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/ASEANBishop.png?raw=true)
 
 象可以斜走一格或者向前一格，如同将棋的银将那样。这也和泰国象棋的象相同。
 

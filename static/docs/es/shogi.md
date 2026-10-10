@@ -1,6 +1,6 @@
-# ![Shogi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/shogi.svg) Shogi
+# ![Shogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/shogi.svg) Shogi
 
-![Boards](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Boards.png)
+![Boards](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Boards.png)
 
 El *Shogi* (将棋), o Ajedrez Japonés, es un juego de tablero clásico nativo de Japón y es descendiente cercano del Chaturanga, el mismo antepasado común al ajedrez. En su forma moderna, ha estado presente desde el siglo XVI. El juego es muy popular en Japón, donde se juega más que el Ajedrez occidental y tiene una escena profesional en alza. El juego es a la vez similar y diferente al Ajedrez occidental, introduciendo la capacidad de soltar piezas capturadas de nuevo en el tablero.
 
@@ -25,11 +25,11 @@ Acerca de las piezas promocionadas, la mayoría de juegos de piezas, incluyendo 
 
 ### Rey
 
-![Reyes Negros](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/BlackKings.png) 
+![Reyes Negros](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/BlackKings.png)
 
-![Reyes Blancos](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/WhiteKings.png)
+![Reyes Blancos](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/WhiteKings.png)
 
-![Movimientos del Rey](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/King.png)
+![Movimientos del Rey](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/King.png)
 
 El Rey mueve exactamente como un Rey de Ajedrez: un paso en cada dirección. En los juegos de piezas kanji, el Rey con un punto, 玉將 gyokushō, es el jugador Negro, mientras que el Rey sin punto, 王將 ōshō, es el jugador Blanco.
 
@@ -37,33 +37,33 @@ Esta es la única pieza en el juego internacionalizado que mantiene su forma kan
 
 ### Torre
 
-![Torres](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Rooks.png)
+![Torres](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Rooks.png)
 
-![Movimientos de la Torre](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Rook.png)
+![Movimientos de la Torre](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Rook.png)
 
 La Torre mueve exactamente igual que una Torre de Ajedrez: cualquier número de casillas ortogonalmente. La pieza internacional tiene el aspecto de un Carruaje, en referencia al nombre Japonés "Carruaje Volador". En inglés, el nombre Torre se basa en la palabra persa para Carruaje. Es la pieza no promocionada más valiosa del juego, a excepción del Rey.
 
 ### Alfil
 
-![Alfiles](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Bishops.png)
+![Alfiles](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Bishops.png)
 
-![Movimiento del Alfil](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Bishop.png)
+![Movimiento del Alfil](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Bishop.png)
 
 El Alfil mueve exactamente igual que un Alfil de Ajedrez: cualquier número de casillas en diagonal. La pieza internacional tiene el aspecto de un oficial Japonés con un sombrero tradicional. Es la segunda pieza no promocionada más valiosa, excluyendo al Rey.
 
 ### Rey Dragón (Dragón, Torre Promocionada)
 
-![Dragones](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Dragons.png)
+![Dragones](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Dragons.png)
 
-![Movimientos del Dragón](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Dragon.png)
+![Movimientos del Dragón](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Dragon.png)
 
 El Rey Dragón es una Torre promocionada, es decir una Torre con los movimientos del Rey a mayores. Esta es la pieza más valiosa del juego, a excepción del Rey.
 
 ### Caballo Dragón (Alfil Promocionado)
 
-![Caballos Dragones](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Horses.png)
+![Caballos Dragones](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Horses.png)
 
-![Movimientos del Caballo Dragón](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Horse.png)
+![Movimientos del Caballo Dragón](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Horse.png)
 
 El Caballo Dragón es un Alfil promocionado, es decir un Alfil con los movimientos del Rey a mayores. Esta es la segunda pieza más valiosa del juego, excluyendo el Rey.
 
@@ -72,9 +72,9 @@ Nota: Aunque algunos principiantes de ajedrez confunden los términos para refer
 
 ### General de Oro (Oro)
 
-![Oros](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Golds.png)
+![Oros](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Golds.png)
 
-![Movimientos del Oro](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Gold.png)
+![Movimientos del Oro](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Gold.png)
 
 Aunque el patrón de movimiento del General de Oro pueda parecer confuso al principio, la forma más sencilla de recordarlo es que mueve **una casilla ortogonalmente en cualquier dirección**… o a cualquiera de las tres casillas enfrente. En el juego internacionalizado, las protuberancias del casco (incluyendo el símbolo circular dorado) también apuntan en todas esas direcciones.
 
@@ -82,45 +82,45 @@ Aunque el patrón de movimiento del General de Oro pueda parecer confuso al prin
 
 ### General de Plata (Plata)
 
-![Platas](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Silvers.png)
+![Platas](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Silvers.png)
 
-![Movimientos del Plata](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Silver.png)
+![Movimientos del Plata](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Silver.png)
 
 Aunque el patrón de movimiento del General de Plata pueda parecer confuso al principio, la forma más sencilla de recordarlo es que mueve **una casilla en diagonal en cualquier dirección** o a cualquiera de las tres casillas enfrente. En el juego internacionalizado, las protuberancias del casco también apuntan en todas esas direcciones.
 
 ### Caballo
 
-![Caballos](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Knights.png)
+![Caballos](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Knights.png)
 
-![Movimientos del Caballo](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Knight.png)
+![Movimientos del Caballo](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Knight.png)
 
 Similar al Caballo del Ajedrez, pero solamente puede mover a las dos casillas enfrente, es decir, mueve 2 casillas hacia adelante y una hacia alguno de los 2 lados. Al igual que el Caballo de Ajedrez, esta pieza puede saltar sobre otras.
 
 ### Lanza
 
-![Lanzas](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Lances.png)
+![Lanzas](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Lances.png)
 
-![Movimientos de la Lanza](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Lance.png)
+![Movimientos de la Lanza](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Lance.png)
 
 Una Lanza solamente puede mover hacia adelante, cualquier número de casillas (similar a una Torre).
 
 ### Peón
 
-![Peones](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Pawns.png)
+![Peones](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Pawns.png)
 
-![Movimientos del Peón](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Pawn.png)
+![Movimientos del Peón](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Pawn.png)
 
 El Peón mueve y captura una casilla hacia adelante. En esto se diferencia del Peón de Ajedrez. El sombrero puntiagudo en el juego de piezas internacional es un recordatorio de esto.
 
 ### Piezas menores promocionadas
 
-![Platas Promocionadas](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/PSilvers.png)
+![Platas Promocionadas](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/PSilvers.png)
 
-![Caballos Promocionados](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/PKnights.png)
+![Caballos Promocionados](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/PKnights.png)
 
-![Lanzas Promocionadas](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/PLances.png)
+![Lanzas Promocionadas](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/PLances.png)
 
-![Tokins](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Tokins.png)
+![Tokins](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Tokins.png)
 
 A diferencia del Rey Dragón y el Caballo Dragón, estas piezas no tienen nombres especiales. La excepción es el Peón, al que a veces se le denomina por su nombre japonés, *Tokin*. Al igual que arriba, mueven del mismo modo que el General de Oro. Nótese que las versiones kanji son todas diferentes variantes de estilo del carácter para el Oro.
 
@@ -221,7 +221,7 @@ Igual que antes, los Castillos dependen de las configuraciones de Torre Estátic
 
 **Yagura (o Fortaleza)**
 
-![Yagura](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Yagura.png)
+![Yagura](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Yagura.png)
 
 El Castillo Yagura es uno de los más poderosos Castillos de Torre Estática, usado contra Torre Estática. Una regla mnemotécnica que puede ser útil para recordar las posiciones de los generales es “S G | G B”, o quizás recordar que el Rey es protegido por el General de Oro, una fuerte pieza defensiva. Yagura es fuerte por el frente, pero débil por los lados.
 
@@ -254,7 +254,7 @@ Para el desarrollo del Yagura, recuerda que los generales siempre muevan en diag
 
 **Castillo Mino**
 
-![Castillo Mino](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Mino.png)
+![Castillo Mino](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Mino.png)
 
 El Castillo Mino es un Castillo de Torre Dinámica clásico, usado contra Torre Estática. El Rey mueve hasta la posición de partida de la Torre, el General de Oro izquierdo mueve arriba a la derecha, y luego el General de Plata derecho avanza para hacer una formación en V “G G S”. Este Castillo es fuerte por la izquierda, pero débil por el frente y el borde.
 
@@ -275,7 +275,7 @@ A partir de este punto, eres libre de cambiar Alfiles y tantas piezas como quier
 
 **Anaguma**
 
-![Anaguma](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Anaguma.png)
+![Anaguma](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Anaguma.png)
 
 Anaguma (es decir “Oso en el agujero”) es otro Castillo de Torre Dinámica, y es uno de los más impenetrables en el juego. Sin embargo, lleva mucho tiempo formarlo.
 

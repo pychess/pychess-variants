@@ -27,11 +27,12 @@ from cheat_report import (
     append_ceval_cheat_report,
     ceval_auto_lose_enabled,
 )
-from const import ANALYSIS, ANON_PREFIX, CASUAL, STARTED
+from const import ANALYSIS, ANON_PREFIX, CASUAL, IMPORTED, STARTED
 from draw import draw, reject_draw
 from fairy import BLACK, WHITE, FairyBoard
 from fishnet import (
     drop_stale_analysis_work,
+    fishnet_variant_requires_capability,
     has_available_fishnet_worker,
     has_pending_analysis_work_for_game,
 )
@@ -58,7 +59,6 @@ if TYPE_CHECKING:
         CountMessage,
         CountResponse,
         DeletedMessage,
-        DeleteMessage,
         DrawMessage,
         EmbedUserConnectedMessage,
         FullChatMessage,
@@ -315,7 +315,7 @@ async def process_message(
     elif data["type"] == "count":
         await handle_count(ws, user, data, game)
     elif data["type"] == "delete":
-        await handle_delete(app_state.db, ws, data)
+        await handle_delete(app_state.db, ws, user, game)
 
 
 async def finally_logic(
@@ -467,7 +467,11 @@ async def handle_ready(
 
 
 async def handle_board(ws: WebSocketResponse, user: User, game: game.Game) -> None:
-    if game.variant == "janggi":
+    if game.server_variant.two_boards:
+        user_color = WHITE if user == game.wplayer else BLACK if user == game.bplayer else None
+        board_response = game.get_board(full=True, persp_color=user_color, client_history=True)
+        await ws_send_json(ws, board_response)
+    elif game.variant == "janggi":
         # print("JANGGI", ws, game.bsetup, game.wsetup, game.status)
         if (game.bsetup or game.wsetup) and game.status <= STARTED:
             setup_response: SetupResponse
@@ -492,11 +496,11 @@ async def handle_board(ws: WebSocketResponse, user: User, game: game.Game) -> No
                     setup_response,
                 )
         else:
-            board_response = game.get_board(full=True)
+            board_response = game.get_board(full=True, client_history=True)
             await ws_send_json(ws, board_response)
     else:
         user_color = WHITE if user == game.wplayer else BLACK if user == game.bplayer else None
-        board_response = game.get_board(full=True, persp_color=user_color)
+        board_response = game.get_board(full=True, persp_color=user_color, client_history=True)
         await ws_send_json(ws, board_response)
 
     if game.corr and game.status <= STARTED and len(game.draw_offers) > 0:
@@ -684,10 +688,17 @@ async def handle_analysis(
         )
         return
 
-    # If there is any active fishnet client, use it.
-    has_fishnet_worker = has_available_fishnet_worker(app_state)
+    # Prefer fishnet when a worker explicitly supports this variant. Optional
+    # engine capabilities (currently Alice) must not fall through to the legacy
+    # BOT websocket merely because other fishnet workers are online.
+    has_any_fishnet_worker = has_available_fishnet_worker(app_state)
+    has_fishnet_worker = has_available_fishnet_worker(app_state, variant=game.variant)
 
     if has_fishnet_worker and catalogued_variant_allows_fishnet(app_state, game.variant):
+        # Fishnet advice needs authoritative parent positions, independently of
+        # the browser display. Reconstruct only when queueing requested analysis.
+        if len(game.steps) == 1 and game.ply > 0:
+            game.ensure_steps()
         work_id = "".join(random.choice(string.ascii_letters + string.digits) for x in range(6))
         work = {
             "work": {
@@ -719,10 +730,11 @@ async def handle_analysis(
             game.id,
             game.variant,
         )
-    elif has_fishnet_worker:
+    elif has_any_fishnet_worker or fishnet_variant_requires_capability(game.variant):
         log.warning(
-            "Skipping analysis request for %s because fishnet workers have been idle for too long",
+            "Skipping analysis request for %s because no active fishnet worker supports variant %s",
             game.id,
+            game.variant,
         )
     else:
         engine = app_state.users["Fairy-Stockfish"]
@@ -740,6 +752,8 @@ async def handle_analysis(
                 )
                 return
             engine.game_queues[data["gameId"]] = asyncio.Queue()
+            if len(game.steps) == 1 and game.ply > 0:
+                game.ensure_steps()
             await engine.event_queue.put(game.analysis_start(data["username"]))
             analysis_requested = True
 
@@ -795,7 +809,7 @@ async def handle_rematch(
             engine = opp_player
 
             if not engine.online:
-                if engine.username in ("Fairy-Stockfish", "Random-Mover"):
+                if engine.username in ("Fairy-Stockfish", "Alice-Stockfish", "Random-Mover"):
                     # Preserve old built-in-AI fallback behavior.
                     engine = app_state.users["Random-Mover"]
                 else:
@@ -1068,7 +1082,7 @@ async def handle_abort_resign_abandon_flag(
 
     if game.status > STARTED:
         # game was already finished!
-        # see  https://github.com/gbtami/pychess-variants/issues/675
+        # see  https://github.com/pychess/pychess-variants/issues/675
         return
 
     async with game.move_lock:
@@ -1488,7 +1502,29 @@ async def handle_count(
         await ws_send_json(ws, response)
 
 
-async def handle_delete(db: AsyncDatabase, ws: WebSocketResponse, data: DeleteMessage) -> None:
-    await db.game.delete_one({"_id": data["gameId"]})
+async def handle_delete(
+    db: AsyncDatabase, ws: WebSocketResponse, user: User, game: game.Game
+) -> None:
+    if game.rated != IMPORTED or game.imported_by != user.username:
+        await ws_send_json(
+            ws,
+            {"type": "error", "message": "You are not allowed to delete this game."},
+        )
+        return
+
+    result = await db.game.delete_one(
+        {
+            "_id": game.id,
+            "y": IMPORTED,
+            "by": user.username,
+        }
+    )
+    if result.deleted_count != 1:
+        await ws_send_json(
+            ws,
+            {"type": "error", "message": "Game could not be deleted."},
+        )
+        return
+
     response: DeletedMessage = {"type": "deleted"}
     await ws_send_json(ws, response)

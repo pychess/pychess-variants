@@ -1,4 +1,4 @@
-# ![KingOfTheHill](https://github.com/gbtami/pychess-variants/blob/master/static/icons/koth.svg) King of the Hill
+# ![KingOfTheHill](https://github.com/pychess/pychess-variants/blob/master/static/icons/koth.svg) King of the Hill
 
 _Bring your King to the center to win the game._
 

@@ -1,6 +1,6 @@
-# ![capablanca](https://github.com/gbtami/pychess-variants/blob/master/static/icons/capablanca.svg) Échecs Capablanca
+# ![capablanca](https://github.com/pychess/pychess-variants/blob/master/static/icons/capablanca.svg) Échecs Capablanca
 
-![Capablanca setup](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Capablanca.png)
+![Capablanca setup](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Capablanca.png)
 
 Les échecs Capablanca (*Capablanca chess* en anglais) furent inventés par l'ancien champion du monde José Raúl Capablanca dans les années 20. Ils se jouent sur un échiquier de taille 10 x 8, et introduisent deux nouvelles pièces hybrides.
 
@@ -14,11 +14,11 @@ Quelques autres variantes existent avec les mêmes pièces mais partant d'une po
 
 ### Princesse (Archevêque)
 
-![Archbishop](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
+![Archbishop](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
 
 Symboles utilisés pour la princesse (le faucon vient de la variante S-Chess).
 
-![Archbishop moves](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
+![Archbishop moves](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
 
 La princesse (aussi appelée l'archevêque, *archbishop* en anglais) est une pièce hybride qui se déplace soit comme un fou, soit comme un cavalier. Elle est notée par la lettre *A* en notation algébrique.
 
@@ -30,11 +30,11 @@ Elle vaut plus qu'une tour, mais moins qu'une impératrice ou une dame.
 
 ### Impératrice (Chancelier)
 
-![Chancellor](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
+![Chancellor](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
 
 Symboles utilisés pour l'impératrice (l'éléphant vient de la variante S-Chess).
 
-![Chancellor moves](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
+![Chancellor moves](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
 
 L'impératrice (aussi appelé le chancelier, *chancellor* en anglais) est une pièce hybride qui se déplace soit comme une tour, soit comme un cavalier. Elle est notée par la lettre *C* en notation algébrique.
 

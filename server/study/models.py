@@ -499,7 +499,7 @@ class StudyChapter:
     server_eval: StudyServerEval | None = None
     revision: int = 0
 
-    def to_document(self) -> dict[str, object]:
+    def to_document(self, *, root_document: dict[str, object] | None = None) -> dict[str, object]:
         if self.order < 1:
             raise ValueError("Study chapter order must be positive")
         if self.orientation not in _ORIENTATIONS:
@@ -521,7 +521,7 @@ class StudyChapter:
             "initialFen": self.initial_fen,
             "orientation": self.orientation,
             "mode": mode,
-            "root": self.root.to_document(),
+            "root": self.root.to_document() if root_document is None else root_document,
             "createdAt": _utc(self.created_at),
             "updatedAt": _utc(self.updated_at),
             "revision": self.revision,

@@ -10,12 +10,12 @@
 </br>
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/hawk3.jpg">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/hawk3.jpg">
 </p>
 
 In orthodox chess it is well known that a Knight is a terrific blockader against the passed pawn whereas the Queen finds it to be beneath her dignity to perform such a role. A Rook can be clumsy and in the case of connected passed pawns a Bishop might be chased away. All of which raises the question of how a Hawk might perform when blockading passed pawns? The answer, for me, is crystal clear: Very well indeed! Acting as both Knight, a great blockader, as well as a Bishop striking along a diagonal means that the Hawk can blockade and attack with relish. The following diagrammed position is the kind of example that I have in mind:
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings3/diagram1.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings3/diagram1.png" width="336" height="336">
 
 White to move
 
@@ -23,13 +23,13 @@ From the diagrammed position we see that from a material point of view Rook (5) 
 
 More intriguing is: **3...c3** **4.Hd5**, forking the b6-Rook and the c3-pawn. The c-pawn can't advance as: **4...c2** **5.He4+**, picks up the c2-pawn. If, **4...b4** **5.Hxb6** **c2** **6.He3** **b3** **7.Hc1** and both passers will be quickly captured. Black puts his faith in his b-pawn: **4...Rb8** **5.Hxc3** **b4** **6.He4+!**, White intends to block the b-pawn from the b3-square and Black tries to avoid that from happening: **6...Kh8**, as **6...Kg8** **7.Hd5+** **Kh8** **8.Hb3**, is what White wants to achieve. White takes a stab: **7.Hg6+** **Kg8** **8.Ee7+** **Kh8!**, Black avoids, **8...Kf7??** **9.Hd6+**, winning the Rook. White decides that blocking on the b2-square isn't so bad after all: **9.Hg6+**, White should not win the Rook as: **9.Hd6** **b3** **10.Hxb8** **b2** and the Hawk can't stop the b-pawn from promoting, **9...Kg8** **10.He5** **b3** **11.Hb2!**, brings us to our next diagrammed position:
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings3/diagram2.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings3/diagram2.png" width="336" height="336">
 
 As we see, Black has at the cost of two pawns managed to advance his b-pawn two squares but has no further benefit to show. The b-pawn is still firmly blockaded and White can plan to bring his King to the b1-square and then release his Hawk against Black's King. Black is helpless to stop this plan. If the Rook leaves the protection of the b3-pawn, it can be attacked by either Hb2-a4 or Hb2-c4. Another winning idea for White would be to advance on the Kingside and support the advancing pawns with the King, letting the Hawk remain where it is, blockading the b-pawn. Let us imagine that Black tries: **11...Rc8** **12.Kg2** **Rc2**, trying to break the blockade, **13.Ha4!**, wins the b-pawn. Clearly, the Hawk is an amazing blockader!
 
 When it comes to supporting a passer, the Hawk is also impressive. In the diagrammed position, the Rooks play a clumsy role.
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings3/diagram3.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings3/diagram3.png" width="336" height="336">
 
 As we see from the diagram, Black's Rooks are stuck. The weakness of the f6-square means that Black is vulnerable to a Hawk Mate. The e8-Rook has to keep guard over his b8-colleague and can't leave the back rank. Black is helpless against White's straight-forward plan of advancing his King and pawns: **1.e4** **Kg7** **2.e5**, while it wasn't clear that Black would play ...f7-f6 exposing his King, this option is now ruled out. Black can only mark time: **2...Rbd8** **3.Kg3** **Rh8** **4.Kg4** **Rhe8** **5.f4** **Rh8** **6.f5**, White simply continues his pawn march, **6...gxf5+** **7.Kxf5** **Rhe8** **8.h5** **Kg8**, this is not a voluntary retreat.
 
@@ -37,7 +37,7 @@ Black can't be caught with his Rook in the corner. If, **8...Rh8** **9.h6+** **K
 
 For our next diagram, the Hawk and passer takes on a Queen:
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings3/diagram4.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings3/diagram4.png" width="336" height="336">
 
 White to move
 
@@ -49,7 +49,7 @@ While Black can, undoubtedly defend better, the moves of the main line were made
 
 These examples of the Hawk doing marvelous things in terms of supporting a passer made me think about the Elephant in the same role. The following diagrammed position shows how an Elephant can stuff a passer forward:
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings3/diagram5.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings3/diagram5.png" width="336" height="336">
 
 White to move
 
@@ -57,13 +57,13 @@ The position is winning for White he has only to be careful about a possible per
 
 Take a quick look at the diagram and see how White can effectively end the game:
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings3/diagram6.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings3/diagram6.png" width="336" height="336">
 
 White to move
 
 White starts by bringing his b8-Elephant into play: **5.Ee8+** **Kh6**, note that: **5...Kh7** **6.Edf6+** or **6.Eef6+** are both winners. Now White has two fine choices he can play: **6.Eef6**, covering the f4-square and setting up the impressive double threat of **7.Edxf7** as well as **7.Efxf7** checkmate, winning on the spot or he can continue with check by, **6.Eg8+**, forcing Black's King to take a stroll, **6...Kg5**, since **6...Kh7** **7.Egf6+** wins Black's Queen. Play has brought us to our next diagram:
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings3/diagram7.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings3/diagram7.png" width="336" height="336">
 
 White to move
 
@@ -73,7 +73,7 @@ White has the superb move: **7.Ee5+!** **Qf5**, Black is forced to make this int
 
 Leading to our next diagram, my question, dear reader is how would you play after **12...Qf5?**
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings3/diagram8.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings3/diagram8.png" width="336" height="336">
 
 White to move
 

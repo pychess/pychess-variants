@@ -1,4 +1,4 @@
-# ![Duck Chess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/duck.svg) 橡皮鸭象棋 | Duck Chess
+# ![Duck Chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/duck.svg) 橡皮鸭象棋 | Duck Chess
 
 橡皮鸭象棋(Duck Chess)是一种非常有趣、极具吸引力的棋类游戏。它由埃克塞特国际象棋俱乐部(Exeter Chess Club, Devon, England)主席 Tim Paulden 于2016年推出。
 

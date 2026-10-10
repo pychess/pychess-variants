@@ -10,7 +10,7 @@
 </br>
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/Kuniyoshi_Utagawa_The_actor_17.jpg" width="300" height="150" alt="">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/Kuniyoshi_Utagawa_The_actor_17.jpg" width="300" height="150" alt="">
 </p>
 
 We are happy to announce the availability of *three* new variants here on Pychess: [**Dragon Chess**](https://www.pychess.org/variants/dragon), [**Khan's Chess**](https://www.pychess.org/variants/khans), and [**Cannon Shogi**](https://www.pychess.org/variants/cannonshogi)!

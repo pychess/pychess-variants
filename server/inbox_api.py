@@ -14,6 +14,7 @@ from link_filter import sanitize_user_message
 from newid import id8, new_id
 from pychess_global_app_state_utils import get_app_state
 from request_utils import read_post_data
+from session_security import session_expiry_timeout
 from sse_utils import consume_sse_queue, enqueue_sse_payload, send_sse_payload
 from utils import notification_items_for_user
 
@@ -346,13 +347,6 @@ async def inbox_thread(request: web.Request) -> web.Response:
             )
             has_more = older is not None
 
-    update_result = await app_state.db.inbox_thread.update_one(
-        {"_id": tid, "lastMsg.user": {"$ne": username}},
-        {"$addToSet": {"readBy": username}},
-    )
-    if update_result.modified_count > 0:
-        await _push_inbox_state(app_state, username, contact)
-
     return json_response(
         {
             "contact": {
@@ -497,7 +491,8 @@ async def inbox_delete(request: web.Request) -> web.Response:
 
 async def subscribe_inbox(request: web.Request) -> web.StreamResponse:
     app_state = get_app_state(request.app)
-    username = await _session_username(request)
+    session = await aiohttp_session.get_session(request)
+    username = session.get("user_name")
     if username is None:
         return json_response({})
 
@@ -507,7 +502,7 @@ async def subscribe_inbox(request: web.Request) -> web.StreamResponse:
     response: web.StreamResponse = web.Response(status=200)
 
     try:
-        async with sse_response(request) as response:
+        async with session_expiry_timeout(session, user), sse_response(request) as response:
             await send_sse_payload(
                 response,
                 json_dumps({"unread": await _unread_count(app_state, username)}),

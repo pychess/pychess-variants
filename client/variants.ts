@@ -127,6 +127,11 @@ export const BOARD_FAMILIES: Record<string, BoardFamily> = {
         cg: 'cg-448-664',
         boardCSS: ['YariPlain.svg'],
     },
+    shogi6x6: {
+        dimensions: { width: 6, height: 6 },
+        cg: 'cg-312',
+        boardCSS: ['judkins.svg'],
+    },
     shogi5x5: {
         dimensions: { width: 5, height: 5 },
         cg: 'cg-260',
@@ -2061,7 +2066,7 @@ export const noPuzzleVariants = [
 ];
 
 export const twoBoarsVariants = variants.filter(v => VARIANTS[v].twoBoards);
-export const unsupportedAiVariants = ['alice', 'fogofwar', 'jieqi'];
+export const unsupportedAiVariants = ['fogofwar', 'jieqi'];
 
 export const devVariants = ['borderlands', 'cwda', 'makbug', 'supply', 'yokai'];
 export const CATALOGUED_VARIANT_ICON = '☐';
@@ -2217,6 +2222,22 @@ function cataloguedIniOption(ini: string | undefined, key: string): string | und
 
 function cataloguedIniHasOption(ini: string | undefined, key: string): boolean {
     return cataloguedIniOption(ini, key) !== undefined;
+}
+
+export function cataloguedShowPromoted(ini: string, startFen: string): boolean {
+    // Match server catalogued_show_promoted() for an immutable imported snapshot.
+    if (cataloguedIniOption(ini, 'promotedPieceType')) return true;
+    if (
+        ['pieceDemotion', 'piecePromotionOnCapture', 'dropPromoted'].some(key =>
+            /^(true|yes|1|on)$/i.test(cataloguedIniOption(ini, key) ?? ''),
+        )
+    )
+        return true;
+    for (const line of ini.split(/\r?\n/)) {
+        const metadata = /^\s*[#;]\s*pychessPieces\s*=([^#;]*)/i.exec(line)?.[1];
+        if (metadata?.split(/[\s,]+/).some(role => /^\+[a-z]$/i.test(role))) return true;
+    }
+    return startFen.split(/\s+/, 1)[0].includes('+');
 }
 
 function cataloguedDerivedPocketRoles(

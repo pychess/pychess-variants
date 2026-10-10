@@ -1,6 +1,6 @@
-# ![Kambodzsai sakk ikon](https://github.com/gbtami/pychess-variants/blob/master/static/icons/cambodian.svg) Kambodzsai sakk (Cambodian Chess, Ok, Ouk Chaktrang)
+# ![Kambodzsai sakk ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/cambodian.svg) Kambodzsai sakk (Cambodian Chess, Ok, Ouk Chaktrang)
 
-![Kambodzsai sakk ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
+![Kambodzsai sakk ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 
 A kambodzsai sakk, másnéven "*Ok*" (khmer nyelven: អុក) vagy "*Ouk Chaktrang*" a makruk (thai sakk) egy változata, melyet Kambodzsában játszanak.
 

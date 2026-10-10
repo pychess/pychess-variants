@@ -1,4 +1,4 @@
-# ![Capahouse](https://github.com/gbtami/pychess-variants/blob/master/static/icons/CHouse.svg) Capahouse
+# ![Capahouse](https://github.com/pychess/pychess-variants/blob/master/static/icons/CHouse.svg) Capahouse
 
 O Capahouse é uma variante personalizada que segue as regras do Capablanca Chess com a regra de colocação de peças do Crazyhouse. São aplicadas as regras de ambos os jogos. Por esta ser considerada uma variante de Capablanca Chess, por favor dê uma leitura nas regras do Capablanca Chess disponibilizadas num guia em separado. As regras do Crazyhouse São disponibilizadas abaixo como um memorando.
 

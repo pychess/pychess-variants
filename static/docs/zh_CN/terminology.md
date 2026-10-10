@@ -73,25 +73,25 @@
 
 **捉双(Fork)** - 用一个棋子同时攻击对方两个棋子的行为。马因为其独特的走法，非常适合捉双。如果是同时攻击王和另一个棋子，则另一个棋子很大概率会被吃，在中文中被称为“抽”。*（译者注：英文中并未对抽吃这种战术进行细化，它们和捉双统称为Fork。）*
 
-![Fork example](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Fork.png)
+![Fork example](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Fork.png)
 
 **牵制(Pin)** - 令一个棋子不能随便移动，否则会暴露后面的高价值棋子被吃。如果后面是王，则被牵制的棋子完全不能离开这条线。
 
-![Pin example](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Pin.png)
+![Pin example](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Pin.png)
 
 **串打(Skewer)** - 攻击一个价值较高的棋子迫使其离开，从而吃掉后面价值略低的棋子。与牵制不同的是，牵制是威胁低价值棋子不能离开否则将攻击高价值棋子，而串打是迫使高价值棋子离开从而攻击低价值棋子。
 
-![Skewer example](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Skewer.png)
+![Skewer example](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Skewer.png)
 
 **闪将与闪击(Discovered Attack)** - 将某个棋子移开，露出后面的棋子使其发起攻击。如果后面的棋子攻击的是王，则叫做“闪将”。在中国象棋中，闪将与闪击战术尤为常见。
 
-![Discovered attack example](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Discovery.png)
+![Discovered attack example](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Discovery.png)
 
 如图，黑马移开实行闪将，同时攻击黑后。因黑方必须应将，丢后已经是必然的了。
 
 **弃子(Sacrifice)** - 为了取得更大的盘面优势，而牺牲部分棋子。
 
-![Sacrifice example](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Sacrifice.png)
+![Sacrifice example](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Sacrifice.png)
 
 如图，白选择弃后吃黑马。若黑兵吃后，则白马将直接将杀黑王。
 

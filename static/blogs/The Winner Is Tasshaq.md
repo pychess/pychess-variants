@@ -12,7 +12,7 @@
 </div>
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/icons/Dobutsu.svg" width="150" height="150">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/icons/Dobutsu.svg" width="150" height="150">
 </p>
 <br>
 
@@ -67,5 +67,5 @@ The day of the final arrived and we were all thrilled. Could Tasshaq take reveng
 
 <p align="center">
 
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/icons/Dobutsu.svg" width="25" height="25">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/icons/Dobutsu.svg" width="25" height="25">
 </p>

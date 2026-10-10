@@ -1,4 +1,7 @@
 import { decodePgnUtf8Base64, parsePgnVariantTag, resolvePgnMove } from '../pgn';
+import type { Notation } from 'ffish-es6';
+import { Notation as BoardNotation } from 'chessgroundx/types';
+import { cataloguedShowPromoted, VARIANTS } from '../variants';
 import type {
     ParsedPgnDocument,
     ParsedPgnGame,
@@ -25,16 +28,17 @@ export type StudyPgnParser = PgnParser;
 
 interface StudyPgnBoard {
     legalMoves(): string;
-    sanMove(move: string): string;
+    sanMove(move: string, notation?: Notation): string;
     push(move: string): boolean;
     pop(): void;
-    fen(): string;
+    fen(showPromoted?: boolean): string;
     isCheck(): boolean;
     delete?(): void;
 }
 
 export interface StudyPgnEngine {
     Board: new (variant: string, fen?: string, chess960?: boolean) => StudyPgnBoard;
+    Notation: typeof Notation;
     loadVariantConfig(config: string): void;
 }
 
@@ -728,8 +732,23 @@ function coalesceImportedComments(annotations: StudyAnnotationsDto | undefined):
     return { ...annotations, comments };
 }
 
+function displayNotation(engine: StudyPgnEngine, variant: string): Notation | undefined {
+    switch (VARIANTS[variant]?.notation) {
+        case BoardNotation.SHOGI_ARBNUM:
+            return engine.Notation.SHOGI_HODGES_NUMBER;
+        case BoardNotation.JANGGI:
+            return engine.Notation.JANGGI;
+        case BoardNotation.XIANGQI_ARBNUM:
+            return engine.Notation.XIANGQI_WXF;
+        default:
+            return undefined;
+    }
+}
+
 function normalizeChildren(
     board: StudyPgnBoard,
+    notation: Notation | undefined,
+    showPromoted: boolean,
     parsedChildren: readonly ParsedStudyPgnMove[],
     parentId: string | null,
     nodes: StudyTreeDto['nodes'],
@@ -751,9 +770,12 @@ function normalizeChildren(
             );
         }
         const resolved = resolvePgnMove(board, parsed, location);
+        // PGN SAN and display notation are different for Shogi/Janggi/Xiangqi.
+        // Both must be generated from the parent position, before pushing the move.
+        const san = notation === undefined ? resolved.san : board.sanMove(resolved.move, notation);
         if (!board.push(resolved.move)) throw new StudyPgnImportError(`Illegal move at ${location}: ${parsed.san}.`);
         try {
-            const fen = board.fen();
+            const fen = board.fen(showPromoted);
             const turnColor = turnColorFromFen(fen);
             const parsedComments = commentsFromPgn(
                 parsed.comments ?? [],
@@ -792,6 +814,8 @@ function normalizeChildren(
                 if (clocks) existing.clocks = clocks;
                 normalizeChildren(
                     board,
+                    notation,
+                    showPromoted,
                     parsed.children ?? [],
                     existing.id,
                     nodes,
@@ -814,7 +838,7 @@ function normalizeChildren(
                 fen,
                 turnColor,
                 check: board.isCheck(),
-                san: resolved.san,
+                san,
                 sanSAN: resolved.san,
                 ...(parsedComments.annotations ? { annotations: parsedComments.annotations } : {}),
                 ...(parsedComments.gamebook ? { gamebook: parsedComments.gamebook } : {}),
@@ -826,6 +850,8 @@ function normalizeChildren(
             normalizedSiblings.push(node);
             normalizeChildren(
                 board,
+                notation,
+                showPromoted,
                 parsed.children ?? [],
                 id,
                 nodes,
@@ -854,7 +880,10 @@ function normalizeGame(engine: StudyPgnEngine, game: ParsedStudyPgnGame, index: 
     let board: StudyPgnBoard | undefined;
     try {
         board = new engine.Board(runtimeVariant, tags['FEN']?.trim() || '', chess960);
-        const initialFen = board.fen();
+        const showPromoted = variantIni
+            ? cataloguedShowPromoted(variantIni, board.fen())
+            : (VARIANTS[variant]?.ui.showPromoted ?? false);
+        const initialFen = board.fen(showPromoted);
         if (!initialFen) throw new StudyPgnImportError(`Unable to initialize PGN variant ${variant}.`);
         const nodes: StudyTreeDto['nodes'] = [];
         const defaultSourceAuthor = cleanPgnAttribution(tags['Annotator'], PGN_ATTRIBUTION_MAX_LENGTH);
@@ -873,6 +902,8 @@ function normalizeGame(engine: StudyPgnEngine, game: ParsedStudyPgnGame, index: 
               : undefined;
         normalizeChildren(
             board,
+            displayNotation(engine, runtimeVariant),
+            showPromoted,
             game.children,
             null,
             nodes,

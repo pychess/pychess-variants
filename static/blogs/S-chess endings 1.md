@@ -10,7 +10,7 @@
 </br>
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/elephant.jpg">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/elephant.jpg">
 </p>
 
 In my book, "Winning Chess Endgames," I quoted a dear late friend of mine, Michael Franett, three-time Washington State Champion, "Studying the Ending is like cheating." His point being that if you play chess you are going to get to an endgame. You might as well learn the endings in advance so that you will be prepared when they inevitably arise. Additionally, a primary benefit of learning endings is that it helps you better understand the values of the pieces on an open board. To many beginning players, a bishop may seem as strong as a rook. Take a look at a few Bishop versus Rook endings and suddenly it becomes crystal clear why a Rook is stronger in the endgame. Endgame study also helps you learn how the pieces coordinate with one another and how to best oppose a superior force. Being a pawn down in a Rook ending is no fun but if you know how to draw such positions, you will become a fearless defender.
@@ -19,7 +19,7 @@ Equally, if a player learns that a Bishop and wrong colored h-pawn or a-pawn is 
 
 In Seirawan Chess I haven't yet formed an opinion of the numerical values of an Elephant or a Hawk as it will take a lot of practice to sort out their value. We can get a better insight in determining their values by seeing how they fare in the endgame. Let us start by looking at a simple basic end-game position.
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings1/diagram1.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings1/diagram1.png" width="336" height="336">
 
 White to play and win
 
@@ -29,7 +29,7 @@ We start: **1.f8=E+!** The Elephant is an absolute killer against a passer on th
 
 An ending that has given everyone fits at one time or another is King & Queen versus King & Rook. Computer endgame table-bases have shown that this ending once considered an easy win is much more difficult when the opponent is a computer. (In passing, I should like to make a footnote worth keeping in mind: In Capablanca's game when the original 10 x 10 board was reduced to a 10 x 8 board the ending King & Queen versus a King & Rook would have been far more difficult to win as the extra two files would have meant that when the Rook moves "far away" there would be two extra files to run away. Just another reason why we should all thank the gods for an 8 x 8 board.) A key question therefore is how will an Elephant fare against a Rook?
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings1/diagram2.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings1/diagram2.png" width="336" height="336">
 
 White to play and to win
 
@@ -45,7 +45,7 @@ Hence, White's only problem is how to meet: **1...Rg8!**, the only "safe square"
 
 So, as we've seen, from the diagrammed position White wins regardless of which side is to move. What is interesting is that the Elephant can win against the Rook without necessarily "forcing" the defender to the last rank. The diagram position features the pattern that I have in mind:
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings1/diagram3.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings1/diagram3.png" width="336" height="336">
 
 White to play and win
 
@@ -53,7 +53,7 @@ From our knowledge base in conventional chess it would seem that White has a lot
 
 The following is the first "study" I've ever created! I'm overly proud of this discovery as it brings a fine delight to those whom solve it.
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings1/diagram4.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings1/diagram4.png" width="336" height="336">
 
 Study Seirawan 2007
 
@@ -67,7 +67,7 @@ Remarkable. White is able to force a checkmate without the involvement of his Ki
 
 I found myself enchanted by these patterns which quickly lead me to my second study. When it rains it pours!
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings1/diagram5.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings1/diagram5.png" width="336" height="336">
 
 Study Seirawan 2007
 
@@ -75,7 +75,7 @@ White to play and win
 
 In this study, I didn't want to put Black's King at the edge of the board, rather I wanted to reveal the remarkable forking power of the Elephant and how it can drive the defending King around on an open board: **1.Ef5+ Kd3**, the most difficult. Black would lose at once after: **1...Kc4?? 2.Ed6+!**, forks King and Rook. While, **1...Kc3 2.Ed5+!**, separates King and Rook and leads to the loss of the Rook: **2...Kc4 3.Ed6+** wins; **2...Kb3 3.Ec5+** wins; **2...Kc2 3.Ec5+** wins; **2...Kb2 3.Ed3+! Ka1**, (_3...Ka2 4.Ed2+_ wins; _3...Kc2 4.Ec5+_ wins as well as _4.Ef2+_ winning;) **4.Eb3+ Ka2 5.Ed2+** wins. **2.Ed5+ Rd4**, a forced interposition. If, **2...Kc2 3.Ec5+** wins; **2...Ke2 3.Ec3+** wins. **3.Ec5+ Ke3**, Black's King keeps contact with his Rook. If: **3...Kd2 4.Eb3+** wins; **3...Ke2 4.Ec3+ Kd2/Ke1 5.Ef3+** wins. Now we start to see why White has checked in such a way, he wants to drive Black's King towards the White King: **4.Ee5+! Re4 5.Ed5+! Kf3**, mission accomplished. Now the win is in sight: **6.Ed3+! Re3**, otherwise **6...Kg4 7.Ef2+** wins; while **6...Ke2 7.Ec3+ or 7.Eg3+** wins. With the help of White's King Black's King and Rook are now separated, see the following Diagram:
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings1/diagram6.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings1/diagram6.png" width="336" height="336">
 
 **1.Ed4+!**, forcibly separating King and Rook: **1...Kg3 2.Ef5+!**, and wins.
 
@@ -83,13 +83,13 @@ Well, those examples with the Elephant versus a Rook were a mismatch. It raised 
 
 Let us see how the Elephant may fare against her majesty the Queen. We start with a simple tactic.
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings1/diagram7.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings1/diagram7.png" width="336" height="336">
 
 White to move and win.
 
 Clearly, White's only chance of winning such a position is to fork the King and Queen. The winning move is therefore clear, White should not check the King towards the Queen but to keep them apart: **1.Ee8+!**, White can choose three squares: **1...Kf7**, **1...Kf5** are easy to meet with: **2.Ed6+**, what is intriguing is that the same winning fork occurs after: **1...Kg6 2.Ed6+!**, although **2.Ee5+** is equally good, this remarkable ability to fork on three squares, is what gives this particular example its charm. If from the diagram we remove the g5-pawn and allow, **1...Kg5 2.Ee5+** would be a winner. I put the g5-pawn on the board to show the fork on three squares.
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings1/diagram8.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings1/diagram8.png" width="336" height="336">
 
 In our diagrammed position, everything appears quite normal. Black is pleased that he has advanced his pawn to the h3-square in order to create checkmating possibilities and he takes the opportunity to leap forwards: **1...Qf3??**, with a double threat of capturing the d1-Elephant as well as threatening **2...Qg2** checkmate. How should White react? Take your time and try to work out the variations.
 
@@ -97,7 +97,7 @@ If you wanted to meet: **1...Qf3**, by **2.Ee1**, pat yourself on the back, you 
 
 Our next diagram is even more normal looking. This time Black is nursing an extra pawn, the one he just captured on the d5-square... 
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings1/diagram9.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings1/diagram9.png" width="336" height="336">
 
 White to play and win.
 

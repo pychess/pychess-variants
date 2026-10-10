@@ -1,4 +1,4 @@
-# ![960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/960.svg) Chess960 (Fischer’s Random Chess)
+# ![960](https://github.com/pychess/pychess-variants/blob/master/static/icons/960.svg) Chess960 (Fischer’s Random Chess)
 
 O Chess960 foi criado por Bobby Fischer com o intuito de fazer o jogo mais variável e de remover um grande aspecto relativo à memorização de aberturas que o Xadrez normal nos força. Esta é uma das variantes mais populares que existem, e é esta que separa aqueles que dominam a estratégia e as tácticas dos que necessitam de memorizar aberturas.
 

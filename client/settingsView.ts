@@ -95,7 +95,8 @@ async function logoutDialog() {
         cancelText: _('Cancel'),
     });
     if (!confirmed) return;
-    window.location.href = '/logout';
+    const response = await window.fetch('/logout', { method: 'POST' });
+    if (response.ok) window.location.href = '/';
 }
 
 function showSubsettings(evt: MouseEvent) {

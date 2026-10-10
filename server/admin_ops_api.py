@@ -13,6 +13,7 @@ from generate_crosstable import generate_crosstable
 from generate_highscore import generate_highscore
 from json_utils import json_response
 from newid import new_id
+from puzzle import drop_stale_daily_puzzle_keys
 from pychess_global_app_state_utils import get_app_state
 from request_utils import read_post_data
 from settings import ADMINS, FISHNET_KEYS
@@ -159,6 +160,9 @@ async def admin_operation(request: web.Request) -> web.Response:
         result = await app_state.db.puzzle.delete_one({"_id": puzzle_id})
         if result.deleted_count == 0:
             return _error("Puzzle not found", 404)
+        # A deleted puzzle must not stay referenced by the daily rotation,
+        # otherwise the lobby renders a null puzzle and stops working.
+        await drop_stale_daily_puzzle_keys(app_state, puzzle_id)
         await record_mod_action(app_state, moderator, SITE_LOG_TARGET, "puzzle_deleted", puzzle_id)
         return _success("puzzle_deleted", f"Puzzle {puzzle_id} deleted.")
 

@@ -1,6 +1,6 @@
-# ![Janggi ikon](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Janggi.svg) Janggi (Koreai sakk)
+# ![Janggi ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/Janggi.svg) Janggi (Koreai sakk)
 
-![Janggi tábla](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Boards.png)
+![Janggi tábla](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Boards.png)
 
 A janggi (장기), avagy a koreai sakk egy klasszikus táblajáték, mely Koreában őshonos. A játék a kínai sakkból (xiangqi) eredeztethető és nagyon hasonló ahhoz.
 
@@ -25,7 +25,7 @@ Több bábunak is van speciális lépéslehetősége a palotákon belül (erről
 
 ### Király
 
-![Király bábuk](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Kings.png) 
+![Király bábuk](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Kings.png)
 
 A *király* (vagy a kínai neve alapján: *tábornok*) csak a palotán belül tud mozogni (egyszerre egy mezőt), ami azt jelenti, hogy ha a közepén áll, akkor maximum 8 lehetséges lépése van. Ha bármely más helyen áll, akkor maximum 3 lehetséges lépése marad.
 
@@ -33,33 +33,33 @@ A *király* (vagy a kínai neve alapján: *tábornok*) csak a palotán belül tu
 
 ### Testőr
 
-![Testőr bábuk](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Advisors.png) 
+![Testőr bábuk](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Advisors.png)
 
 A *testőr* is ugyanúgy mozoghat, mint a király: egy lépést, kizárólag a palotán belül.
 
-![Király és a testőrei ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Palace.png)
+![Király és a testőrei ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Palace.png)
 
 ### Ló
 
- ![Ló bábuk](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Horses.png)
+ ![Ló bábuk](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Horses.png)
  
- ![Ló ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/HorseDiagram.png)
+ ![Ló ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/HorseDiagram.png)
 
 A *ló* hasonlóan mozog, mint a sakkban a huszár. Azonban az L-alakzattól eltérően inkább úgy tekintsünk a mozgására, hogy egyet lép vízszintesen vagy függőlegesen, majd átlóban egyet valamelyik irányba, egy Y-alakzatra emlékeztetve. Ennek az az oka, hogy a ló blokkolható, ha egy bábu mellette áll.
 
 ### Elefánt
 
- ![Elefánt bábuk](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Elephants.png)
+ ![Elefánt bábuk](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Elephants.png)
  
- ![Elefánt ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/ElephantDiagram.png)
+ ![Elefánt ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/ElephantDiagram.png)
 
 Az *elefánt* nagyon más, mint ami a kínai sakkban megtalálható. Hasonló a lóhoz, de az elefánt két mezőt lép átlóban, ezért a mozgása inkább egy nyújtott Y-alakzatot ír le. A lóhoz hasonlóan az elefánt is blokkolható a köztes mezőkön álló bábukkal.
 
 ### Szekér (Bástya)
 
- ![Szekér bábuk](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Chariots.png)
+ ![Szekér bábuk](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Chariots.png)
  
- ![Szekér ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/ChariotDiagram.png)
+ ![Szekér ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/ChariotDiagram.png)
 
 A *szekér* (vagy más néven: *bástya*) ugyanúgy mozog, mint a sakkban a bástya: akárhány mezőt vízszintesen vagy függőlegesen. A királyt leszámítva ez a legértékesebb bábu.
 
@@ -67,9 +67,9 @@ A *szekér* (vagy más néven: *bástya*) ugyanúgy mozog, mint a sakkban a bás
 
 ### Ágyú
 
-![Ágyú bábuk](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Cannons.png)
+![Ágyú bábuk](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Cannons.png)
 
-![Ágyú ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/CannonDiagram_HU.png)
+![Ágyú ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/CannonDiagram_HU.png)
 
 Az ágyú hasonlóan mozog és üt, mint a szekér: akárhány mezőt vízszintesen vagy függőlegesen, de a mozgáshoz és az ütéshez is egy köztes bábura van szüksége, amit "átugrik", és csak az azt követő bábut tudja leütni, vagy csak az azt követő üres mezők valamelyikére tud lépni. Tehát az ágyú a hozzá legközelebbi bábut nem tudja leütni. Ha az ágyú vonalában nincs bábu, akkor az lépni sem tud.
 
@@ -79,9 +79,9 @@ Az ágyú hasonlóan mozog és üt, mint a szekér: akárhány mezőt vízszinte
 
 ### Gyalog
 
-![Gyalog bábuk](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Pawns.png)
+![Gyalog bábuk](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Pawns.png)
 
-![Gyalog ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/PawnDiagram.png)
+![Gyalog ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/PawnDiagram.png)
 
 A *gyalog* előre vagy oldalirányba egyet tud lépni és így is tud ütni.
 
@@ -175,10 +175,10 @@ A fenti szabályokon kívül még:
 
 * A gyalogok struktúrája nagyon fontos. Mivel képesek oldalirányba is lépni, akkor a legerősebbek, ha párban vannak és védik egymást. A hármas csoportba szervezett gyalogok nem előnyösek. Továbbá a gyalogokat itt nem ajánlott előrefelé vinni, ha nem muszáj.
 
-![Rossz gyalogformáció](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/BadPawns.png)
+![Rossz gyalogformáció](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/BadPawns.png)
 
 * A játszma kezdetén megválasztott elefánt-ló pozíciók nagyban befolyásolják a megnyitásokat. A külső elefánt képes a tábla közepe felé lépni a két gyalog közé. A belső elefánt számára nincs szabad mező, mert ott állnak a gyalogok (viszont így védi azokat).
 
 * A fentiből következik, hogy az elefánt pozíciója meghatározza azt, hogy **melyik oldalt nyitjuk meg**. Például, ha bal oldalon külső elefánttal játszunk (és az ellenfél szemben lévő elefántja is a külső oldalon van), akkor ajánlott a bal szélső gyalogot oldalra léptetni ezzel megnyitva az utat a szekérnek. Ez azért előnyös, mert az ellenfél szélső gyalogja nem léphet el onnan (hiszen akkor leüthetnénk a szekerét). Ha a másik gyalogját az ágyúja elé lépteti (ezzel is védve a szélső gyalogot), akkor az elefánttal megtámadhatjuk ezt az ágyú előtti gyalogot, hiszen ha a szélső gyaloggal ütné az elefántunkat, akkor megnyílna az út a bal szélen és a szekerünkkel leüthetnénk az ellenfél szekerét.
 
-![Támadó elefánt ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/ActiveElephant2.png)
+![Támadó elefánt ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/ActiveElephant2.png)

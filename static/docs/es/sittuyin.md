@@ -1,6 +1,6 @@
-# ![Sittuyin](https://github.com/gbtami/pychess-variants/blob/master/static/icons/sittuyin.svg) Sittuyin
+# ![Sittuyin](https://github.com/pychess/pychess-variants/blob/master/static/icons/sittuyin.svg) Sittuyin
 
-![Sittuyin](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/Sittuyin.png?raw=true)
+![Sittuyin](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Sittuyin.png?raw=true)
 
 El *Sittuyin*, o Ajedrez Birmano, es un juego de tablero clásico nativo de Myanmar y es muy similar al Makruk. Es jugado en Myanmar, y aunque el Ajedrez occidental es más popular allí, se están llevando a cabo esfuerzos para revitalizar el juego. Las piezas tienen los mismos movimientos que el Makruk (Ajedrez Tailandés), pero las reglas son ligeramente diferentes. El juego está lleno de diversión, con sus propias dinámicas/equilibrio. El ritmo ligeramente más lento puede servir para cultivar la paciencia, y desarrollar el pensamiento estratégico.
 
@@ -27,13 +27,13 @@ Condiciones adicionales para tablas:
 
 ### Rey
 
-![Rey](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/King.png?raw=true) 
+![Rey](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/King.png?raw=true)
 
 El Rey mueve exactamente igual que en Ajedrez.
 
 ### General
 
-![General](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/General.png?raw=true)
+![General](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/General.png?raw=true)
 
 A diferencia de la Dama del Ajedrez, el General es una pieza relativamente débil que solo mueve una casilla en diagonal. Se pueden conseguir Generales adicionales a través de la promoción de Peones.
 
@@ -45,7 +45,7 @@ Para el bando débil, un General puede ser un buen señuelo que normalmente debe
 
 ### Elefante
 
-![Elefante](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/Elephant.png?raw=true)
+![Elefante](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Elephant.png?raw=true)
 
 El Elefante mueve una casilla en diagonal o una casilla hacia adelante, exactamente igual que un General de Plata en Shogi.
 
@@ -57,7 +57,7 @@ Los Elefantes pueden resultar a veces torpes o lentos para maniobrar o retrocede
 
 ### Caballo
 
- ![Caballo](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/Horse.png?raw=true)
+ ![Caballo](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Horse.png?raw=true)
 
 El Caballo mueve exactamente como el Caballo en el Ajedrez.
 
@@ -65,7 +65,7 @@ Los Caballos no son "piezas menores" en Sittuyin. Son fuerzas mayores. Centralí
 
 ### Carruaje
 
- ![Carruaje](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/Chariot.png?raw=true)
+ ![Carruaje](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Chariot.png?raw=true)
 
 El Carruaje mueve exactamente igual que la Torre del Ajedrez.
 
@@ -73,7 +73,7 @@ En ausencia de las poderosas Damas del Ajedrez, los Carruajes dominan el tablero
 
 ### Señor Feudal
 
-![Señor Feudal](https://github.com/gbtami/pychess-variants/blob/master/static/images/SittuyinGuide/Pawn.png?raw=true)
+![Señor Feudal](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Pawn.png?raw=true)
 
 El Peón, o Señor Feudal, mueve y ataca al igual que un Peón en el Ajedrez. Sin embargo, no puede mover dos casillas al principio.
 

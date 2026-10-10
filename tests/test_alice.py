@@ -61,7 +61,7 @@ GAME_PART2 = (
     "d1d8",
 )
 
-# https://github.com/gbtami/pychess-variants/issues/1570
+# https://github.com/pychess/pychess-variants/issues/1570
 GHOST_ROOKS_PART1 = (
     "e2e4",
     "e7e5",
@@ -82,7 +82,7 @@ GHOST_ROOKS_PART2 = (
     "e2d4",
 )
 
-# https://github.com/gbtami/pychess-variants/issues/1604
+# https://github.com/pychess/pychess-variants/issues/1604
 QUEEN_DISAPPEARED = (
     "d2d4",
     "d7d5",

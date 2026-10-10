@@ -1,8 +1,8 @@
-# ![Orda chess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/orda.svg) Orda Chess
+# ![Orda chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/orda.svg) Orda Chess
 
-![Orda](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Orda.png)
+![Orda](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Orda.png)
 
-![Legend](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/OrdaLegend.png)
+![Legend](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/OrdaLegend.png)
 
 Orda Chess is a chess variant designed in 2020 by Couch Tomato. The idea of the game was to create a true asymmetric chess with two different armies. Ralph Betza’s Chess with Different Armies was an inspiration, but the goal was to be a little more streamlined with the theme here. In this case, the theme of the new army is knight-based movement, where most pieces have an element of knight movement. Given the knight (or horse) theme, this was modeled after the Mongol army and named the Horde. In fact, an orda was a military structure for the people of the Steppes, which also gave rise to the English word “horde.” The original chess army is named the Kingdom for contrast. The game itself is incredibly balanced by engine evaluation (even more than standard chess), with a near 50-50 win ratio for the Kingdom and Horde.
  
@@ -32,28 +32,28 @@ Details and diagrams of each piece are below. Green dots represent movement, red
  
 ### Yurt (Y)
 
-![Yurt](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Yurt.png)
+![Yurt](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Yurt.png)
  
 The Yurt moves and captures one space diagonally or one space forward. This is the same as a silver general from Shogi or the bishop/khon from Makruk. There is only one yurt, starting in the queen’s spot, but unlike the queen, it is very much a minor piece, the weakest piece in the game aside from a pawn. It should not be underestimated though, because it is one of the few Horde pieces that can move and capture the same way. The other two are the Khan and Kheshig, which are the two most valuable pieces. Therefore, the yurt has the unique role of reliably supporting pawns and other pieces without fear of retaliation.
 A yurt is a mobile home for Mongol and Turkic peoples in the steppes of Asia. Their limited mobility but importance for supporting the army is reflected in this piece.
 
 ### Kheshig (H)
 
-![Kheshig](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Kheshig.png)
+![Kheshig](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Kheshig.png)
  
 The Kheshig is a hybrid piece that moves and captures as a knight and king combined. This piece type is also generically called the centaur. The kheshig starts in the knight’s spot, but unlike the knight, is the strongest Horde piece. It can be thought of as the general that leads its own troops on each flank. It is generally preferred to keep the kheshigs safely behind during early to mid-game because of their extreme importance to the Horde in the endgame.
 The kheshigs were the elite imperial guard for the Mongol royalty. Appropriately, it is incredibly difficult for the Kingdom to checkmate the khan without at least eliminating one of his kheshigs first.
 
 ### Horse Archer (A)
 
-![Horse Archer](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archer.png)
+![Horse Archer](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archer.png)
  
 The Horse Archer, or simply abbreviated Archer, is a unique divergent piece that moves and attacks differently. The archer moves as a knight but captures as a bishop. Because the archer is not colorbound, its value is greater than its bishop counterpart.
 Horse Archers were one of the two core components of the Mongol cavalry, functioning as the light cavalry. Their speed and prowess as mounted archers made them a unique threat. Their ability to quickly position themselves for a deadly skewer or fork makes them a dangerous threat for the Kingdom.
  
 ### Lancer (L)
 
-![Lancer](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Lancer.png)
+![Lancer](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Lancer.png)
  
 The Lancer is a unique divergent piece that moves and attacks differently. The lancer moves as a knight but captures as a rook. Because the lancer is not as mobile as the rook, its value is generally weaker than the rook, and this becomes more pronounced in the endgame, as it cannot move across the board as quickly as a rook can. Its value is still comparable to the horse archer.
 Lancers were one of the two core components of the Mongol cavalry, functioning as the heavy cavalry. Despite being weaker than the rook, their ability to come into play much earlier in the game is an advantage that the Horde player should utilize.
@@ -111,7 +111,7 @@ Some particular lines have been also played for multiple games. Here are the fou
 2. e4 Kg7
 3. (Bd3 or Nf3) ...
 
-![Benko's Castle](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/BenkoCastle.png)
+![Benko's Castle](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/BenkoCastle.png)
 
 *Benko's Castle after 2... Kg7*
 
@@ -132,7 +132,7 @@ Some particular lines have been also played for multiple games. Here are the fou
 4. b3 Kf7
 5. c4
 
-![Stockfish Defense Queenside Push](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/QueensidePush.png)
+![Stockfish Defense Queenside Push](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/QueensidePush.png)
 
 *Stockfish Defense- Queenside Push after 5. c4*
 

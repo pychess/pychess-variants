@@ -1,6 +1,6 @@
-# ![Makpong](https://github.com/gbtami/pychess-variants/blob/master/static/icons/makpong.svg) Makpong
+# ![Makpong](https://github.com/pychess/pychess-variants/blob/master/static/icons/makpong.svg) Makpong
 
-![Makpong Board](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
+![Makpong Board](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 
 O Makpong é uma variante do Makruk (Xadrez Tailandês) que tem como intuito reduzir o número de empates. Este é jogado em torneios de Makruk de eliminações únicas na Tailandia a fim de decidir o vencedor após um certo número de empates em partidas de Makruk.
 

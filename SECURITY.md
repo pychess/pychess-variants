@@ -1,13 +1,13 @@
 # Security Policy
 
-[pychess.org](https://github.com/gbtami/pychess-variants/) is a free and open source chess server powered by volunteers and donations. We are a non-profit and don't answer to any shareholders, only our users. That is reflected in our discussions and decisions every day.
+[pychess.org](https://github.com/pychess/pychess-variants/) is a free and open source chess server powered by volunteers and donations. We are a non-profit and don't answer to any shareholders, only our users. That is reflected in our discussions and decisions every day.
 
 Like all contributions to Pychess, security reviews and pentesting are appreciated.
 
 If you believe you've found a security issue in our platform, we encourage you to notify us. We welcome working with you to resolve the issue promptly.
 ## Reporting vulnerabilities
 
-Please report security issues through [GitHub security advisory](https://github.com/gbtami/pychess-variants/security/advisories/new).
+Please report security issues through [GitHub security advisory](https://github.com/pychess/pychess-variants/security/advisories/new).
 
 Vulnerabilities are relevant even when they are not directly exploitable, for example XSS mitigated by CSP.
 

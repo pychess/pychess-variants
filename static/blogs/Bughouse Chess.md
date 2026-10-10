@@ -9,7 +9,7 @@
 </div>
 </br>
 
-![Bughouse](https://github.com/gbtami/pychess-variants/blob/master/static/images/bughouse.jpg)
+![Bughouse](https://github.com/pychess/pychess-variants/blob/master/static/images/bughouse.jpg)
 
 "[Bughouse](https://www.flickr.com/photos/gadl/91700546)" by [Alexandre Duret-Lutz](https://www.flickr.com/photos/gadl/) licensed under [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/)
 
@@ -26,5 +26,5 @@ This variant is probably the most popular one played by club and tournament play
 <iframe width="560" height="315" src="https://www.youtube.com/embed/rz3f5febUAU" frameborder="0" allowfullscreen></iframe> 
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/icons/Bughouse.svg" width="25" height="25">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/icons/Bughouse.svg" width="25" height="25">
 </p>

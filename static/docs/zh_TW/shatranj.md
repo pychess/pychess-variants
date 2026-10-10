@@ -1,6 +1,6 @@
-# ![Shatranj](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Shatranj.svg) 波斯象棋（Shatranj）
+# ![Shatranj](https://github.com/pychess/pychess-variants/blob/master/static/icons/Shatranj.svg) 波斯象棋（Shatranj）
 
-![Shatranj](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/shatranj.png?raw=true)
+![Shatranj](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/shatranj.png?raw=true)
 
 波斯象棋（Shatranj）是薩珊帝國時期所流行的古代棋類，源自於印度的恰圖蘭卡（Chaturanga）。現代西洋棋即是從這種棋演化而來，並於10世紀透過穆斯林統治的安達魯斯（今西班牙）及西西里傳入歐洲。
 
@@ -13,11 +13,11 @@
 * 若將對方除國王外的所有棋子吃光（也就是只剩國王），則視為勝利。
 
 ### 士/維齊爾（Ferz）
-![Ferz](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Duchess.png)
+![Ferz](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Duchess.png)
 
 士每回合只能沿任一對角線移動一格，其子力比起現代西洋棋中的皇后要弱得多。
 
 ### 大象（Alfil）
-![Alfil](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Alfil.png)
+![Alfil](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Alfil.png)
 
 象每回合只能沿任一對角線跳兩格移動，其子力比現代西洋棋中的主教弱得多。

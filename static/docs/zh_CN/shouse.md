@@ -1,4 +1,4 @@
-# ![S-House](https://github.com/gbtami/pychess-variants/blob/master/static/icons/SHouse.svg) S-House
+# ![S-House](https://github.com/pychess/pychess-variants/blob/master/static/icons/SHouse.svg) S-House
 
 S-House 结合了 S-Chess 和双狂象棋的规则。在游玩之前请先熟悉S-Chess的规则。下文简单介绍双狂象棋的打入规则。
 
@@ -20,13 +20,13 @@ S-House 结合了 S-Chess 和双狂象棋的规则。在游玩之前请先熟悉
 
 ### 鹰
 
-![Hawk](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Hawk.png)
+![Hawk](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Hawk.png)
 
 鹰的走法等于象+马。在走法上，它能单独对角格的王形成威胁。
 鹰的价值一般认为比车高，但比大象和后低。
 
 ### 大象
 
-![Elephant](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantSeirawan.png)
+![Elephant](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantSeirawan.png)
 
 大象的走法等同于车+马。一般认为它的价值比鹰高，但是跟后相等或是低一些。

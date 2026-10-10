@@ -1,6 +1,6 @@
-# ![Bughouse](https://raw.githubusercontent.com/gbtami/pychess-variants/master/static/icons/Bughouse.svg) Bughouse
+# ![Bughouse](https://raw.githubusercontent.com/pychess/pychess-variants/master/static/icons/Bughouse.svg) Bughouse
 
-![Boards](https://github.com/gbtami/pychess-variants/blob/master/static/images/bugboards.png)
+![Boards](https://github.com/pychess/pychess-variants/blob/master/static/images/bugboards.png)
 
 Bughouse is a chess variant played on two chessboards by four players in teams of two. Each team member faces one opponent of the other team. One player per team has black pieces, while the other has white pieces. Each player plays the opponent as in a standard chess game, with the exception of the rules specified below.
 

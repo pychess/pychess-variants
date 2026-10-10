@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime
+from typing import ClassVar
 from urllib.parse import urlparse
 
 import aiohttp
@@ -22,7 +23,7 @@ from textual.widgets import (
     TabPane,
 )
 
-from monitor.metrics_client import fetch_metrics, metrics_url, monitor_token
+from monitor.metrics_client import fetch_metrics, metrics_url, monitor_token, monitor_view
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -97,6 +98,11 @@ class MemoryMonitorApp(App):
     }
     """
 
+    BINDINGS: ClassVar[list[tuple[str, str, str]]] = [
+        ("d", "snapshot", "Full snapshot"),
+        ("i", "inspect", "Task locations"),
+    ]
+
     monitoring = reactive(True)  # switch on/off
 
     categories: reactive[list[str]] = reactive([])
@@ -127,6 +133,8 @@ class MemoryMonitorApp(App):
         )
         self.max_history = 100
         self.ui_setup_done = False
+        self._fetching = False
+        self.measured_sizes: set[str] = set()
 
     @staticmethod
     def build_column_config(items: list[dict[str, object]]) -> list[tuple[str, str]]:
@@ -160,6 +168,9 @@ class MemoryMonitorApp(App):
                 )
                 yield Rule()
             with Vertical(id="right_panel"):
+                yield Label(
+                    "Summary polling; D: full snapshot, I: task locations", id="metrics_status"
+                )
                 yield DataTable(id="alloc_table")
                 yield TabbedContent(id="details_tabs")
         yield Footer()
@@ -174,9 +185,12 @@ class MemoryMonitorApp(App):
     def watch_category_memories(self, value: dict) -> None:
         for cat, mem in value.items():
             try:
-                self.query_one(f"#{cat}_mem_label", Label).update(
+                label = (
                     f"{cat.capitalize()} Mem: [b]{mem:.2f} KB[/b]"
+                    if cat in self.measured_sizes
+                    else f"{cat.capitalize()} Mem: not measured"
                 )
+                self.query_one(f"#{cat}_mem_label", Label).update(label)
             except NoMatches:
                 pass
 
@@ -224,6 +238,8 @@ class MemoryMonitorApp(App):
 
         # Fetch once immediately, then continue at a production-safe interval.
         await self.update_metrics()
+        if self.ui_setup_done:
+            self.query_one("#details_tabs", TabbedContent).active = "process_memory_tab"
         self.set_interval(self.update_interval, self.update_metrics)
 
     async def setup_ui(self) -> None:
@@ -256,10 +272,19 @@ class MemoryMonitorApp(App):
 
         self.ui_setup_done = True
 
-    async def update_metrics(self) -> None:
+    async def action_snapshot(self) -> None:
+        await self.update_metrics(summary_only=False)
+
+    async def action_inspect(self) -> None:
+        await self.update_metrics(summary_only=False, inspect_tasks=True)
+
+    async def update_metrics(
+        self, *, summary_only: bool = True, inspect_tasks: bool = False
+    ) -> None:
         """Fetch server metrics and update reactive variables."""
-        if not self.monitoring:
+        if (summary_only and not self.monitoring) or self._fetching:
             return
+        self._fetching = True
 
         async with aiohttp.ClientSession() as session:
             try:
@@ -267,9 +292,20 @@ class MemoryMonitorApp(App):
                     session,
                     url=metrics_url(),
                     token=monitor_token(),
-                    inspect_tasks=False,
+                    inspect_tasks=inspect_tasks,
+                    summary_only=summary_only,
                 )
                 if data:
+                    data = monitor_view(data)
+                    self.measured_sizes = set(data.get("object_sizes", {}))
+                    mode = (
+                        "Summary"
+                        if data.get("mode") == "summary"
+                        else "Full snapshot (cached up to 60s)"
+                    )
+                    self.query_one("#metrics_status", Label).update(
+                        f"{mode}; sampled at {data.get('timestamp', '?')}"
+                    )
                     logger.debug(
                         "Received metric categories: %s",
                         list(data.get("object_details", {})),
@@ -303,11 +339,13 @@ class MemoryMonitorApp(App):
                         changed_categories: list[str] = []
                         for cat in self.categories:
                             old_config = new_column_configs.get(cat, [])
-                            if old_config:
-                                continue
                             items = object_details.get(cat, [])
-                            new_config = self.build_column_config(items)
-                            if not new_config:
+                            keys = {key for _, key in old_config}
+                            keys.update(key for item in items for key in item)
+                            new_config = [
+                                (key.replace("_", " ").title(), key) for key in sorted(keys)
+                            ]
+                            if new_config == old_config:
                                 continue
                             new_column_configs[cat] = new_config
                             columns_changed = True
@@ -327,6 +365,7 @@ class MemoryMonitorApp(App):
                             for cat in self.categories
                         }
 
+                    self.watch_category_memories(self.category_memories)
                     histories = self.category_histories.copy()
                     for cat in self.categories:
                         histories[cat] = histories[cat] + [self.category_counts[cat]]
@@ -351,6 +390,8 @@ class MemoryMonitorApp(App):
                 logger.error(f"Failed to fetch metrics: {e}")
                 if self.categories:
                     self.category_counts = {cat: -1 for cat in self.categories}
+            finally:
+                self._fetching = False
 
     def update_category_table(self, category: str) -> None:
         """Update the details table for a specific category."""

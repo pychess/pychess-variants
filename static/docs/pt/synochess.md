@@ -1,6 +1,6 @@
-# ![Synochess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/synochess.svg) Synochess
+# ![Synochess](https://github.com/pychess/pychess-variants/blob/master/static/icons/synochess.svg) Synochess
 
-![Synochess](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Synochess.png)
+![Synochess](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Synochess.png)
 
 O Synochess é uma variante de Xadrez criada em 2020 por Couch Tomato. A ideia foi de criar uma variante onde o Xadrez Ocidental podia batalhar contra o Xiangqi ou o exército do Xadrez Chinês de uma forma justa. Considerando o facto do Xiangqi ser bem diferente (Tabuleiro maior e peças menos poderosas) isto foi bastante dificil de alcançar sem algumas modificações ao exército Chinês. No entanto, isto foi obtido, sem perder a alma do Xiangqi quando se joga pelo exército Chinês. Nesta variante, o exército branco representa o Xadrez Ocidental e é chamado de Reino, quando o exército Vermelho representa uma junção entre o Xiangqi e o Janggi (Xadrez Coreano) e este é denominado de Dinastia. Todas as peças da Dinastia representam o seu correspondente em relação ao Xiangqi ou ao Janggi.
 O nome Synochess foi baseado no seu nome antigo de Sinochess, mas foi alterado quando a Dinastia se tornou menos "Sino" (em chinês) e se tornou numa mistura entre o Chinês e o Coreano. Daí, o prefixo syn- significa "juntos", e o jogo representa uma junção entre dois jogos de Xadrez distintos que uniram forças.  
@@ -32,25 +32,25 @@ Abaixo estão detalhes e diagramas de cada peça.
 
 ### Soldado (S)
 
-![Soldado](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Soldier.png)
+![Soldado](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Soldier.png)
 O Soldado pode-se mover uma casa à frente e para ambos os lados. É exatamente o mesmo Soldado do Xiangqi quando atravessa o rio e exatamente igual ao soldado do Janggi inicial. O Soldado, ao contrário do peão não pode ser promovido.
 Devido ao facto do soldado não se poder movimentar para trás, este só se pode mover para os lados na linha final. Evite este situação ao máximo excepto se esta resultar em xeque-mate ou mate de linha. Os soldados são mais poderosos quando emparelhados lado a lado pelo facto de poderem proteger mutuamente.
 
 ### Elefante (E)
 
-![Elefante](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantDynasty.png)
+![Elefante](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantDynasty.png)
  
 O Elefante é uma peça salteadora qe se move na diagonal uma ou duas casas. Pelo facto de ser salteadora, esta pode pular por cima de uma peça interveniente a fim de capturar ou de se movimentar. Esta peça é basicamente uma versão mais poderosa do Elefante do Xiangqi; E é exatamente igual ao elefante da variante Shako.
 
 ### Canhão (C)
 
-![Cannon](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/CannonDynasty.png)
+![Cannon](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/CannonDynasty.png)
  
 O Canhão é uma peça de pulo. É basicamente como uma Torre que precisa de uma peça interveniente (também chamada de "mira") a fim de pulsar por cima desta a fim de se mover ou capturar. *****Um canhão não pode usar outro canhão como mira.***** Esta versão do canhão é exatamente igual ao do Janggi. Pelo facto de precisar de outra peça interveniente a fim de capturar ou de se mover, O canhão é muito mais fraco no final de jogo.
  
 ### Assistente
 
-![Assistente](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Advisor.png)
+![Assistente](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Advisor.png)
 
 O Assistente, movimenta-se e captura exatamente como um Rei. Ao contrário do Rei, este pode ser capturado. Enquanto não existe uma peça equivalente no Janggi ou no Xiangqi, não existe o Palácio no Synochess. Por isto, o Assistente precisou de se tornar mais forte a fim de proteger o Rei, pode-se considerar os seus movimentos como uma junção entre os dois assistentes do Xiangqi que podem ir para quaisquer das 8 casas.
 
@@ -134,7 +134,7 @@ O jogador da Dinastia tem de evitar movimentar os Soldados em demasia. A sua pos
 
 Se jogas de brancas, evita esta situação. Atenção aos canhões
 
-![Mate do Louco](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/FoolsMate.png)
+![Mate do Louco](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/FoolsMate.png)
 
 Esta é a razão pela qual 1.e3 é a abertura mais popular. Se não for 1.e3 então 2.e3, é jogada. Após isto, se o Canhão atacar, este pode ser bloqueado por um Bispo ou um Cavalo, que irá continuar pregado por um bocado. 1.e4 não é comendado por não ser ameaça nenhuma (o Peão está pregado à sua coluna por estar no meio entre Reis).
 
@@ -142,6 +142,6 @@ Esta é a razão pela qual 1.e3 é a abertura mais popular. Se não for 1.e3 ent
 
 Esta é uma táctica bastante mortifera que pode resultar na derrota das brancas se não tiverem cuidado. A situação é de que a Biga/Torre tem uma coluna aberta (pela qual já começa com esta) e de que o Canhão tem o caminho aberta para as casas b1 ou g1. Esta casa pode ou não ter um Cavalo lá, mas se estiver vazia, o Cavalo não pode protegê-la a fim de isto resultar.
 
-![Assassino de Dama](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Queenslayer.png)
+![Assassino de Dama](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Queenslayer.png)
 
 Quanto esta posição acontecer, a Biga/Torre pode capturar o peão, fazendo com que a Torre seja forçada a capturar a Biga/Torre. Isto expõe a casa b1/g1 a ataques do Canhão, que irão ameaçar a Dama e pregá-la ao atacar o lado desta (b1), ou efetuar a tática do espeto no lado do Rei(g1). De uma forma ou outra a Dama irá ser capturada.

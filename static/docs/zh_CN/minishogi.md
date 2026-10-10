@@ -1,6 +1,6 @@
-# ![Minishogi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/minishogi.svg) 迷你将棋|Mini Shogi
+# ![Minishogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/minishogi.svg) 迷你将棋|Mini Shogi
 
-![Minishogi](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Minishogi.png)
+![Minishogi](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Minishogi.png)
 
 迷你将棋（或称5五将棋）是缩小版的将棋，使用5x5的棋盘，于1970年由琉球的楠本重信发明。
 
@@ -18,11 +18,11 @@
 
 ### 玉将、王将
 
-![BlackKings](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/BlackKings.png)
+![BlackKings](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/BlackKings.png)
 
-![WhiteKings](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/WhiteKings.png)
+![WhiteKings](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/WhiteKings.png)
 
-![KingDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/King.png)
+![KingDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/King.png)
 
 正式场合，先手方使用玉将。后手使用王将。
 
@@ -30,9 +30,9 @@
 
 ### 飞车
 
-![Rooks](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Rooks.png)
+![Rooks](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Rooks.png)
 
-![RookDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Rook.png)
+![RookDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Rook.png)
 
 飞车，简称飞，移动和象棋的车一样。可以直走任意格数。它是将棋最强的未升变棋子。
 
@@ -40,17 +40,17 @@
 
 ### 龙王
 
-![Dragons](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Dragons.png)
+![Dragons](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Dragons.png)
 
-![DragonDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Dragon.png)
+![DragonDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Dragon.png)
 
 龙王，简称龙，由飞车升级而来，走法除了直走任意格数以外，还可以斜走一格。它是场上最强的棋子。
 
 ### 角行
 
-![Bishops](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Bishops.png)
+![Bishops](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Bishops.png)
 
-![BishopDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Bishop.png)
+![BishopDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Bishop.png)
 
 角行，简称角，可以斜走任意步数，和国际象棋象一样。它是将棋第二强的未升变棋子。
 
@@ -58,17 +58,17 @@
 
 ### 龙马
 
-![Horses](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Horses.png)
+![Horses](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Horses.png)
 
-![HorseDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Horse.png)
+![HorseDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Horse.png)
 
 龙马，简称龙，由角行升级而来，除了斜走任意格数以外，还可以直走一格。龙马是场上第二强的棋子。
 
 ### 金将
 
-![Golds](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Golds.png)
+![Golds](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Golds.png)
 
-![GoldDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Gold.png)
+![GoldDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Gold.png)
 
 金将，简称金，可以向前、左前、右前、左、右或后行走一格，如中文「甲」字。
 金将无法升变。
@@ -77,9 +77,9 @@
 
 ### 银将
 
-![Silvers](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Silvers.png)
+![Silvers](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Silvers.png)
 
-![SilverDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Silver.png)
+![SilverDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Silver.png)
 
 银将，简称银，可以斜角方向或正前方行走一格。
 
@@ -87,9 +87,9 @@
 
 ### 步兵
 
-![Pawns](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Pawns.png)
+![Pawns](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Pawns.png)
 
-![PawnDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Pawn.png)
+![PawnDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Pawn.png)
 
 步兵，简称步，走法为直行一格。
 
@@ -97,9 +97,9 @@
 
 ## 升变\|成驹
 
-![PSilvers](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/PSilvers.png)
+![PSilvers](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/PSilvers.png)
 
-![Tokins](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Tokins.png)
+![Tokins](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Tokins.png)
 
 棋子在**进入敌阵**、**离开敌阵**、**在敌阵内行动**之后，均可升级。在迷你将棋中，敌阵即对方底线。一般情况，升级是可选的，即可以保持不升级状态等更合适的时机或利用原棋子走法；但若一个棋子不升级就再也不可能移动（步兵抵达对方底线），则必须升级。
 

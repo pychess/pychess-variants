@@ -1,4 +1,4 @@
-# ![满州棋](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Manchu.svg) 满洲棋 | Manchu
+# ![满州棋](https://github.com/pychess/pychess-variants/blob/master/static/icons/Manchu.svg) 满洲棋 | Manchu
 
 满州棋，或称一统棋，是一个非对称中国象棋变体。于清朝时由满州旗人发明，主要风行于八旗子弟之中。
 

@@ -37,7 +37,8 @@ class ProfileCountsTestCase(AioHTTPTestCase):
                 "AIOHTTP_SESSION": json.dumps(
                     {"session": {"user_name": "alice"}, "created": int(time.time())}
                 )
-            }
+            },
+            response_url=self.client.make_url("/"),
         )
 
     async def tearDownAsync(self):
@@ -130,7 +131,9 @@ class ProfileCountsTestCase(AioHTTPTestCase):
         self.assertEqual(2, self.alice.forum_posts)
         response = await self.client.get("/api/forum/search?text=user:alice")
         self.assertEqual(2, (await response.json())["total"])
-        await self.client.post(f"/api/forum/post/{post['_id']}/delete")
+        response = await self.client.post(f"/api/forum/post/{post['_id']}/delete")
+        self.assertEqual(200, response.status)
+        self.assertTrue((await response.json())["erased"])
         self.assertEqual(1, self.alice.forum_posts)
         first = await self.db.forum_post.find_one({"topicId": topic["_id"], "user": "alice"})
         await self.db.forum_post.insert_one(
@@ -150,9 +153,12 @@ class ProfileCountsTestCase(AioHTTPTestCase):
                     "AIOHTTP_SESSION": json.dumps(
                         {"session": {"user_name": "bob"}, "created": int(time.time())}
                     )
-                }
+                },
+                response_url=self.client.make_url("/"),
             )
-            await self.client.post(f"/api/forum/post/{first['_id']}/delete")
+            response = await self.client.post(f"/api/forum/post/{first['_id']}/delete")
+            self.assertEqual(200, response.status)
+            self.assertTrue((await response.json())["deletedTopic"])
         self.assertEqual(0, (await self.db.user.find_one({"_id": "alice"}))["forumPosts"])
         self.assertEqual(0, (await self.db.user.find_one({"_id": "bob"}))["forumPosts"])
 

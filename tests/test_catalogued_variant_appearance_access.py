@@ -13,7 +13,7 @@ from catalogued_variants import (
     upload_catalogued_variant,
 )
 
-INI = "[appearanceaccess:chess]"
+INI = "[appearanceaccess:chess]\nstartFen = 8/8/8/8/8/8/8/K6k w - - 0 1"
 PAYLOAD = (
     INI,
     "Appearance access",

@@ -4,7 +4,7 @@ Any file in this project that does not state otherwise and is not listed as an
 exception below is part of pychess-variants and copyright (c) 2012-2024 the pychess-variants authors.
 
 For a list of the authors see the commit log or
-https://github.com/gbtami/pychess-variants/graphs/contributors.
+https://github.com/pychess/pychess-variants/graphs/contributors.
 
 Pychess-variants is free software; you can redistribute and/or modify it under the terms
 of the GNU Affero General Public License as published by the Free Software

@@ -1,4 +1,4 @@
-# ![Grandhouse](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Grandhouse.svg) 雙狂大象棋
+# ![Grandhouse](https://github.com/pychess/pychess-variants/blob/master/static/icons/Grandhouse.svg) 雙狂大象棋
 
 雙狂大象棋的規則就如雙狂象棋與西洋大象棋，只是略有修改。
 
@@ -33,11 +33,11 @@
 
 ### 大主教
 
-![Cardinal](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
+![Cardinal](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
 
 大主教，Archbishop ：走法同西洋棋的主教 + 騎士(看棋子的樣子就知道了吧!)。記法簡稱為A。
 
-![Cardinal moves](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
+![Cardinal moves](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
 
 
 大主教是唯一可以單獨將死對方王的棋子。
@@ -46,11 +46,11 @@
 
 ### 首相
 
-![Marshal](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
+![Marshal](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
 
 首相，Chancellor ：走法同西洋棋的城堡 + 騎士，記法簡稱為C。 (還有另一個名稱為大象，只會在S-Chess中使用)
 
-![Marshal moves](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
+![Marshal moves](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
 
 
 棋子價值比大主教高，但遜於或等於王后。

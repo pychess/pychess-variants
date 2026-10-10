@@ -1,7 +1,7 @@
 
-# ![Minixiangqi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Minixiangqi.svg) Minixiangqi
+# ![Minixiangqi](https://github.com/pychess/pychess-variants/blob/master/static/icons/Minixiangqi.svg) Minixiangqi
 
-![Minixiangqi](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Minixiangqi.png)
+![Minixiangqi](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Minixiangqi.png)
 
 El Minixiangqi es esencialmente Xiangqi en un tablero de 7x7. El juego fue inventado en 1973 por Shigenobu Kusumoto de Osaka, Japón.
 

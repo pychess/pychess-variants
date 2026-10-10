@@ -1,4 +1,4 @@
-# ![960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/960.svg) Ajedrez 960 (Ajedrez Random de Fischer)
+# ![960](https://github.com/pychess/pychess-variants/blob/master/static/icons/960.svg) Ajedrez 960 (Ajedrez Random de Fischer)
 
 El Ajedrez 960 fue creado por Bobby Fischer para hacer el juego más variado y eliminar gran parte de la memorización mecánica de las aperturas que el ajedrez estándar te obliga a desarrollar. Esta es una de las variantes más populares, y separa a aquellos que llegan realmente a dominar la estrategia y la táctica de aquellos que se basan en memorizar líneas de apertura.
 

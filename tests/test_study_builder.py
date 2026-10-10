@@ -51,6 +51,8 @@ class StudyChapterBuilderTestCase(unittest.IsolatedAsyncioTestCase):
         # rights, not castling rights. The non-960 validator historically
         # rejected them merely because the king is no longer on e1.
         fen = "rh3rk1/pp4pp/2n3q1/2pp1pP1/8/2PP1N2/PP3P2/R1BQ1RK1[H] w ACD - 1 19"
+        board = FairyBoard("seirawan", initial_fen=fen)
+        board.push("c1f4h")
         draft = await self.builder.from_import(
             variant="seirawan",
             initial_fen=fen,
@@ -61,9 +63,10 @@ class StudyChapterBuilderTestCase(unittest.IsolatedAsyncioTestCase):
                         "parentId": None,
                         "order": 0,
                         "move": "c1f4h",
-                        "fen": "client-fen-is-not-trusted",
+                        "fen": board.fen,
                         "turnColor": "black",
                         "check": False,
+                        "san": "Bf4/H",
                     }
                 ]
             },
@@ -118,7 +121,35 @@ class StudyChapterBuilderTestCase(unittest.IsolatedAsyncioTestCase):
                     mode="normal",
                 )
 
-    async def test_analysis_tree_is_replayed_authoritatively(self) -> None:
+    async def test_bulk_analysis_does_not_engine_validate_node_positions(self) -> None:
+        root_fen = FairyBoard.start_fen("chess")
+        with (
+            patch.object(self.builder, "_validated_initial_fen", return_value=(True, root_fen)),
+            patch("study.builder.FairyBoard") as board,
+            patch("study.builder.validate_fen") as validate,
+        ):
+            draft = await self.builder.from_analysis(
+                variant="chess",
+                initial_fen=root_fen,
+                tree_payload={
+                    "nodes": [
+                        {
+                            "id": "Client0001",
+                            "parentId": None,
+                            "order": 0,
+                            "move": "e2e4",
+                            "fen": "client-derived b",
+                            "turnColor": "black",
+                            "check": False,
+                        }
+                    ]
+                },
+            )
+        self.assertEqual(draft.root.count(), 1)
+        board.assert_not_called()
+        validate.assert_not_called()
+
+    async def test_analysis_tree_trusts_client_chess_data_and_canonicalizes_authors(self) -> None:
         root_fen = FairyBoard.start_fen("chess")
         submitted = {
             "rootGamebook": {"hint": "Root lesson"},
@@ -134,10 +165,10 @@ class StudyChapterBuilderTestCase(unittest.IsolatedAsyncioTestCase):
                     "parentId": None,
                     "order": 0,
                     "move": "e2e4",
-                    "fen": "fake-fen",
-                    "turnColor": "white",
+                    "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+                    "turnColor": "black",
                     "check": True,
-                    "san": "fake-san",
+                    "san": "client-e4",
                     "gamebook": {"deviation": "Node lesson"},
                     "eval": {"cp": 35},
                     "annotations": {
@@ -153,9 +184,10 @@ class StudyChapterBuilderTestCase(unittest.IsolatedAsyncioTestCase):
                     "parentId": "Client0001",
                     "order": 0,
                     "move": "e7e5",
-                    "fen": "another-fake-fen",
-                    "turnColor": "black",
+                    "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+                    "turnColor": "white",
                     "check": True,
+                    "san": "client-e5",
                     "eval": {"mate": 3},
                 },
                 {
@@ -163,8 +195,8 @@ class StudyChapterBuilderTestCase(unittest.IsolatedAsyncioTestCase):
                     "parentId": None,
                     "order": 1,
                     "move": "d2d4",
-                    "fen": "variation-fake-fen",
-                    "turnColor": "white",
+                    "fen": "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1",
+                    "turnColor": "black",
                     "check": False,
                     "forceVariation": True,
                 },
@@ -177,16 +209,16 @@ class StudyChapterBuilderTestCase(unittest.IsolatedAsyncioTestCase):
         )
 
         first = draft.root.nodes["Client0001"]
-        self.assertEqual(first.san, "e4")
+        self.assertEqual(first.san, "client-e4")
         self.assertEqual(first.turn_color, "black")
-        self.assertFalse(first.check)
-        self.assertNotEqual(first.fen, "fake-fen")
-        # Submitted evals use the submitted node turn as their POV. Move replay
-        # reconstructs the opposite turn for both deliberately bogus payloads, so
-        # the builder must preserve the score while rebasing it authoritatively.
-        self.assertEqual(first.eval_score, {"cp": -35})
-        self.assertEqual(draft.root.nodes["Client0002"].san, "e5")
-        self.assertEqual(draft.root.nodes["Client0002"].eval_score, {"mate": -3})
+        self.assertTrue(first.check)
+        self.assertEqual(
+            first.fen,
+            "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+        )
+        self.assertEqual(first.eval_score, {"cp": 35})
+        self.assertEqual(draft.root.nodes["Client0002"].san, "client-e5")
+        self.assertEqual(draft.root.nodes["Client0002"].eval_score, {"mate": 3})
         self.assertTrue(draft.root.nodes["Client0003"].force_variation)
         self.assertEqual([n.id for n in draft.root.children_of(None)], ["Client0001", "Client0003"])
         self.assertEqual(draft.root.root_annotations.comments[0].text, "Root note")
@@ -240,9 +272,10 @@ class StudyChapterBuilderTestCase(unittest.IsolatedAsyncioTestCase):
                         "parentId": None,
                         "order": 0,
                         "move": "e2e4",
-                        "fen": "fake",
+                        "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
                         "turnColor": "black",
                         "check": False,
+                        "san": "e4",
                     }
                 ]
             },
@@ -257,7 +290,9 @@ class StudyChapterBuilderTestCase(unittest.IsolatedAsyncioTestCase):
         doc = _build_fsf_builtin_doc("joust", FSF_CATALOGUED_BUILTIN_VARIANTS["joust"])
         register_catalogued_variant_doc(cast(Any, self.app_state), doc, load_config=False)
         initial_fen = FairyBoard.start_fen("joust")
-        move = next(iter(FairyBoard("joust", initial_fen=initial_fen).legal_moves()))
+        board = FairyBoard("joust", initial_fen=initial_fen)
+        move = next(iter(board.legal_moves()))
+        board.push(move)
         await self.db.game.insert_one({"_id": "gameFsf1", "v": "joust", "z": 0})
         try:
             draft = await self.builder.from_analysis(
@@ -271,8 +306,8 @@ class StudyChapterBuilderTestCase(unittest.IsolatedAsyncioTestCase):
                             "parentId": None,
                             "order": 0,
                             "move": move,
-                            "fen": "client-fen-is-not-trusted",
-                            "turnColor": "black",
+                            "fen": board.fen,
+                            "turnColor": "white" if board.fen.split()[1] == "w" else "black",
                             "check": False,
                         }
                     ]
@@ -301,8 +336,8 @@ class StudyChapterBuilderTestCase(unittest.IsolatedAsyncioTestCase):
                 tree_payload={"nodes": []},
             )
 
-    async def test_analysis_tree_rejects_illegal_move(self) -> None:
-        with self.assertRaisesRegex(StudyChapterBuildError, "illegal move"):
+    async def test_analysis_tree_rejects_fen_turn_mismatch(self) -> None:
+        with self.assertRaisesRegex(StudyChapterBuildError, "FEN/turn mismatch"):
             await self.builder.from_analysis(
                 variant="chess",
                 initial_fen=FairyBoard.start_fen("chess"),
@@ -312,9 +347,9 @@ class StudyChapterBuilderTestCase(unittest.IsolatedAsyncioTestCase):
                             "id": "Client0001",
                             "parentId": None,
                             "order": 0,
-                            "move": "e2e5",
-                            "fen": "fake",
-                            "turnColor": "black",
+                            "move": "e2e4",
+                            "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+                            "turnColor": "white",
                             "check": False,
                         }
                     ]
@@ -390,38 +425,20 @@ class StudyChapterBuilderTestCase(unittest.IsolatedAsyncioTestCase):
         main_process_validate.assert_not_called()
         self.assertEqual(set(sf.variants()), before_variants)
 
-    async def test_illegal_embedded_tree_never_reaches_main_pyffish_registry(self) -> None:
+    async def test_embedded_snapshot_isolated_check_does_not_replay_move_tree(self) -> None:
         initial_fen = FairyBoard.start_fen("chess")
         snapshot = f"[isolatedtree:chess]\nstartFen = {initial_fen}\n"
-        submitted = {
-            "nodes": [
-                {
-                    "id": "Illegal001",
-                    "parentId": None,
-                    "order": 0,
-                    "move": "e2e5",
-                    "fen": "client supplied",
-                    "turnColor": "white",
-                    "check": False,
-                }
-            ]
-        }
-        from fairy.fairy_board import sf
-
-        before_variants = set(sf.variants())
-        with (
-            patch("study.variant.validate_catalogued_ini") as main_process_validate,
-            self.assertRaisesRegex(StudyChapterBuildError, "snapshot is invalid"),
-        ):
-            await self.builder.from_import(
-                variant="isolatedtree",
-                initial_fen=initial_fen,
-                tree_payload=submitted,
-                variant_ini=snapshot,
+        with patch(
+            "study.variant.check_catalogued_ini_tree_without_mutating_server",
+            new=AsyncMock(),
+        ) as isolated_check:
+            await study_variant.validate_study_variant_import_without_mutating_server(
+                "isolatedtree", snapshot, initial_fen
             )
 
-        main_process_validate.assert_not_called()
-        self.assertEqual(set(sf.variants()), before_variants)
+        args = isolated_check.await_args.args
+        self.assertEqual(args[2], initial_fen)
+        self.assertEqual(args[3], ())
 
     async def test_rejects_two_board_game(self) -> None:
         await self.db.game.insert_one({"_id": "game0002"})

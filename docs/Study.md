@@ -41,7 +41,8 @@ one validated import and opens the final imported chapter.
 - Root and move arrows/circles and NAGs, including a picker for the 24 named lichess
   glyphs. Comments, glyphs, PGN tags, descriptions, and sharing have dedicated tools.
 - Chapter-wide Clear annotations and Clear variations actions.
-- Local engine analysis, subject to the viewer's computer-analysis permission.
+- Local engine analysis, subject to the viewer's computer-analysis permission and
+  support from the browser engine loaded for that variant.
 - Contributor requests for Fishnet analysis of a chapter's preferred mainline, with
   at least five moves, a five-minute repeat guard, one pending Study analysis per
   account, and rolling per-account analysis budgets.
@@ -157,6 +158,10 @@ hint as explanatory text.
 
 Practice requires the viewer's computer-analysis permission, no conflicting active
 eligible live game, and a variant supported by the browser Fairy-Stockfish instance.
+This browser/WASM capability is independent of server Fishnet support: a variant may
+support Play-AI and server analysis through a dedicated worker engine while remaining
+unavailable for local analysis or Practice. Alice Chess is the current example.
+See [Engine-Capabilities.md](Engine-Capabilities.md) for the cross-feature capability model.
 Saved custom rules are passed to the browser engine. Two-board variants are explicitly
 unsupported, and engine/permission/time-out failures show an unavailable state rather
 than falling back to server Fishnet work. A failed engine drain barrier fails closed
@@ -305,6 +310,13 @@ move tokens remain import errors rather than being silently skipped.
 [studyPgnImport.ts](../client/study/studyPgnImport.ts) defines the parser-neutral recursive
 PGN contract and converts parsed games into Study trees. It preserves variations,
 comments, NAGs, shapes, clocks, evaluations, and the supported PyChess extensions.
+The browser's ffish.js replay is also authoritative for bulk-import chess semantics:
+move legality, node FEN/SAN/check data, and side to move are derived client-side instead
+of replaying the complete tree again with pyffish on the production aiohttp event loop.
+The server still validates the root position and enforces structural/resource invariants,
+including node limits, IDs/parents/cycles/order, bounded node FENs and FEN/turn
+consistency, and authenticated comment authorship. Interactive single-move Study edits
+continue to receive server-side engine validation.
 When an imported PGN contains `[Orientation "white"]` or `[Orientation "black"]`, that
 choice is preserved exactly. Lichess omits this tag from its default Study export, so in its
 absence the importer applies the useful parts of Lichess's automatic orientation rules.
@@ -445,8 +457,8 @@ keep this schema-preserving server deployed and narrow the production variable (
 example to `normal`) rather than deploying code from before analysis-mode support. No
 eager migration/backfill is required.
 
-Untrusted embedded rules and their imported positions/trees are validated outside
-the serving process. Historical rules admitted to the main native engine registry
+Untrusted embedded rules and their imported root position are validated outside
+the serving process before bulk tree data is accepted. Historical rules admitted to the main native engine registry
 have a separate configurable cap of 256 snapshots per process. Native registrations
 cannot be unloaded; the budget resets on restart. This bound is a resource policy,
 not a production memory measurement.

@@ -1,6 +1,6 @@
-# ![Spartan](https://github.com/gbtami/pychess-variants/blob/master/static/icons/spartan.svg) 斯巴达象棋 | Spartan Chess
+# ![Spartan](https://github.com/pychess/pychess-variants/blob/master/static/icons/spartan.svg) 斯巴达象棋 | Spartan Chess
 
-![Spartan](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Spartan.png)
+![Spartan](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Spartan.png)
 
 斯巴达象棋(Spartan Chess)是由 Steven Streetman 设计的象棋类游戏，2010年收录在ChessVariants网站，具体的设计时间不详。该棋是使用不对称棋组的棋类中很受欢迎的一个棋种。平衡性方面，该棋在没有Fairy Stockfish等现代引擎作为辅助的那个年代依然做到不错的平衡。
 
@@ -27,7 +27,7 @@
 
 ### 王 | King (K)
 
-![King](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanKing.png)
+![King](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanKing.png)
  
 王和国际象棋的国王完全相同。
 主要的区别在于斯巴达方有两个王。不能使得场上的所有王同时被攻击。
@@ -37,7 +37,7 @@
 
 ### 重步兵 | Hoplite (H)
 
-![Hoplite](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanHoplite.png)
+![Hoplite](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanHoplite.png)
  
 重步兵相当于斯巴达象棋的兵，它的走法和贝罗琳娜兵(Berolina Pawn)类似，即国际象棋兵的走吃互换版本，走子只能斜向前走一格，吃子只能向前走一格。在初始位置时，可以斜向前移动两格。
 重步兵在初始位置斜向前移动两格时可以越子。
@@ -45,25 +45,25 @@
 
 ### 将军 | General (G)
 
-![General](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanGeneral.png)
+![General](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanGeneral.png)
  
 将军可以直走任意格数，或斜走一格。这个走法和将棋的龙王一样。
 
 ### 统战官 | Warlord (W)
 
-![Warlord](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanWarlord.png)
+![Warlord](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanWarlord.png)
  
 统战官可以斜走任意格数，或者像马一样行动。这与大主教(ArchBishop)是一样的。
 
 ### 队长 | Captain (C)
 
-![Captain](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanCaptain.png)
+![Captain](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanCaptain.png)
  
 队长可以直走1到2格，走法和吃法相同，而且直走2格时可以越子。
 
 ### 队副 | Lieutenant (L)
 
-![Lieutenant](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanLieutenant.png)
+![Lieutenant](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanLieutenant.png)
  
 队副可以斜走1到2格，走法和吃法相同，斜走2格时可以越子。还可以左右走1格，但不能吃子。
 

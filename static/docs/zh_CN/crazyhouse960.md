@@ -1,4 +1,4 @@
-# ![Crazyhouse960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Crazyhouse960.svg) 任意制双狂象棋 Crazyhouse 960
+# ![Crazyhouse960](https://github.com/pychess/pychess-variants/blob/master/static/icons/Crazyhouse960.svg) 任意制双狂象棋 Crazyhouse 960
 
 任意制双狂象棋结合了原本双狂象棋与菲舍尔任意制象棋 Chess960 的规则。由于这视为双狂象棋的变体，因此请先熟悉双狂象棋的规则，
 

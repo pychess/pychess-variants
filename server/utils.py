@@ -80,6 +80,7 @@ from json_utils import json_response
 from preferences import effective_game_category
 from pychess_global_app_state_utils import get_app_state
 from request_utils import read_post_data
+from session_security import session_expiry_timeout
 from settings import URI
 from sse_utils import consume_sse_queue
 from variants import (
@@ -100,6 +101,58 @@ NO_LEGAL_MOVES_START_FEN_MESSAGE = (
 MAX_CUSTOM_FEN_LENGTH = 4096
 FAIRY_STOCKFISH_MAX_ACTIVE_PIECES = 128
 FAIRY_STOCKFISH_POCKET_SLOTS_PER_FILE = 2
+REALTIME_GAME_IN_PROGRESS_MESSAGE = "You already have a realtime game in progress."
+
+
+def active_realtime_game_for_user(
+    app_state: PychessGlobalAppState,
+    user: User | None,
+    *,
+    allowed_simul_id: str | None = None,
+):
+    """Return an active non-correspondence game that blocks a new realtime game.
+
+    ``app_state.games`` is authoritative here rather than ``User.game_in_progress``.
+    The latter is intentionally only a single navigation hint and cannot represent
+    a simul host's several simultaneous boards.
+    """
+    if user is None or user.bot:
+        return None
+
+    for game in getattr(app_state, "games", {}).values():
+        if game.status > STARTED or getattr(game, "corr", False):
+            continue
+        if allowed_simul_id is not None and getattr(game, "simulId", None) == allowed_simul_id:
+            continue
+        if any(player.username == user.username for player in game.non_bot_players):
+            return game
+    return None
+
+
+def realtime_game_conflict(
+    app_state: PychessGlobalAppState,
+    players,
+    *,
+    allowed_simul_id: str | None = None,
+    simul_host_username: str | None = None,
+):
+    """Return ``(player, game)`` for the first blocked realtime participant.
+
+    A simul host may already be playing other boards belonging to that same simul.
+    Duplicate seats in one two-board seek are collapsed by username, allowing the
+    supported one-person-team Bughouse/Supply-style setup without permitting an
+    unrelated second realtime game.
+    """
+    seen: set[str] = set()
+    for player in players:
+        if player is None or player.bot or player.username in seen:
+            continue
+        seen.add(player.username)
+        same_simul = allowed_simul_id if player.username == simul_host_username else None
+        game = active_realtime_game_for_user(app_state, player, allowed_simul_id=same_simul)
+        if game is not None:
+            return player, game
+    return None
 
 
 async def put_bot_game_queue(player: User, game_id: str, payload: str) -> bool:
@@ -746,29 +799,37 @@ async def join_seek(
         response: SeekStatusMessage = {"type": "seek_yourself", "seekID": seek.id}
         return response
 
+    joined_slot: str | None = None
     if join_as == "player1":
         if seek.player1 is None:
             seek.player1 = user
+            joined_slot = "player1"
         else:
             response: SeekStatusMessage = {"type": "seek_occupied", "seekID": seek.id}
             return response
     elif join_as == "player2":
         if seek.player2 is None:
             seek.player2 = user
+            joined_slot = "player2"
         else:
             response: SeekStatusMessage = {"type": "seek_occupied", "seekID": seek.id}
             return response
     else:
         if seek.player1 is None:
             seek.player1 = user
+            joined_slot = "player1"
         elif seek.player2 is None:
             seek.player2 = user
+            joined_slot = "player2"
         else:
             response: SeekStatusMessage = {"type": "seek_occupied", "seekID": seek.id}
             return response
 
     if seek.player1 is not None and seek.player2 is not None:
-        return await new_game(app_state, seek, game_id)
+        response = await new_game(app_state, seek, game_id)
+        if response["type"] == "error" and joined_slot is not None:
+            setattr(seek, joined_slot, None)
+        return response
     else:
         response: SeekStatusMessage = {"type": "seek_joined", "seekID": seek.id}
         return response
@@ -804,14 +865,25 @@ async def new_game(
         assert bplayer is not None
         assert seek.chess960 is not None
 
-    if game_id is not None:
-        # game invitation
-        del app_state.invites[game_id]
-    else:
+    if game_id is None:
         game_id = await new_id(None if app_state.db is None else app_state.db.game)
 
-    # print("new_game", game_id, seek.variant, seek.fen, wplayer, bplayer, seek.base, seek.inc, seek.level, seek.rated, seek.chess960)
+    realtime_locked = seek.day == 0
+    if realtime_locked:
+        await app_state.realtime_game_creation_lock.acquire()
     try:
+        if realtime_locked:
+            conflict = realtime_game_conflict(app_state, (wplayer, bplayer))
+            if conflict is not None:
+                player, active_game = conflict
+                log.info(
+                    "Rejecting realtime game creation for %s; active game %s is still running",
+                    player.username,
+                    active_game.id,
+                )
+                return {"type": "error", "message": REALTIME_GAME_IN_PROGRESS_MESSAGE}
+
+        # print("new_game", game_id, seek.variant, seek.fen, wplayer, bplayer, seek.base, seek.inc, seek.level, seek.rated, seek.chess960)
         catalogued_casual = is_catalogued_variant(seek.variant)
         any_bot_player = wplayer.bot or bplayer.bot
         rated = (
@@ -842,6 +914,7 @@ async def new_game(
             new_960_fen_needed_for_rematch=seek.reused_fen,
             is_rematch=seek.is_rematch,
         )
+        app_state.games[game_id] = game
     except Exception:
         log.exception(
             "Creating new game %s failed! %s 960:%s FEN:%s %s vs %s",
@@ -854,7 +927,13 @@ async def new_game(
         )
         remove_seek(app_state.seeks, seek)
         return {"type": "error", "message": "Failed to create game"}
-    app_state.games[game_id] = game
+    finally:
+        if realtime_locked:
+            app_state.realtime_game_creation_lock.release()
+
+    if seek.game_id is not None:
+        # game invitation; only consume it after admission succeeded
+        app_state.invites.pop(seek.game_id, None)
 
     if seek.is_direct_challenge:
         seek.set_challenge_status(DIRECT_CHALLENGE_ACCEPTED)
@@ -1270,6 +1349,7 @@ async def play_move(
                 in (
                     "Random-Mover",
                     "Fairy-Stockfish",
+                    "Alice-Stockfish",
                 )
             ):
                 await send_bot_game_start_unless_streaming(users[opp_name], game)
@@ -1415,7 +1495,7 @@ def pgn(doc):
     )
 
 
-def _fen_board_width(placement: str) -> int:
+def fen_board_width(placement: str) -> int:
     board = placement.split("[", maxsplit=1)[0]
     first_rank = board.split("/", maxsplit=1)[0]
     width = 0
@@ -1450,7 +1530,8 @@ def _fen_material_counts(placement: str) -> tuple[dict[str, int], int]:
     return counts, total
 
 
-def _pocket_variant_material_fits_engine(initial_fen: str, start_fen: str) -> bool:
+def pocket_variant_material_fits_engine(initial_fen: str, start_fen: str) -> bool:
+    """Bound pocket and active material before initializing a native position."""
     placement = initial_fen.split(maxsplit=1)[0]
     start_placement = start_fen.split(maxsplit=1)[0]
     if "[" in placement:
@@ -1465,9 +1546,7 @@ def _pocket_variant_material_fits_engine(initial_fen: str, start_fen: str) -> bo
         if char.isascii() and char.isalpha():
             pocket_counts[char] = pocket_counts.get(char, 0) + 1
 
-    pocket_slots_per_role = FAIRY_STOCKFISH_POCKET_SLOTS_PER_FILE * _fen_board_width(
-        start_placement
-    )
+    pocket_slots_per_role = FAIRY_STOCKFISH_POCKET_SLOTS_PER_FILE * fen_board_width(start_placement)
     if any(count > pocket_slots_per_role for count in pocket_counts.values()):
         return False
 
@@ -1505,7 +1584,7 @@ def sanitize_fen(variant, initial_fen, chess960, base=False):
 
     start_fen = FairyBoard.start_fen(variant)
     start_placement = start_fen.split(maxsplit=1)[0]
-    if "[" in start_placement and not _pocket_variant_material_fits_engine(initial_fen, start_fen):
+    if "[" in start_placement and not pocket_variant_material_fits_engine(initial_fen, start_fen):
         return False, ""
 
     sf_validate = validate_fen(initial_fen, variant, chess960)
@@ -1545,6 +1624,10 @@ def sanitize_fen(variant, initial_fen, chess960, base=False):
     # Only piece types listed in variant start position can be used later
     if variant == "dobutsu":
         non_piece = "~+0123456789[]hH-"
+    elif variant == "alice":
+        # pyffish-alice uses ``|`` in the placement field to mark pieces that
+        # currently occupy the mirror board.
+        non_piece = "~+0123456789[]-|"
     elif variant == "orda":
         non_piece = "~+0123456789[]qH-"
     elif variant == "duck":
@@ -1867,7 +1950,7 @@ async def subscribe_notify(request):
     user.notify_channels.add(queue)
     response: web.StreamResponse = web.Response(status=200)
     try:
-        async with sse_response(request) as response:
+        async with session_expiry_timeout(session, user), sse_response(request) as response:
             await consume_sse_queue(response, queue)
     except Exception:
         pass

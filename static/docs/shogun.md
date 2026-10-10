@@ -1,6 +1,6 @@
-# ![Shogun](https://github.com/gbtami/pychess-variants/blob/master/static/icons/shogun.svg) Shogun Chess
+# ![Shogun](https://github.com/pychess/pychess-variants/blob/master/static/icons/shogun.svg) Shogun Chess
 
-![Shogun](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ShogunPromotionsMedival.svg)
+![Shogun](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ShogunPromotionsMedival.svg)
 
 Shogun Chess is a chess variant designed in 2019-2020 by Couch Tomato. While the game itself is a blend of western chess and shogi rules, the original idea for the game was a way to introduce the hybrid pieces (commonly known as the archbishop and chancellor) in a way different from what other variants have done. For example, keeping an 8x8 instead of enlarging the board to not diminish the value of the minor pieces, or introduce them in a board that is not as cluttered as in S-chess. The idea evolved to introduce these pieces through the means of promotion from the minor pieces and the rook at an earlier rank than the 8th rank. Later, drops were also introduced into the rules as a means to increase the offensive options to offset the defensive nature introduced by the need to protect against the threat of promotion. Unique pawn and knight promotions as well as even a queen demotion were added to complete the theme and symmetry.
 
@@ -33,31 +33,31 @@ Additional minor rules for clarification:
 
 ### Archbishop (A)
 
-![Archbishop](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/shogunDestination_w+B.svg)
+![Archbishop](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/shogunDestination_w+B.svg)
 
 The archbishop is a hybrid piece seen in multiple other chess variants. In this game, it promotes from bishop and gains the move of a knight. Because of its unique moves, it is the only piece that can checkmate on its own.
 
 ### Mortar (M)
 
-![Mortar](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/shogunDestination_w+B.svg)
+![Mortar](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/shogunDestination_w+B.svg)
 
 The mortar is a hybrid piece seen in multiple other chess variants, often with other names such as the chancellor or marshall. In this game, it promotes from the rook and gains the move of a knight. 
 
 ### General (G)
 
-![General](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/shogunDestination_w+N.svg)
+![General](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/shogunDestination_w+N.svg)
 
 The general is a hybrid piece, often known as a centaur. In this game, it promotes from the knight and gains the moves of a king.
 
 ### Captain (C)
 
-![Captain](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/shogunDestination_w+P.svg)
+![Captain](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/shogunDestination_w+P.svg)
 
 The captain is the only promotion of the pawn and moves exactly like a king. As a non-royal piece, capturing a captain does not win the game. Also, unlike the rest of promoted pieces, there can be multiple captains, as it is not a major piece.
 
 ### Duchess (F)
 
-![Duchess](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/shogunDestination_wF.svg)
+![Duchess](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/shogunDestination_wF.svg)
 
 The duchess is the only demoted form of the queen and only comes into play after capturing a queen, where it then becomes a duchess in hand. The duchess moves only one space diagonally (same movement as what's often called the "ferz," hence the abbreviation used). As a reminder, a duchess cannot promote to a queen when that player already has a queen on the board (polygamy is illegal in Shogun chess).
 

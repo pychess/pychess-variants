@@ -10,7 +10,7 @@
 </br>
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/man-design-thinking.453x512.png">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/man-design-thinking.453x512.png">
 </p>
 
 "[man design thinking](https://iconduck.com/illustrations/173196/man-design-thinking)" by [Streamline](https://iconduck.com/designers/streamline) is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
@@ -37,7 +37,7 @@ Keep in mind that Stockfish can have parameters for exactly which squares pieces
 Tips: A good variant will almost *certainly* require unique board designs to convey movements. There's a lot of creativity that can be done with the options available in FSF. For example, you could have a linear spiral on the board where the king can't escape but moves like a rook and needs to get to the center. You can have a region of the board where there's a super piece like an amazon but is only limited to the region. You can have regions that cause a piece to change (via promotion) but then cannot go back the way it came (like the Divine King in Chak). There are a lot of options available.
 
 **Coding the Variant**
-Again, the variant must be compatible with FairyStockfish. This means the variant has to be able to defined using the code in FSF.  At the most basic level, this means no variants larger than 12 x 10. The variant definition code is basically what you'd put in the variants.ini file. All the documentation on that (which is very well explained by ubdip) is [here](https://github.com/fairy-stockfish/Fairy-Stockfish/blob/master/src/variants.ini), and you can see how PyChess implements all our variants [here](https://github.com/gbtami/pychess-variants/blob/master/variants.ini). If you're not familiar with variants.ini, don't worry! We'll provide assistance for anyone who's unfamiliar with making a variant definition. 
+Again, the variant must be compatible with FairyStockfish. This means the variant has to be able to defined using the code in FSF.  At the most basic level, this means no variants larger than 12 x 10. The variant definition code is basically what you'd put in the variants.ini file. All the documentation on that (which is very well explained by ubdip) is [here](https://github.com/fairy-stockfish/Fairy-Stockfish/blob/master/src/variants.ini), and you can see how PyChess implements all our variants [here](https://github.com/pychess/pychess-variants/blob/master/variants.ini). If you're not familiar with variants.ini, don't worry! We'll provide assistance for anyone who's unfamiliar with making a variant definition.
 
 **Playtesting**
 Entries should be playtested using FairyStockfish.  At the most basic level, this involves downloading the FairyStockfish engine and then running a script to have the engine play against itself for multiple games. One such script provided by ubdip (FSF’s creator) is [variantfishtest](https://github.com/ianfab/variantfishtest). If there any difficulties, there members in the community that will be be able to help.

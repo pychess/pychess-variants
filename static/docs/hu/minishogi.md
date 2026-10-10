@@ -1,7 +1,7 @@
 
-# ![Minisógi ikon](https://github.com/gbtami/pychess-variants/blob/master/static/icons/minishogi.svg) Minisógi (Minishogi)
+# ![Minisógi ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/minishogi.svg) Minisógi (Minishogi)
 
-![Minisógi ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Minishogi.png)
+![Minisógi ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Minishogi.png)
 
 A Minisógi alapvetően a standard (9x9-es) sógi kisebb változata, melyet 5x5-ös táblán játszanak. A játékot 1970 körül találta fel (vagy fedezte fel újra) a japán Shigenobu Kusumoto.
 

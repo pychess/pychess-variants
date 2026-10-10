@@ -1,6 +1,6 @@
-# ![Shogi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/shogi.svg) 将棋 | Shogi
+# ![Shogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/shogi.svg) 将棋 | Shogi
 
-![Boards](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Boards.png)
+![Boards](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Boards.png)
 
 将棋*（しょうぎ，Shogi）*是一种盛行于日本的棋类游戏。最早的将棋从平安时代的平安将棋开始，经历镰仓时代、室町时代发展出不同棋盘大小、不同子力数量的变种。现代的将棋（本将棋）是16世纪中期由小将棋改造而来。在日本，将棋跟围棋并列为两大最受欢迎的棋，而且都设有段位与职业赛头衔。与国际象棋不同的是，将棋拥有独特的“持驹打入”规则。
 
@@ -30,11 +30,11 @@
 
 ### 玉将、王将
 
-![BlackKings](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/BlackKings.png)
+![BlackKings](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/BlackKings.png)
 
-![WhiteKings](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/WhiteKings.png)
+![WhiteKings](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/WhiteKings.png)
 
-![KingDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/King.png)
+![KingDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/King.png)
 
 正式场合，先手方使用玉将。后手使用王将。
 
@@ -42,9 +42,9 @@
 
 ### 飞车
 
-![Rooks](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Rooks.png)
+![Rooks](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Rooks.png)
 
-![RookDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Rook.png)
+![RookDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Rook.png)
 
 飞车，简称飞，移动和象棋的车一样。可以直走任意格数。它是将棋最强的未升变棋子。
 
@@ -52,17 +52,17 @@
 
 ### 龙王
 
-![Dragons](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Dragons.png)
+![Dragons](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Dragons.png)
 
-![DragonDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Dragon.png)
+![DragonDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Dragon.png)
 
 龙王，简称龙，由飞车升级而来，走法除了直走任意格数以外，还可以斜走一格。它是场上最强的棋子。
 
 ### 角行
 
-![Bishops](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Bishops.png)
+![Bishops](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Bishops.png)
 
-![BishopDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Bishop.png)
+![BishopDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Bishop.png)
 
 角行，简称角，可以斜走任意步数，和国际象棋象一样。它是将棋第二强的未升变棋子。
 
@@ -70,17 +70,17 @@
 
 ### 龙马
 
-![Horses](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Horses.png)
+![Horses](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Horses.png)
 
-![HorseDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Horse.png)
+![HorseDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Horse.png)
 
 龙马，简称龙，由角行升级而来，除了斜走任意格数以外，还可以直走一格。龙马是场上第二强的棋子。
 
 ### 金将
 
-![Golds](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Golds.png)
+![Golds](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Golds.png)
 
-![GoldDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Gold.png)
+![GoldDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Gold.png)
 
 金将，简称金，可以向前、左前、右前、左、右或后行走一格，如中文「甲」字。
 金将无法升变。
@@ -89,9 +89,9 @@
 
 ### 银将
 
-![Silvers](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Silvers.png)
+![Silvers](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Silvers.png)
 
-![SilverDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Silver.png)
+![SilverDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Silver.png)
 
 银将，简称银，可以斜角方向或正前方行走一格。
 
@@ -99,18 +99,18 @@
 
 ### 桂马
 
-![Knights](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Knights.png)
+![Knights](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Knights.png)
 
-![KnightDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Knight.png)
+![KnightDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Knight.png)
 
 桂马，简称桂，如图所示，和国际象棋的马类似，但是桂马只能跳到向前的两格。
 桂马的跳跃可以越子。
 
 升变后叫「成桂」或简称「圭」
 
-![Lances](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Lances.png)
+![Lances](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Lances.png)
 
-![LanceeDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Lance.png)
+![LanceeDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Lance.png)
 
 香车，简称香向前走任意步数，不能跨过别的棋子。
 
@@ -118,9 +118,9 @@
 
 ### 步兵
 
-![Pawns](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Pawns.png)
+![Pawns](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Pawns.png)
 
-![PawnDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Pawn.png)
+![PawnDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Pawn.png)
 
 步兵，简称步，走法为直行一格。
 
@@ -128,13 +128,13 @@
 
 ## 升变\|成驹
 
-![PSilvers](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/PSilvers.png)
+![PSilvers](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/PSilvers.png)
 
-![PKnights](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/PKnights.png)
+![PKnights](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/PKnights.png)
 
-![PLances](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/PLances.png)
+![PLances](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/PLances.png)
 
-![Tokins](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Tokins.png)
+![Tokins](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Tokins.png)
 
 上述四个图片分别为银、桂、香、步的升变造型。它们的升变通常没有双字驹的造型，统一采用单字简称。它们的单字简称均为“金”以表示走法与金将相同，采用不同字体区分不同的棋子。
 
@@ -260,7 +260,7 @@ P = 步兵
 
 ### 矢仓
 
-![Yagura](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Yagura.png)
+![Yagura](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Yagura.png)
 
 矢仓围是将棋中采用于相居飞车和相振飞车的围玉。通常简称为矢仓，与美浓、穴熊并列为最具代表性的围玉。居飞车双方围出矢仓后战斗的战型被称为相矢仓，也常被直接简称为矢仓。
 
@@ -295,7 +295,7 @@ P = 步兵
 
 ### 美浓
 
-![Mino Castle](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Mino.png)
+![Mino Castle](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Mino.png)
 
 美浓通常用于振飞车，用来对付居飞车的围玉，王将来到飞车的初始位置，金将走上&右，再上银将，形成“金金银” 。此围玉左侧防御很强，但对上方防御较弱。
 
@@ -316,7 +316,7 @@ P = 步兵
 
 ### 穴熊
 
-![Anaguma](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Anaguma.png)
+![Anaguma](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Anaguma.png)
 
 十分著名的围玉方式，曾在棋界流行数十年。它的防守非常强大，只不过要花费许多步数完成。
 

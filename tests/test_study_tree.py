@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import unittest
+from dataclasses import replace
+from unittest.mock import patch
 
 from study.annotations import StudyAnnotations, StudyComment, StudyShape
 from study.tree import (
@@ -54,6 +56,40 @@ def make_node(
 
 
 class StudyTreeTestCase(unittest.TestCase):
+    def test_children_and_mainline_follow_order_after_tree_changes(self) -> None:
+        first = make_node(ROOT_A)
+        other = make_node(ROOT_B, order=1)
+        child = make_node(CHILD_A, parent_id=ROOT_A)
+        tree = StudyTree({ROOT_B: other, CHILD_A: child, ROOT_A: first})
+        self.assertEqual(tree.children_of(None), (first, other))
+        self.assertEqual(tree.children_of(ROOT_A), (child,))
+        self.assertEqual(tree.children_of(ROOT_B), ())
+        self.assertEqual(tree.children_of("missing"), ())
+        self.assertEqual(tree.preferred_mainline(), (first, child))
+
+        promoted = replace(
+            tree,
+            nodes={ROOT_A: replace(first, order=1), ROOT_B: replace(other, order=0)},
+        )
+        self.assertEqual(promoted.preferred_mainline_path(), ROOT_B)
+        forced = replace(promoted, nodes={ROOT_B: replace(other, order=0, force_variation=True)})
+        self.assertEqual(forced.preferred_mainline(), ())
+        stopped = replace(
+            tree, nodes={ROOT_A: first, CHILD_A: replace(child, force_variation=True)}
+        )
+        self.assertEqual(stopped.preferred_mainline(), (first,))
+        self.assertEqual(tree.preferred_mainline(), (first, child))
+
+    def test_tree_nodes_are_detached_and_read_only(self) -> None:
+        node = make_node(ROOT_A)
+        supplied = {ROOT_A: node}
+        tree = StudyTree(supplied)
+        supplied.clear()
+        self.assertEqual(tree.count(), 1)
+        self.assertEqual(tree.children_of(None), (node,))
+        with self.assertRaises(TypeError):
+            tree.nodes[ROOT_B] = make_node(ROOT_B, order=1)  # type: ignore[index]
+
     def test_node_ids_are_compact_collision_resistant_path_segments(self) -> None:
         ids = {new_study_node_id() for _ in range(200)}
         self.assertEqual(len(ids), 200)
@@ -134,6 +170,14 @@ class StudyTreeTestCase(unittest.TestCase):
         self.assertEqual(payload["nodes"][0]["eval"], {"cp": 42})  # type: ignore[index]
         self.assertEqual(StudyTree.from_payload(payload), tree)
 
+    def test_payload_rejects_node_limit_before_parsing_nodes(self) -> None:
+        payload = {"nodes": [{}, {}]}
+        with (
+            patch("study.tree.STUDY_MAX_NODES_PER_CHAPTER", 1),
+            self.assertRaisesRegex(ValueError, "maximum is 1"),
+        ):
+            StudyTree.from_payload(payload)
+
     def test_gamebook_text_uses_comment_sanitization_and_empty_values_remove_fields(self) -> None:
         gamebook = StudyGamebook(hint="  hello\x00 world  ", deviation="   ")
         self.assertEqual(gamebook.hint, "hello world")
@@ -203,6 +247,7 @@ class StudyTreeTestCase(unittest.TestCase):
         restored = StudyTree.from_document(doc)
         self.assertEqual(restored.count(), 1_200)
         self.assertEqual(len(doc), 1_201)
+        self.assertEqual(restored.preferred_mainline(), tuple(nodes.values()))
 
 
 if __name__ == "__main__":

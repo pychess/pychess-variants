@@ -1,6 +1,6 @@
-# ![Xiangqi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/xiangqi.svg) 象棋
+# ![Xiangqi](https://github.com/pychess/pychess-variants/blob/master/static/icons/xiangqi.svg) 象棋
 
-![Boards](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Boards.png)
+![Boards](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Boards.png)
 
 
 象棋是中國大陸、香港、台灣、馬來西亞、新加坡、越南、琉球地區所流行的傳統的2人對弈棋類遊戲。中國大陸為了進行區分稱此為中國象棋，將西方的「Chess」稱為國際象棋；台灣將「Chess」翻譯為「西洋棋」。據說從春秋戰國時期的「六博」演繹而來，也有一說是源自於古印度象棋恰圖蘭卡，傳入中國成寶應象棋，最後中國人在宋代改造成中國象棋。德國西洋棋歷史學家Peter Banaschak指出，唐代宰相牛僧孺的《玄怪錄》內沒有「炮」的寶應象棋是中國象棋的真正來源。
@@ -24,7 +24,7 @@
 
 ### 將、帥
 
-![Kings](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Kings.png) 
+![Kings](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Kings.png)
 
 只可在己方的九宮內直行或橫行，每次一步。
 
@@ -33,20 +33,20 @@
 被將死或無處可動時，該方告負。
 
 
-![King and advisor movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/KingAdvisorDiagram.png)
+![King and advisor movement](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/KingAdvisorDiagram.png)
 
 ### 士、仕
 
-![Advisors](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Advisors.png) 
+![Advisors](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Advisors.png)
 
 只可在己方的九宮內斜行，每次一步。
 行動力較低的棋子，用作將（帥）的內防禦之用。
 
 ### 象、相
 
- ![Elephants](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Elephants.png)
+ ![Elephants](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Elephants.png)
  
- ![Elephant movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/ElephantDiagram.png)
+ ![Elephant movement](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/ElephantDiagram.png)
 
 象行田：每一著斜走兩步（路線如「田」字的對角線）。
 
@@ -55,9 +55,9 @@
 與士大致相同，用作將（帥）的外防禦之用。
 ### 馬、傌
 
- ![Horses](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Horses.png)
+ ![Horses](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Horses.png)
  
- ![Horse movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/HorseDiagram.png)
+ ![Horse movement](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/HorseDiagram.png)
 
 馬行日：先向一個方向直走兩步，再橫向走一步。
 
@@ -68,9 +68,9 @@
 
 ### 車、俥
 
- ![Chariots](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Chariots.png)
+ ![Chariots](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Chariots.png)
  
- ![Chariot movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/ChariotDiagram.png)
+ ![Chariot movement](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/ChariotDiagram.png)
 
 只要無子阻隔，直行或橫行不限距離移動。
 
@@ -79,9 +79,9 @@
 
 ### 包、炮
 
-![Cannons](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Cannons.png)
+![Cannons](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Cannons.png)
 
-![Cannon movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/CannonDiagram.png)
+![Cannon movement](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/CannonDiagram.png)
 
 若不吃子，走法與車相同。
 
@@ -92,9 +92,9 @@
 
 ### 卒、兵
 
-![Pawns](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Pawns.png)
+![Pawns](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Pawns.png)
 
-![Pawn movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/PawnDiagram.png)
+![Pawn movement](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/PawnDiagram.png)
 
 過河前每次只可向前直行一步；過河後可左右或往前走一步。
 
@@ -231,7 +231,7 @@ Ex:
 
 
 
-![Cannon opening](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/CannonOpening.png)
+![Cannon opening](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/CannonOpening.png)
 
 瞭解中炮局是對新手不錯的還擇，以下將簡介四種黑方可以做出的應對，稱為四大開局:
 
@@ -239,7 +239,7 @@ Ex:
 
 **1. 屏風馬**
 
-![Screen horses](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Screen_Horses.png)
+![Screen horses](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Screen_Horses.png)
 
 屏風馬是指在同一個棋局中，一位象棋棋手同時走馬二進三和馬八進七。
 
@@ -257,7 +257,7 @@ Ex:
 
 一旦沒有根的反宮馬被對方紅棋的車壓制，或被紅炮瞄準攻擊的時候，黑棋的防守會變得非常被動，造成難以抽出機會去反擊對手。
 
-![Fan Gong Ma](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Fan_Gong_Ma.png)
+![Fan Gong Ma](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Fan_Gong_Ma.png)
 
 **3. 順手炮**
 
@@ -273,7 +273,7 @@ Ex:
 
 **5.三步虎**
 
-![Three Step Tiger](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Three_Step_Tiger.png)
+![Three Step Tiger](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Three_Step_Tiger.png)
 
 黑方上馬之後快速平邊炮亮車，是較激進的走法。
 

@@ -551,7 +551,7 @@
 
                 <div class="form-actions">
                 {% if edit %}
-                    {% if not admin %}<a href="/tournament/{{ tournament.id }}/cancel" class="button red text">Cancel the tournament</a>{% endif %}
+                    {% if not admin %}<button type="submit" formmethod="post" formaction="/tournament/{{ tournament.id }}/cancel" formnovalidate class="button red text">Cancel the tournament</button>{% endif %}
                     <button type="submit" data-icon="x" class="submit button text">Save</button>
                 {% else %}
                     <a href="/tournaments">Cancel</a>

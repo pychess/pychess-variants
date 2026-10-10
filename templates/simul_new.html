@@ -242,7 +242,7 @@
                 <div class="form-actions">
                 {% if edit %}
                     {% if simul_editable %}
-                    <a href="{{ simul_abort_url }}" class="button red text">{% trans %}Cancel the simul{% endtrans %}</a>
+                    <button type="submit" formmethod="post" formaction="{{ simul_abort_url }}" formnovalidate class="button red text">{% trans %}Cancel the simul{% endtrans %}</button>
                     {% else %}
                     <a href="{{ simul_cancel_url }}">{% trans %}Cancel{% endtrans %}</a>
                     {% endif %}

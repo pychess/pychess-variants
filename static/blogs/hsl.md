@@ -11,14 +11,14 @@
     </div>
 </div>
 
-![HSL](https://github.com/gbtami/pychess-variants/blob/master/static/images/hsl.png)
+![HSL](https://github.com/pychess/pychess-variants/blob/master/static/images/hsl.png)
 
 The [Shogi Harbour Discord server](https://discord.gg/uxfjFfe) recently finished its first xiangqi league! For those unfamiliar, this was created by fellow member [@DrLennon](https://www.pychess.org/@/DrLennon); participants played a group round and were sorted into a Red League (higher ranks) and Black League (lower ranks). After the league games were played, players were seeded into a single elimination tournament. You can see the bracket above, and list of games below. Congrats to [@Illion](https://www.pychess.org/@/Illion), who ended up winning it all!
 
 The group round results were as follows:
 
-![HSL Red League](https://github.com/gbtami/pychess-variants/blob/master/static/images/hslred.png)
-![HSL Black League](https://github.com/gbtami/pychess-variants/blob/master/static/images/hslblack.png)
+![HSL Red League](https://github.com/pychess/pychess-variants/blob/master/static/images/hslred.png)
+![HSL Black League](https://github.com/pychess/pychess-variants/blob/master/static/images/hslblack.png)
 
 Here are the tournament games and their links:
 
@@ -47,6 +47,6 @@ GRAND FINALE
 [Illion 1-0 LilyLionmane](https://www.pychess.org/9BiurASk)
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/icons/xiangqi.svg" width="25" height="25">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/icons/xiangqi.svg" width="25" height="25">
 </p>
 

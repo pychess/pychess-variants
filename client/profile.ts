@@ -12,7 +12,7 @@ import { boardSettings } from './boardSettings';
 import { alternateStartName, timeControlStr } from './view';
 import { PyChessModel } from './types';
 import { Ceval } from './messages';
-import { aiLevel, gameType, result, renderRdiff } from './result';
+import { aiDisplayName, aiLevel, gameType, result, renderRdiff } from './result';
 import { renderBugTeamInfo, renderGameBoardsBug } from '@/two-board/profile';
 import { displayUsername, userLink } from './user';
 import { bindMiniBoardResize, sizeMiniBoardHost } from './miniBoard';
@@ -151,9 +151,10 @@ export function renderGames(model: PyChessModel, games: Game[]) {
                                 isBug
                                     ? renderBugTeamInfo(game, 0)
                                     : [
-                                          userLink(game['us'][0], [
+                                          userLink(aiDisplayName(game['us'][0], game.v), [
                                               h('player-title', game['wt'] ? ' ' + game['wt'] + ' ' : ''),
-                                              displayUsername(game['us'][0]) + aiLevel(game['us'][0], game['x']),
+                                              displayUsername(aiDisplayName(game['us'][0], game.v)) +
+                                                  aiLevel(game['us'][0], game['x']),
                                           ]),
                                           h('br'),
                                           game['wb'] === true ? h('icon.icon-berserk') : '',
@@ -168,9 +169,10 @@ export function renderGames(model: PyChessModel, games: Game[]) {
                                 isBug
                                     ? renderBugTeamInfo(game, 1)
                                     : [
-                                          userLink(game['us'][1], [
+                                          userLink(aiDisplayName(game['us'][1], game.v), [
                                               h('player-title', game['bt'] ? ' ' + game['bt'] + ' ' : ''),
-                                              displayUsername(game['us'][1]) + aiLevel(game['us'][1], game['x']),
+                                              displayUsername(aiDisplayName(game['us'][1], game.v)) +
+                                                  aiLevel(game['us'][1], game['x']),
                                           ]),
                                           h('br'),
                                           game['bb'] === true ? h('icon.icon-berserk') : '',

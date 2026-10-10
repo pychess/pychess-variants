@@ -1,6 +1,6 @@
-# ![Empire chess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/empire.svg) Empire Chess
+# ![Empire chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/empire.svg) Empire Chess
 
-![Empire](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Empire.png)
+![Empire](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Empire.png)
 
 Empire Chess is a chess variant designed in 2020 by Couch Tomato, third in the series of asymmetric games (although available to play on Pychess later than the fourth game due to unique pieces that were not yet available). The mighty Empire (Gold army) has heard stories of a mighty lady with great powers on the battlefield and has proposed a marriage with its Duke. However, the king of the chess kingdom (black) married her instead. Humiliated, the Kaiser leads the imperial army to teach the Kingdom a lesson! 
 
@@ -29,31 +29,31 @@ There are five new units unique to the Empire: two Soldiers, two Siege Towers, t
 In these images, green dots represent movement only, while yellow dots represent both movement and capture.
 
 ### Soldier (S)
-![Soldier](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/EmpireSoldier.png)
+![Soldier](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/EmpireSoldier.png)
 
 The Soldiers replace the two middle Pawns. Soldiers both move and attack either one space forwards or one space to either side. These act as the bodyguards of the Kaiser; they're strongest when paired together. As Soldiers are not Pawns, they *don't* promote.
 
 ### Duke (D)
 
-![Duke](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Duke.png)
+![Duke](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Duke.png)
 
 The Duke is the counterpart to the Queen. It moves like a Queen, but attacks like a King only. This does not make it a weak piece. In the endgame, it is very capable of checkmating the King with help from any other piece, including the Kaiser itself (because of the King-Kaiser Faceoff rule).
 
 ### Siege Tower (T)
 
-![Siege Tower](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Tower.png)
+![Siege Tower](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Tower.png)
 
 The Siege Tower, or Tower for short, moves like a Queen, but attacks like a Rook only. Effectively, this also means that it is a Rook that can also peacefully move like a Bishop. This is the Empire's strongest piece.
 
 ### Eagle (E)
 
-![Eagle](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Eagle.png)
+![Eagle](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Eagle.png)
 
 The Eagle moves like a Queen, but attacks like a Knight only. The value of an Eagle is very similar to that of a Knight and is consequently the weakest piece in the Empire (outside of Pawns and Soldiers).
 
 ### Cardinal (C)
 
-![Cardinal](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Cardinal.png)
+![Cardinal](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Cardinal.png)
 
 The Cardinal moves like a Queen, but attacks like a Bishop only. Effectively, this also means that it is a Bishop that can also peacefully move like a Rook. As this is not colorbound like the Bishop, this is not much weaker than the Siege Tower and is consequently the second strongest piece in the Empire. 
 

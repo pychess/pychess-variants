@@ -1,4 +1,4 @@
-# ![Grandhouse](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Grandhouse.svg) Grandhouse
+# ![Grandhouse](https://github.com/pychess/pychess-variants/blob/master/static/icons/Grandhouse.svg) Grandhouse
 
 O Grandhouse é uma variante personalizada que segue as regras do Grand Chess com a regra de colocação de peças do Crazyhouse. São aplicadas as regras de ambos os jogos. Por esta ser considerada uma variante de Grand Chess, por favor dê uma leitura nas regras do Crand Chess disponibilizadas num guia em separado. As regras do Crazyhouse São disponibilizadas abaixo como um memorando.
 

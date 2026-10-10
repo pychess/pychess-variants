@@ -1,6 +1,6 @@
-# ![Makruk](https://github.com/gbtami/pychess-variants/blob/master/static/icons/makruk.svg) Makruk
+# ![Makruk](https://github.com/pychess/pychess-variants/blob/master/static/icons/makruk.svg) Makruk
 
-![Makruk](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
+![Makruk](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 
 El *Makruk*, o Ajedrez Tailandés, es un juego de tablero clásico nativo de Tailanda y es descendiente cercano del Chaturanga, el mismo antepasado común al ajedrez. Es jugado en Tailandia y Camboya, donde es conocido como *Ouk Chatrang* (con reglas ligeramente diferentes). El Makruk ofrece la opción de saborear el Ajedrez antiguo en su forma original antes de que las reglas modernas acelerasen el ritmo del juego. El juego está lleno de diversión, con sus propias dinámicas/equilibrio. El ritmo ligeramente más lento puede servir para cultivar la paciencia, y desarrollar el pensamiento estratégico.
 
@@ -18,13 +18,13 @@ Los nombres de las piezas en Tailandés aparecen entre paréntesis.
 
 ### Rey (*Khun*)
 
-![Rey](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/King.png?raw=true) 
+![Rey](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/King.png?raw=true)
 
 El Rey mueve una casilla ortogonal o diagonalmente. No hay enroque como en Ajedrez.
 
 ### Dama (*Met*)
 
-![Dama](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Queen.png?raw=true)
+![Dama](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Queen.png?raw=true)
 
 A diferencia de la dama en ajedrez, la Dama es una pieza relativamente débil que solamente mueve una casilla en diagonal.
 
@@ -32,7 +32,7 @@ La Dama vale entre 1.5 y 2 Peones en general. La dama es una buena pieza para li
 
 ### Alfil (*Khon*)
 
-![Alfil](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Bishop.png?raw=true)
+![Alfil](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Bishop.png?raw=true)
 
 El Alfil mueve una casilla diagonalmente o una casilla hacia adelante, al igual que el General de Plata en Shogi.
 
@@ -44,7 +44,7 @@ Los Alfiles a veces resultan lentos/torpes a la hora de maniobrar o retroceder. 
 
 ### Caballo (*Ma*)
 
- ![Caballo](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Knight.png?raw=true)
+ ![Caballo](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Knight.png?raw=true)
 
 El Caballo mueve exactamente igual que en el Ajedrez.
 
@@ -52,7 +52,7 @@ Los Caballos no son "piezas menores" en Makruk. Son piezas muy fuertes. Central�
 
 ### Torre (*Ruea*)
 
- ![Torre](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Rook.png?raw=true)
+ ![Torre](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Rook.png?raw=true)
 
 La Torre mueve exactamente igual que en el Ajedrez.
 
@@ -60,7 +60,7 @@ En ausencia de Damas, las Torres dominan el tablero. Los jaques laterales de la 
 
 ### Peón (*Bia*)
 
-![Peón](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) ![ProPawn](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true)
+![Peón](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) ![ProPawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true)
 
 El Peón mueve y ataca igual que en Ajedrez. Sin embargo, no existe la posibilidad de mover dos casillas en la primera jugada. Los Peones promocionan y mueven como las Damas cuando llegan a la sexta fila.
 

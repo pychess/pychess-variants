@@ -1,4 +1,4 @@
-# ![Atomic960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Atomic960.svg) Atomic 960
+# ![Atomic960](https://github.com/pychess/pychess-variants/blob/master/static/icons/Atomic960.svg) Atomic 960
 
 O Xadrez Atómico 960 é uma variante personalizada que segue as regras do Xadrez Atómico com a disposição aleatória do Chess960(Xadrez de Fischer). São aplicadas as regras de ambos os jogos. Por esta ser considerada uma variante de Xadrez Atómico, por favor deia uma leitura nas regras de Xadrez Atómico disponibilizadas num guia em separado. As regras do Xadrez960 São disponibilizadas abaixo como um memorando.
 

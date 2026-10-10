@@ -1,4 +1,4 @@
-# ![Placement](https://github.com/gbtami/pychess-variants/blob/master/static/icons/placement.svg) 自由擺置西洋棋 \| Placement (伯恩斯坦象棋)
+# ![Placement](https://github.com/pychess/pychess-variants/blob/master/static/icons/placement.svg) 自由擺置西洋棋 \| Placement (伯恩斯坦象棋)
 
 帕爾．本科(Pal Benko)將此變體的發明歸功於大衛．伯恩斯坦(David Bronstein.)。與西洋棋變體網站上的自由擺置西洋棋不同，此變體的規則是:
 

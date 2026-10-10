@@ -239,7 +239,7 @@ export function inboxView(model: PyChessModel) {
         fetch(`/api/inbox/thread/${encodeURIComponent(user)}${query}`)
             .then(parseJsonResponse)
             .then(
-                ({ status, data }: { status: number; data: ThreadResponse & InboxApiError }) => {
+                async ({ status, data }: { status: number; data: ThreadResponse & InboxApiError }) => {
                     if (status >= 400 || data.type === 'error') {
                         if (data.code === 'invalid_contact' || data.message === 'Invalid contact') {
                             contact = '';
@@ -278,6 +278,10 @@ export function inboxView(model: PyChessModel) {
                         contactBlockedByThem = Boolean(data.contact.blockedByThem);
                         messages = data.messages || [];
                         history.replaceState({ contact }, '', `/inbox/${encodeURIComponent(contact)}`);
+                        const readResponse = await fetch(`/api/inbox/thread/${encodeURIComponent(contact)}/read`, {
+                            method: 'POST',
+                        });
+                        if (!readResponse.ok) throw new Error(`HTTP ${readResponse.status}`);
                         loadThreads(false);
                         pendingScrollToBottom = true;
                     }

@@ -1,14 +1,21 @@
+import json
 import unittest
 from datetime import UTC, datetime
 from types import SimpleNamespace
 from typing import ClassVar
+from unittest.mock import AsyncMock
 
 import test_logger
 from aiohttp.test_utils import AioHTTPTestCase
-from const import STARTED
+from bug.game_bug import GameBug
+from const import RESIGN, STARTED
+from glicko2.glicko2 import new_default_perf_map
 from mongomock_motor import AsyncMongoMockClient
 from pychess_global_app_state_utils import get_app_state
+from user import User
+from variants import VARIANTS
 from views import add_game_context
+from wsr import init_ws
 
 from server import make_app
 
@@ -57,7 +64,7 @@ class BughouseContextTestCase(unittest.TestCase):
                 raise AssertionError("bughouse context should not access game.board")
 
             def get_board(
-                self, full: bool = False, persp_color: int | None = None
+                self, full: bool = False, persp_color: int | None = None, *, client_history=False
             ) -> dict[str, object]:
                 return {"type": "board", "full": full, "persp": persp_color}
 
@@ -114,6 +121,43 @@ class GamesApiBughousePreviewTestCase(AioHTTPTestCase):
 
         self.assertEqual(payload[0]["gameId"], "bug1")
         self.assertEqual(payload[0]["fen"], "fen-a")
+
+
+class BughouseRoundSocketTestCase(AioHTTPTestCase):
+    async def get_application(self):
+        return make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+
+    async def tearDownAsync(self) -> None:
+        await self.client.close()
+
+    async def test_active_and_finished_bughouse_connections_send_both_boards(self):
+        state = get_app_state(self.app)
+        players = [
+            User(state, username=name, perfs=new_default_perf_map(VARIANTS))
+            for name in ("whiteA", "blackA", "whiteB", "blackB", "spectator")
+        ]
+        for player in players:
+            state.users[player.username] = player
+        game = GameBug(state, "bugWS001", "bughouse", "", *players[:4], rated=False)
+        state.games[game.id] = game
+        await game.play_move("e2e4", clocks=[60000, 60000], clocks_b=[60000, 60000], board="a")
+        await game.play_move("d2d4", clocks=[60000, 60000], clocks_b=[60000, 60000], board="b")
+
+        for status in (STARTED, RESIGN):
+            game.status = status
+            game.result = "*" if status == STARTED else "1-0"
+            for viewer in players:
+                with self.subTest(status=status, viewer=viewer.username):
+                    ws = AsyncMock()
+                    await init_ws(state, ws, viewer, game)
+                    messages = [json.loads(call.args[0]) for call in ws.send_str.await_args_list]
+                    board = next(message for message in messages if message["type"] == "board")
+                    self.assertEqual(board["fen"], game.fen)
+                    self.assertEqual(len(board["steps"]), 3)
+                    self.assertEqual(board["steps"][-1]["fenB"], game.boards["b"].fen)
+                    self.assertIn("clocksB", board)
+                    self.assertNotIn("history", board)
+                    viewer.remove_ws_for_game(game.id, ws)
 
 
 if __name__ == "__main__":

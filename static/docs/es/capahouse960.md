@@ -1,4 +1,4 @@
-# ![Capahouse960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Capahouse960.svg) Capahouse 960
+# ![Capahouse960](https://github.com/pychess/pychess-variants/blob/master/static/icons/Capahouse960.svg) Capahouse 960
 
 Capahouse 960 es una variante que combina las reglas del ajedrez Capablanca, Crazyhouse y Ajedrez 960. Dado que se considera una variante derivada del Capahouse, por favor consulta las reglas de Capahouse en su propia guía. Las reglas de Crazyhouse y Ajedrez 960 se incluyen a continuación como referencia.
 

@@ -1,4 +1,4 @@
-# ![Capahouse ikon](https://github.com/gbtami/pychess-variants/blob/master/static/icons/CHouse.svg) Capahouse
+# ![Capahouse ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/CHouse.svg) Capahouse
 
 A Capahouse egy sakkvariáns, ami a Capablanca-sakkot kombinálja a Crazyhouse behozási szabályaival. Mivel ez a játék az Capablanca-sakk egy változata, annak szabályai az arra vonatkozó leírásban megtalálhatók. A Crazyhouse szabályai emlékeztetőnek:
 

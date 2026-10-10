@@ -1,4 +1,4 @@
-# ![Atomic960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Atomic960.svg) Atomic 960
+# ![Atomic960](https://github.com/pychess/pychess-variants/blob/master/static/icons/Atomic960.svg) Atomic 960
 
 Atomic 960 es una variante que combina las reglas de Atomic con la ubicación al azar de las piezas de Ajedrez 960. Las mismas reglas se aplican en ambos juegos. Dado que se considera una variante derivada del Atomic, por favor consulta las reglas de Atomic en su propia guía. Las reglas de 960 se incluyen a continuación como referencia.
 

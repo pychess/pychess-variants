@@ -11,7 +11,7 @@ from game import Game
 from newid import new_id
 from team import is_enabled_team_member
 from tournament_director import is_tournament_director
-from utils import insert_game_to_db
+from utils import REALTIME_GAME_IN_PROGRESS_MESSAGE, insert_game_to_db, realtime_game_conflict
 from variants import get_server_variant, is_catalogued_variant
 from websocket_utils import ws_send_json_many
 
@@ -147,6 +147,7 @@ class Simul:
         self.games: dict[str, Game] = {}
         self.ongoing_games: set[Game] = set()
         self.host_game_id: str | None = None
+        self._admission_error: str | None = None
         self.clock_task: asyncio.Task[None] | None = None
         self.status = T_CREATED
         self.created_at = datetime.now(UTC)
@@ -473,7 +474,11 @@ class Simul:
 
         return missing
 
-    async def create_games(self) -> list[Game]:
+    async def create_games(self, *, admission_locked: bool = False) -> list[Game]:
+        if not admission_locked:
+            async with self.app_state.realtime_game_creation_lock:
+                return await self.create_games(admission_locked=True)
+
         created_games: list[Game] = []
         host = self.players.get(self.created_by)
         if host is None:
@@ -488,6 +493,20 @@ class Simul:
         game_table = self.app_state.db.game if self.app_state.db else None
 
         for opponent, variant_key in opponents:
+            conflict = realtime_game_conflict(
+                self.app_state,
+                (host, opponent),
+                allowed_simul_id=self.id,
+                simul_host_username=self.created_by,
+            )
+            if conflict is not None:
+                player, _active_game = conflict
+                # Recovery can encounter an opponent who started another game
+                # after accepting the simul but before the missing board was
+                # recreated. Never manufacture a second realtime game.
+                self._admission_error = f"{player.username}: {REALTIME_GAME_IN_PROGRESS_MESSAGE}"
+                continue
+
             game_id = await new_id(game_table)
             variant, chess960 = split_simul_variant_key(variant_key)
             server_variant = get_server_variant(variant, chess960)
@@ -536,6 +555,8 @@ class Simul:
         return created_games
 
     def start_error(self) -> str | None:
+        if self._admission_error is not None:
+            return self._admission_error
         if self.status != T_CREATED:
             return "This simul has already started"
         if self.opponent_count < 2:
@@ -547,20 +568,33 @@ class Simul:
         return None
 
     async def start(self) -> bool:
-        if self.start_error() is None:
+        self._admission_error = None
+        if self.start_error() is not None:
+            return False
+
+        async with self.app_state.realtime_game_creation_lock:
+            host = self.players.get(self.created_by)
+            if host is None:
+                return False
+            conflict = realtime_game_conflict(self.app_state, self.players.values())
+            if conflict is not None:
+                player, _active_game = conflict
+                self._admission_error = f"{player.username}: {REALTIME_GAME_IN_PROGRESS_MESSAGE}"
+                return False
+
             self.status = T_STARTED
             self.starts_at = datetime.now(UTC)
             self.host_extra_time += (len(self.players) - 1) * self.host_extra_time_per_player
             from simul.simuls import upsert_simul_to_db
 
             await upsert_simul_to_db(self)
-            await self.create_games()
+            await self.create_games(admission_locked=True)
             await upsert_simul_to_db(self)
-            await self.broadcast({"type": "simul_started"})
-            await self.broadcast_spotlight()
-            self.clock_task = asyncio.create_task(self.clock(), name=f"simul-clock-{self.id}")
-            return True
-        return False
+
+        await self.broadcast({"type": "simul_started"})
+        await self.broadcast_spotlight()
+        self.clock_task = asyncio.create_task(self.clock(), name=f"simul-clock-{self.id}")
+        return True
 
     async def finish(self):
         if self.status == T_STARTED:

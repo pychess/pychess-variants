@@ -60,7 +60,7 @@ minigame .row-name {
     padding-top: 0;
 }
 
-minigame.smaller-text.dobutsu, minigame.smaller-text.shogi5x5, minigame.smaller-text.shogi5x6 {
+minigame.smaller-text.dobutsu, minigame.smaller-text.shogi5x5, minigame.smaller-text.shogi5x6, minigame.smaller-text.shogi6x6 {
     font-size: 0.7em;
 }
 minigame.smaller-text.shogi7x7, minigame.smaller-text.shogi7x9 {

@@ -1,6 +1,6 @@
-# ![Spartan](https://github.com/gbtami/pychess-variants/blob/master/static/icons/spartan.svg) Spartan Chess
+# ![Spartan](https://github.com/pychess/pychess-variants/blob/master/static/icons/spartan.svg) Spartan Chess
 
-![Spartan](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Spartan.png)
+![Spartan](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Spartan.png)
 
 Spartan Chess is a chess variant created by Steven Streetman (rules recorded in 2010) and is one of the most popular variants to use asymmetric armies. This was also balanced before the time of modern engines such as Fairy Stockfish. 
 
@@ -29,13 +29,13 @@ For the images below, the following convention is used:
 
 ### King (K)
 
-![King](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanKing.png)
+![King](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanKing.png)
  
 The king moves exactly like the orthodox chess king, one square in any direction. The main difference is that the Spartans have two kings. One can be captured normally, but when the second is mated, the Spartans lose. Also, when both kings are attacked simultaneously, this is called duple-check (this is not the same as the classic term double check, where two separate pieces both check the same king). If neither can escape duple-check, then the Spartans lose.
 
 ### Hoplite (H)
 
-![Hoplite](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanHoplite.png)
+![Hoplite](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanHoplite.png)
  
 The hoplite is the Spartan pawn, and for those familiar with fairy pieces, it is essentially a Berolina pawn. A Berolina pawn is the functional opposite of an orthodox pawn. While an orthodox pawn moves (but cannot capture) one step forward and captures one step diagonally forwards, a hoplite moves (but cannot capture) one step diagonally forwards and captures forwards.
 
@@ -45,25 +45,25 @@ As stated above, upon reaching the 8th rank, a hoplite can promote to any Sparta
 
 ### General (G)
 
-![General](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanGeneral.png)
+![General](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanGeneral.png)
  
 The general (*strategos*) moves as a rook combined with a king. That is, it can move any number of squares orthogonally or one square diagonally. This is like the dragon king from shogi.
 
 ### Warlord (W)
 
-![Warlord](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanWarlord.png)
+![Warlord](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanWarlord.png)
  
 The warlord (*polemarchos*) moves as a bishop combined with a knight (i.e. archbishop). That is, it can move any number of squares diagonally, or leap in a 2x1 rectangle.
 
 ### Captain (C)
 
-![Captain](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanCaptain.png)
+![Captain](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanCaptain.png)
  
 The captain (*syntagmatarchis*) moves one or two squares in any direction orthogonally. It can jump over blocking friendly/enemy pieces to reach the second square.
 
 ### Lieutenant (L)
 
-![Lieutenant](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanLieutenant.png)
+![Lieutenant](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/SpartanLieutenant.png)
  
 The lieutenant (*tagmatarchos*) moves one or two squares in any direction diagonally or can move (but not capture) one square sideways. It can jump over blocking friendly/enemy pieces to reach the second square. 
  

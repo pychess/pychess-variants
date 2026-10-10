@@ -21,6 +21,7 @@ SYSTEM_USER = "PyChess"
 RESERVED_USERS = (
     "Random-Mover",
     "Fairy-Stockfish",
+    "Alice-Stockfish",
     "Invite-friend",
     SYSTEM_USER,
     NONE_USER,

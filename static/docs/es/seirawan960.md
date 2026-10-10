@@ -1,4 +1,4 @@
-# ![Seirawan960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/S960.svg) S-chess 960
+# ![Seirawan960](https://github.com/pychess/pychess-variants/blob/master/static/icons/S960.svg) S-chess 960
 
 S-Chess 960 es una variante que combina las reglas de S-Chess con la ubicación al azar de las piezas de Ajedrez 960. Las mismas reglas se aplican en ambos juegos. Dado que se considera una variante derivada del S-Chess, por favor consulta las reglas de S-Chess en su propia guía. Las reglas de 960 se incluyen a continuación como referencia.
 

@@ -1,4 +1,4 @@
-# ![S-House](https://github.com/gbtami/pychess-variants/blob/master/static/icons/SHouse.svg) S-House
+# ![S-House](https://github.com/pychess/pychess-variants/blob/master/static/icons/SHouse.svg) S-House
 
 S-House es una variante que combina las reglas del ajedrez Seirawan (S-Chess o Ajedrez SHARPER) con las reglas de "soltar" piezas de Crazyhouse. Las mismas reglas se aplican en ambos juegos. Dado que se considera una variante derivada del S-Chess, por favor consulta las reglas de Capablanca en su propia guía. Las reglas de Crazyhouse se incluyen a continuación como referencia.
 

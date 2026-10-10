@@ -1,6 +1,6 @@
-# ![Chess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/chess.svg) Échecs (échecs occidentaux)
+# ![Chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/chess.svg) Échecs (échecs occidentaux)
 
-![Chess board](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Chess.png?raw=true)
+![Chess board](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chess.png?raw=true)
 
 Si vous êtes déjà joueur d'échecs (occidentaux), alors vous n'êtes pas venu pour apprendre les règles. Allez essayer d'autres variantes !
 

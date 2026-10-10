@@ -1,5 +1,5 @@
 
-# ![Seirawan](https://github.com/gbtami/pychess-variants/blob/master/static/icons/schess.svg) S-chess 
+# ![Seirawan](https://github.com/pychess/pychess-variants/blob/master/static/icons/schess.svg) S-chess
 S-chess 是美國西洋棋特級大師亞西爾．塞拉萬(Yasser Seirawan)和布魯斯．哈伯(Bruce Harper)於2007年發明的變體。此遊戲引入了兩種新棋子:大象和鷹。
 
 ## 規則
@@ -12,7 +12,7 @@ S-chess 是美國西洋棋特級大師亞西爾．塞拉萬(Yasser Seirawan)和�
 
 ### 鷹
 
-![Hawk](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Hawk.png)
+![Hawk](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Hawk.png)
 
 鷹的走法等於騎士加上主教。它是唯一可以直接將死對方王的棋
 鷹的價值一般認為比城堡高，但比大象和后低。
@@ -20,7 +20,7 @@ S-chess 是美國西洋棋特級大師亞西爾．塞拉萬(Yasser Seirawan)和�
 
 ### 大象
 
-![Elephant](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantSeirawan.png)
+![Elephant](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantSeirawan.png)
 
 大象的走法等同馬加上城堡，一般認為它的價值比鷹高，但是跟后相等或是低一些。
 

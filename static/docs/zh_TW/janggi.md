@@ -1,6 +1,6 @@
-# ![Janggi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Janggi.svg) 韓國將棋
+# ![Janggi](https://github.com/pychess/pychess-variants/blob/master/static/icons/Janggi.svg) 韓國將棋
 
-![Boards](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Boards.png)
+![Boards](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Boards.png)
 
 韓國將棋，韓文장기(“*chahng-ghee*”)，流行於朝鮮地區的象棋類遊戲，與中國象棋有相近發展的關係，在宋代以前由中國傳入高麗。
 
@@ -25,7 +25,7 @@
 
 ### 將 (楚／漢)
 
-![Kings](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Kings.png) 
+![Kings](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Kings.png)
 
 將 (楚／漢)的走法為在九宮內沿著直線或斜線走一步，不能離開九宮。此外將還有虛手、照面等規則，詳見後述。
 
@@ -33,44 +33,44 @@
 
 **虛手:** 輪到走棋的一方可以把自己的將翻面，表示棄權不走棋，直接讓對方繼續下，此動作為「虛手」。除了被將軍時之外，任何時候都可以自由虛手，也沒有次數限制，若雙方都虛手則和局。韓國將棋沒有困斃或逼和，當一方無子可動時只是被迫虛手，對局仍舊繼續進行。
 
-![King and advisor](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Palace.png)
+![King and advisor](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Palace.png)
 
 ### 士
 
-![Advisors](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Advisors.png) 
+![Advisors](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Advisors.png)
 
 士的走法為在九宮內沿著**直線**或斜線走一步，不能離開九宮，即與將相同。
 
 ### 馬
 
- ![Horses](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Horses.png)
+ ![Horses](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Horses.png)
  
- ![Horse movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/HorseDiagram.png)
+ ![Horse movement](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/HorseDiagram.png)
  
 馬的走法為直一步再斜一步，即與中國象棋的馬相同，路徑上若有棋子同樣會被拐腳。以上圖為例，打勾處為馬能走到的地方，藍色處為拐腳點。
 
 ### 象
 
- ![Elephants](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Elephants.png)
+ ![Elephants](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Elephants.png)
  
- ![Elephant movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/ElephantDiagram.png)
+ ![Elephant movement](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/ElephantDiagram.png)
 
 與中國象棋的象走田不一樣，韓國將棋象是是走2x3的長方型，即先朝一個方向直走一步，再朝斜向走**兩步**。與馬一樣，只有是行走的路徑上有子就會被卡象眼。
 
 ### 車
 
- ![Chariots](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Chariots.png)
+ ![Chariots](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Chariots.png)
  
- ![Chariot movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/ChariotDiagram.png)
+ ![Chariot movement](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/ChariotDiagram.png)
 
 車的走法為沿著直線或**九宮的斜線**走任意距離。
 
 
 ### 包
 
-![Cannons](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Cannons.png)
+![Cannons](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Cannons.png)
 
-![Cannon movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/CannonDiagram.png)
+![Cannon movement](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/CannonDiagram.png)
 
 與中國象棋的包不一樣，不能像車一般任意移動，無論是走子或吃子都需要跳過一子。且有限制包不能吃包，且也不能跳過包移動，無論自己的還是對手的均不可跳過，故韓國將棋沒有雙包殺。
 
@@ -80,9 +80,9 @@
 
 ### 兵、卒
 
-![Pawns](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/Pawns.png)
+![Pawns](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Pawns.png)
 
-![Pawn movement](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/PawnDiagram.png)
+![Pawn movement](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/PawnDiagram.png)
 
 兵的走法為沿著直線或**九宮的斜線**前進一步，或橫著走一步。不能後退。
 
@@ -159,6 +159,6 @@ P = 兵
 * 開局配置的重點是象該如何定位，這對開局有重大影響。外象能進到兩個卒之間。而內象則被卒擋住。
 * 再者，象的位置決定了要打開哪一邊線的攻擊。 例如，在左象配時（並且對手象也是外象），可以將左邊的卒移走，打開車的開放線，然後用象去攻擊對方的包路卒。原因是現在對方的邊兵不能動，如果他的邊兵防守包路卒，他就會掉卒請注意，如果對手有兩個內象，則改為開相反的邊線。
 
-![Activating the elephant and chariot](https://github.com/gbtami/pychess-variants/blob/master/static/images/JanggiGuide/ActiveElephant.png)
+![Activating the elephant and chariot](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/ActiveElephant.png)
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/KDkF2dEt41g" frameborder="0" allowfullscreen></iframe>

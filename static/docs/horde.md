@@ -1,10 +1,10 @@
-# ![Horde](https://github.com/gbtami/pychess-variants/blob/master/static/icons/horde.svg) Horde
+# ![Horde](https://github.com/pychess/pychess-variants/blob/master/static/icons/horde.svg) Horde
 
 _Destroy the horde to win!_
 
 Horde chess is a variant where white has 36 pawns (which will be referred to as The Pawns ) and black (The Pieces) needs to destroy the Horde to win. A special starting position is used:
 
-![Horde](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/horde.png?raw=true)
+![Horde](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/horde.png?raw=true)
 
 
 ## Rules

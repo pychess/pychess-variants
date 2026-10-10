@@ -1,8 +1,8 @@
-# ![Orda ikon](https://github.com/gbtami/pychess-variants/blob/master/static/icons/orda.svg) Orda sakk (Horda sakk)
+# ![Orda ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/orda.svg) Orda sakk (Horda sakk)
 
-![Orda ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Orda.png)
+![Orda ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Orda.png)
 
-![Orda ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/OrdaLegend_HU.png)
+![Orda ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/OrdaLegend_HU.png)
 
 Az Orda sakk egy sakkvariáns, amit [*Couch Tomato*](https://github.com/CouchTomato87) tervezett 2020-ban. A cél egy asszimetrikus sakkjáték megteremtése volt két különböző sereggel. A játékot [Ralph Betza sakkvariánsa](https://en.wikipedia.org/wiki/Chess_with_different_armies) inspirálta, de a cél az volt, hogy a játék tematikája is visszaköszönjön a játékmenet során. A tematika ebben az esetben a Mongol Birodalom lovas hadseregei, melyeket Hordának (Ordának) hívtak. Ebből következik, hogy a Horda mozgása a huszárlépésen alapul, így az erősebb egységek L-alakzatban lépnek. A játékban a Horda aranyszínű, ez az [Arany Hordát](https://hu.wikipedia.org/wiki/Arany_Horda) szimbolizálja, mely a Mongol Birodalom része volt.
 
@@ -32,7 +32,7 @@ A részletes ábrák lentebb. A zöld pontok a lépést jelölik, a pirosak az �
  
 ### Jurta (Y)
 
-![Jurta ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Yurt.png)
+![Jurta ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Yurt.png)
  
 A *jurta* (angolul: *yurt*) egyet lép/üt átlóban vagy előre (ugyanúgy, mint az ezüsttábornok a sógiban). Ebből a bábuból csak egy van a táblán, a vezér vonalában, de a vezérrel ellentétben az a leggyengébb bábu a gyalogot leszámítva. Ugyanakkor nem kell alábecsülni, mert ugyanúgy tud lépni és ütni is, és hasznos lehet a gyalogok védelmezésére.
 
@@ -40,7 +40,7 @@ A jurta a mongolok mobilizálható otthona volt. A seregek támogatásában is f
 
 ### Kesik (H)
 
-![Kesik ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Kheshig.png)
+![Kesik ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Kheshig.png)
  
 A *kesik* (angolul: *khesig*) egy hibrid bábu, amely a huszár és a király lépés- és ütéslehetőségeivel is rendelkezik. (Ez a bábu *kentaur* néven is ismert más, nem standard sakk készletekben). A huszárral egyvonalban kezd és a Horda legerősebb egysége. Kettő van belőlük és érdemes vigyázni rájuk, mert fontos szerepük van a közép- és végjátékban.
 
@@ -48,7 +48,7 @@ A *kesik*ek a mongol uralkodói családok elit testőrsége volt. Ennek megfelel
 
 ### Lovas íjász (A)
 
-![Lovas íjász ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archer.png)
+![Lovas íjász ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archer.png)
  
 A lovas íjász (vagy röviden csak *íjász*) (angolul: *archer*) L-alakzatban lép (mint a huszár), de átlóban üt (mint a futó). Mivel az íjász mozgása nem kötődik mindig azonos színű mezőhöz, ezért értékesebb, mint a futó.
 
@@ -56,7 +56,7 @@ A lovas íjászok a mongol sereg egyik alapvető egységei voltak. A bátorságu
  
 ### Lándzsás (L)
 
-![Lándzsás ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Lancer.png)
+![Lándzsás ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Lancer.png)
  
 A lándzsás (angolul: *lancer*) L-alakzatban lép (mint a huszár), de vízszintesen vagy függőlegesen üt (mint a bástya). A lándzsás általánosságban a bástyánál gyengébbnek tekinthető, ami a végjátékban hangsúlyos lehet, hiszen ütés hiányában kevesebb mezőt tud lépni, mint a bástya. A játszma elején azonban, amíg a bástya nem tud olyan gyorsan támadásba lendülni, a lándzsás a mozgása miatt előnyös lehet, amit érdemes kihasználni.
 
@@ -120,7 +120,7 @@ Alább a leggyakoribb megnyitások. Az utolsó, zárójelbe tett lépések azok,
 2. e4 Kg7
 3. (Bd3 vagy Nf3) ...
 
-![Benkő megnyitás ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/BenkoCastle.png)
+![Benkő megnyitás ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/BenkoCastle.png)
 
 *Kán védelmezése a g7-re lépéssel*
 
@@ -141,4 +141,4 @@ Alább a leggyakoribb megnyitások. Az utolsó, zárójelbe tett lépések azok,
 4. b3 Kf7
 5. c4
 
-![Stockfish Védelem Vezérszárny ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/QueensidePush.png)
+![Stockfish Védelem Vezérszárny ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/QueensidePush.png)

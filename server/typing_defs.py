@@ -242,6 +242,20 @@ class GameStep(TypedDict, total=False):
     analysis: AnalysisStep
 
 
+class GameDisplayHistory(TypedDict):
+    variant: str
+    chess960: bool
+    moves: list[str]
+    showPromoted: bool
+    countStarted: int
+    usi: bool
+    clocksWhite: NotRequired[list[int | float]]
+    clocksBlack: NotRequired[list[int | float]]
+    analysis: NotRequired[list[AnalysisStep | None]]
+    countIntervals: NotRequired[list[tuple[int, int]]]
+    jieqiCovered: NotRequired[dict[str, str]]
+
+
 class GameBoardResponse(TypedDict):
     type: Literal["board"]
     gameId: str
@@ -252,6 +266,7 @@ class GameBoardResponse(TypedDict):
     lastMove: str | None
     tp: str
     steps: list[GameStep]
+    history: NotRequired[GameDisplayHistory]
     check: bool
     ply: int
     positionId: NotRequired[str]
@@ -284,8 +299,13 @@ class GameEndResponse(TypedDict):
 TournamentPoint = tuple[int | str, int] | Literal["-"]
 
 
+class FishnetCapabilities(TypedDict):
+    variants: list[str]
+
+
 class FishnetKey(TypedDict):
     apikey: str
+    capabilities: NotRequired[FishnetCapabilities]
 
 
 class FishnetAcquireFishnet(FishnetKey):
@@ -492,6 +512,7 @@ class ViewContext(TypedDict, total=False):
     view_css: str
     anon: bool
     username: str
+    csrf_token: str
     piece_sets: list[str]
     simuling: bool
     admin: bool
@@ -961,6 +982,7 @@ class TournamentPlayerDoc(TypedDict):
     g: NotRequired[int]
     p: list[TournamentPoint]
     jr: NotRequired[int]
+    joinedAt: NotRequired[datetime]
     wd: bool
 
 
@@ -979,6 +1001,7 @@ class TournamentPlayerUpdate(TypedDict, total=False):
     g: int
     p: list[TournamentPoint]
     jr: int
+    joinedAt: datetime
     wd: bool
 
 

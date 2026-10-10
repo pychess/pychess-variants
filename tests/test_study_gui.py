@@ -130,6 +130,29 @@ class TestStudyGUI:
     async def _create_conceal_acceptance_study(
         self, app_state, owner: str, writer: str, reader: str
     ):
+        def normalized_line(node_ids: tuple[str, ...], moves: tuple[str, ...]):
+            board = FairyBoard("chess")
+            nodes = []
+            parent_id = None
+            for node_id, move in zip(node_ids, moves, strict=True):
+                san = board.get_san(move)
+                board.push(move)
+                fields = board.fen.split()
+                nodes.append(
+                    {
+                        "id": node_id,
+                        "parentId": parent_id,
+                        "order": 0,
+                        "move": move,
+                        "fen": board.fen,
+                        "turnColor": "white" if fields[1] == "w" else "black",
+                        "check": board.is_checked(),
+                        "san": san,
+                    }
+                )
+                parent_id = node_id
+            return nodes
+
         builder = StudyChapterBuilder(app_state, owner)
         initial_fen = FairyBoard.start_fen("chess")
         first = await builder.from_analysis(
@@ -139,35 +162,10 @@ class TestStudyGUI:
             conceal_ply=0,
             name="Hidden line",
             tree_payload={
-                "nodes": [
-                    {
-                        "id": "Node000001",
-                        "parentId": None,
-                        "order": 0,
-                        "move": "e2e4",
-                        "fen": "ignored",
-                        "turnColor": "black",
-                        "check": False,
-                    },
-                    {
-                        "id": "Node000002",
-                        "parentId": "Node000001",
-                        "order": 0,
-                        "move": "e7e5",
-                        "fen": "ignored",
-                        "turnColor": "white",
-                        "check": False,
-                    },
-                    {
-                        "id": "Node000003",
-                        "parentId": "Node000002",
-                        "order": 0,
-                        "move": "g1f3",
-                        "fen": "ignored",
-                        "turnColor": "black",
-                        "check": False,
-                    },
-                ]
+                "nodes": normalized_line(
+                    ("Node000001", "Node000002", "Node000003"),
+                    ("e2e4", "e7e5", "g1f3"),
+                )
             },
         )
         study, chapter = await create_study_from_draft(
@@ -180,26 +178,10 @@ class TestStudyGUI:
             conceal_ply=0,
             name="Second hidden line",
             tree_payload={
-                "nodes": [
-                    {
-                        "id": "Node001001",
-                        "parentId": None,
-                        "order": 0,
-                        "move": "c2c4",
-                        "fen": "ignored",
-                        "turnColor": "black",
-                        "check": False,
-                    },
-                    {
-                        "id": "Node001002",
-                        "parentId": "Node001001",
-                        "order": 0,
-                        "move": "e7e5",
-                        "fen": "ignored",
-                        "turnColor": "white",
-                        "check": False,
-                    },
-                ]
+                "nodes": normalized_line(
+                    ("Node001001", "Node001002"),
+                    ("c2c4", "e7e5"),
+                )
             },
         )
         second_chapter = await add_chapter_from_draft(

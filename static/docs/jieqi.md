@@ -1,5 +1,5 @@
 
-# ![Jieqi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/jieqi.svg) Jieqi
+# ![Jieqi](https://github.com/pychess/pychess-variants/blob/master/static/icons/jieqi.svg) Jieqi
 
 Jieqi (in Chinese: 揭棋, in Vietnamese: Cờ Úp, probably other names in English: uncovering / dark / unveiling chess/xiangqi) is a Xiangqi (Chinese chess) variant rising star when the number of players grows rapidly, especially in China and Vietnam.
 

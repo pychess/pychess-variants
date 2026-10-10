@@ -17,8 +17,14 @@ export function gameType(rated: string | number) {
     }
 }
 
+export function aiDisplayName(username: string, variant: string) {
+    return username === 'Fairy-Stockfish' && variant === 'alice' ? 'Alice-Stockfish' : username;
+}
+
 export function aiLevel(username: string, level: number) {
-    return username === 'Fairy-Stockfish' && level >= 0 ? ' ' + _('level %1', level) : '';
+    return (username === 'Fairy-Stockfish' || username === 'Alice-Stockfish') && level >= 0
+        ? ' ' + _('level %1', level)
+        : '';
 }
 
 export function renderRdiff(rdiff: number) {

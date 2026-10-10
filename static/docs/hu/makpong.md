@@ -1,6 +1,6 @@
-# ![Makpong ikon](https://github.com/gbtami/pychess-variants/blob/master/static/icons/makpong.svg) Makpong
+# ![Makpong ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/makpong.svg) Makpong
 
-![Makpong tábla](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
+![Makpong tábla](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 
 A makpong a makruk (thai sakk) egy változata, melyet azért terveztek, hogy csökkentsék a döntetlen játszmák számát. Thaiföldön az egyenes kieséses rendszerű makruk bajnokságokban alkalmazzák, hogy győztest hirdethessenek egy bizonyos számú döntetlen játszma után.
 

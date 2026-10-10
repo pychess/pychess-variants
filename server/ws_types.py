@@ -360,7 +360,6 @@ class RequestAnalysisMessage(TypedDict):
 
 class DeleteMessage(TypedDict):
     type: Literal["delete"]
-    gameId: str
 
 
 class DeletedMessage(TypedDict):

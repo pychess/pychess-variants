@@ -1,5 +1,5 @@
 
-# ![Ajedrez Manchú](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Manchu.svg) Ajedrez Manchú
+# ![Ajedrez Manchú](https://github.com/pychess/pychess-variants/blob/master/static/icons/Manchu.svg) Ajedrez Manchú
 
 El Ajedrez Manchú (Chino: 满洲棋; pinyin: *Mǎnzhōuqí*), también conocido como Yitong o Ajedrez Yitong (Chino: 一统棋; pinyin: *Yìtǒngqí*), es una variante asimétrica del Xiangqi.  Fue creada por los Estandartes (pueblo Manchú) durante la Dinastía Qing y se convirtió en uno de sus juegos de tablero más populares.
 

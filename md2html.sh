@@ -7,9 +7,9 @@ node ../../md2html.js
 TAGNAME=$(git tag -l -n1 --sort=-v:refname --format='%(refname:short)' | head -n 1)
 echo "${TAGNAME}"
 
-SRC='https://github.com/gbtami/pychess-variants/blob/master';
-# DST='https://cdn.jsdelivr.net/gh/gbtami/pychess-variants\@'$TAGNAME;
-DST='https://cdn.jsdelivr.net/gh/gbtami/pychess-variants\@1.11.70';
+SRC='https://github.com/pychess/pychess-variants/blob/master';
+# DST='https://cdn.jsdelivr.net/gh/pychess/pychess-variants\@'$TAGNAME;
+DST='https://cdn.jsdelivr.net/gh/pychess/pychess-variants\@1.11.72';
 echo "${DST}"
 find . -type f -name "*.html" -exec perl -pi -e s,$SRC,$DST,g '{}' +
 

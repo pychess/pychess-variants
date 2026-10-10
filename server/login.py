@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import base64
 import hashlib
 import logging
@@ -24,6 +25,11 @@ from security_evasion import (
     is_signup_blocked_by_signals,
     remember_user_signals,
 )
+from session_security import (
+    auth_version_from_user_document,
+    authenticate_session,
+    revoke_user_sessions,
+)
 from settings import URI
 from typedefs import REQUEST_NEW_SESSION_KEY
 from typing_defs import UserDocument
@@ -34,6 +40,7 @@ log = logging.getLogger(__name__)
 
 USERNAME_LOWER_FIELD = "username_lower"
 REOPEN_TOKEN_TTL_MINUTES = 20
+MAX_PENDING_OAUTH_FLOWS = 3
 
 if TYPE_CHECKING:
     from user import User
@@ -45,6 +52,11 @@ class OAuthUserData(TypedDict, total=False):
     title: str
     closed: str
     tosViolation: str
+
+
+class OAuthFlowData(TypedDict):
+    provider: str
+    code_verifier: str
 
 
 def normalized_username(username: str) -> str:
@@ -70,6 +82,28 @@ async def username_exists(app_state, username: str) -> bool:
     return existing_user is not None
 
 
+def oauth_authorization_redirect(session: aiohttp_session.Session, provider: str) -> web.HTTPFound:
+    config = oauth_config.get(provider)
+    if config is None:
+        raise web.HTTPBadRequest(text="Unknown sign-in provider")
+    state = secrets.token_urlsafe(32)
+    code_verifier = secrets.token_urlsafe(64)
+    flow: OAuthFlowData = {"provider": provider, "code_verifier": code_verifier}
+    params = {
+        "state": state,
+        "client_id": config["client_id"],
+        "response_type": "code",
+        "redirect_uri": URI + "/oauth/%s" % provider,
+        "code_challenge": get_code_challenge(code_verifier),
+        "code_challenge_method": "S256",
+        "scope": config["scope"],
+    }
+    oauth_flows: dict[str, OAuthFlowData] = dict(session.get("oauth_flows", {}))
+    oauth_flows[state] = flow
+    session["oauth_flows"] = dict(list(oauth_flows.items())[-MAX_PENDING_OAUTH_FLOWS:])
+    return web.HTTPFound(config["oauth_authorize_url"] + "?" + urlencode(params))
+
+
 async def oauth(request: web.Request) -> web.StreamResponse:
     """Get oauth token with PKCE"""
 
@@ -78,57 +112,54 @@ async def oauth(request: web.Request) -> web.StreamResponse:
         assert provider is not None
     redirect_uri = URI + "/oauth/%s" % provider
 
-    config = oauth_config.get(provider, oauth_config["lichess"])
+    config = oauth_config.get(provider)
+    if config is None:
+        raise web.HTTPBadRequest(text="Unknown sign-in provider")
 
     client_id = config["client_id"]
-    client_secret = config["client_secret"]
+    client_secret = config.get("client_secret")
 
-    oauth_authorize_url = config["oauth_authorize_url"]
     oauth_token_url = config["oauth_token_url"]
-    scope = config["scope"]
 
     session = await aiohttp_session.get_session(request)
     code = request.rel_url.query.get("code")
 
-    if code is None:
-        code_verifier = secrets.token_urlsafe(64)
-        session["oauth_code_verifier"] = code_verifier
-        code_challenge = get_code_challenge(code_verifier)
-
-        authorize_url = (
-            oauth_authorize_url
-            + "?"
-            + urlencode(
-                {
-                    "state": client_secret,
-                    "client_id": client_id,
-                    "response_type": "code",
-                    "redirect_uri": redirect_uri,
-                    "code_challenge": code_challenge,
-                    "code_challenge_method": "S256",
-                    "scope": scope,
-                }
-            )
-        )
-        return web.HTTPFound(authorize_url)
+    if code is None and "error" not in request.rel_url.query:
+        return oauth_authorization_redirect(session, provider)
     else:
-        state = request.rel_url.query.get("state")
-        if state != client_secret:
+        returned_state = request.rel_url.query.get("state")
+        oauth_flows: dict[str, OAuthFlowData] = dict(session.get("oauth_flows", {}))
+        matching_state = next(
+            (
+                saved_state
+                for saved_state in oauth_flows
+                if returned_state is not None
+                and secrets.compare_digest(returned_state, saved_state)
+            ),
+            None,
+        )
+        flow = oauth_flows.pop(matching_state, None) if matching_state is not None else None
+
+        if oauth_flows:
+            session["oauth_flows"] = oauth_flows
+        else:
+            session.pop("oauth_flows", None)
+
+        if flow is None or flow["provider"] != provider:
             log.error("OAuth state value mismatch for provider '%s'", provider)
             return web.HTTPFound("/")
 
-        if "oauth_code_verifier" not in session:
-            log.error("No oauth_code_verifier in session")
+        if request.rel_url.query.get("error") is not None or not code:
             return web.HTTPFound("/")
-
         data: dict[str, str] = {
             "grant_type": "authorization_code",
             "code": code,
-            "code_verifier": session["oauth_code_verifier"],
+            "code_verifier": flow["code_verifier"],
             "client_id": client_id,
-            "client_secret": client_secret,
             "redirect_uri": redirect_uri,
         }
+        if client_secret is not None:
+            data["client_secret"] = client_secret
 
         # print(oauth_token_url)
         # print(data)
@@ -162,12 +193,14 @@ async def login(request: web.Request) -> web.StreamResponse:
     provider = request.match_info.get("provider")
     if TYPE_CHECKING:
         assert provider is not None
+    config = oauth_config.get(provider)
+    if config is None:
+        raise web.HTTPBadRequest(text="Unknown sign-in provider")
     redirect_path = "/oauth/%s" % provider
 
     if "token" not in session:
         return web.HTTPFound(redirect_path)
 
-    config = oauth_config.get(provider, oauth_config["lichess"])
     account_api_url = config["account_api_url"]
 
     token: str = session["token"]
@@ -243,7 +276,11 @@ async def login(request: web.Request) -> web.StreamResponse:
             session.pop("closed_account_user", None)
             return web.HTTPFound("/contact")
         else:
-            session["user_name"] = existing_user["_id"]
+            authenticate_session(
+                session,
+                existing_user["_id"],
+                auth_version_from_user_document(existing_user),
+            )
             request[REQUEST_NEW_SESSION_KEY] = True
             session.pop("closed_account_user", None)
             await remember_user_signals(app_state.db, existing_user["_id"], signals)
@@ -292,19 +329,10 @@ async def logout(request: web.Request | None, user: User | None = None) -> web.S
 
     if user is None:
         return web.HTTPFound("/")
-    response = {"type": "logout"}
+    logout_response = {"type": "logout"}
 
-    # close lobby socket
-    ws_set = user.lobby_sockets
-    await ws_send_json_many(ws_set, response)
-
-    # close tournament sockets
-    tournament_sockets = []
-    for ws_set in user.tournament_sockets.values():
-        tournament_sockets.extend(list(ws_set))
-    await ws_send_json_many(tournament_sockets, response)
-
-    # lose and close game sockets when ban() calls this from admin.py
+    # Lose active games when ban() calls this from admin.py. Explicit browser
+    # logout only disconnects sockets; it does not resign games.
     # TODO: this can't end game if logout came from an ongoing game
     # because its ws was already closed and removed from game_sockets
     if not user.enabled:
@@ -312,8 +340,33 @@ async def logout(request: web.Request | None, user: User | None = None) -> web.S
             if gameId in app_state.games:
                 game = app_state.games[gameId]
                 if game.status <= STARTED:
-                    response = await game.game_ended(user, "abandon")
-                    await round_broadcast(game, response, full=True)
+                    game_end_response = await game.game_ended(user, "abandon")
+                    await round_broadcast(game, game_end_response, full=True)
+
+    await revoke_user_sessions(user)
+
+    # Revocation is user-wide, matching the existing logout semantics. Notify
+    # and then forcibly close every browser-authenticated websocket so a client
+    # that ignores the logout message cannot keep using an already-open channel.
+    sockets = set(user.authenticated_sockets)
+    sockets.update(user.lobby_sockets)
+    for ws_set in user.tournament_sockets.values():
+        sockets.update(ws for ws in ws_set if ws is not None)
+    for ws_set in user.simul_sockets.values():
+        sockets.update(ws_set)
+    for ws_set in user.study_sockets.values():
+        sockets.update(ws_set)
+    for ws_set in user.game_sockets.values():
+        sockets.update(ws_set)
+
+    await ws_send_json_many(sockets, logout_response)
+    if sockets:
+        await asyncio.gather(*(ws.close() for ws in sockets), return_exceptions=True)
+
+    # SSE subscriptions are authenticated only when opened. Shut them down too
+    # so they cannot outlive the session generation that authorized them.
+    for queue in tuple(user.notify_channels | user.inbox_channels | user.challenge_channels):
+        queue.shutdown(immediate=True)
 
     if request is not None:
         session.invalidate()
@@ -485,7 +538,7 @@ async def confirm_username(request: web.Request) -> web.StreamResponse:
         log.info("db insert user result %r", result.inserted_id)
 
         # Set session username and clean up OAuth data
-        session["user_name"] = username
+        authenticate_session(session, username, 0)
         request[REQUEST_NEW_SESSION_KEY] = True
         session.pop("oauth_id", None)
         session.pop("oauth_provider", None)

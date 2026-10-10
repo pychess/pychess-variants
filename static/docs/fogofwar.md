@@ -1,6 +1,6 @@
-# ![Fog of War](https://github.com/gbtami/pychess-variants/blob/master/static/icons/FogOfWar.svg) Fog of War
+# ![Fog of War](https://github.com/pychess/pychess-variants/blob/master/static/icons/FogOfWar.svg) Fog of War
 
-![Fog of War](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Fogofwar.png)
+![Fog of War](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Fogofwar.png)
 
 Fog of War is a chess variant invented by Jens Bæk Nielsen and Torben Osted in 1989 under the name of Dark Chess.  A player does not see the entire board – only their own pieces and the squares that they can legally move to.
 

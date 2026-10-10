@@ -2272,7 +2272,7 @@ export function lobbyView(model: PyChessModel): VNode[] {
                     'a.reflist',
                     {
                         attrs: {
-                            href: 'https://github.com/gbtami/pychess-variants',
+                            href: 'https://github.com/pychess/pychess-variants',
                             rel: 'noopener',
                             target: '_blank',
                         },

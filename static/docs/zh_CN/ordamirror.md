@@ -1,5 +1,5 @@
-# ![Orda Mirror](https://github.com/gbtami/pychess-variants/blob/master/static/icons/ordamirror.svg) 可汗对决棋 | Orda Mirror
-![Orda Mirror Board](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/OrdaMirror.png)
+# ![Orda Mirror](https://github.com/pychess/pychess-variants/blob/master/static/icons/ordamirror.svg) 可汗对决棋 | Orda Mirror
+![Orda Mirror Board](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/OrdaMirror.png)
 
 可汗对决棋(Orda Mirror)是由 Couch Tomato 于2020年推出的国际象棋变体玩法，也被认为是可汗西征棋的衍生变体。该游戏的两方均设计成可汗西征棋中加入的可汗棋组，变成了一个可汗vs可汗的对决。但是棋组相比原版又做了一个改动：原版的穹庐被替换成了新棋子战隼，一个走棋如后，吃子如马的棋子（其他棋子走子如马）。新的棋子让棋组在保留游牧民族的主题的同时又增加了些许机动性。
  
@@ -27,25 +27,25 @@
  
 ###  战隼 | Falcon (F)
 
-![Falcon](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Falcon.png)
+![Falcon](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Falcon.png)
  
 战隼的走吃不同，注意它和其他部落棋子不一样，它走子是后的走法，吃子是马的走法。
 
 ### 禁卫 | Kheshig (H)
 
-![Kheshig](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Kheshig.png)
+![Kheshig](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Kheshig.png)
  
 禁卫的走法融合了马和王，在部分棋中被称为半人马(Centaur)。禁卫一开始位于b8和g8，即原本「马」的位置。但它与马不同，它是可汗方的最强棋子。它可以看成是左右两个分队的指挥官。
 
 ### 弓骑兵 | Horse Archer (A)
 
-![Horse Archer](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archer.png)
+![Horse Archer](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archer.png)
  
 弓骑兵属于走吃分离的棋子，移动走马步，但吃子时斜走不限格数，注意弓骑兵并不是象那样的单色棋子，它比象的强度略高。
  
 ### 枪骑兵 | Lancer (L)
 
-![Lancer](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Lancer.png)
+![Lancer](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Lancer.png)
  
 枪骑兵属于走吃分离的棋子，移动走马步，但吃子时直走不限格数，如同车。
 

@@ -1,6 +1,6 @@
-# ![Dobutsu Shogi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Dobutsu.svg) 动物将棋|Dōbutsu Shogi
+# ![Dobutsu Shogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/Dobutsu.svg) 动物将棋|Dōbutsu Shogi
 
-![Dobutsu](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Dobutsu.png)
+![Dobutsu](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Dobutsu.png)
 
 动物将棋（どうぶつしょうぎ）由女流职业棋士北尾 まどか（Kitao Madoka，也写作北尾圆）发明的将棋变种。动物将棋设计用来给小朋友教学将棋的基本规则，因此整体的造型非常可爱。主要规则与将棋相同。棋子的走法就印在棋子上（就是那些小点点）
 
@@ -16,7 +16,7 @@
 
 ### 母鸡
 
-![Hen](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Hen.png)
+![Hen](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Hen.png)
 
 母鸡的走法等同金将，可以上下左右行走一格，或者斜向前走一格。
 

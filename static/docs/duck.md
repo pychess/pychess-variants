@@ -1,4 +1,4 @@
-# ![Duck Chess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/duck.svg) Duck Chess
+# ![Duck Chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/duck.svg) Duck Chess
 
 Duck Chess is an exciting and absorbing new chess variant invented in early 2016 by Dr Tim Paulden, the president of Exeter Chess Club, Devon, England.
 

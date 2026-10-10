@@ -1,6 +1,6 @@
-# ![Shinobi chess+](https://github.com/gbtami/pychess-variants/blob/master/static/icons/shinobi.svg) Shinobi Chess+
+# ![Shinobi chess+](https://github.com/pychess/pychess-variants/blob/master/static/icons/shinobi.svg) Shinobi Chess+
 
-![Shinobi+](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Shinobiplus.png)
+![Shinobi+](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Shinobiplus.png)
 
 Shinobi Chess is a chess variant designed in 2021 by Couch Tomato with help from Fables, fourth in the series of asymmetric games. The Western chess army (“the Kingdom,” black) has invaded the land of the Sakura Clan (pink/sakura). While having mostly weak pieces at the start, the Clan is very resourceful and can instantly recruit and summon allies to defend at a minute’s notice. The Clan starts with many pieces in hand and can drop them on its side of the board in lieu of moving a piece. Furthermore, they can promote upon reaching the far end of the board – these abilities are similar to the game of shogi, with the major exception that captured pieces do not go into a player’s hand, so each drop counts! 
 
@@ -26,13 +26,13 @@ The Clan also has access to the Kingdom pieces of the Rook, Bishop, and Knight a
 
 ### Captain (C)
 
-![Captain](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ClanCaptain.png)
+![Captain](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ClanCaptain.png)
 
 The Clan starts with one Captain in hand. Additional Captains can be obtained by both sides by promoting their pawns at the 7th rank. The Captain has the same movement of a King. Of course, unlike the King, capturing a Captain does not end the game.
 
 ### Ninja (J)
 
-![Ninja](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Ninja.png)
+![Ninja](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Ninja.png)
 
 The Ninja is a hybrid piece that combines the movements of the bishop and the knight. In many variants, this is also known as the Archbishop. The Ninja is the Clan's strongest piece and is a very tricky piece that can easily penetrate defenses. The Ninja is also the only piece capable of checkmating on its own! The Ninja is slightly weaker than the Queen.
 
@@ -40,7 +40,7 @@ The Ninja does not promote.
 
 ### Dragon (D)
 
-![Dragon](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Dragon.png)
+![Dragon](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Dragon.png)
 
 The Dragon is a hybrid piece that combines the movements of the rook and king (or for purists, rook and ferz). This is identical to the Dragon King (promoted Rook) in Shogi. The Dragon is weaker than the Ninja but stronger than the Rook.
 
@@ -48,7 +48,7 @@ The Dragon does not promote.
 
 ### Fox (F)
 
-![Fox](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Fox.png)
+![Fox](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Fox.png)
 
 The Fox is a hybrid piece that combines the movements of the bishop and king (or for purists, bishop and wazir). This is identical to the Dragon Horse (promoted Bishop) in Shogi. The Fox is weaker than the Ninja, but stronger than the Rook.
 
@@ -56,19 +56,19 @@ The Fox does not promote.
 
 ### Lance (L)
 
-![Lance](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Lance.png)
+![Lance](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Lance.png)
 
 The Lance is like a Rook but can only move straight forward. This is identical to the Lance in Shogi. One Lance starts in hand and can be thought of as a droppable skewer. Because it can't retreat, make sure the drop counts! The Lances that start on the board are much less flexible and serve to control the board. The **Lance promotes to a Rook** upon reaching the 7th (optional) or 8th (mandatory) ranks. The Lance is valued less than the typical minor Kingdom piece; however, it has hidden value in its ability to promote to one of the strongest pieces in the game.
 
 ### Wooden Horse (H)
 
-![Wooden Horse](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Horse.png)
+![Wooden Horse](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Horse.png)
 
 The Wooden Horse (or Horse, for short) is like a Knight but can only move to the forward-most two spots. This is identical to the Knight in Shogi. One Horse starts in hand and can be thought of as a droppable fork. Because it can't retreat, make sure the drop counts! The **Horse promotes to a Knight** upon reaching the 7th or 8th rank; promotion is mandatory. The Horse is valued less than the typical minor Kingdom piece; however, it has hidden value in its ability to promote to a Knight.
 
 ### Monk (M)
 
-![Monk](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Monk.png)
+![Monk](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Monk.png)
 
 The Monk moves one space diagonally, either forwards or backwards. In other variants, this is also known as a Ferz/Fers. One Monk starts in hand. **Monks may promote into a Bishop upon reaching the 7th or 8th ranks**. The Monk is weaker than the typical minor Kingdom piece; however, it has hidden value in its ability to promote to a Bishop.
  

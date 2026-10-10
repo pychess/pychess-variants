@@ -1,6 +1,6 @@
-# ![Chess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/chess.svg) 西洋棋
+# ![Chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/chess.svg) 西洋棋
 
-![Chess board](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Chess.png?raw=true)
+![Chess board](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chess.png?raw=true)
 
 如果你已經熟悉西洋棋的話，你應該不是來這裡學怎麼玩西洋棋的。玩玩其他變體吧!
 

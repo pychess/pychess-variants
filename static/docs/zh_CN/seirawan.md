@@ -1,4 +1,4 @@
-# ![Seirawan](https://github.com/gbtami/pychess-variants/blob/master/static/icons/schess.svg) S-Chess
+# ![Seirawan](https://github.com/pychess/pychess-variants/blob/master/static/icons/schess.svg) S-Chess
 
 S-Chess，全称为Seirawan Chess，是美国国际象棋特级大师亚瑟·塞拉万(Yasser Seirawan)和布鲁斯·哈伯(Bruce Harper)于2007年发明的变体。该棋引入了两种新棋子：大象和鹰。与其他棋不同的机制是，大象和鹰并非开局在棋盘上，它会在对局过程中出场。由于对局比国际象棋激烈，也有“SHARPER Chess“的别称。
 
@@ -14,14 +14,14 @@ S-Chess，全称为Seirawan Chess，是美国国际象棋特级大师亚瑟·塞
 
 ### 鹰
 
-![Hawk](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Hawk.png)
+![Hawk](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Hawk.png)
 
 鹰的走法等于象+马。在走法上，它能单独对角格的王形成威胁。
 鹰的价值一般认为比车高，但比大象和后低。
 
 ### 大象
 
-![Elephant](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantSeirawan.png)
+![Elephant](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantSeirawan.png)
 
 大象的走法等同于车+马。一般认为它的价值比鹰高，但是跟后相等或是低一些。
 

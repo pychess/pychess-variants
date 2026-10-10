@@ -1,6 +1,6 @@
-# ![Shinobi chess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/shinobi.svg) Shinobi Chess
+# ![Shinobi chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/shinobi.svg) Shinobi Chess
 
-![Shinobi](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Shinobi.png)
+![Shinobi](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Shinobi.png)
 
 O Shinobi Chess é uma variante de Xadrez criada em 2021 por Couch Tomato com a ajuda de Fables, a quarta na série de variantes assimétricas. O Exército de Xadrez Ocidental ("o Reino", pretas) invadiu o territória do Clã Sakura (rosa/sakura). Mesmo tendo peças mais fracas no inicio, o Clã demonstra ser bastante criativo e pode recrutar e convocar aliados na última hora. O Clã começa com várias peças em sua posse e pode colocá-las no seu lado do tabuleiro como lance. Futuramente, as peças podem ser promovidas quando alcançarem duas das últimas filas do tabuleiro - Estas habilidades são extremamente semelhantes ao jogo do Shogi, com uma excepção, quanto as peças forem capturas, estas não entram na posse do adversário, daí que cada peça colocada conta! A variante em si é bastante equilibrada (ainda mais do que o xadrez normal), com um resultado muito próximo de 50-50 vitórias para o reino e para o Clã.
  
@@ -24,13 +24,13 @@ Existem cinco peças unicas que pertencem ao Clã: o Ninja, o Dragão, as Lança
 
 ### Capitão (C)
 
-![Captain](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ClanCaptain.png)
+![Captain](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ClanCaptain.png)
 
 O Clã começa com um Capitão no lugar normal da Dama. Além disso o Capitão pode ser obtido através da promoção de peões ao atingirem a 7ª fila. O Capitão tem o mesmo movimento do Rei. E claro, ao contrário do Rei, capturando um Capitão não fará com que o jogo termine.
 
 ### Ninja (J)
 
-![Ninja](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Ninja.png)
+![Ninja](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Ninja.png)
 
 O Ninja é uma peça híbrida que combina os movimentos de um Bispo e de um Cavalo. Em várias variantes este é denominado de Arcebispo. O Ninja é a peça mais poderosa do Clã e por ser bastante interessante e complexa pode facilmente quebrar as defesas adversárias. O Ninja é a única peça capaz de dar Xeque-Mate por si mesma! O Ninja é um bocado mais fraco do que a Dama.
 
@@ -38,7 +38,7 @@ O Ninja não pode ser promovido.
 
 ### Dragão (D)
 
-![Dragon](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Dragon.png)
+![Dragon](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Dragon.png)
 
 O Dragão é uma peça híbrida que combina os movimentos de uma Torre e de um Rei (ou para uma definição mais técnica, uma Torre e um Ferz). Esta é identica ao Dragão-Rei(Torre promovida) do Shogi. O Dragão é um bocado mais fraco do que um Ninja, mas mais poderoso do que uma Torre.
 
@@ -46,19 +46,19 @@ O Dragão não pode ser promovido.
 
 ### Lança (L)
 
-![Lance](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Lance.png)
+![Lance](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Lance.png)
 
 A Lança é como uma Torre mas só se pode movimentar para a frente. É igual à Lança do Shogi. Uma lança começa na mão e pode ser colocada no tabuleiro, pode ser considerada como um parafuso colocável. Pelo facto desta não se poder movimentar para trás, tenha certeza de que a sua colocação seja valiosa! As Lanças que começam no tabuleiro são menos flexíveis e servem apenas para controle do jogo. A Lança é promovida a torre quando alcança a 7ª fila (opcional) ou 8ª fila (obrigatório). A Lança é menos valiosa do que uma peça menor do Reino, No entanto tem um potencial enorme visto poder ser promovida a uma das peças mais poderosas do jogo.
 
 ### Cavalo-de-Madeira (H)
 
-![Wooden Horse](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Horse.png)
+![Wooden Horse](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Horse.png)
 
 O Cavalo-de-Madeira (ou Cavaleiro) é como um Cavalo, mas apenas se pode movimentar duas casas para a frente. Este é semelhante ao Cavalo do Shogi. Um Cavalo-de-Madeira começa na posse do Clã. Pelo facto de não se poder movimentar atrás, faça com que a sua colocação seja valiosa! Os Cavalos-de-Madeira que começam no tabuleiro aplicam pressão identica ao do Cavalo do Reino, mas tem de ser jogado com precaução pelo facto de não poder se movimentar atrás. O Cavalo-de-Madeira é promovida a Cavalo quando chegar à 7ª ou 8ª fila; a sua promoção é obrigatória. O Cavalo-de-Madeira é menos poderoso do que um Cavalo do Reino, no entanto tem um grande potencial por ser promovido a Cavalo.
 
 ### Monge (M)
 
-![Monk](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Monk.png)
+![Monk](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Monk.png)
 
 O Monge movimenta-se uma casa na diagonal, tanto para a frente como para trás. Em outras variantes este é denominado de Ferz/Fers. Ambos os monges começam em posse do Clã. Os Monges podem ser promovidos a Bispo após chegarem à 7ª ou 8ª fila. O Monge é uma peça mais fraca do que uma peça menor do Reino. No entanto tem um grande potencial por ser promovido a Bispo.
  

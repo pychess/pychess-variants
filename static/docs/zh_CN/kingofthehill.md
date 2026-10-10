@@ -1,4 +1,4 @@
-# ![KingOfTheHill](https://github.com/gbtami/pychess-variants/blob/master/static/icons/koth.svg) 争夺中心 | King of the Hill
+# ![KingOfTheHill](https://github.com/pychess/pychess-variants/blob/master/static/icons/koth.svg) 争夺中心 | King of the Hill
 
 _全体注意！向中心进攻！_
 

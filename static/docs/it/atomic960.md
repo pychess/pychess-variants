@@ -1,4 +1,4 @@
-# ![Atomic960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Atomic960.svg) Atomic 960
+# ![Atomic960](https://github.com/pychess/pychess-variants/blob/master/static/icons/Atomic960.svg) Atomic 960
 
 Atomic 960 is a custom variant combining the rules of Atomic with the random placement of Chess 960. The same rules apply to both games. As this is considered a derivative of Atomic, please check the Atomic rules in its separate guide. 960 rules are as below for a reminder.
 

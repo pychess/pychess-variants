@@ -1,4 +1,4 @@
-# ![KingOfTheHill960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/koth960.svg) 任意制争夺中心 | King of the Hill 960
+# ![KingOfTheHill960](https://github.com/pychess/pychess-variants/blob/master/static/icons/koth960.svg) 任意制争夺中心 | King of the Hill 960
 
 该变种玩法是结合了争夺中心与960规则的国际象棋变体玩法。关于争夺中心的玩法，请参考相关页面。下面简述任意制规则。
 

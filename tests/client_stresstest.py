@@ -884,7 +884,7 @@ class TestUser:
                             print(self.username)
 
                     try:
-                        async with session.ws_connect(LOBBY_URL) as wsl:
+                        async with session.ws_connect(LOBBY_URL, headers={"Origin": URI}) as wsl:
                             # await wsl.send_json({"type": "lobby_user_connected", "username": self.username})
                             # await wsl.send_json({"type": "get_seeks"})
                             loop_time = asyncio.get_running_loop().time
@@ -1069,7 +1069,9 @@ class TestUser:
             while not game_completed:
                 reconnect_needed = False
                 try:
-                    async with session.ws_connect(ROUND_URL + game_id, timeout=20.0) as wsr:
+                    async with session.ws_connect(
+                        ROUND_URL + game_id, timeout=20.0, headers={"Origin": URI}
+                    ) as wsr:
                         self._mark_round_connected(game_id, resolved_variant, resolved_bot_profile)
                         # TODO: am I player or am I spectator ???
                         ok = await self._send_json_safe(

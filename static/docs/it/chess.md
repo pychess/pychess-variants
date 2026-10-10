@@ -1,6 +1,6 @@
-# ![Chess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/chess.svg) Scacchi
+# ![Chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/chess.svg) Scacchi
 
-![Chess board](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Chess.png?raw=true)
+![Chess board](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chess.png?raw=true)
 
 Se conosci gli scacchi, allora probabilmente non sei venuto qui per impararne le regole. Dai, prova qualche variante!
 

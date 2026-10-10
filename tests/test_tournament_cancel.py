@@ -37,7 +37,7 @@ class TournamentCancelRedirectTestCase(AioHTTPTestCase):
         app_state.tournaments[tournament_id] = tournament
 
         with patch("views.tournament.is_tournament_director", return_value=True):
-            response = await self.client.get(
+            response = await self.client.post(
                 f"/tournament/{tournament_id}/cancel",
                 allow_redirects=False,
             )

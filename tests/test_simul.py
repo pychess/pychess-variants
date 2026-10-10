@@ -441,7 +441,9 @@ class TestGUI:
 
     async def _connect_ws(self, username: str, port: int):
         session = await self._session_for_user(username)
-        ws = await session.ws_connect(f"ws://127.0.0.1:{port}/wss")
+        ws = await session.ws_connect(
+            f"ws://127.0.0.1:{port}/wss", headers={"Origin": f"http://127.0.0.1:{port}"}
+        )
         return session, ws
 
     async def _receive_until_type(self, ws, expected_type: str, max_messages: int = 6):
@@ -613,7 +615,8 @@ class TestGUI:
 
             game_id = next(iter(simul.games))
             host_round_ws = await host_session.ws_connect(
-                f"ws://127.0.0.1:{server.port}/wsr/{game_id}"
+                f"ws://127.0.0.1:{server.port}/wsr/{game_id}",
+                headers={"Origin": f"http://127.0.0.1:{server.port}"},
             )
             host_game = await self._receive_until_type(watcher_ws, "host_game")
             assert host_game["gameId"] == game_id
@@ -956,7 +959,7 @@ class TestGUI:
                 assert edit_log["user"] == host.username
                 assert simul.id in edit_log["details"]
 
-                cancelled = await moderator_session.get(
+                cancelled = await moderator_session.post(
                     f"http://127.0.0.1:{server.port}/simul/{simul.id}/cancel",
                     allow_redirects=False,
                 )
@@ -996,7 +999,7 @@ class TestGUI:
                 patch("views.simul.ADMINS", [moderator.username]),
                 patch("views.ADMINS", [moderator.username]),
             ):
-                response = await moderator_session.get(
+                response = await moderator_session.post(
                     f"http://127.0.0.1:{server.port}/simul/{simul.id}/cancel",
                     allow_redirects=False,
                 )

@@ -1,6 +1,6 @@
-# ![Synochess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/synochess.svg) 王朝象棋 | Synochess
+# ![Synochess](https://github.com/pychess/pychess-variants/blob/master/static/icons/synochess.svg) 王朝象棋 | Synochess
 
-![Synochess](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Synochess.png)
+![Synochess](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Synochess.png)
 
 王朝象棋(Synochess)是由Couch Tomato于2020年推出的国际象棋变体。设计此游戏的初衷是设计一个中国象棋 vs 国际象棋的平衡游戏。然而，由于中国象棋的棋盘偏大、棋子相对国际象棋较弱，若想达到双方均衡，就必须要对中国象棋一方进行明显的加强，同时还要保留中国象棋的风格。虽然看似比较难，但是经过不断调整，最终成功推出了这一棋组。在王朝象棋中，白方为原本的国际象棋阵容，称为王国(Kingdom)，红方融合了中国象棋和朝鲜象棋的棋子，称为王朝(Dynasty)。王朝方的棋子与其在中国象棋/朝鲜象棋的对应棋子基本相同，所以玩过中国象棋和/或朝鲜象棋的玩家会比较熟悉。
 Synochess原本拟命名为Sinochess，前缀sino-表示“中国的”。然而，在融入朝鲜象棋之后，Sinochess这个名字就变的不够合适了，因此作者造了一个词作为本游戏的名称，即Synochess。前缀syn-表示“联合、共同”，以表示王朝方融合了中国象棋和朝鲜象棋。
@@ -27,7 +27,7 @@ Synochess原本拟命名为Sinochess，前缀sino-表示“中国的”。然而
 下面是棋子的走法及其图示。
 
 ### 王 | King (K) ,车 | Chariot (R)
-![King and Chariot](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/SynoRK.png)
+![King and Chariot](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/SynoRK.png)
 
 如图所示，双方的王和车虽然造型不一样，但是走法完全相同。
 在系统中，红方的车也记作R，与白方一样。
@@ -36,26 +36,26 @@ Synochess原本拟命名为Sinochess，前缀sino-表示“中国的”。然而
 
 ### 卒 | Soldier (S)
 
-![Soldier](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Soldier.png)
+![Soldier](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Soldier.png)
 
 卒可以向前、左、右移动一格。和中国象棋的过河兵、朝鲜象棋的兵一样。卒不能升变。
 卒不能后退，因此达到对方底线的卒只能左右移动。注意除非是能达到胜利（将杀或触底获胜），否则不要轻易把兵推进到底线。两个卒左右相邻的“手拉手”形状是非常强的。
 
 ### 象 | Elephant (E)
 
-![Elephant](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantDynasty.png)
+![Elephant](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantDynasty.png)
  
 象是中国象棋象的强化版本，它可以斜走1~2格，并且可以越过棋子移动。您可能会发现，它和Shako里的象完全一致。
 
 ### 炮 | Cannon (C)
 
-![Cannon](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/CannonDynasty.png)
+![Cannon](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/CannonDynasty.png)
  
 炮可以横竖移动任意格数，但**必须**跳过一个棋子（炮架）走棋。***炮不能把另一个炮当炮架。***。这个炮是来自朝鲜象棋的炮（包）。炮在残局中价值会快速降低，因为棋子减少的原因。
  
 ### 士 | Advisor
 
-![Advisor](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Advisor.png)
+![Advisor](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Advisor.png)
 
 士走法为八方走1格，和王相同。当然，它被吃不算落败。在王朝象棋中，并没有“九宫”的概念，因此士作了强化，以加强对王的防御。
 
@@ -138,7 +138,7 @@ Synochess原本拟命名为Sinochess，前缀sino-表示“中国的”。然而
 *（译者注：Fool's Mate，指刻意地去走导致自己被将杀的行动，通常把最快被将杀的棋局称为Fool's Mate）
 对白方而言，这一点非常重要：务必要注意对方架中炮的企图。
 
-![Fool's Mate](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/FoolsMate.png)
+![Fool's Mate](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/FoolsMate.png)
 
 上图，炮e6+，逼迫白棋走主教e5，然后红方炮e4#。这是由于白方放任红方架中炮所致。即使在其他类似局面有其他棋子供垫将，也会处于劣势。
 
@@ -148,16 +148,16 @@ Synochess原本拟命名为Sinochess，前缀sino-表示“中国的”。然而
 
 此战术对白棋而言是非常致命的，因为它会导致白方重要棋子的损失。通常会出现在车有开放线（事实上开局如此），且炮能够威胁白棋底线的情况（通常为b1或g1，且该位置必须是无保护的）。最基本的战术如下图。
 
-![Queenslayer](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Queenslayer.png)
+![Queenslayer](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Queenslayer.png)
 
 在上图中，红车吃兵，逼迫白车吃回。然而这样会使b1/g1失去唯一的保护，从而炮进入底线，直接串打白后或将军抽吃，白方必然丢后。请注意炮擒皇后**不是**开局的常见做法，它是一个特定局面下的战术。因为开局这样做需要移开卒才能打开炮线，红方刻意去制造这种情况，往往会起反作用。
 
 请注意，在下面两种情况，炮擒皇后是没有作用的。
 
-![QueenslayerGoneWrongb1](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/QueenslayerGoneWrongb1.png)
+![QueenslayerGoneWrongb1](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/QueenslayerGoneWrongb1.png)
 
 若d3没有阻挡，白方白格主教则可以自由行动。那么当红方吃车时，白方主教可以先行一步跑到b5将军，同时阻挡红炮对b1的攻击。如此一来红方不仅不能捉后，反而白白丢了一车。
 
-![QueenslayerGoneWrongg1](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/QueenslayerGoneWrongg1.png)
+![QueenslayerGoneWrongg1](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/QueenslayerGoneWrongg1.png)
 
 在王翼的情况，在车xh2，车xh2，炮xg1+之后，看似白方依然会丢后，但是并非如此。白主教依然可以先行去b5将军，而抢先让白后离开炮的攻击范围。

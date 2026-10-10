@@ -102,6 +102,7 @@ customPiece1 = p:mKmDmA
                     self.assertEqual(current.rematch_id, rematch.id)
                     self.assertIs(rematch.wplayer, opponent)
                     self.assertIs(rematch.bplayer, self.player)
+                    await rematch.game_ended(self.player, "resign")
         self.assertEqual(self.bot_start.await_count, 2)
 
     async def test_failed_rematches_clean_up_and_can_be_retried(self):
@@ -128,6 +129,7 @@ customPiece1 = p:mKmDmA
                 response = await self.rematch(current, ws)
                 self.assertEqual(response["type"], "new_game")
                 self.assertEqual(current.rematch_id, response["gameId"])
+                await self.state.games[response["gameId"]].game_ended(self.player, "resign")
 
     async def test_community_fen_validation_still_rejects_invalid_input(self):
         register_catalogued_variant_doc(

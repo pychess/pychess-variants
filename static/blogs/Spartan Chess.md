@@ -10,7 +10,7 @@
 </br>
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/spartan-kick.jpg" width="300" height="150">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/spartan-kick.jpg" width="300" height="150">
 </p>
 
 We’re pleased to announce a new game to our roster: Spartan Chess! For those who are unfamiliar with it, Spartan Chess was basically one of the original asymmetric variants that was balanced using engines, long before Fairy Stockfish made the work much easier for us.
@@ -21,5 +21,5 @@ In Spartan chess, the black army represents the Spartans, and one of the two big
 -Couch Tomato
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/icons/spartan.svg" width="25" height="25">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/icons/spartan.svg" width="25" height="25">
 </p>

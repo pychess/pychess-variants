@@ -1,4 +1,4 @@
-# ![Capahouse960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Capahouse960.svg) Capahouse 960
+# ![Capahouse960](https://github.com/pychess/pychess-variants/blob/master/static/icons/Capahouse960.svg) Capahouse 960
 
 A Capahouse 960 egy sakkvariáns, ami a Capablanca-sakkot kombinálja a Crazyhouse behozási szabályaival és a Sakk960 (más néven Fischer random sakk) szabályaival.
 

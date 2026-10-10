@@ -8,7 +8,7 @@ import { boardSettings } from './boardSettings';
 import { patch } from './document';
 import { timeControlStr } from './view';
 import { PyChessModel } from './types';
-import { aiLevel } from './result';
+import { aiDisplayName, aiLevel } from './result';
 import { sizeMiniBoardHost } from './miniBoard';
 import { getLastMoveFen, VARIANTS } from './variants';
 import { subscribeOngoingRealtime } from './ongoingRealtime';
@@ -59,7 +59,7 @@ function gameView(games: Games, game: Game) {
                 ]),
                 h('div.name.row-name', [
                     h('player-title', ' ' + game.bTitle + ' '),
-                    displayUsername(game.b) + aiLevel(game.b, game.level),
+                    displayUsername(aiDisplayName(game.b, game.variant)) + aiLevel(game.b, game.level),
                 ]),
             ]),
             h(`div.cg-wrap.${variant.board.cg}.mini`, {
@@ -83,7 +83,7 @@ function gameView(games: Games, game: Game) {
             }),
             h('div.name', [
                 h('player-title', ' ' + game.wTitle + ' '),
-                displayUsername(game.w) + aiLevel(game.w, game.level),
+                displayUsername(aiDisplayName(game.w, game.variant)) + aiLevel(game.w, game.level),
             ]),
         ]),
     );

@@ -1,6 +1,6 @@
-# ![Synochess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/synochess.svg) Synochess
+# ![Synochess](https://github.com/pychess/pychess-variants/blob/master/static/icons/synochess.svg) Synochess
 
-![Synochess](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Synochess.png)
+![Synochess](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Synochess.png)
 
 El Synochess es una variante de Ajedrez diseñada en 2020 por Couch Tomato. La idea del juego era crear una variante donde el ejército del Ajedrez occidental luchara contra el ejército del Xiangqi (Ajedrez Chino) de una forma equilibrada. Dado que las circunstancias en Xiangqi son muy distintas (tablero más grande, piezas en general más débiles), era difícil conseguirlo sin añadir grandes mejoras al ejército basado en Xiangqi. Sin embargo, fue posible hacerlo, sin perder la sensación de estar jugando Xiangqi cuando se juega con ese bando. En este juego las Blancas representan el Ajedrez occidental y reciben el nombre de Reino, mientras que el ejército Rojo representa la mezcla de Xiangqi y Janggi (Ajedrez Coreano) y se denomina Dinastía. Todas las piezas de la Dinastía recuerdan a su contrapartida bien en Xiangqi o bien en Janggi y deberían resultar familiares para quienes hayan practicado dichos juegos.
 El nombre Synochess se basa en un nombre previo, Sinochess, pero fue cambiado porque la Dinastía se convirtió en menos "Sino" (como en Chino) y más una mezcla de Chino y Coreano. En cambio el prefijo syn- significa "juntos", y el juego representa dos ramas históricas diferentes del ajedrez juntas en una.
@@ -33,26 +33,26 @@ Los detalles y diagramas de cada pieza se muestran a continuación.
 
 ### Soldado (S)
 
-![Soldado](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Soldier.png)
+![Soldado](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Soldier.png)
 
 El Soldado puede mover un espacio hacia adelante o hacia los lados. Es exactamente lo mismo que un Soldado que ha cruzado el Río en Xiangqi y lo mismo que un Soldado de Janggi. El Soldado, a diferencia del Peón, no puede promocionar.
 Dado que el Soldado no puede mover hacia atrás, solamente puede mover hacia los lados en la última fila. Evita ponerlos en esta situación a menos que te sirva para llegar a jaque mate o camp mate. Los Soldados son más fuertes cuando van en pares de forma que se protegen mutuamente.
 
 ### Elefante (E)
 
-![Elefante](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantDynasty.png)
+![Elefante](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantDynasty.png)
  
 El Elefante es una pieza "saltadora" que se mueven diagonalmente una o dos casillas. Puede saltar en diagonal sobre una pieza para mover o capturar en la segunda casilla. La pieza es esencialmente una versión mejorada del Elefante de Xiangqi; es exactamente lo mismo que el Elefante del Shako.
 
 ### Cañón (C)
 
-![Cañón](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/CannonDynasty.png)
+![Cañón](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/CannonDynasty.png)
  
  El Cañón también es una pieza que salta. Es esencialmente una Torre que para moverse necesita la intervención de una pieza intermedia (denominada "pantalla") para saltar sobre ella y poder mover o capturar a lo largo de la misma línea. *****Un Cañón no puede saltar sobre otro Cañón.***** Esta versión del Cañón es exactamente la misma que en Janggi. Dado que requiere de otra pieza para mover o capturar, el Cañón tiene menos valor en los finales.
  
 ### Consejero
 
-![Consejero](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Advisor.png)
+![Consejero](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Advisor.png)
 
 El Consejero mueve y captura exactamente como un Rey. A diferencia del Rey, puede ser capturado. Aunque no hay ninguna pieza equivalente en Xiangqi o Janggi, no hay Palacio en Synochess. Por tanto, el Consejero necesitaba ser más fuerte para proteger a su propio Rey, y uno puede pensar en sus movimientos como una combinación de la fuerza de los dos Consejeros del Xiangqi para cubrir las 8 casillas.
 
@@ -135,7 +135,7 @@ Como Dinastía, trata de evitar mover los Soldados mucho. Su formación inicial 
 
 Si eres Blancas, evita esta situación. No pierdas de vista a los Cañones.
 
-![Mate del Loco](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/FoolsMate.png)
+![Mate del Loco](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/FoolsMate.png)
 
 En parte esto explica por qué 1. e3 es una apertura estándar. Y cuando no se hace 1. e3, se suele hacer 2. e3. Después, si un Cañón ataca, puede ser bloqueado por un Alfil o Caballo, que quedará clavado durante un rato. 1. e4 no es recomendablte porque de hecho no amenaza nada (el Peón está clavado debido a los Reyes enfrentados).
 
@@ -143,6 +143,6 @@ En parte esto explica por qué 1. e3 es una apertura estándar. Y cuando no se h
 
 Esta es una táctica especialmente devastadora que puede causar la derrota inevitable de las Blancas. La situación se produce cuando un Carruaje tiene una columna abierta (con la cual ya cuenta al comienzo), y el Cañón tiene un camino abierto hacia la primera fila (b1 o g1). Esa casilla puede o no contener un Caballo, pero si está vacía la táctica solo funciona si el Caballo no la cubre.
 
-![MataDamas](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Queenslayer.png)
+![MataDamas](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Queenslayer.png)
 
 Una vez que esta posición ocurre, el Carruaje puede tomar el Peón, forzando a la Torre a retomar el carruaje. Esto expone la casilla b1/g1 para el Cañón, que o bien amenazará Y clavará la Dama en el caso de b1, o bien hará una enfilada a la Dama con el jaque desde g1. En cualquier caso, se pierde la Dama.

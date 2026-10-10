@@ -1,8 +1,8 @@
-# ![Gorogoro](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Gorogoro.svg) Gorogoro+ | 五六将棋
+# ![Gorogoro](https://github.com/pychess/pychess-variants/blob/master/static/icons/Gorogoro.svg) Gorogoro+ | 五六将棋
 
 |                                                                                                            |                                                                                                            |
 | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| ![Gorogoro](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Gorogoro1.png) | ![Gorogoro](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Gorogoro2.png) |
+| ![Gorogoro](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Gorogoro1.png) | ![Gorogoro](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Gorogoro2.png) |
 
 Gorogoro+ 是将棋的精简版，棋盘大小为 5x6 。
 

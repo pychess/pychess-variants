@@ -1,4 +1,4 @@
-# ![ChreeCheck](https://github.com/gbtami/pychess-variants/blob/master/static/icons/3check.svg) 三将象棋 | Three-Check
+# ![ChreeCheck](https://github.com/pychess/pychess-variants/blob/master/static/icons/3check.svg) 三将象棋 | Three-Check
 
 _成功实行三次将军即算获胜的国际象棋变种。_
 

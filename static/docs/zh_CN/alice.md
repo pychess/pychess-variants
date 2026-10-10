@@ -1,6 +1,6 @@
-# ![Alice Chess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Alice.svg) 爱丽丝象棋 | Alice Chess
+# ![Alice Chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/Alice.svg) 爱丽丝象棋 | Alice Chess
 
-![Alice](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Aliceroom3.jpg)
+![Alice](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Aliceroom3.jpg)
 上图：《爱丽丝镜中世界奇遇记》穿越镜子的爱丽丝；作者：John Tenniel.
 
 爱丽丝象棋（Alice chess）是一个国际象棋的变种，由 V. R. Parton 设计于 1953 年。该变种引入了两个相同的棋盘，增加了一条在两个棋盘之间穿越的机制。

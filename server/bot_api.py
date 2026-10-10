@@ -15,6 +15,7 @@ from bot_accounts import (
 )
 from broadcast import round_broadcast
 from const import RESIGN, STARTED
+from csrf import csrf_exempt
 from game import Game
 from json_utils import json_dumps, json_response
 from pychess_global_app_state_utils import get_app_state
@@ -191,11 +192,12 @@ def authorized(*, require_bot: bool = True) -> Callable[[Handler], Handler]:
             await _authorize_token(request, require_bot=require_bot)
             return await func(request)
 
-        return inner
+        return csrf_exempt(inner)
 
     return decorator
 
 
+@csrf_exempt
 async def bot_token_test(request: web.Request) -> web.StreamResponse:
     app_state = get_app_state(request.app)
     text = await read_text_data(request)

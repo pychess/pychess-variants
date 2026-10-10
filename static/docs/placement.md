@@ -1,4 +1,4 @@
-# ![Placement](https://github.com/gbtami/pychess-variants/blob/master/static/icons/placement.svg) Placement Chess (Bronstein chess, Pre-Chess, Shuffle-Chess)
+# ![Placement](https://github.com/pychess/pychess-variants/blob/master/static/icons/placement.svg) Placement Chess (Bronstein chess, Pre-Chess, Shuffle-Chess)
 
 Pal Benko credited the idea of “Pre-Chess” or “Shuffle-Chess” to David Bronstein.
 

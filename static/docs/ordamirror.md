@@ -1,6 +1,6 @@
-# ![Orda Mirror](https://github.com/gbtami/pychess-variants/blob/master/static/icons/ordamirror.svg) Orda Mirror
+# ![Orda Mirror](https://github.com/pychess/pychess-variants/blob/master/static/icons/ordamirror.svg) Orda Mirror
 
-![Orda Mirror Board](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/OrdaMirror.png)
+![Orda Mirror Board](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/OrdaMirror.png)
 
 Orda Mirror is a chess variant designed in 2020 by Couch Tomato and is a derivative variant of Orda Chess. Orda Mirror takes the Horde army from Orda Chess and pits them against each other, turning into a Horde vs Horde mirror match. However, the Horde armies in Orda Mirror are not completely identical to the one in Orda Chess; the Yurt is replaced with the new Falcon, a piece that moves like a queen, but attacks like a knight (all other Horde pieces *move* like a knight). This gives some long range flexibility that the Horde was otherwise missing while preserving the horse motif.
  
@@ -28,25 +28,25 @@ Details and diagrams of each piece are below. Green dots represent movement, red
  
 ### Falcon (F)
 
-![Falcon](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Falcon.png)
+![Falcon](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Falcon.png)
  
 The Falcon is a unique divergent piece that moves and attacks differently. It moves as a queen but captures as a knight.
 
 ### Kheshig (H)
 
-![Kheshig](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Kheshig.png)
+![Kheshig](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Kheshig.png)
  
 The Kheshig is a hybrid piece that moves and captures as a knight and king combined. This piece type is also generically called the centaur. The kheshig starts in the knight’s spot, but unlike the knight, is the strongest Horde piece. It can be thought of as the general that leads its own troops on each flank.
 
 ### Horse Archer (A)
 
-![Horse Archer](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archer.png)
+![Horse Archer](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archer.png)
  
 The Horse Archer, or simply abbreviated Archer, is a unique divergent piece that moves and attacks differently. The archer moves as a knight but captures as a bishop. Because the archer is not colorbound, its value is greater than the bishop.
  
 ### Lancer (L)
 
-![Lancer](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Lancer.png)
+![Lancer](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Lancer.png)
  
 The Lancer is a unique divergent piece that moves and attacks differently. The lancer moves as a knight but captures as a rook.
 

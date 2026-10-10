@@ -1,4 +1,4 @@
-# ![Capahouse](https://github.com/gbtami/pychess-variants/blob/master/static/icons/CHouse.svg) Capahouse
+# ![Capahouse](https://github.com/pychess/pychess-variants/blob/master/static/icons/CHouse.svg) Capahouse
 
 Capahouse es una variante que combina las reglas del ajedrez Capablanca con las reglas de "soltar" piezas de Crazyhouse. Las mismas reglas se aplican en ambos juegos. Dado que se considera una variante derivada del Capablanca, por favor consulta las reglas de Capablanca en su propia guía. Las reglas de Crazyhouse se incluyen a continuación como referencia.
 

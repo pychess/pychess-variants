@@ -1,6 +1,6 @@
-# ![Shogun](https://github.com/gbtami/pychess-variants/blob/master/static/icons/shogun.svg) Shogun Chess
+# ![Shogun](https://github.com/pychess/pychess-variants/blob/master/static/icons/shogun.svg) Shogun Chess
 
-![Shogun](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ShogunPromotions3.png)
+![Shogun](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ShogunPromotions3.png)
 
 O Shogun é uma variante de Xadrez criada em 2019-2020 por Couch Tomato. Enquanto a variante em si é uma mistura de Xadrez e Shogi, a ideia principal do jogo foi a introdução de peças híbridas (normalmente denominadas de Arcebispo e Chancelor) de maneira diferente do habitual. Por exemplo, manter um tabuleiro 8x8 em vez de aumentar o seu tamanho a fim de não diminuir o valor das peças menores, ou introduzi-las num tabuleiro não muito congestionado como o Seirawan Chess. A ideia veio da introdução destas peças via promoção de peças menores e da Torre a partir da linha anterior à 8ª. Mais tarde, as colocações de peça também foram adicionadas a fim de reforçar a defesa contra as promoções. Promoções únicas de peões e cavalos e também a despromoção da Dama foram adicionadas à variante a fim de completar o tema e a simetria.
 
@@ -34,31 +34,31 @@ Regras adicionais para clarificação:
 
 ### Arcebispo
 
-![Archbishop](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ArchbishopShogun.png)
+![Archbishop](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ArchbishopShogun.png)
 
 O Arcebispo é uma peça híbrida já muito usada noutras variantes. Nesta variante, esta é promovida a partir do Bispo e ganha os mesmos movimentos de um Cavalo. Por causa dos seus movimentos únicos, esta é a única capaz de dar Xeque-Mate por si mesma.
 
 ### Morteiro
 
-![Mortar](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Mortar.png)
+![Mortar](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Mortar.png)
 
 O Morteiro é uma peça híbrida já muito usadas noutras variantes, na maior parte das vezes denominada de Chanceler ou Marechal. Nesta variante, esta é promovida a partir da Torre e ganha os mesmos movimentos de um Cavalo.
 
 ### General
 
-![General](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/General.png)
+![General](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/General.png)
 
 O General é uma peça híbrida, geralmente conhecida como Centauro. Neste jogo, é promovida a partir de um Cavalo e ganha os mesmos movimentos de um Rei.
 
 ### Capitão
 
-![Captain](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Captain.png)
+![Captain](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Captain.png)
 
 O Capitão é a única promoção de um Peão e movimenta-se exatamente como um Rei. Sendo uma peça não-Real, capturando o Capitão não dará o jogo como concluido. De notar que ao contrário das outras peças, podem existir vários Capitães em jogo, pelo facto de não ser uma Peça Maior.
 
 ### Duquesa
 
-![Duchess](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Duchess.png)
+![Duchess](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Duchess.png)
 
 A Duquesa é a única despromoção da Dama, e só chega a jogo após a captura da Dama, por se tornar numa Duquesa às mãos do adversário. A Duquesa movimenta-se apenas uma casa na diagonal (Mesmo movimento do chamado "ferz"). Como lembrete, a Duquesa não pode ser promovida caso o jogador já tenha uma Dama em jogo (A poligamia é ilegal em Shogun).
 

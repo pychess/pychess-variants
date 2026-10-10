@@ -2,7 +2,7 @@ import { h, VNode } from 'snabbdom';
 
 import { _ } from './i18n';
 import { colorIcon } from './chess';
-import { aiLevel, gameType, renderRdiff } from './result';
+import { aiDisplayName, aiLevel, gameType, renderRdiff } from './result';
 import { timeago } from './datetime';
 import { alternateStartName, timeControlStr } from './view';
 import { PyChessModel } from './types';
@@ -108,9 +108,10 @@ function playerInfo(model: PyChessModel, color: string) {
     const rating = model[color === 'w' ? 'wrating' : 'brating'];
     const rdiff = model[color === 'w' ? 'wrdiff' : 'brdiff'];
     const berserk = model[color === 'w' ? 'wberserk' : 'bberserk'];
-    const displayName = displayUsername(username);
+    const playerName = aiDisplayName(username, model.variant);
+    const displayName = displayUsername(playerName);
 
-    return userLink(username, [
+    return userLink(playerName, [
         title !== '' ? h('player-title', title + ' ') : '',
         displayName + aiLevel(username, level) + (title !== 'BOT' ? ' (' + rating + ') ' : ''),
         model['status'] < 1 || model['rated'] !== '1' ? h('rdiff#' + color + 'rdiff') : renderRdiff(rdiff),

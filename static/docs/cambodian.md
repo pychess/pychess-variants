@@ -1,6 +1,6 @@
-# ![Ouk Chaktrang](https://github.com/gbtami/pychess-variants/blob/master/static/icons/cambodian.svg) Ouk Chaktrang
+# ![Ouk Chaktrang](https://github.com/pychess/pychess-variants/blob/master/static/icons/cambodian.svg) Ouk Chaktrang
 
-![Ouk Chaktrang](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
+![Ouk Chaktrang](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 
 *Ouk Chaktrang*, or Cambodian Chess, is the form of chess played in Cambodia. Its rules are similar to *Makruk*, the Thai Chess, with some special opening moves and slight differences. Ouk Chaktrang offers a taste of ancient Chess in its original form before the introduction of modern rules quickened the pace. The game is plenty of fun in its own right with its balance and dynamics. The slightly slower pace can provide a good way to cultivate patience and hone strategic thinking.
 
@@ -14,13 +14,13 @@ Cambodian piece names are in parentheses.
 
 ### King (*Khon*)
 
-![King](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/King.png?raw=true) 
+![King](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/King.png?raw=true)
 
 The king moves one square orthogonally or diagonally.
 
 ### Queen (*Neang*)
 
-![Queen](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Queen.png?raw=true)
+![Queen](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Queen.png?raw=true)
 
 Unlike the queen in chess, the queen is a relatively weak piece that only moves one square diagonally.
 
@@ -28,7 +28,7 @@ The queen is worth about 1.5 to 2 pawns in general. The queen is a good piece to
 
 ### Bishop (*Koul*)
 
-![Bishop](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Bishop.png?raw=true)
+![Bishop](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Bishop.png?raw=true)
 
 The bishop moves one square diagonally or one square forward, just like the silver general in shogi.
 
@@ -40,7 +40,7 @@ Bishops can sometimes prove slow/awkward to maneuver or retreat. It is therefore
 
 ### Knight (*Ses*)
 
- ![Knight](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Knight.png?raw=true)
+ ![Knight](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Knight.png?raw=true)
 
 The knight moves exactly the same as in chess.
 
@@ -48,7 +48,7 @@ The knights are not "minor pieces" in Ouk Chaktrang. They are major forces. Cent
 
 ### Rook (*Touk*)
 
- ![Rook](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Rook.png?raw=true)
+ ![Rook](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Rook.png?raw=true)
 
 The rook moves exactly the same as in chess.
 
@@ -58,7 +58,7 @@ In the absence of mighty chess queens, the rooks dominate the board. Lateral roo
 
 |   |   |
 --- | ---
-![Pawn](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) | ![ProPawn](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true)
+![Pawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) | ![ProPawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true)
 
 The pawn moves and attacks the same as in chess. However, there is no double-step first move. Pawns promote and move like queens when they reach the sixth rank.
 
@@ -70,17 +70,17 @@ For the disadvantaged side, a promoted pawn is a good decoy which must be trappe
 
 ### The king's special move
 
-![King's Jump](https://github.com/gbtami/pychess-variants/blob/master/static/images/OukGuide/kingleap.png)
+![King's Jump](https://github.com/pychess/pychess-variants/blob/master/static/images/OukGuide/kingleap.png)
 
 During its first move, the king can jump like a knight to the second row. This move cannot capture and cannot be performed while in check.
 
-![Rook's Aiming](https://github.com/gbtami/pychess-variants/blob/master/static/images/OukGuide/rookaim.png)
+![Rook's Aiming](https://github.com/pychess/pychess-variants/blob/master/static/images/OukGuide/rookaim.png)
 
 Furthermore, if an enemy rook moves into the same rank or file as the king, "indirectly attacking" it, it *permanently* loses this ability. The king can no longer jump even if the rook moves away afterwards.
 
 ### The queen's special move
 
-![Met's Jump](https://github.com/gbtami/pychess-variants/blob/master/static/images/OukGuide/metleap.png)
+![Met's Jump](https://github.com/pychess/pychess-variants/blob/master/static/images/OukGuide/metleap.png)
 
 During its first move, the queen can jump two squares forward. This move cannot capture.
 

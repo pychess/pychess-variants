@@ -1,4 +1,4 @@
-# ![Grandhouse](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Grandhouse.svg) Grandhouse
+# ![Grandhouse](https://github.com/pychess/pychess-variants/blob/master/static/icons/Grandhouse.svg) Grandhouse
 
 Le Grandhouse est une variante combinant les règles du Grand avec le parachutage du Crazyhouse. les mêmes règles s'appliquent aux deux jeux. Comme le Grandhouse est considéré comme un dérivé du Grand, voir la page du Grand pour les règles. Les règles du Crazyhouse sont écrites ci-dessous.
 

@@ -1755,7 +1755,10 @@ async def test_switching_to_private_disconnects_read_only_study_websockets(aioht
     assert response.status == 302
 
     async with aiohttp.ClientSession() as viewer:
-        ws = await viewer.ws_connect(client.make_url(f"/wsstudy/{study.id}"))
+        ws = await viewer.ws_connect(
+            client.make_url(f"/wsstudy/{study.id}"),
+            headers={"Origin": str(client.make_url("/")).rstrip("/")},
+        )
         connected = await ws.receive_json()
         assert connected["type"] == "study_user_connected"
         assert connected["studyId"] == study.id
@@ -1776,7 +1779,10 @@ async def test_switching_to_private_disconnects_read_only_study_websockets(aioht
         assert closed.type in {aiohttp.WSMsgType.CLOSE, aiohttp.WSMsgType.CLOSED}
 
         with pytest.raises(aiohttp.WSServerHandshakeError) as exc_info:
-            await viewer.ws_connect(client.make_url(f"/wsstudy/{study.id}"))
+            await viewer.ws_connect(
+                client.make_url(f"/wsstudy/{study.id}"),
+                headers={"Origin": str(client.make_url("/")).rstrip("/")},
+            )
         assert exc_info.value.status == 404
 
 

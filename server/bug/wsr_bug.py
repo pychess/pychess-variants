@@ -146,7 +146,7 @@ async def handle_resign_bughouse(data: AbortResignMessage, game: GameBug, user: 
 
     if game.status > STARTED:
         # game was already finished!
-        # see  https://github.com/gbtami/pychess-variants/issues/675
+        # see  https://github.com/pychess/pychess-variants/issues/675
         return
 
     # Resigning takes both teammates; abort, flag and abandon do not and still end the

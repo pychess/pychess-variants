@@ -950,7 +950,7 @@ async def _populate_study_chapter_context(
                 "id": chapter.id,
                 "name": chapter.name,
                 "revision": chapter.revision,
-                "snapshotToken": chapter_snapshot_token(chapter),
+                "snapshotToken": await chapter_snapshot_token(chapter),
                 "order": chapter.order,
                 "orientation": chapter.orientation,
                 "mode": chapter.mode,

@@ -9,7 +9,7 @@
 </div>
 </br>
 
-![Duck](https://github.com/gbtami/pychess-variants/blob/master/static/images/Duck.jpg)
+![Duck](https://github.com/pychess/pychess-variants/blob/master/static/images/Duck.jpg)
 Photo by Jerry Lai [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/deed.en)
 
 In response to the recent popularity of Duck Chess, we've decided to add it to Pychess as well. If you're not familiar with this interesting variant, here's a nice introductory video by <a href="/@/EricRosen">Eric Rosen</a>.

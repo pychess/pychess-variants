@@ -1,6 +1,6 @@
-# ![capablanca](https://github.com/gbtami/pychess-variants/blob/master/static/icons/capablanca.svg) Capablanca Chess
+# ![capablanca](https://github.com/pychess/pychess-variants/blob/master/static/icons/capablanca.svg) Capablanca Chess
 
-![Capablanca setup](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Capablanca.png)
+![Capablanca setup](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Capablanca.png)
 
 Capablanca(卡帕布蘭卡)象棋是國際象棋棋王Capablanca在其棋王任（~1920）內推出。這變體使用10*8格的棋盤而添加了兩種棋子：大主教（馬和象）和首相（馬和車）。
 
@@ -11,21 +11,21 @@ Capablanca(卡帕布蘭卡)象棋是國際象棋棋王Capablanca在其棋王任�
 
 ### 大主教 | 公主 | Archbishop
 
-![Archbishop](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
+![Archbishop](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
 
 大主教用的各種符號（老鷹為S-chess所用）
 
-![Archbishop moves](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
+![Archbishop moves](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
 
 大主教是一個複合棋子，組合動作方法從馬和象。它的樣子常常就是一匹馬和一枚象，不過你可選擇其他的圖像。只有它能單人匹馬把王將死。大主教的價值不如首相或者後，但還是差不多。
 
 ### 首相 | Chancellor
 
-![Chancellor](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
+![Chancellor](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
 
 首相用的各種符號（大象為S-chess所用）
 
-![Chancellor moves](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
+![Chancellor moves](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
 
 首相是一個複合棋子，組合動作方法從馬和車。它的樣子常常就是一匹馬和一輛車，不過你可以選擇其他的圖像。首相的價值被認為是比大主教高一些，跟後一樣或者差一點
 

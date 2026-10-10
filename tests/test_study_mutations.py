@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 import unittest
+from dataclasses import replace
 from datetime import UTC, datetime
 from types import SimpleNamespace
 from typing import Any, cast
@@ -9,6 +11,7 @@ from unittest.mock import patch
 from fairy.fairy_board import FairyBoard
 from mongomock_motor import AsyncMongoMockClient
 from study.annotations import StudyShape
+from study.document import encode_chapter
 from study.models import Study, StudyChapter
 from study.mutations import StudyMutationService
 from study.tree import StudyTree
@@ -63,6 +66,43 @@ class StudyMutationServiceTestCase(unittest.IsolatedAsyncioTestCase):
             move=move,
             expected_revision=revision,
         )
+
+    async def test_cancelled_large_chapter_size_check_does_not_commit_mutation(self) -> None:
+        added = await self._add("e2e4", 0)
+        assert added.node is not None
+        nodes = {}
+        parent = None
+        for index in range(65):
+            node_id = f"N{index:09d}"
+            nodes[node_id] = replace(added.node, id=node_id, parent_id=parent)
+            parent = node_id
+        await self.db.study_chapter.update_one(
+            {"_id": CHAPTER_ID}, {"$set": {"root": StudyTree(nodes).to_document()}}
+        )
+        before = await self.db.study_chapter.find_one({"_id": CHAPTER_ID})
+        encoding_started = asyncio.Event()
+
+        async def encode(chapter: StudyChapter):
+            encoding_started.set()
+            return await encode_chapter(chapter)
+
+        with patch("study.mutations.encode_chapter", side_effect=encode):
+            task = asyncio.create_task(
+                self.service.set_comment(
+                    study_id=STUDY_ID,
+                    chapter_id=CHAPTER_ID,
+                    username=OWNER,
+                    path="",
+                    comment_id="Comment001",
+                    text="Interrupted annotation",
+                    expected_revision=1,
+                )
+            )
+            await encoding_started.wait()
+            task.cancel()
+            with self.assertRaises(asyncio.CancelledError):
+                await task
+        self.assertEqual(await self.db.study_chapter.find_one({"_id": CHAPTER_ID}), before)
 
     async def test_write_contributor_can_mutate_but_reader_cannot(self) -> None:
         await self.db.study.update_one(
@@ -144,6 +184,27 @@ class StudyMutationServiceTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(invalid.status, "error")
         self.assertEqual(invalid.reason, "invalid_node_id")
         self.assertEqual((await self._chapter()).revision, 1)
+
+    async def test_add_rejects_untrusted_parent_fen_before_native_move_generation(self) -> None:
+        added = await self._add("e2e4", 0)
+        assert added.node is not None
+        for variant, fen in (
+            ("chess", "not-a-fen b"),
+            (
+                "crazyhouse",
+                FairyBoard.start_fen("crazyhouse").replace("[]", "[" + "P" * 1000 + "]"),
+            ),
+        ):
+            with self.subTest(variant=variant):
+                await self.db.study_chapter.update_one(
+                    {"_id": CHAPTER_ID},
+                    {"$set": {"variant": variant, f"root.{added.node.id}.f": fen}},
+                )
+                with patch("fairy.fairy_board.sf.legal_moves") as legal:
+                    result = await self._add("e7e5", 1, added.node.id)
+                self.assertEqual(result.reason, "invalid_chapter_tree")
+                self.assertEqual((await self._chapter()).revision, 1)
+                legal.assert_not_called()
 
     async def test_add_rejects_illegal_move_and_stale_revision(self) -> None:
         illegal = await self._add("e2e5", 0)

@@ -1,4 +1,4 @@
-# ![Antichess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Antichess960.svg) 逆国际象棋 960 | Antichess 960
+# ![Antichess](https://github.com/pychess/pychess-variants/blob/master/static/icons/Antichess960.svg) 逆国际象棋 960 | Antichess 960
 
 该玩法是逆国际象棋的 960 玩法，加入菲舍尔任意制规则。
 

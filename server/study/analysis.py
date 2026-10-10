@@ -16,7 +16,6 @@ from analysis_advice import (
     analysis_score,
     prepare_analysis_line,
 )
-from bson import BSON
 from catalogued_variants import catalogued_variant_allows_fishnet, replace_variant_section_name
 from const import ANALYSIS
 from fairy.fairy_board import FairyBoard
@@ -30,6 +29,8 @@ from study.constants import (
     STUDY_MAX_NAGS_PER_POSITION,
     STUDY_MAX_NODES_PER_CHAPTER,
 )
+from study.document import encode_chapter
+from study.engine import validated_study_position
 from study.models import Study, StudyChapter, StudyServerEval
 from study.permissions import can_write_study
 from study.quota import (
@@ -241,9 +242,6 @@ async def request_study_server_analysis(
         has_available_fishnet_worker,
     )
 
-    if not has_available_fishnet_worker(app_state):
-        return StudyAnalysisRequestResult("fishnet_unavailable", current)
-
     try:
         with study_variant_context(app_state, chapter.variant, chapter.variant_ini) as options:
             board = FairyBoard(
@@ -271,6 +269,9 @@ async def request_study_server_analysis(
             exc_info=True,
         )
         return StudyAnalysisRequestResult("variant_unavailable", current)
+
+    if not has_available_fishnet_worker(app_state, variant=work_variant):
+        return StudyAnalysisRequestResult("fishnet_unavailable", current)
 
     if not catalogued_variant_allows_fishnet(app_state, work_variant):
         return StudyAnalysisRequestResult("variant_unavailable", current)
@@ -471,9 +472,9 @@ def _new_analysis_board(
     parent = mainline[parent_ply - 1] if parent_ply else None
     parent_fen = parent.fen if parent is not None else chapter.initial_fen
     if parent is not None and not legal_moves_need_history:
-        return FairyBoard(
+        return validated_study_position(
             runtime_variant,
-            initial_fen=parent_fen,
+            parent_fen,
             chess960=chapter.chess960,
             show_promoted=show_promoted,
         )
@@ -676,23 +677,24 @@ def _merge_analysis_into_tree(
     )
 
 
-def _tree_within_chapter_size(
+async def _sized_tree_document(
     chapter: StudyChapter,
     root: StudyTree,
     server_eval: StudyServerEval,
-) -> bool:
-    if root == chapter.root:
-        return True
+) -> dict[str, object] | None:
     try:
         candidate = replace(chapter, root=root, server_eval=server_eval)
-        return len(BSON.encode(candidate.to_document())) <= STUDY_CHAPTER_MAX_BSON_BYTES
+        encoded = await encode_chapter(candidate, include_document=True)
+        if encoded.size <= STUDY_CHAPTER_MAX_BSON_BYTES:
+            assert encoded.document is not None
+            return cast(dict[str, object], encoded.document["root"])
     except Exception:
         log.exception(
             "Failed to size Study Fishnet tree merge for %s/%s",
             chapter.study_id,
             chapter.id,
         )
-        return False
+    return None
 
 
 async def merge_study_server_analysis(
@@ -727,17 +729,18 @@ async def merge_study_server_analysis(
         analysis, complete = _merge_analysis_rows(chapter, rows)
         server_eval = replace(current, done=complete, analysis=analysis)
         merged_root = _merge_analysis_into_tree(app_state, chapter, rows)
-        if not _tree_within_chapter_size(chapter, merged_root, server_eval):
-            log.warning(
-                "Skipping Study Fishnet tree merge for %s/%s because the chapter size limit would be exceeded",
-                chapter.study_id,
-                chapter.id,
-            )
-            merged_root = chapter.root
-
         set_fields: dict[str, object] = {"serverEval": server_eval.to_document()}
         if merged_root != chapter.root:
-            set_fields["root"] = merged_root.to_document()
+            root_document = await _sized_tree_document(chapter, merged_root, server_eval)
+            if root_document is None:
+                log.warning(
+                    "Skipping Study Fishnet tree merge for %s/%s because the chapter size limit would be exceeded",
+                    chapter.study_id,
+                    chapter.id,
+                )
+                merged_root = chapter.root
+            else:
+                set_fields["root"] = root_document
         result = await app_state.db.study_chapter.update_one(
             {
                 "_id": chapter.id,

@@ -1,4 +1,4 @@
-# ![Grandhouse](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Grandhouse.svg) Grandhouse
+# ![Grandhouse](https://github.com/pychess/pychess-variants/blob/master/static/icons/Grandhouse.svg) Grandhouse
 
 Az Grandhouse egy sakkvariáns, ami az Grand sakkot kombinálja a Crazyhouse behozási szabályaival. Mivel ez a játék a Grand sakk egy változata, annak szabályai az arra vonatkozó leírásban megtalálhatók. A Crazyhouse szabályai emlékeztetőnek:
 

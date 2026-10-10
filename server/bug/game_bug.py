@@ -26,6 +26,7 @@ from user import User
 from variants import GRANDS, get_server_variant
 
 from bug.game_bug_clocks import GameBugClocks
+from bug.history import clock_columns, replay_history, step_metadata
 
 log = logging.getLogger(__name__)
 
@@ -169,6 +170,9 @@ class GameBug:
         self.date = datetime.now(UTC)
 
         self.lastmove = None
+        self._history_doc: dict | None = None
+        self._history_moves: list[str] = []
+        self._history_replayed = False
         self.lastmovePerBoardAndUser = {"a": {}, "b": {}}
         self.status = STARTED  # CREATED
         self.result: str = "*"
@@ -227,6 +231,7 @@ class GameBug:
         pass
 
     def handle_chat_message(self, user, message, room):
+        self.ensure_steps()
         cur_ply = len(self.steps) - 1
         time = self.gameClocks.elapsed_since_last_move()
         step_chat = {"message": message, "username": user.username, "time": time, "room": room}
@@ -879,14 +884,47 @@ class GameBug:
 
         return self.game_end_payload()
 
-    def get_board(self, full=False, persp_color=None):
+    def ensure_steps(self) -> None:
+        if self._history_doc is None or self._history_replayed:
+            return
+        self._history_replayed = True
+        for board in self.boards.values():
+            board.fen = board.initial_fen
+            board.move_stack = []
+            board.ply = 0
+            board.color = WHITE if board.fen.split()[1] == "w" else BLACK
+        self.checkA = self.boards["a"].is_checked()
+        self.checkB = self.boards["b"].is_checked()
+        replay_history(self, self._history_doc, self._history_moves)
+
+    def display_history(self):
+        if self._history_doc is None or self._history_replayed:
+            return None
+        columns = clock_columns(self, self._history_doc)
+        return {
+            "variant": self.variant,
+            "chess960": self.chess960,
+            "moves": self._history_moves,
+            "boards": ["a" if board == 0 else "b" for board in self._history_doc["o"]],
+            "metadata": [
+                step_metadata(self._history_doc, columns, ply)
+                for ply in range(1, len(self._history_moves) + 1)
+            ],
+        }
+
+    def get_board(self, full=False, persp_color=None, *, client_history=False):
+        history = (
+            self.display_history() if full and client_history and self.status > STARTED else None
+        )
+        if history is None:
+            self.ensure_steps()
         [clocks_a, clocks_b] = self.gameClocks.get_clocks_for_board_msg(full)
         if full:
             steps = self.steps
         else:
             steps = (self.steps[-1],)
 
-        return {
+        response = {
             "type": "board",
             "gameId": self.id,
             "status": self.status,
@@ -911,6 +949,9 @@ class GameBug:
             "berserk": {"w": False, "b": False},
             "by": self.imported_by,
         }
+        if history is not None:
+            response["twoBoardHistory"] = history
+        return response
 
     @property
     def turn_player(self):

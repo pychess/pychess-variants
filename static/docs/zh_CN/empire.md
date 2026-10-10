@@ -1,6 +1,6 @@
-# ![Empire chess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/empire.svg) 帝王象棋 | Empire Chess
+# ![Empire chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/empire.svg) 帝王象棋 | Empire Chess
 
-![Empire](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Empire.png)
+![Empire](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Empire.png)
 
 帝王象棋(Empire Chess)是一种国际象棋变体，在 2019-2020 由 Couch Tomato 推出，非对称棋组变体系列的第三款（第四个发布于 Pyches s的，因为代码问题拖延了一段时间）。游戏的背景设定在一个王国（黑）与一个强大的帝国（金）之间。帝国的皇帝听说过有一位在战场上统领千军万马的女士，并且有意让她与帝国公爵结婚。然而，王国的国王捷足先登娶走了她。帝国的皇帝感到受到了莫大羞辱，于是起兵亲征，要去给王国军一个教训！
 
@@ -29,31 +29,31 @@
 
 ### 卒 | Soldier(S)
 
-![Soldier](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/EmpireSoldier.png)
+![Soldier](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/EmpireSoldier.png)
 
 卒的走法和中国象棋过河兵一样，可左右或往前走一步。注意卒不可升变。
 
 ### 公爵 | Duke(D)
 
-![Duke](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Duke.png)
+![Duke](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Duke.png)
 
 公爵是王国方后的对应棋子。他走棋是后的步法，但吃子只能按王的步法。虽然他确实是帝国方重子里较弱的，但是在残局中他可与任意一枚棋子协同实行将杀，甚至是借助帝王（注意照面规则）。
 
 ### 攻城塔 | Siege Tower(T)
 
-![Siege Tower](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Tower.png)
+![Siege Tower](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Tower.png)
 
 攻城塔的走子是后的步法，吃子则是车的步法。也可以认为是在车的基础上，增加了按象的步法只走不吃的能力。攻城塔是帝国最强的棋子。
 
 ### 战鹰 | Eagle(E)
 
-![Eagle](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Eagle.png)
+![Eagle](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Eagle.png)
 
 战鹰的走子是后的步法，吃子只能按马的步法。战鹰的价值跟马差不多，是帝国最弱的重子。
 
 ### 红衣主教 | Cardinal(C)
 
-![Cardinal](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Cardinal.png)
+![Cardinal](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Cardinal.png)
 
 红衣主教走子是后的步法，吃子只能按象的步法。它也可以认为是在国际象棋象的基础上，增加了按车的步法只走不吃的走法。与象不同，他可以切换方格颜色，因此价值仅略微弱于攻城塔。是帝国威力第二大的棋子。
 

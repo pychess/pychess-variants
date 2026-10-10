@@ -299,14 +299,7 @@ export function notifyView() {
     xmlhttp.send();
 
     function sendNotified() {
-        const xmlhttp = new XMLHttpRequest();
-        xmlhttp.onreadystatechange = function () {
-            if (this.readyState === 4 && this.status === 200) {
-                console.log('sendNotified() was OK');
-            }
-        };
-        xmlhttp.open('GET', '/notified', true);
-        xmlhttp.send();
+        void window.fetch('/notified', { method: 'POST' });
     }
 
     function showNotify() {

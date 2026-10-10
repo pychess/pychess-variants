@@ -1,4 +1,4 @@
-# ![Antichess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/antichess.svg) 逆国际象棋 | Antichess
+# ![Antichess](https://github.com/pychess/pychess-variants/blob/master/static/icons/antichess.svg) 逆国际象棋 | Antichess
 
 _国际象棋，但是目标是送吃_
 

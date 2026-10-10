@@ -10,7 +10,7 @@
 </br>
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Aliceroom3.jpg" width="300" height="150">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Aliceroom3.jpg" width="300" height="150">
 </p>
 
 We are happy to announce the availability of two new variants here on Pychess: [**Alice Chess**](https://www.pychess.org/variants/alice) and [**Fog of War**](https://www.pychess.org/variants/fogofwar).

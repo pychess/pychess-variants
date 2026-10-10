@@ -10,7 +10,7 @@
 </br>
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/Shi_DeRu_and_Shi_DeYang.jpg">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/Shi_DeRu_and_Shi_DeYang.jpg">
 </p>
 
 "[Shi DeRu and Shi DeYang](https://commons.wikimedia.org/wiki/File:Shi_DeRu_and_Shi_DeYang.jpg)" is licensed under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)
@@ -47,4 +47,4 @@ Most notably, @Dean's Borderlands was the runner-up. Personally, at first I thou
 After thorough play testing and piece set design Xiangfu is playable on pychess from now on. Enjoy!
 
 -Couch Tomato
-![Xiangfu](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Xiangfu.svg)
+![Xiangfu](https://github.com/pychess/pychess-variants/blob/master/static/icons/Xiangfu.svg)

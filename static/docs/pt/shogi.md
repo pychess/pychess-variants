@@ -1,6 +1,6 @@
-# ![Shogi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/shogi.svg) Shogi
+# ![Shogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/shogi.svg) Shogi
 
-![Boards](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Boards.png)
+![Boards](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Boards.png)
 
 *Shogi* (将棋), ou Xadrez japonês é um jogo de tabuleiro classico proveniente do Japão e descendente do Chaturanga, o mesmo antepassado do Xadrez. A sua forma moderna já existe desde o século XVI. O jogo é muito popular no Japão, país este onde o Shogi é mais jogado do que o Xadrez e onde existe um lado profissional. O jogo em si é ao mesmo tempo semelhante e muito distinto do Xadrez, com a adição da colocação de peças que são capturadas de volta ao tabuleiro.
 
@@ -25,11 +25,11 @@ Acerca das peças promovidas, na maioria das representações, incluindo as que 
 
 ### Rei
 
-![BlackKings](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/BlackKings.png) 
+![BlackKings](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/BlackKings.png)
 
-![WhiteKings](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/WhiteKings.png)
+![WhiteKings](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/WhiteKings.png)
 
-![KingDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/King.png)
+![KingDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/King.png)
 
 O rei movimenta-se exatamente como no Xadrez: uma casa em qualquer direção. Na representação em kanji, o rei com um ponto, 玉將 gyokushō é o rei das pretas, enquanto que o Rei sem ponto, 王將 ōshō é o rei das brancas.
 
@@ -37,9 +37,9 @@ Esta é a única peça cuja representação internacional é mantida na sua form
 
 ### Torre
 
-![Rooks](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Rooks.png)
+![Rooks](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Rooks.png)
 
-![RookDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Rook.png)
+![RookDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Rook.png)
 
 
 A Torre movimenta-se exatamente como no xadrez: quaisquer número de casas na ortogonal. A representação internacional é um Carrinho, a que se refere ao nome japonês "Carrinho Voador". Em inglês o nome da Torre (Rook) é baseado na palavra persa para Carrinho. Esta é a peça não promovida mais valiosa, excluindo o Rei.
@@ -48,23 +48,23 @@ A Torre movimenta-se exatamente como no xadrez: quaisquer número de casas na or
 
 O Bispo movimenta-se exatamente como no Xadrez: quaisquer número de casas na diagonal. A sua representação internacional tem um chapéu tradicional de um oficial Japonês. Esta é a segunda peça não promovida mais valiosa do jogo, excluindo o Rei.
 
-![Bishops](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Bishops.png)
+![Bishops](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Bishops.png)
 
-![BishopDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Bishop.png)
+![BishopDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Bishop.png)
 
 ### Dragão Rei (Dragão, Torre Promovida)
 
-![Dragons](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Dragons.png)
+![Dragons](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Dragons.png)
 
-![DragonDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Dragon.png)
+![DragonDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Dragon.png)
 
 O Dragão-Rei é uma Torre promovida, que obtém os mesmos movimentos do Rei adicionando-os aos movimentos da Torre. Esta é a peça mais valiosa do jogo, excluindo o Rei.
 
 ### Dragão-Cavalo (Cavalo, Bispo Promovido)
 
-![Horses](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Horses.png)
+![Horses](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Horses.png)
 
-![HorseDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Horse.png)
+![HorseDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Horse.png)
 
 O Dragão-Cavalo é um bispo promovido, que tem os mesmos movimentos do Rei para além do Bispo. Esta é a segunda peça mais valiosa no jogo, excluindo o Rei.
 
@@ -72,9 +72,9 @@ Nota: Não confundir esta peça com o cavalo do Xadrez.
 
 ### General Dourado (Ouro)
 
-![Golds](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Golds.png)
+![Golds](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Golds.png)
 
-![GoldDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Gold.png)
+![GoldDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Gold.png)
 
 O movimento do General-Dourado pode parecer confuso à primeira, mas a maneira mais fácil de lembrar é pensando que este se **move uma casa na ortogonal em qualquer direção** ou para as três casas da frente. Na sua representação internacional, as saliências no seu capacete (incluindo o símbolo dourado circular) também apontam para todas as possíveis direções.
 
@@ -82,45 +82,45 @@ O movimento do General-Dourado pode parecer confuso à primeira, mas a maneira m
 
 ### General Prateado (Prata)
 
-![Silvers](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Silvers.png)
+![Silvers](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Silvers.png)
 
-![SilverDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Silver.png)
+![SilverDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Silver.png)
 
 O movimento do General-Prateado pode parecer confuso à primeira, mas a maneira mais fácil de lembrar é pensando que este se **move uma casa na diagonal em qualquer direção** ou para as três casas da frente. Na sua representação internacional, as saliências no seu capacete também apontam para todas as possíveis direções.
 
 ### Cavalo
 
-![Knights](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Knights.png)
+![Knights](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Knights.png)
 
-![KnightDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Knight.png)
+![KnightDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Knight.png)
 
 Semelhante ao cavalo do Xadrez, mas este só se movimenta para as duas casas em frente, i.e. movimenta-se para a frente duas casas e uma para o lado. Tal como o Cavalo do Xadrez, esta pode saltar outras peças.
 
 ### Lança
 
-![Lances](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Lances.png)
+![Lances](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Lances.png)
 
-![LanceeDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Lance.png)
+![LanceeDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Lance.png)
 
 A Lança só se movimenta para a frente, mas em qualquer número de casas (semelhante à Torre).
 
 ### Peão
 
-![Pawns](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Pawns.png)
+![Pawns](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Pawns.png)
 
-![PawnDiagram](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Pawn.png)
+![PawnDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Pawn.png)
 
 O peão movimenta-se e captura uma casa em frente. Este é diferente do Peão do Xadrez. O seu chapéu potiagudo na representação internacional é um lembrete do seu movimento.
 
 ### Peças menores promovidas
 
-![PSilvers](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/PSilvers.png)
+![PSilvers](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/PSilvers.png)
 
-![PKnights](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/PKnights.png)
+![PKnights](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/PKnights.png)
 
-![PLances](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/PLances.png)
+![PLances](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/PLances.png)
 
-![Tokins](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Tokins.png)
+![Tokins](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Tokins.png)
 
 Ao contrário do Dragão-Rei e do Dragão-Cavalo, estas não têm designações diferentes. À exceção do Peão, que por vezes é denominado de *tokin* o seu nome japonês. Como já foi explicado acima todas estas peças se movem como um General-Dourado. De notar que as versões em kanji têm representações diferentes para os caracteres do General-Dourado.
 
@@ -222,7 +222,7 @@ Aqui estão três tipos de roque mais importantes de se saber:
 
 **Yagura (AKA Fortress) / Fortaleza**
 
-![Yagura](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Yagura.png)
+![Yagura](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Yagura.png)
 
 O Roque Yagura é um dos mais poderosos Roques de *Torre Estática*, usado contra Torre Estática adversária. Um lembrete que pode ser útil para se lembrar destas posições é lembrar-se das posições dos generais "S G | G B," ou talvez de se lembrar que o Rei é protegido por um General-Dourado, uma peça extremamente forte. O Yagura é forte na frente, mas fraco nos lados.
 
@@ -255,7 +255,7 @@ A fim de efetuar o Yagura, lembre-se que os generals que se movimentam na diagon
 
 **Roque Mino**
 
-![Mino Castle](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Mino.png)
+![Mino Castle](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Mino.png)
 
 O Roque Mino é um roque clássico de *Torre Enfurecida*, usado contra Torre Estática adversária. O Rei é posto na posição inicial da torre, o General Dourado da esquerda movimenta-se uma casa para a frente e uma para a direita, e após isto o General-Prateado é posto na forma de "G G S" formação V. Este Roque é forte na esquerda, mas fraco em frente e na beira. 
 
@@ -276,7 +276,7 @@ Após estes lances, estará livre de trocar de Bispos e outras peças que deseja
 
 **Anaguma**
 
-![Anaguma](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Anaguma.png)
+![Anaguma](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Anaguma.png)
 
 Anaguma (“Urso no buraco”) é um outro tipo de Roque com *Torre Enraivecida*, e um dos mais sólidos do jogo, no entanto este leva imenso tempo a ser formado.
 

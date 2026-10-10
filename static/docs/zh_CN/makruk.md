@@ -1,6 +1,6 @@
-# ![Makruk](https://github.com/gbtami/pychess-variants/blob/master/static/icons/makruk.svg) 泰国象棋 | Makruk
+# ![Makruk](https://github.com/pychess/pychess-variants/blob/master/static/icons/makruk.svg) 泰国象棋 | Makruk
 
-![Makruk](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
+![Makruk](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 
 泰国象棋(Makruk)是泰国的经典传统棋盘游戏，与恰图兰卡(国际象棋的祖先)关系十分密切。相较国际象棋的快节奏对局，泰国象棋保留了古棋的思维与策略形式。游戏本身十分有趣，节奏稍慢，可培养棋手的耐心与战略思维。
 
@@ -16,7 +16,7 @@
 
 ### 王 (ขุน，*Khun*)
 
-![King](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/King.png?raw=true) 
+![King](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/King.png?raw=true)
 
 王走法与国际象棋的王相同，八个方向一格。
 
@@ -24,7 +24,7 @@
 
 ### 士 (เม็ด，*Met*)
 
-![Queen](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Queen.png?raw=true)
+![Queen](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Queen.png?raw=true)
 
 士，泰语为大臣，走法与中国象棋的士相同，斜走一格。
 
@@ -32,7 +32,7 @@
 
 ### 象 (โคน，*Khon*)
 
-![Bishop](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Bishop.png?raw=true)
+![Bishop](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Bishop.png?raw=true)
 
 象，泰语Khon意为面具舞，走法同日本将棋的银将、可以斜走一格，或向前一格。
 
@@ -44,7 +44,7 @@
 
 ### 马 (ม้า，*Ma*)
 
- ![Knight](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Knight.png?raw=true)
+ ![Knight](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Knight.png?raw=true)
 
 马走法与国际象棋的马完全相同。
 
@@ -52,7 +52,7 @@
 
 ### 车 (เรือ，*Ruea*)
 
-![Rook](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Rook.png?raw=true)
+![Rook](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Rook.png?raw=true)
 
 车(Ruea，意为船)的走法与国际象棋的车相同，直走任意格数。没有王车易位。
 
@@ -62,7 +62,7 @@
 
 |                                                                                                             |                                                                                                                   |
 | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| ![Pawn](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) | ![ProPawn](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true) |
+| ![Pawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) | ![ProPawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true) |
 
 兵走法与国际象棋的兵相类似，移动时向前走一格，斜走一格吃子。与国际象棋兵不同，泰国象棋兵的第一步不能走两格，也没有吃过路兵。在走到对方底线的倒数第3行（本方数第6行）时，必须立即升变为士。不能不升变。
 

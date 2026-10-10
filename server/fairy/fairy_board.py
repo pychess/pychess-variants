@@ -16,7 +16,7 @@ from fairy.chess960 import CHESS960_FENS
 from fairy.cwda import cwda_engine_variant
 from fairy.jieqi import BLACK_PIECES, RED_PIECES, apply_move_and_transform, make_initial_mapping
 from fairy.paradigm import PARADIGM_FENS
-from fairy.racingkings import RACINGKINGS_FENS
+from fairy.racingkings import RACINGKINGS_FEN_TO_ID, RACINGKINGS_FENS
 
 log = logging.getLogger(__name__)
 
@@ -236,14 +236,13 @@ class FairyBoard:
     @property
     def posnum(self):
         if self.chess960:
+            if self.variant == "racingkings":
+                return RACINGKINGS_FEN_TO_ID.get(self.initial_fen[12:29], -1)
             try:
-                if self.variant == "racingkings":
-                    return RACINGKINGS_FENS.index(self.initial_fen[12:29])
-                elif self.variant in ("capablanca", "capahouse"):
+                if self.variant in ("capablanca", "capahouse"):
                     rank8 = self.initial_fen.split("/", 1)[0]
                     return caparandom_id_from_rank8(rank8)
-                else:
-                    return CHESS960_FENS.index(self.initial_fen[:8])
+                return CHESS960_FENS.index(self.initial_fen[:8])
             except ValueError:
                 # Legacy/corrupted chess960 FEN can be outside known start positions.
                 return -1

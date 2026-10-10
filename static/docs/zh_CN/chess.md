@@ -1,6 +1,6 @@
-# ![Chess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/chess.svg) 西洋棋
+# ![Chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/chess.svg) 西洋棋
 
-![Chess board](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Chess.png?raw=true)
+![Chess board](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chess.png?raw=true)
 
 如果您已经熟悉国际象棋的话，您可能会发现这里除了国际象棋还有很多值得尝试的。玩玩其他棋吧!
 

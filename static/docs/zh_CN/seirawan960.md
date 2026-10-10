@@ -1,4 +1,4 @@
-# ![Seirawan960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/S960.svg) S-Chess 960
+# ![Seirawan960](https://github.com/pychess/pychess-variants/blob/master/static/icons/S960.svg) S-Chess 960
 
 S-Chess 960 为 S-Chess 加入菲舍尔任意制的规则的变种，在游玩之前请先熟悉S-Chess的规则。
 
@@ -29,13 +29,13 @@ S-Chess 960 为 S-Chess 加入菲舍尔任意制的规则的变种，在游玩�
 
 ### 鹰
 
-![Hawk](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Hawk.png)
+![Hawk](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Hawk.png)
 
 鹰的走法等于象+马。在走法上，它能单独对角格的王形成威胁。
 鹰的价值一般认为比车高，但比大象和后低。
 
 ### 大象
 
-![Elephant](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantSeirawan.png)
+![Elephant](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantSeirawan.png)
 
 大象的走法等同于车+马。一般认为它的价值比鹰高，但是跟后相等或是低一些。

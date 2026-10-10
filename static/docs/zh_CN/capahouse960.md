@@ -1,4 +1,4 @@
-# ![Capahouse960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Capahouse960.svg) 任意制双狂卡帕布兰卡象棋 | Capahouse 960
+# ![Capahouse960](https://github.com/pychess/pychess-variants/blob/master/static/icons/Capahouse960.svg) 任意制双狂卡帕布兰卡象棋 | Capahouse 960
 
 任意制双狂卡帕布兰卡象棋（Capahouse 960）是卡帕布兰卡象棋的变种，融合了原版游戏和双狂象棋的打入、以及任意制布局。在游玩之前，建议您熟悉卡帕布兰卡象棋的规则。
 
@@ -39,11 +39,11 @@
 
 ### 大主教 | Archbishop
 
-![Archbishop](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
+![Archbishop](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
 
 以上为本站大主教可能出现的各种棋子造型。其中老鹰为 S-chess 所用。
 
-![Archbishop moves](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
+![Archbishop moves](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
 
 大主教是一个复合棋子，它可以看成是马+象。在其他棋类里，也有称为“公主”(Princess)的。
 
@@ -53,11 +53,11 @@
 
 ### 首相 | Chancellor
 
-![Chancellor](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
+![Chancellor](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
 
 以上是本站中首相可能会用的几种棋子造型。大象为S-chess所用。
 
-![Chancellor moves](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
+![Chancellor moves](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
 
 首相是一个复合棋子，它可以看成车+马。如同大主教，它的棋子造型就是马头拼上车的下半部分。其他的棋有不同的造型，本站也可以切换棋子造型。
 

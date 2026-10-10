@@ -70,6 +70,8 @@ export function analysisContext(model: PyChessModel): AnalysisContext {
             positionMetadata: !puzzle && !ongoing && !practiceLearner,
             evalCharts: !puzzle && !ongoing && !practiceLearner,
             positionEvaluation: !ongoing,
+            // Whether this page mode may ask the server for analysis. Variant/worker
+            // support is intentionally decided server-side and is independent of WASM.
             serverAnalysisRequest: !analysisBoard && !embed,
             moveTimeChart: !embed && !practiceLearner,
         },

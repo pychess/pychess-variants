@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import logging
-from collections import defaultdict
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Literal
 
-from bson import BSON
 from fairy.fairy_board import NOTATION_SAN, WHITE, FairyBoard
 
 from study.annotations import (
@@ -22,6 +20,8 @@ from study.annotations import (
 )
 from study.conceal import reconciled_conceal_ply
 from study.constants import STUDY_CHAPTER_MAX_BSON_BYTES, STUDY_MAX_NODES_PER_CHAPTER
+from study.document import encode_chapter
+from study.engine import validated_study_position
 from study.models import Study, StudyChapter
 from study.permissions import can_write_study
 from study.storage import refresh_study_search_tokens
@@ -194,7 +194,7 @@ class StudyMutationService:
                 root_clocks=chapter.root.root_clocks,
             ),
         )
-        size_error = self._size_error(candidate)
+        size_error = await self._size_error(candidate)
         if size_error is not None:
             return size_error
 
@@ -353,7 +353,7 @@ class StudyMutationService:
                 root_clocks=chapter.root.root_clocks,
             ),
         )
-        size_error = self._size_error(candidate)
+        size_error = await self._size_error(candidate)
         if size_error is not None:
             return size_error
         result = await self._commit(chapter, candidate, set_nodes=changed_nodes)
@@ -417,7 +417,7 @@ class StudyMutationService:
                 root_clocks=chapter.root.root_clocks,
             ),
         )
-        size_error = self._size_error(candidate)
+        size_error = await self._size_error(candidate)
         if size_error is not None:
             return size_error
         result = await self._commit(chapter, candidate, set_nodes=changed_nodes)
@@ -600,7 +600,7 @@ class StudyMutationService:
             gamebook_field = "root._.g"
 
         candidate = self._candidate_chapter(chapter, root)
-        size_error = self._size_error(candidate)
+        size_error = await self._size_error(candidate)
         if size_error is not None:
             return size_error
         result = await self._commit(
@@ -649,7 +649,7 @@ class StudyMutationService:
             updated_at=datetime.now(UTC),
             revision=chapter.revision + 1,
         )
-        size_error = self._size_error(candidate)
+        size_error = await self._size_error(candidate)
         if size_error is not None:
             return size_error
         result = await self._commit(
@@ -695,7 +695,7 @@ class StudyMutationService:
             updated_at=datetime.now(UTC),
             revision=chapter.revision + 1,
         )
-        size_error = self._size_error(candidate)
+        size_error = await self._size_error(candidate)
         if size_error is not None:
             return size_error
         result = await self._commit(
@@ -781,7 +781,7 @@ class StudyMutationService:
             gamebook_field = "root._.g"
 
         candidate = self._candidate_chapter(chapter, root)
-        size_error = self._size_error(candidate)
+        size_error = await self._size_error(candidate)
         if size_error is not None:
             return size_error
         result = await self._commit(
@@ -847,7 +847,7 @@ class StudyMutationService:
             annotation_field = "root._.a"
 
         candidate = self._candidate_chapter(chapter, root)
-        size_error = self._size_error(candidate)
+        size_error = await self._size_error(candidate)
         if size_error is not None:
             return size_error
         result = await self._commit(
@@ -913,10 +913,6 @@ class StudyMutationService:
 
     @staticmethod
     def _subtree_ids(tree: StudyTree, root_id: str) -> set[str]:
-        children: dict[str, list[str]] = defaultdict(list)
-        for node in tree.nodes.values():
-            if node.parent_id is not None:
-                children[node.parent_id].append(node.id)
         removed: set[str] = set()
         pending = [root_id]
         while pending:
@@ -924,7 +920,7 @@ class StudyMutationService:
             if node_id in removed:
                 continue
             removed.add(node_id)
-            pending.extend(children[node_id])
+            pending.extend(node.id for node in tree.children_of(node_id))
         return removed
 
     def _validated_child_node(
@@ -956,14 +952,17 @@ class StudyMutationService:
                 )
                 if parent_id is not None and not legal_moves_need_history:
                     # Most variants are position-local. Starting directly from the
-                    # authoritative parent FEN makes appending to a 1,000-ply Study O(1)
+                    # checked parent FEN makes appending to a 1,000-ply Study O(1)
                     # instead of replaying the whole line for every new move.
-                    board = FairyBoard(
-                        runtime_variant,
-                        initial_fen=parent_fen,
-                        chess960=chapter.chess960,
-                        show_promoted=show_promoted,
-                    )
+                    try:
+                        board = validated_study_position(
+                            runtime_variant,
+                            parent_fen,
+                            chess960=chapter.chess960,
+                            show_promoted=show_promoted,
+                        )
+                    except ValueError as exc:
+                        raise _InvalidStoredTree from exc
                 else:
                     # Janggi/Ataxx and custom rules such as perpetual-check illegality
                     # need the complete move history, so reconstruct those branches.
@@ -1032,9 +1031,9 @@ class StudyMutationService:
         )
 
     @staticmethod
-    def _size_error(chapter: StudyChapter) -> StudyMutationResult | None:
+    async def _size_error(chapter: StudyChapter) -> StudyMutationResult | None:
         try:
-            encoded_size = len(BSON.encode(chapter.to_document()))
+            encoded_size = (await encode_chapter(chapter)).size
         except Exception:
             log.exception("Failed to BSON-encode Study chapter %s", chapter.id)
             return StudyMutationService._error(chapter.revision - 1, "invalid_chapter")

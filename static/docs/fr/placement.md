@@ -1,4 +1,4 @@
-# ![Placement](https://github.com/gbtami/pychess-variants/blob/master/static/icons/placement.svg) Placement Chess (échecs Bronstein)
+# ![Placement](https://github.com/pychess/pychess-variants/blob/master/static/icons/placement.svg) Placement Chess (échecs Bronstein)
 
 Le Placement Chess (ou les échecs Bronstein) est connu sous plusieurs noms, par exemple *Placement Chess*, *Bronstein chess*, *Pre-Chess* ou *Shuffle-Chess* en anglais.
 

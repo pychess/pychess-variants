@@ -1,6 +1,6 @@
-# ![Synochess](https://github.com/gbtami/pychess-variants/blob/master/static/icons/synochess.svg) Synochess
+# ![Synochess](https://github.com/pychess/pychess-variants/blob/master/static/icons/synochess.svg) Synochess
 
-![Synochess](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Synochess.png)
+![Synochess](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Synochess.png)
 
 Synochess is a chess variant designed in 2020 by Couch Tomato. The idea of the game was to create a variant where the western chess army can fight against the xiangqi or Chinese chess army in a fair manner. Given that the circumstances in xiangqi are much different (larger board, overall weaker pieces), this was difficult to achieve without significant boosts to the Chinese-style army. However, this was able to be achieved, without overall losing the feel of xiangqi when playing as the Chinese army. In this game, the white army represents the western chess side and is called the Kingdom, while the red army represents an amalgamation of xiangqi and janggi (Korean chess) and is called the Dynasty. All pieces on the Dynasty side resemble their counterpart in either xiangqi or janggi and should be familiar to those who have played those games.
 The name Synochess is based off an earlier name, Sinochess, but it was changed as the Dynasty became less “Sino” (as in Chinese) and more a mixture of Chinese and Korean. Instead, the prefix syn- means together, and the game represents two different historic branches of chess coming together into one.
@@ -27,7 +27,7 @@ The Dynasty does not have a piece as strong as the Queen; instead, it has more m
 Details and diagrams of each piece are below. 
 
 ### King (K) and Chariot (R)
-![King and Chariot](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/SynoRK.png)
+![King and Chariot](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/SynoRK.png)
 
 As above, these pieces are purely cosmetic changes. The Chariot is essentially a Rook and uses the same symbol (R).
 Keep in mind the King Faceoff rule above for the King.
@@ -35,26 +35,26 @@ The Chariot is the strongest piece of the Dynasty.
 
 ### Soldier (S)
 
-![Soldier](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Soldier.png)
+![Soldier](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Soldier.png)
 
 The Soldier can move either one space forward or one space sideways. It is the exact same as a Xiangqi soldier that has crossed the river and the exact same as a Janggi soldier from the start. The soldier, unlike the pawn, cannot promote.
 Because the soldier cannot move backwards, it can only move sideways in the final rank. Avoid putting them in this situation unless it will lead to checkmate or campmate. Soldiers are strongest when paired side to side so that they can protect each other.
 
 ### Elephant (E)
 
-![Elephant](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantDynasty.png)
+![Elephant](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ElephantDynasty.png)
  
 The Elephant is a leaping piece that moves diagonally one or two spaces. Because it is a leaper, it can jump over an intervening piece to move or capture on the second space. The piece is essentially a powered-up version of the Xiangqi elephant; it is the exact same as the elephant in another variant, Shako.
 
 ### Cannon (C)
 
-![Cannon](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/CannonDynasty.png)
+![Cannon](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/CannonDynasty.png)
  
 The Cannon is a hopping piece. It is essentially a rook that requires an intervening piece (often called a “screen”) to hop over before it can move **or** capture along that line. **A cannon cannot hop over another cannon.** This version of the cannon is the exact same as the one in Janggi. Because it requires another piece to move or capture, the cannon loses value in the endgame.
  
 ### Advisor
 
-![Advisor](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Advisor.png)
+![Advisor](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Advisor.png)
 
 The Advisor moves and captures exactly like a king. Unlike the king, it can be captured. While there is no equivalent piece in Xiangqi or Janggi, there is no palace in Synochess. As such, the Advisor needed to be stronger to protect its king, and one might think of its movements as combining the strength of two Xiangqi advisors to cover all 8 squares.
 
@@ -136,7 +136,7 @@ As the Dynasty, avoid moving the soldiers too much. Their initial formation is a
 
 If you are white, avoid this situation. Always eye the cannons.
 
-![Fool's Mate](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/FoolsMate.png)
+![Fool's Mate](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/FoolsMate.png)
 
 In this position Ce6+ forces Be5 which leads to Ce4#, in others it could be just mate, or at least force white to block the check with a piece and lose it.
 
@@ -146,16 +146,16 @@ This is part of why 1. e3 is a standard opening. And if not 1. e3, then 2. e3. A
 
 This is an extremely deadly tactic that may end in an inevitable loss for white if not caught. The situation is where a chariot has an open file (which it already starts with), and the cannon has an open path to the first rank square (b1 or g1). That square may or may not contain a knight, but if it's empty, the knight cannot cover it for this to work.
 
-![Queenslayer](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Queenslayer.png)
+![Queenslayer](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Queenslayer.png)
 
 Once this position happens, the chariot can take the pawn, forcing the rook to retake the chariot. This now exposes the b1/g1 square to the cannon, which will either threaten AND pin the queen if attacking queenside (b1) or skewer the queen by check on the kingside (g1). Either way, the queen is lost. It should noted that the Queenslayer is not an opening line. It's a *tactic* for a certain situation when red's soldiers are shifted to open up the chariot and cannon files. Intentionally aiming to recreate this position by shifting soldiers open will likely be counterproductive for red.
 
 Moveover, this trap can go wrong in 2 ways.
 
-![QueenslayerGoneWrongb1](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/QueenslayerGoneWrongb1.png)
+![QueenslayerGoneWrongb1](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/QueenslayerGoneWrongb1.png)
 
 With no pawn on d3 blocking the path of the bishop white can save their queen by going Bb5+. No matter if red takes the bishop or moves the king out of check their cannon no longer hits b1, so white can just recapture the chariot.
 
-![QueenslayerGoneWrongg1](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/QueenslayerGoneWrongg1.png)
+![QueenslayerGoneWrongg1](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/QueenslayerGoneWrongg1.png)
 
 Here red tries the same trick on the kingside. After Rxh2, Rxh2 Cxg1+ it seems the queen is lost as white is in check and defending by moving either the king or the bishop would allow Cxd1, except if white goes Bxb5+ red has to get out of check and white has time to move the queen out of the way.

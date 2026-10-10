@@ -7,6 +7,7 @@ import string
 from collections import defaultdict
 from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Literal, cast
 
 from study.annotations import StudyAnnotations, canonical_comment_text
@@ -352,10 +353,13 @@ class StudyTree:
     root_gamebook: StudyGamebook = field(default_factory=StudyGamebook)
     root_eval_score: Mapping[str, int] | None = None
     root_clocks: tuple[int | float, int | float] | None = None
+    _children: Mapping[str | None, tuple[StudyTreeNode, ...]] = field(
+        init=False, repr=False, compare=False
+    )
 
     def __post_init__(self) -> None:
         nodes = dict(self.nodes)
-        object.__setattr__(self, "nodes", nodes)
+        object.__setattr__(self, "nodes", MappingProxyType(nodes))
         object.__setattr__(
             self,
             "root_eval_score",
@@ -367,6 +371,17 @@ class StudyTree:
             _canonical_clocks(self.root_clocks, context="Study root clocks"),
         )
         self._validate(nodes)
+        children: dict[str | None, list[StudyTreeNode]] = defaultdict(list)
+        for node in nodes.values():
+            children[node.parent_id].append(node)
+        object.__setattr__(
+            self,
+            "_children",
+            {
+                parent: tuple(sorted(group, key=lambda node: node.order))
+                for parent, group in children.items()
+            },
+        )
 
     @staticmethod
     def _validate(nodes: Mapping[str, StudyTreeNode]) -> None:
@@ -414,12 +429,7 @@ class StudyTree:
         )
 
     def children_of(self, parent_id: str | None) -> tuple[StudyTreeNode, ...]:
-        return tuple(
-            sorted(
-                (node for node in self.nodes.values() if node.parent_id == parent_id),
-                key=lambda node: node.order,
-            )
-        )
+        return self._children.get(parent_id, ())
 
     def preferred_mainline(self) -> tuple[StudyTreeNode, ...]:
         """Return the editable Study mainline using the same rule as the client.
@@ -468,7 +478,7 @@ class StudyTree:
             parent_id = node.id
         return node
 
-    def to_document(self) -> dict[str, object]:
+    def root_to_document(self) -> dict[str, object]:
         # Keep a dedicated root record like lila's StudyFlatTree so start-position
         # annotations are first-class and can be updated incrementally.
         root_record: dict[str, object] = {}
@@ -480,7 +490,10 @@ class StudyTree:
             root_record["e"] = dict(self.root_eval_score)
         if self.root_clocks is not None:
             root_record["k"] = list(self.root_clocks)
-        doc: dict[str, object] = {STUDY_TREE_ROOT_KEY: root_record}
+        return root_record
+
+    def to_document(self) -> dict[str, object]:
+        doc: dict[str, object] = {STUDY_TREE_ROOT_KEY: self.root_to_document()}
         for node_id, node in self.nodes.items():
             doc[node_id] = node.to_document()
         return doc
@@ -563,6 +576,10 @@ class StudyTree:
             raise TypeError("Study tree payload field 'rootGamebook' must be a mapping")
         if not isinstance(raw_nodes, Sequence) or isinstance(raw_nodes, (str, bytes)):
             raise TypeError("Study tree payload field 'nodes' must be a list")
+        if len(raw_nodes) > STUDY_MAX_NODES_PER_CHAPTER:
+            raise ValueError(
+                f"Study tree has {len(raw_nodes)} nodes, maximum is {STUDY_MAX_NODES_PER_CHAPTER}"
+            )
         nodes: dict[str, StudyTreeNode] = {}
         for raw_node in raw_nodes:
             if not isinstance(raw_node, Mapping):

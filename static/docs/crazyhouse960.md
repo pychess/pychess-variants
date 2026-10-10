@@ -1,4 +1,4 @@
-# ![Crazyhouse960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Crazyhouse960.svg) Crazyhouse 960
+# ![Crazyhouse960](https://github.com/pychess/pychess-variants/blob/master/static/icons/Crazyhouse960.svg) Crazyhouse 960
 
 Crazyhouse 960 is a custom variant combining the rules of Crazyhouse with the random placement of Chess 960. The same rules apply to both games. As this is considered a derivative of Crazyhouse, please check the Crazyhouse rules in its separate guide. 960 rules are as below for a reminder.
 

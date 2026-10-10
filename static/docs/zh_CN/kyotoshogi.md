@@ -1,6 +1,6 @@
-# ![Kyoto](https://github.com/gbtami/pychess-variants/blob/master/static/icons/KyotoShogi.svg) 京都将棋 | Kyoto Shogi
+# ![Kyoto](https://github.com/pychess/pychess-variants/blob/master/static/icons/KyotoShogi.svg) 京都将棋 | Kyoto Shogi
 
-![Kyoto Shogi](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Kyoto.png)
+![Kyoto Shogi](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Kyoto.png)
 
 京都将棋（Kyoto Shogi）是5×5的将棋变体，但与本将棋又有一定差别。它由田宫克哉（Tamiya Katsuya）于1976年发明。京都将棋的主要差别是每次棋子行动之后，都必须翻面改变走法，而没有升级概念。京都将棋的名字实际上来源于棋子的谐音——香车（Kyo）的另一面是本将棋的成步（と金，To），即“香と”（Kyoto）。
 
@@ -8,7 +8,7 @@
 
 初始布局如上图。
 
-与将棋不同，棋子每次行动之后，必须翻到另一面改变形态。每个棋子的正反两面都是对应的。在本站的系统之中，会以红色字提示即将变成的形态。![Example](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/KyotoIllustration.png)
+与将棋不同，棋子每次行动之后，必须翻到另一面改变形态。每个棋子的正反两面都是对应的。在本站的系统之中，会以红色字提示即将变成的形态。![Example](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/KyotoIllustration.png)
 
 如图，图中棋子为桂-金。当桂马行动之后必须立刻翻面变成金将。当金将再次行动之后，会翻面变成桂马。
 
@@ -30,7 +30,7 @@
 
 ### 玉将、王将
 
-![Kings](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/KyotoK.png) 
+![Kings](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/KyotoK.png)
 
 玉将走法为八方走一格。
 
@@ -38,7 +38,7 @@
 
 | 步兵                                                                                                  | 飞车                                                                                                  |
 | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| ![Pawn](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/KyotoP.png) | ![Rook](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/KyotoR.png) |
+| ![Pawn](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/KyotoP.png) | ![Rook](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/KyotoR.png) |
 
 步兵可以向前走一格。
 
@@ -48,7 +48,7 @@
 
 | 金将                                                                                                  | 桂马                                                                                                    |
 | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| ![Gold](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/KyotoG.png) | ![Knight](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/KyotoN.png) |
+| ![Gold](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/KyotoG.png) | ![Knight](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/KyotoN.png) |
 
 金将可以直走一格或斜向前走一格。.
 
@@ -58,7 +58,7 @@
 
 | 银将                                                                                                    | 角行                                                                                                    |
 | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| ![Silver](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/KyotoS.png) | ![Bishop](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/KyotoB.png) |
+| ![Silver](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/KyotoS.png) | ![Bishop](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/KyotoB.png) |
 
 银将可以斜走一格，或向前一格。
 
@@ -68,7 +68,7 @@
 
 | Tokin                                                                                                | Lance                                                                                                |
 | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| ![Tokin](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/KyotoT.png) | ![Lance](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/KyotoL.png) |
+| ![Tokin](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/KyotoT.png) | ![Lance](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/KyotoL.png) |
 
 と金的走法和金将相同。
 

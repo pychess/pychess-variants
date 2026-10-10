@@ -269,9 +269,21 @@ Use the least perturbing tool that can distinguish the remaining hypotheses:
    missing.
 5. If the cause remains unknown, capture one isolated full metrics snapshot.
 
-The full endpoint runs garbage collection and inspects heap objects, so it is
-slower and allocates memory while diagnosing memory. It may also contain
-sensitive object detail. Never poll it.
+The full endpoint inspects heap objects cooperatively without forcing garbage
+collection. It shares one collection between callers and caches the encoded
+snapshot for sixty seconds, but still allocates memory while diagnosing memory
+and may contain sensitive object detail. Never poll it. Heap counts can include
+unreachable objects waiting for normal GC, so detached-object counts alone do
+not prove a leak.
+
+The Textual TUI launched by `./monitor.sh` now polls lightweight summaries, with
+the same default ten-minute interval and sixty-second production minimum. It
+opens the process-memory table; detailed object tables and heap sizes remain
+unmeasured until requested. Press **D** for one full snapshot or **I** for task
+stack locations. The status line shows the sample timestamp; full data may be
+up to sixty seconds old. The next timer update returns to summary data and clears
+heap rows and allocation sizes. The recorder (`./monitor.sh record`) continues
+to use summaries only.
 
 Queue diagnostics must never use `str(queue)` or `repr(queue)`.
 `asyncio.Queue` representations include their pending payloads; during the

@@ -1,4 +1,4 @@
-# ![Placement ikon](https://github.com/gbtami/pychess-variants/blob/master/static/icons/placement.svg) Pre-Sakk (Bronstein-sakk) (Placement Chess)
+# ![Placement ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/placement.svg) Pre-Sakk (Bronstein-sakk) (Placement Chess)
 
 A Pre-Sakk egy sakkvariáns, ami [Benkő Pál](https://hu.wikipedia.org/wiki/Benk%C5%91_P%C3%A1l) által vált ismertté, azonban az eredeti ötletet ő [David Bronstein](https://en.wikipedia.org/wiki/David_Bronstein)nek tulajdonította. ([forrás](http://www.quantumgambitz.com/blog/chess/cga/bronstein-chess-pre-chess-shuffle-chess))
 

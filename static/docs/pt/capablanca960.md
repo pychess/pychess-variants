@@ -1,4 +1,4 @@
-# ![Caparandom](https://github.com/gbtami/pychess-variants/blob/master/static/icons/caparandom.svg) Caparandom
+# ![Caparandom](https://github.com/pychess/pychess-variants/blob/master/static/icons/caparandom.svg) Caparandom
 
 O Capablanca 960 é uma variante personalizada que segue as regras do Capablanca Chess com a disposição aleatória do Chess960(Xadrez de Fischer). São aplicadas as regras de ambos os jogos. Por esta ser considerada uma variante de Capablanca Chess, por favor deia uma leitura nas regras do Capablanca Chess disponibilizadas num guia em separado. As regras do Chess960 São disponibilizadas abaixo como um memorando.
 

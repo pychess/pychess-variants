@@ -1,4 +1,4 @@
-# ![Crazyhouse](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Crazyhouse.svg) Crazyhouse
+# ![Crazyhouse](https://github.com/pychess/pychess-variants/blob/master/static/icons/Crazyhouse.svg) Crazyhouse
 
 Crazyhouse è una variante popolare degli scacchi in cui i pezzi catturati possono essere rimessi sulla scacchiera come un propri (come nello Shogi). Ciò porta ad un gioco molto diverso dagli scacchi standard. Esiste anche una scena competitiva per Crazyhouse.
 

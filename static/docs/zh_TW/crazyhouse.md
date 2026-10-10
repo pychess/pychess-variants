@@ -1,4 +1,4 @@
-# ![Crazyhouse](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Crazyhouse.svg) 雙狂象棋 Crazyhouse
+# ![Crazyhouse](https://github.com/pychess/pychess-variants/blob/master/static/icons/Crazyhouse.svg) 雙狂象棋 Crazyhouse
 
 雙狂象棋（Crazyhouse），為四狂象棋的兩人版，是種可將俘虜來的棋子放回棋盤上使用的西洋棋變體(如同日本將棋)。它行棋激烈，變化複雜，有許多全新的局面，喜歡西洋棋和將棋的朋友非常值得一試。
 ## 規則

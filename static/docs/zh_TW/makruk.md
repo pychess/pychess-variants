@@ -1,5 +1,5 @@
-# ![Makruk](https://github.com/gbtami/pychess-variants/blob/master/static/icons/makruk.svg) 泰國象棋
-![Makruk](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
+# ![Makruk](https://github.com/pychess/pychess-variants/blob/master/static/icons/makruk.svg) 泰國象棋
+![Makruk](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 
 泰國象棋是泰國的經典傳統棋盤遊戲，與古印度恰圖蘭卡(國際象棋的祖先)密切相關，相較國際象棋，泰國象棋保留了恰圖蘭卡的思維與策略形式。遊戲本身十分有趣，步調稍慢，其原始的形式可以讓玩家體會古代象棋的獨特風格。
 
@@ -18,13 +18,13 @@
 
 ### 國王 (ขุน，*Khun*)
 
-![King](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/King.png?raw=true) 
+![King](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/King.png?raw=true)
 
 王走法與西洋棋的王相同，移動為周圍八格。
 
 ### 士 (เม็ด，*Met*)
 
-![Queen](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Queen.png?raw=true)
+![Queen](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Queen.png?raw=true)
 
 士，泰語為大臣，走法與中國象棋的士相同，移動為斜向四格。
 
@@ -32,7 +32,7 @@
 
 ### 象 (โคน，*Khon*)
 
-![Bishop](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Bishop.png?raw=true)
+![Bishop](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Bishop.png?raw=true)
 
 象，泰語為面具舞，走法同日本將棋的銀將、或緬甸象棋、馬來象棋的象，移動為斜向四格或直前一格。
 
@@ -44,7 +44,7 @@
 
 ### 馬 (ม้า，*Ma*)
 
- ![Knight](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Knight.png?raw=true)
+ ![Knight](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Knight.png?raw=true)
 
 馬走法與西洋棋的馬相同，移動為跳躍至2x3的對角格，可以越子(沒有卡馬腳)。。
 
@@ -52,7 +52,7 @@
 
 ### 船 (เรือ，*Ruea*)
 
-![Rook](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Rook.png?raw=true)
+![Rook](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Rook.png?raw=true)
 
 船走法與西洋棋的車相同，移動為直向任意格。無西洋棋的王車易位規則。
 
@@ -62,7 +62,7 @@
 
 |   |   |
 --- | ---
-![Pawn](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) | ![ProPawn](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true)
+![Pawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) | ![ProPawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true)
 
 兵走法與西洋棋的兵相類似，單純移動時直前進一步，但吃子時斜進一步。兵的第一步時不能走兩步，故無吃過路兵。在走到對方底線的倒數第三列時，立即升級為士，不能選擇不升級。
 

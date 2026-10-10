@@ -10,7 +10,7 @@
 </div>
 </br>
 <p align="center">
-    <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/Weights-nn-62ef826d1a6d.png" width="300" height="150">
+    <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/Weights-nn-62ef826d1a6d.png" width="300" height="150">
 </p>
 </br>
 

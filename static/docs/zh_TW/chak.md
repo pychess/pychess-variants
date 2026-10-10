@@ -1,6 +1,6 @@
-# ![Chak](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Chak.svg) 馬雅象棋 | Chak
+# ![Chak](https://github.com/pychess/pychess-variants/blob/master/static/icons/Chak.svg) 馬雅象棋 | Chak
 
-![Chak](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/Chak.png)
+![Chak](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/Chak.png)
 
 ## 背景
 
@@ -18,7 +18,7 @@ Chak 這個詞來自馬雅神祇中雨神 Chaac，它掌管雨水、雷電與戰
 
 馬雅象棋的棋盤為 9x9 :
 
-![Chak](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/ChakBoard.png)
+![Chak](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/ChakBoard.png)
 
 其中有三個特殊的區域:
 
@@ -50,7 +50,7 @@ Chak 這個詞來自馬雅神祇中雨神 Chaac，它掌管雨水、雷電與戰
 
 ### 國王 (K)
 
-![King](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/ChakKing.png)
+![King](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/ChakKing.png)
 
 國王 (*Ajaw*, 讀作 「Dachau」) 走法就如就如西洋棋的國王，朝八方走一格。
 
@@ -58,7 +58,7 @@ Chak 這個詞來自馬雅神祇中雨神 Chaac，它掌管雨水、雷電與戰
 
 ### 神王 (D)
 
-![Divine King](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/DivineKing.png)
+![Divine King](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/DivineKing.png)
 
 神王可向任何方向移動最多*兩個*方格，也可以通過被對方棋子威脅的方格（換句話說，它不像西棋的王車易位，王的路徑上不能有棋子攻擊）。 請記住，國王一互升變，便不能退到河界後！由於其攻擊範圍，神王可以直接將未變的國王將死。
 
@@ -66,7 +66,7 @@ Chak 這個詞來自馬雅神祇中雨神 Chaac，它掌管雨水、雷電與戰
 
 ### 美洲豹 (J)
 
-![Jaguar](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/Jaguar.png)
+![Jaguar](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/Jaguar.png)
 
 
 美洲豹的移動融合西洋棋的騎士和國王，即 
@@ -83,19 +83,19 @@ Chak 這個詞來自馬雅神祇中雨神 Chaac，它掌管雨水、雷電與戰
 
 ### 羽神(Q)
 
-![Quetzal range](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/QuetzalRange.png)
+![Quetzal range](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/QuetzalRange.png)
 
 羽神的走法很特別，它類似於國際象棋皇后，因為它可以在任何方向（垂直或對角）移動任意格...... *但是*，它需要先跳過中間的棋子。對於熟悉韓國將棋的人來說，這與韓國將棋的「包」類似，但增加了對角線移動，且沒有「不能跳過對方的羽神」的限制。
 
 羽神是第二強的棋子，但就如象棋的炮，在殘局會因為沒有炮架而失去價值。
 
-![Quetzal example](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/QuetzalLegal.png)
+![Quetzal example](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/QuetzalLegal.png)
 
 *範例*: 上圖中，羽神可以移動到以上格子(紅色代表吃子)。
 
 ### 祭司 (S)
 
-![Shaman](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/Shaman.png)
+![Shaman](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/Shaman.png)
 
 祭司朝前方及後方三格移動一步。
 
@@ -105,13 +105,13 @@ Chak 這個詞來自馬雅神祇中雨神 Chaac，它掌管雨水、雷電與戰
 
 ### 禿鷹 (V)
 
-![Vulture](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/Vulture.png)
+![Vulture](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/Vulture.png)
 
 禿鷹的走法就如中國象棋的馬，只是沒有拐馬腳的規則(或如西洋棋的騎士)，先朝一個方向走兩格，再垂直走一格，就如L型。
 
 ### 蚺蛇 (R)
 
-![Serpent](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/Serpent.png)
+![Serpent](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/Serpent.png)
 
 蚺蛇就如中國象棋的車，可朝一個方向任意直行。
 
@@ -119,7 +119,7 @@ Chak 這個詞來自馬雅神祇中雨神 Chaac，它掌管雨水、雷電與戰
 
 ### 兵 (P)
 
-![Pawn](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/ChakPawn.png)
+![Pawn](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/ChakPawn.png)
 
 兵的移動與攻擊是分開的。走法就如中國象棋的過河卒，吃子的方式卻如西棋的兵。
 
@@ -127,13 +127,13 @@ Chak 這個詞來自馬雅神祇中雨神 Chaac，它掌管雨水、雷電與戰
 
 ### 士 (W)
 
-![Warrior](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/ChakWarrior.png)
+![Warrior](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/ChakWarrior.png)
 
 士的走法就如祭司，朝前方與後方三格動一步。與祭司不同的是，士不能退回河界後。
 
 ### 祭品 (O)
 
-![Offering](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/Offering.png)
+![Offering](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/Offering.png)
 
 
 
@@ -162,17 +162,17 @@ Chak 這個詞來自馬雅神祇中雨神 Chaac，它掌管雨水、雷電與戰
 
 若對方國王是唯一的防守者，攻擊者只需要迫使對方王移出神殿，便可以輕鬆登壇:
 
-![KvsKzugzwang](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/KvsKzugzwang.png)
+![KvsKzugzwang](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKzugzwang.png)
 
 
 
 當祭品還在的時候，攻擊者仍然可以獲勝，但更加棘手。 攻擊者應該做的不是登壇，而是以下這種困斃：
 
-![KvsKStalemate](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/KvsKStalemate.png)
+![KvsKStalemate](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKStalemate.png)
 
 以下是走出這種困斃的棋譜:
 
-![KvsKO](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/KvsKO.png)
+![KvsKO](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKO.png)
 
 1. Dd6+ 
 
@@ -186,13 +186,13 @@ Chak 這個詞來自馬雅神祇中雨神 Chaac，它掌管雨水、雷電與戰
 
 如此形成以下局面:
 
-![KvsKOzugzwang](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/KvsKOzugzwang.png)
+![KvsKOzugzwang](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKOzugzwang.png)
 
 此時綠方被迫移動，白方即可走出困斃。
 
 然而。 如果防守方多出一子（不動的羽神除外），情況就會發生巨大變化，如下:
 
-![KvsKdraw](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/KvsKdraw.png)
+![KvsKdraw](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKdraw.png)
 
 不管祭品是否還在，神王都沒有辦法將死守方的王。唯一需要擔心的是下錯棋，讓自己多出來的一子被神王吃掉。因此建議將其保留在最後4列內，因為神王永遠無法到達那裡，如此雙方便和棋。
 
@@ -201,7 +201,7 @@ Chak 這個詞來自馬雅神祇中雨神 Chaac，它掌管雨水、雷電與戰
 
 堡壘是指有子防守著祭壇，如此對方便無計可施: 
 
-![Fortresses](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/Fortresses.png)
+![Fortresses](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/Fortresses.png)
 
 以上這些範例都意謂著，若一方將棋子移開防守，將卸掉堡壘，若雙方都如此則導致和局。另一方面，若一方的堡壘有根而一方沒有，該子通常可以過河並攻擊對方的堡壘，通常多子的一方會獲勝。
 
@@ -211,30 +211,30 @@ Chak 這個詞來自馬雅神祇中雨神 Chaac，它掌管雨水、雷電與戰
 
 美幻豹對神王會因重複局面而和棋
 
-![JaguarPerpetual](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/JaguarPerpetual.png)
+![JaguarPerpetual](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/JaguarPerpetual.png)
 
 ...除非對方可以直接棄子登壇。
 
-![JaguarPerpetual2](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/JaguarPerpetual2.png)
+![JaguarPerpetual2](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/JaguarPerpetual2.png)
 
 
 
 然而當祭品還在時，又是兩碼子事:
 
-![JaguarvsKO](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/JaguarvsKO.png)
+![JaguarvsKO](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/JaguarvsKO.png)
 
 綠可走 1. Jf9; 白方唯一可以繼續攻擊美洲豹的走法為 Df7, 但當 2. Je9+ Dg 而 3. Jd9, 則將失去對美洲豹的威脅。而若白方花二步來攻擊美洲豹， 綠方可以在河的另一頭作更有義意的事。 若白把王動到f9, 則 Jd8 後，同樣也會失去對美洲豹的威脅。所以最好是把王動到 d7 來迫使美洲豹移動。最好記得以走法來形成和棋。
 
 #### 蚺蛇
 
-![SerpentFortress](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/SerpentFortress.png)
+![SerpentFortress](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/SerpentFortress.png)
 
 蚺蛇可以封住整條路線，如此神王便無法登壇。
 
-![SerpentFortressTrap](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/SerpentFortressTrap.png)
+![SerpentFortressTrap](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/SerpentFortressTrap.png)
 
 而且，若神王從劃記的格子離開去騷擾蚺蛇，可能會付出代價，例如:
 
-![SerpentFortressTrap2](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChakGuide/SerpentFortressTrap2.png)
+![SerpentFortressTrap2](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/SerpentFortressTrap2.png)
 
 綠方棄蚺蛇攻擊白祭司，同時又守住綠祭壇。此時白祭司無論吃掉蚺蛇與否都無法阻止綠方登壇。

@@ -1,4 +1,4 @@
-# ![ChreeCheck960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/3check960.svg) 任意制三将象棋 | Three-Check 960
+# ![ChreeCheck960](https://github.com/pychess/pychess-variants/blob/master/static/icons/3check960.svg) 任意制三将象棋 | Three-Check 960
 
 任意制三将象棋(Three-Check 960)是国际象棋结合960规则与三将规则的变体玩法。关于三将象棋的规则，请查看相关页面。下面简述960规则。
 

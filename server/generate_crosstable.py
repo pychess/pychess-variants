@@ -40,8 +40,10 @@ async def generate_crosstable(app_state, username=None):
             or bp.startswith("Anon")
             or wp == "Random-Mover"
             or wp == "Fairy-Stockfish"
+            or wp == "Alice-Stockfish"
             or bp == "Random-Mover"
             or bp == "Fairy-Stockfish"
+            or bp == "Alice-Stockfish"
         ):
             continue
 

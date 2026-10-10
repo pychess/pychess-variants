@@ -10,7 +10,7 @@
 </br>
 
 <p align="center">
-  <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/hawk.jpg">
+  <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/hawk.jpg">
 </p>
 
 In one way the seed to Seirawan Chess was born in the hot and heady blitz crowds of Manhattan. I don't recall the actual year I think it was in the early eighties that while visiting the Big Apple to play in Jose Cuchi's celebrated New York Open events I'd stay a few days before and after the event in order to better enjoy the excellent Indian culinary delights on the lower East side as well as to share time with my New York friends. Often I'd visit the Marshall and Manhattan Chess Clubs as well as Washington Square Park.
@@ -19,7 +19,7 @@ In the park I'd find, Livermore, an African American with a lively patter design
 
 For our first diagram, the Hawk takes on a Queen:
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings2/diagram1.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings2/diagram1.png" width="336" height="336">
 
 White to move and win
 
@@ -31,7 +31,7 @@ Let us investigate how the Hawk fares dueling a Rook. If from the diagrammed pos
 
 This series of ladder checks were tailor made for the Hawk. However, if we "misplace" the Hawk on the g2-square from the start, we come to my first Hawk Study in our next diagram:
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings2/diagram2.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings2/diagram2.png" width="336" height="336">
 
 Hawk Study Seirawan 2007
 
@@ -41,7 +41,7 @@ The first thing we discover is that the series of ladder checks after: **1.Hf4+ 
 
 **1.Hb7!!**, A marvelous move as White tries to lose a tempo to reposition his Hawk. Black is forced to keep his Rook on the c-file: **1...Rc1!**, the best move. If, **1...Rh8?? 2.Ha6+! Ka8 3.Hc7** Checkmate. An important motif worth searing into our brains. Other moves by the Rook along the c-file allow the Hawk to fill its clutches: **1...Rc4? 2.Hd6+** wins; **1...Rc3? 2.Hd6+ Ka8 3.He4+** wins; **1...Rc2? 2.Hd6+ Ka8 3.He4+** wins. With Black's Rook forced away, the Hawk is repositioned with tempo: **2.Hd6+! Ka8 3.He4+ Kb8 4.Hd3!!** Brings us to our next diagram:
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings2/diagram3.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings2/diagram3.png" width="336" height="336">
 
 White threatens Black's Rook while also threatening an invasion on the a6-square. Black's Rook cannot guard against all the threats: **4...Ra1**, Black has no checks. If his c1-rook moves along the back rank, **4...Rg1**, then **5.Ha6+ Ka8 6.Hc7** checkmate while **4...Rc8 5.Ha6+** snares the Rook. Now the Hawk struts its stuff by: **5.He5+** and **6.Hxa1**, winning.
 
@@ -49,7 +49,7 @@ In passing, I would note that this study would not succeed on a 10 x 10 board. T
 
 As we have seen with the Elephant, while it is desirable to drive the defending King into a corner, it isn't always necessary. Let us move on to our next diagram:
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings2/diagram4.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings2/diagram4.png" width="336" height="336">
 
 White to move and win
 
@@ -57,13 +57,13 @@ White to move and win
 
 Again, a tailor made operation. It seems whenever a Rook is forced into an absolute pin by a Hawk the Rook is lost as we see in our next diagram:
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings2/diagram5.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings2/diagram5.png" width="336" height="336">
 
 White to move and win
 
 The win is child's play: **1.He5!**, Black's King must give up protection of the Rook and it is lost. The question is can White force these types of winning positions from say a normal starting position of Hawk versus Rook? Clearly, if the defending King is driven to the edge of the board or to the corners a win is likely, but can it be forced?
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings2/diagram6.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings2/diagram6.png" width="336" height="336">
 
 Win or Draw?
 
@@ -75,7 +75,7 @@ The question is how to meet, **9...Rh1**, when it feels as if White can torture 
 
 We know that passers on the seventh rank can cause problems for the Queen whereas the Elephant has no trouble against a passer. How about the Hawk? Give the matter some thought before reading on...
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings2/diagram7.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings2/diagram7.png" width="336" height="336">
 
 White wins
 
@@ -83,7 +83,7 @@ I see no trouble for the Hawk. For instance in our diagram, as the Hawk already 
 
 This ability of the Hawk to win against any passer on the 7th rank makes it far superior to a Rook and as we know, in the cases of a, c, f or h-pawns, superior to a Queen.
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings2/diagram8.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings2/diagram8.png" width="336" height="336">
 
 Seirawan 2007
 
@@ -95,7 +95,7 @@ Readers score no points for playing: **1.a8=H+!**, the only winning move. Those 
 
 Let us see how the Hawk might fare in some normal appearing circumstances:
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings2/diagram9.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings2/diagram9.png" width="336" height="336">
 
 White to move and win
 
@@ -105,7 +105,7 @@ If you wanted to take the Queen, kudos to you! Being a materialist in chess is q
 
 What is so exciting about the Hawk is not how it fares in endings but how it can combine with other pieces in a mating attack. I was inspired by a game from a simultaneous by FM John Yoos to create the following:
 
-<img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/SchessEndings2/diagram10.png" width="336" height="336">
+<img src="https://github.com/pychess/pychess-variants/blob/master/static/images/SchessEndings2/diagram10.png" width="336" height="336">
 
 White to move and win
 

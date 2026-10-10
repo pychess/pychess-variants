@@ -87,19 +87,22 @@ async def BOT_task(bot: User, app_state: PychessGlobalAppState) -> None:
             # print("   +++ game_queues get()", event)
             try:
                 if random_mover:
-                    legal_moves = game.legal_moves
-                    if len(legal_moves) == 0:
-                        # Keep the task alive: a transient state mismatch should
-                        # not kill the per-game bot worker permanently.
-                        log.warning(
-                            "No legal moves for bot=%s in game=%s game_task()",
-                            bot.username,
-                            game.id,
-                        )
-                        continue
                     async with game.move_lock:
+                        if game.status > STARTED or game.turn_player != bot.username:
+                            continue
+                        # A queued event can arrive during the opponent's move.
+                        # Read the current position only after acquiring its lock;
+                        # cached moves may belong to the previous ply or a reload.
+                        legal_moves = game.board.legal_moves()
+                        if not legal_moves:
+                            log.warning(
+                                "No legal moves for bot=%s in game=%s game_task()",
+                                bot.username,
+                                game.id,
+                            )
+                            continue
                         await play_move(app_state, bot, game, random.choice(legal_moves))
-                elif has_available_fishnet_worker(app_state):
+                elif has_available_fishnet_worker(app_state, variant=game.variant):
                     if not catalogued_variant_allows_fishnet(app_state, game.variant):
                         log.warning(
                             "Aborting bot game %s because Fairy-Stockfish AI is temporarily disabled for variant %s",
@@ -194,8 +197,8 @@ async def BOT_task(bot: User, app_state: PychessGlobalAppState) -> None:
         if TYPE_CHECKING:
             assert isinstance(game, Game)
 
-        if not random_mover and not has_available_fishnet_worker(app_state):
-            log.error("ERROR: No recent fairyfishnet worker alive!")
+        if not random_mover and not has_available_fishnet_worker(app_state, variant=game.variant):
+            log.error("ERROR: No recent fairyfishnet worker capable of %s!", game.variant)
             # TODO: send msg to player
             await game.abort_by_server()
             continue

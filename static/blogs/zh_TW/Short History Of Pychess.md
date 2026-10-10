@@ -11,7 +11,7 @@
 </br>
 
 <p align="center">
-    <img src="https://github.com/gbtami/pychess-variants/blob/master/static/images/TomatoPlasticSet.svg" width="300" height="150">
+    <img src="https://github.com/pychess/pychess-variants/blob/master/static/images/TomatoPlasticSet.svg" width="300" height="150">
 </p>
 一切都始於Lichess。我們都知道數十年來，這個開源網站不斷的演進，大大顛覆了西洋棋愛好者對下棋網站的想像。然而，還是有一些人不滿足，有些人想加入[S-chess](https://lichess.org/forum/lichess-feedback/seirawan-chess) 、[四狂象棋](https://lichess.org/forum/lichess-feedback/bughouse-team-up-with-a-friend) 、[自由擺置西洋棋](https://lichess.org/forum/lichess-feedback/placement-chess-varient) 和各式各樣的變體到網站上。
 

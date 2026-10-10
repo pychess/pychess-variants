@@ -1,4 +1,4 @@
-# ![960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/960.svg) 菲舍尔任意制象棋 | Chess960
+# ![960](https://github.com/pychess/pychess-variants/blob/master/static/icons/960.svg) 菲舍尔任意制象棋 | Chess960
 
 菲舍尔任意制象棋，也称 Chess960，是由国际象棋世界冠军鲍比·菲舍尔（Bobby Fischer）在不违反国际象棋的逻辑及平衡的前提下，为了丰富国际象棋的变化，减少开局定式，而将随机性引入国际象棋中，提出了一种国际象棋变体。这是目前最热门的国际象棋变种玩法之一，它可以让玩家不再依赖于开局的定式与变例，而专注于比拼计算能力。
 

@@ -1,6 +1,6 @@
-# ![Makruk](https://github.com/gbtami/pychess-variants/blob/master/static/icons/makruk.svg) Makruk
+# ![Makruk](https://github.com/pychess/pychess-variants/blob/master/static/icons/makruk.svg) Makruk
 
-![Makruk](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
+![Makruk](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 
 *Makruk*, or Thai Chess, is a classic board game native to Thailand and is closely descended from Chaturanga, the same ancestor as Chess. Makruk offers a taste of ancient Chess in the original form before the introduction of modern rules quickened the pace. The game is plenty of fun in its  own right, with its own balance/dynamics. The slightly slower pace can provide a good way to cultivate patience, and to hone strategic thinking.
 
@@ -18,13 +18,13 @@ Thai piece names are in parentheses.
 
 ### King (*Khun*)
 
-![King](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/King.png?raw=true) 
+![King](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/King.png?raw=true)
 
 The king moves one square orthogonally or diagonally. There is no castling as in chess.
 
 ### Queen (*Met*)
 
-![Queen](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Queen.png?raw=true)
+![Queen](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Queen.png?raw=true)
 
 Unlike the queen in chess, the queen is a relatively weak piece that only moves one square diagonally.
 
@@ -32,7 +32,7 @@ The queen is worth about 1.5 to 2 pawns in general. The queen is a good piece to
 
 ### Bishop (*Khon*)
 
-![Bishop](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Bishop.png?raw=true)
+![Bishop](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Bishop.png?raw=true)
 
 The bishop moves one square diagonally or one square forward, just like the silver general in shogi.
 
@@ -44,7 +44,7 @@ Bishops can sometimes prove slow/awkward to maneuver or retreat. It is therefore
 
 ### Knight (*Ma*)
 
- ![Knight](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Knight.png?raw=true)
+ ![Knight](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Knight.png?raw=true)
 
 The knight moves exactly the same as in chess.
 
@@ -52,7 +52,7 @@ The knights are not "minor pieces" in Makruk. They are major forces. Centralize 
 
 ### Rook (*Ruea*)
 
- ![Rook](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Rook.png?raw=true)
+ ![Rook](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Rook.png?raw=true)
 
 The rook moves exactly the same as in chess.
 
@@ -62,7 +62,7 @@ In the absence of mighty chess queens, the rooks dominate the board. Lateral roo
 
 |   |   |
 --- | ---
-![Pawn](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) | ![ProPawn](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true)
+![Pawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) | ![ProPawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true)
 
 The pawn moves and attacks the same as in chess. However, there is no double-step first move. Pawns promote and move like queens when they reach the sixth rank.
 

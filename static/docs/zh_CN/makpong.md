@@ -1,6 +1,6 @@
-# ![Makpong](https://github.com/gbtami/pychess-variants/blob/master/static/icons/makpong.svg) 防御泰国象棋 | Makpong
+# ![Makpong](https://github.com/pychess/pychess-variants/blob/master/static/icons/makpong.svg) 防御泰国象棋 | Makpong
 
-![Makpong Board](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
+![Makpong Board](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 
 防御泰国象棋是用来减少和局的泰国象棋变体。主要在泰国象棋比赛中，出现过多和棋时使用。
 

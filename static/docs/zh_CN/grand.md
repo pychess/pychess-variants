@@ -1,6 +1,6 @@
-# ![Grand](https://github.com/gbtami/pychess-variants/blob/master/static/icons/grand.svg) 大型国际象棋
+# ![Grand](https://github.com/pychess/pychess-variants/blob/master/static/icons/grand.svg) 大型国际象棋
 
-![Grand Chess setup](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Grand.png)
+![Grand Chess setup](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Grand.png)
 
 大型国际象棋（Grand chess）是荷兰人克里斯蒂安·弗林（Christian Freeling）在 1984 年推出的国际象棋变体。它是在众多国际象棋变体中最受欢迎的变体之一，曾被收录进多本书籍和杂志，并且在 1996 年举行过比赛。
 
@@ -24,11 +24,11 @@
 
 ### 大主教 | Archbishop
 
-![Archbishop](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
+![Archbishop](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
 
 以上为本站大主教可能出现的各种棋子造型。其中老鹰为 S-chess 所用。
 
-![Archbishop moves](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
+![Archbishop moves](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
 
 尽管在很多资料中这个棋子的称呼各有不同（有 Princess，有 Cardinal），但是在本站还是叫它大主教。大主教是一个复合棋子，它可以看成是马+象。
 它棋子的造型一般如图，把象的下半部分拼在马下面。本站有其他的造型可以选择，不同的棋也有不同的造型。
@@ -36,11 +36,11 @@
 
 ### 首相 | Chancellor
 
-![Chancellor](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
+![Chancellor](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
 
 以上是本站中首相可能会用的几种棋子造型。大象为 S-chess 所用。
 
-![Chancellor moves](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
+![Chancellor moves](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
 
 首相是一个复合棋子，它可以看成车+马。如同大主教，它的棋子造型就是马头拼上车的下半部分。其他的棋有不同的造型，本站也可以切换棋子造型。
 首相的价值一般认为比大主教略高一些，但和后相等或略小。

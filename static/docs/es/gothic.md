@@ -1,6 +1,6 @@
-# ![gothic](https://github.com/gbtami/pychess-variants/blob/master/static/icons/capablanca.svg) Ajedrez Gótico
+# ![gothic](https://github.com/pychess/pychess-variants/blob/master/static/icons/capablanca.svg) Ajedrez Gótico
 
-![Posición inicial de Ajedrez Gótico](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Gothic.png)
+![Posición inicial de Ajedrez Gótico](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Gothic.png)
 
 El ajedrez gótico fue creado por Ed Trice en el año 2000. En 2019, su nombre fue cambiado a Ajedrez de Trice. El juego usa las mismas piezas y tablero de 10 x 8 del ajedrez Capablanca, pero tiene una disposición inicial diferente.
 
@@ -12,11 +12,11 @@ La partida se juega en un tablero de 10 x 8, con columnas adicionales para las n
 
 ### Cardenal
 
-![Cardenal](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
+![Cardenal](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Princesses.png)
 
 Varios símbolos son usados para el Cardenal. (Nótese que el Halcón solo se usa en el ajedrez Seirawan)
 
-![Movimientos del Cardenal](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
+![Movimientos del Cardenal](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Archbishop.png)
 
 El Cardenal (A en notación inglesa) es una pieza híbrida que combina los movimientos del **Alfil** y el **Caballo**. En el ámbito de las piezas de fantasía, esta pieza se conoce con el nombre genérico de Princesa, pero tiene también otras denominaciones en diferentes variantes.
 
@@ -28,11 +28,11 @@ Se considera que el valor del Cardenal es ligeramente superior al de una Torre, 
 
 ### Mariscal
 
-![Mariscal](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
+![Mariscal](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Empresses.png)
 
 Varios símbolos son usados para el Mariscal. (Nótese que el Elefante solo se usa en el ajedrez Seirawan)
 
-![Movimientos del Mariscal](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
+![Movimientos del Mariscal](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chancellor.png)
 
 El Mariscal (C en notación inglesa) es una pieza híbrida que combina los movimientos de la **Torre** y el **Caballo**. En el ámbito de las piezas de fantasía, esta pieza se conoce con el nombre genérico de Emperatriz, pero tiene también otras denominaciones en diferentes variantes.
 

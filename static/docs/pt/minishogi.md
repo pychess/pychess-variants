@@ -1,7 +1,7 @@
 
-# ![Minishogi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/minishogi.svg) Minishogi
+# ![Minishogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/minishogi.svg) Minishogi
 
-![Minishogi](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/Minishogi.png)
+![Minishogi](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Minishogi.png)
 
 O Minishogi é na realidade Shogi num tabuleiro 5x5. O jogo foi inventado (ou re-descoberto) por volta de 1970 por Shigenobu Kusumoto proveniente de Osaka, Japão.
 

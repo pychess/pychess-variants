@@ -1,6 +1,6 @@
-# ![Chennis](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Chennis.svg) Chennis
+# ![Chennis](https://github.com/pychess/pychess-variants/blob/master/static/icons/Chennis.svg) Chennis
 
-![Chennis](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChennisGuide/Chennis.png)
+![Chennis](https://github.com/pychess/pychess-variants/blob/master/static/images/ChennisGuide/Chennis.png)
 
 ## Background
 
@@ -10,7 +10,7 @@ Chennis is a game designed by Couch Tomato in 2021 primarily designed as a varia
 
 There are two sides, designated white and black, respectively. White moves first. Each piece (other than the king) has *two sides*; after each move, the piece changes to its counterpart piece (typically marked as red on the white pieces and marked as blue on the black pieces).
 
-![Piece Swaps](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChennisGuide/Swap.png)
+![Piece Swaps](https://github.com/pychess/pychess-variants/blob/master/static/images/ChennisGuide/Swap.png)
 
 When you capture a piece, it goes into your hand. On a future turn, you can drop that piece onto the board on any open square *as either side of the piece*. For example, for the Rook-Pawn combo, you can drop it as a rook or as a pawn.
 
@@ -18,7 +18,7 @@ When you capture a piece, it goes into your hand. On a future turn, you can drop
 
 Chennis is played on a 7x7 board as shown below:
 
-![Chak](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChennisGuide/ChennisCourt.png)
+![Chak](https://github.com/pychess/pychess-variants/blob/master/static/images/ChennisGuide/ChennisCourt.png)
 
 Pieces that are not the king can move anywhere on the board. There are four types of regions, which determine where the kings can move:
 
@@ -56,24 +56,24 @@ The rook, pawn, knight, and bishop move exactly as in chess. If you are not fami
 In general, each pair has opposite movement: Diagonally-attacking pieces turn into orthogonally-attacking pieces and vice-versa.
 
 ### Soldier (S)
-![Soldier](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChennisGuide/Soldier.png)
+![Soldier](https://github.com/pychess/pychess-variants/blob/master/static/images/ChennisGuide/Soldier.png)
 
 The Soldier moves one space forwards or one space sideways. It turns into a Bishop after moving.
 
 ### Mayor (M)
-![Mayor](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChennisGuide/Mayor.png)
+![Mayor](https://github.com/pychess/pychess-variants/blob/master/static/images/ChennisGuide/Mayor.png)
 
 The Mayor moves exactly like the king (one space in any direction). It turns into a Knight after moving.
 
 ### Ferz (F)
-![Ferz](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChennisGuide/Ferz.png)
+![Ferz](https://github.com/pychess/pychess-variants/blob/master/static/images/ChennisGuide/Ferz.png)
 
 The Ferz moves exactly one space diagonally. It turns into a Cannon after moving.
 
 ### Cannon (C)
-![Cannon Move](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChennisGuide/CannonMove.png)
+![Cannon Move](https://github.com/pychess/pychess-variants/blob/master/static/images/ChennisGuide/CannonMove.png)
 
-![Cannon Attack](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChennisGuide/CannonAttack.png)
+![Cannon Attack](https://github.com/pychess/pychess-variants/blob/master/static/images/ChennisGuide/CannonAttack.png)
 
 The Cannon moves like a rook (any number of squares orthogonally), but to capture, it needs to hop over an intervening piece. This is the same as the cannon in Xiangqi. It turns into a Ferz after moving.
 

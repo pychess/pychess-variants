@@ -1,4 +1,4 @@
-# ![S-House](https://github.com/gbtami/pychess-variants/blob/master/static/icons/SHouse.svg) S-House
+# ![S-House](https://github.com/pychess/pychess-variants/blob/master/static/icons/SHouse.svg) S-House
 
 O S-House é uma variante personalizada que segue as regras do Seirawan Chess(Sharper-Chess) com a regra de colocação de peças do Crazyhouse. São aplicadas as regras de ambos os jogos. Por esta ser considerada uma variante de Seirawan Chess, por favor dê uma leitura nas regras do Crand Chess disponibilizadas num guia em separado. As regras do Crazyhouse estão disponibilizadas abaixo como um memorando.
 

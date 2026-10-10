@@ -85,6 +85,24 @@ afterEach(() => {
     document.body.innerHTML = '';
 });
 
+test('cancel submits to its POST action instead of saving tournament settings', async () => {
+    const form = document.getElementById('tournament-form') as HTMLFormElement;
+    form.action = '/tournaments/abcd1234/edit';
+    const cancel = document.createElement('button');
+    cancel.type = 'submit';
+    cancel.setAttribute('formaction', '/tournament/abcd1234/cancel');
+    cancel.setAttribute('formmethod', 'post');
+    cancel.formNoValidate = true;
+    form.appendChild(cancel);
+    const fetchMock = jest.fn(() => new Promise<Response>(() => {}));
+    Object.defineProperty(window, 'fetch', { configurable: true, writable: true, value: fetchMock });
+    initTournamentForm();
+
+    form.dispatchEvent(new SubmitEvent('submit', { bubbles: true, cancelable: true, submitter: cancel }));
+
+    expect(fetchMock).toHaveBeenCalledWith('/tournament/abcd1234/cancel', expect.objectContaining({ method: 'post' }));
+});
+
 describe('tournament schedule form', () => {
     test('keeps an Arena duration when the start date is chosen afterward', () => {
         initTournamentForm();

@@ -1,6 +1,6 @@
-# ![Xiangqi ikon](https://github.com/gbtami/pychess-variants/blob/master/static/icons/xiangqi.svg) Xiangqi (Kínai sakk)
+# ![Xiangqi ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/xiangqi.svg) Xiangqi (Kínai sakk)
 
-![Xiangqi tábla](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Boards.png)
+![Xiangqi tábla](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Boards.png)
 
 A xiangqi (象棋), avagy a kínai sakk egy klasszikus táblajáték, mely Kínában őshonos és úgy tartják, hogy [csaturangából](https://hu.wikipedia.org/wiki/Csaturanga) eredeztethető, akárcsak a sakk, bár egyesek ezt vitatják, és úgy gondolják, hogy az ellenkezője történt. A játék nem csak Kínában, de Vietnámban is népszerű.
 
@@ -22,7 +22,7 @@ A tradicionális készletek a kínai írásjegyeket használják, de a könnyebb
 
 ### Király
 
-![Király bábuk](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Kings.png) 
+![Király bábuk](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Kings.png)
 
 A király (vagy a kínai neve alapján: tábornok) csak a palotán belül tud mozogni, egy mezőt vízszintesen vagy függőlegesen.
 
@@ -30,17 +30,17 @@ A király (vagy a kínai neve alapján: tábornok) csak a palotán belül tud mo
 
 ### Testőr
 
-![Testőr bábuk](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Advisors.png) 
+![Testőr bábuk](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Advisors.png)
 
 A testőr csak a palotán belüli átlók mentén léphet egyet, így maximum 5 lehetséges pozíciója van egy testőrnek.
 
-![Király és testőrök ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/KingAdvisorDiagram.png)
+![Király és testőrök ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/KingAdvisorDiagram.png)
 
 ### Elefánt
 
- ![Elefánt bábuk](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Elephants.png)
+ ![Elefánt bábuk](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Elephants.png)
  
- ![Elefánt ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/ElephantDiagram.png)
+ ![Elefánt ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/ElephantDiagram.png)
 
 Az elefánt csak átlósan tudod mozogni pontosan két mezőt. Az elefánt blokkolható, ha az útjában áll egy bábu, ilyenkor nem tud lépni. További megkötés, hogy az elefánt nem tud átkelni a folyón, ezért csak a saját térfelén képes mozogni.
 
@@ -48,33 +48,33 @@ Az elefánt csak átlósan tudod mozogni pontosan két mezőt. Az elefánt blokk
 
 ### Ló
 
- ![Ló bábuk](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Horses.png)
+ ![Ló bábuk](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Horses.png)
  
- ![Ló ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/HorseDiagram.png)
+ ![Ló ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/HorseDiagram.png)
 
 A ló hasonlóan mozog, mint a sakkban a huszár. Azonban az L-alakzattól eltérően inkább úgy tekintsünk a mozgására, hogy egyet lép vízszintesen vagy függőlegesen, majd átlóban egyet valamelyik irányba, egy Y-alakzatra emlékeztetve. Ennek az az oka, hogy a ló blokkolható, ha egy bábu mellette áll.
 
 ### Szekér (Bástya)
 
- ![Szekér bábuk](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Chariots.png)
+ ![Szekér bábuk](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Chariots.png)
  
- ![Szekér ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/ChariotDiagram.png)
+ ![Szekér ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/ChariotDiagram.png)
 
 A szekér (vagy más néven: bástya) ugyanúgy mozog, mint a sakkban a bástya: akárhány mezőt vízszintesen vagy függőlegesen. A királyt leszámítva ez a legértékesebb bábu.
 
 ### Ágyú
 
-![Ágyú bábuk](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Cannons.png)
+![Ágyú bábuk](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Cannons.png)
 
-![Ágyú ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/CannonDiagram.png)
+![Ágyú ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/CannonDiagram.png)
 
 Az ágyú hasonlóan mozog és üt, mint a szekér: akárhány mezőt vízszintesen vagy függőlegesen, de az ütéshez egy köztes bábura van szüksége, amit "átugrik", és csak az azt követő bábut tudja leütni.
 
 ### Gyalog
 
-![Gyalog bábuk](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Pawns.png)
+![Gyalog bábuk](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Pawns.png)
 
-![Gyalog ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/PawnDiagram.png)
+![Gyalog ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/PawnDiagram.png)
 
 A gyalog csak előrefelé tud lépni/ütni egyet. Amikor átkel a folyón, akkor képes lesz oldalirányba is lépni/ütni.
 
@@ -144,7 +144,7 @@ Az alábbi információk [erről az oldalról származnak](http://www.shakki.inf
 
 A leggyakoribb megnyitás a "központi ágyú", amikor a király vonalába visszük az ágyút, ezzel nyomás alá helyezve az ellenfelet. A játszmák kb. 70%-a így kezdődik.
 
-![Ágy megnyitás ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/CannonOpening.png)
+![Ágy megnyitás ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/CannonOpening.png)
 
 **A leggyakoribb megnyitások:**
 
@@ -152,31 +152,31 @@ A leggyakoribb megnyitás a "központi ágyú", amikor a király vonalába vissz
 
 Ez a leggyakoribb védelem. A cél természetesen, hogy mindkét ló védelmezze a középső gyalogot. Többféle variáció is létezik erre.
 
-![Két lovas védelem ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Screen_Horses.png)
+![Két lovas védelem ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Screen_Horses.png)
 
 **2. Fan Gong Ma / "Szendvics lovak"**
 
 Az egyik lovat előrehozzuk, de a másik ló léptetése előtt az ágyút a palota közelebbi sarkába visszük, csak ezután következik a másik ló. Így az ágyú a két ló közé kerül. Ez egy viszonylag új megnyitás.
 
-![Fan Gong Ma ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Fan_Gong_Ma.png)
+![Fan Gong Ma ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Fan_Gong_Ma.png)
 
 **3. Azonos oldali ágyúk**
 
 A piros játék középre mozgatja az ágyúját, a fekete játékos pedig az ugyanazon oldalon lévő ágyúját viszi középre.
 
-![Azonos oldali ágyúk ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/SameDirectionCannon.png)
+![Azonos oldali ágyúk ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/SameDirectionCannon.png)
 
 **4. Ellentétes oldali ágyúk**
 
 Az előzőnek az ellentettje, amikor a fekete az ellentétes oldalon lévő ágyúját viszi középre.
 
-![Ellentétes oldali ágyúk ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/OppositeDirectionCannon.png)
+![Ellentétes oldali ágyúk ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/OppositeDirectionCannon.png)
 
 **5. "A tigris három lépése"**
 
 A fekete játékos gyorsan mozgásba hozza a szekerét azzal, hogy az ágyút a tábla szélére viszi. Ez általában 3 lépésből áll, ebben a sorrendben: a ló előrelép, az ágyú a tábla szélére mozog, aztán a szekér az ágyú kezdővonalába megy.
 
-![A tigris 3 lépése ábra](https://github.com/gbtami/pychess-variants/blob/master/static/images/XiangqiGuide/Three_Step_Tiger.png)
+![A tigris 3 lépése ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Three_Step_Tiger.png)
 
 Az ágyús megnyitásokon kívül a piros játékosnak más opciói is vannak. Ezeket "lágy megnyitásoknak" nevezzük, mert nem járnak azonnali fenyegetéssel.
 

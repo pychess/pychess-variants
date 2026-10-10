@@ -15,6 +15,7 @@ from const import (
     NONE_USER,
     reserved,
 )
+from session_security import auth_version_from_user_document
 from typing_defs import RelationDocument, UserDocument
 from user import User
 
@@ -123,6 +124,7 @@ class Users(UserDict[str, User]):
             catalogued_variant_favorites=doc.get("cvf") or [],
             oauth_id=doc.get("oauth_id") or "",
             oauth_provider=doc.get("oauth_provider") or "",
+            auth_version=auth_version_from_user_document(doc),
             created_at=doc.get("createdAt"),
             swiss_ban_until=doc.get("swissBanUntil"),
             swiss_ban_hours=doc.get("swissBanHours", 0),
@@ -197,6 +199,7 @@ class Users(UserDict[str, User]):
             or user.correspondence_games
             or user.seeks
             or user.game_sockets
+            or user.authenticated_sockets
             or user.lobby_sockets
             or user.tournament_sockets
             or user.simul_sockets

@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import math
-from collections import deque
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any, Literal, cast
 
 from catalogued_variants import CATALOGUED_SOURCE_FSF_BUILTIN, find_catalogued_variant_doc
-from fairy.fairy_board import FEN_OK, NOTATION_SAN, WHITE, FairyBoard, validate_fen
+from fairy.fairy_board import FEN_OK, FairyBoard, validate_fen
 from settings import URI
 from utils import MAX_CUSTOM_FEN_LENGTH, load_game, sanitize_fen
 from variants import (
@@ -236,26 +235,15 @@ class StudyChapterBuilder:
             try:
                 submitted = StudyTree.from_payload(tree_payload)
                 await validate_study_variant_import_without_mutating_server(
-                    variant,
-                    snapshot,
-                    initial_fen,
-                    tuple(
-                        (node.id, node.parent_id, node.move) for node in submitted.nodes.values()
-                    ),
+                    variant, snapshot, initial_fen
                 )
                 with study_variant_context(self.app_state, variant, snapshot) as options:
                     if chess960 and not options.random_start:
                         raise StudyChapterBuildError(
                             "Embedded custom variant snapshot does not support randomized Chess960 starts"
                         )
-                    root = self._validated_tree(
+                    root = self._canonicalized_client_tree(
                         submitted,
-                        variant=variant,
-                        initial_fen=initial_fen,
-                        chess960=chess960,
-                        show_promoted=options.show_promoted,
-                        legal_moves_need_history=options.legal_moves_need_history,
-                        runtime_variant=options.runtime_variant,
                         comment_author=self.owner,
                         preserve_comment_attribution=True,
                     )
@@ -274,14 +262,8 @@ class StudyChapterBuilder:
                 initial_fen = sanitized_fen
                 try:
                     submitted = StudyTree.from_payload(tree_payload)
-                    root = self._validated_tree(
+                    root = self._canonicalized_client_tree(
                         submitted,
-                        variant=variant,
-                        initial_fen=initial_fen,
-                        chess960=chess960,
-                        show_promoted=options.show_promoted,
-                        legal_moves_need_history=options.legal_moves_need_history,
-                        runtime_variant=options.runtime_variant,
                         comment_author=self.owner,
                         preserve_comment_attribution=True,
                     )
@@ -343,14 +325,8 @@ class StudyChapterBuilder:
                     raise StudyChapterBuildError("Invalid analysis start FEN")
             try:
                 submitted = StudyTree.from_payload(tree_payload)
-                root = self._validated_tree(
+                root = self._canonicalized_client_tree(
                     submitted,
-                    variant=variant,
-                    initial_fen=sanitized_fen,
-                    chess960=chess960,
-                    show_promoted=options.show_promoted,
-                    legal_moves_need_history=options.legal_moves_need_history,
-                    runtime_variant=options.runtime_variant,
                     comment_author=self.owner,
                 )
             except StudyChapterBuildError:
@@ -464,93 +440,52 @@ class StudyChapterBuilder:
         return None
 
     @staticmethod
-    def _validated_tree(
+    def _canonicalized_client_tree(
         tree: StudyTree,
         *,
-        variant: str,
-        initial_fen: str,
-        chess960: bool,
-        show_promoted: bool,
-        legal_moves_need_history: bool,
-        runtime_variant: str,
         comment_author: str,
         preserve_comment_attribution: bool = False,
     ) -> StudyTree:
+        """Accept browser-derived chess data while enforcing cheap server invariants.
+
+        Bulk Study creation/import is already fully replayed with ffish.js in the
+        browser. Replaying every node again with pyffish would monopolize the aiohttp
+        event loop, especially for history-dependent variants. The server therefore
+        treats move/FEN/SAN/check data as client-derived cache here, while retaining
+        structural/resource checks and authenticated comment authorship. Interactive
+        single-move mutations remain server-authoritatively validated.
+        """
+
         rebuilt: dict[str, StudyTreeNode] = {}
-        pending = deque([(None, initial_fen, ())])
+        for submitted in tree.nodes.values():
+            if len(submitted.fen) > MAX_CUSTOM_FEN_LENGTH:
+                raise StudyChapterBuildError("Study node FEN is too long")
+            fields = submitted.fen.split()
+            if len(fields) < 2 or fields[1] not in ("w", "b"):
+                raise StudyChapterBuildError("Study node FEN has invalid side to move")
+            fen_turn = "white" if fields[1] == "w" else "black"
+            if submitted.turn_color != fen_turn:
+                raise StudyChapterBuildError("Study node FEN/turn mismatch")
 
-        while pending:
-            parent_id, parent_fen, parent_moves = pending.popleft()
-            for submitted in tree.children_of(parent_id):
-                try:
-                    if legal_moves_need_history:
-                        board = FairyBoard(
-                            runtime_variant,
-                            initial_fen=initial_fen,
-                            chess960=chess960,
-                            show_promoted=show_promoted,
-                            legal_moves_need_history=True,
-                        )
-                        for stored_move in parent_moves:
-                            board.push(stored_move)
-                        if board.fen != parent_fen:
-                            raise StudyChapterBuildError("Analysis tree parent FEN mismatch")
-                    else:
-                        board = FairyBoard(
-                            runtime_variant,
-                            initial_fen=parent_fen,
-                            chess960=chess960,
-                            show_promoted=show_promoted,
-                        )
-                    if submitted.move not in board.legal_moves():
-                        raise StudyChapterBuildError("Analysis tree contains an illegal move")
-                    san = board.get_san(submitted.move)
-                    san_san = board.sf.get_san(
-                        board.variant,
-                        board.fen,
-                        submitted.move,
-                        board.chess960,
-                        NOTATION_SAN,
-                    )
-                    board.push(submitted.move)
-                except StudyChapterBuildError:
-                    raise
-                except Exception as exc:
-                    raise StudyChapterBuildError("Analysis tree cannot be replayed") from exc
+            rebuilt[submitted.id] = StudyTreeNode(
+                id=submitted.id,
+                parent_id=submitted.parent_id,
+                order=submitted.order,
+                move=submitted.move,
+                fen=submitted.fen,
+                turn_color=submitted.turn_color,
+                check=submitted.check,
+                san=submitted.san,
+                san_san=submitted.san_san,
+                eval_score=submitted.eval_score,
+                clocks=submitted.clocks,
+                force_variation=submitted.force_variation,
+                annotations=StudyChapterBuilder._canonical_annotation_authors(
+                    submitted.annotations, comment_author, preserve_comment_attribution
+                ),
+                gamebook=submitted.gamebook,
+            )
 
-                turn_color = "white" if board.color == WHITE else "black"
-                eval_score = submitted.eval_score
-                if eval_score is not None and submitted.turn_color != turn_color:
-                    # Study evaluations are stored from the side-to-move point of view.
-                    # Submitted FEN/turn metadata is deliberately untrusted, so rebase
-                    # the score if authoritative move replay reconstructs the opposite
-                    # side to move.
-                    eval_score = {key: -value for key, value in eval_score.items()}
-
-                node = StudyTreeNode(
-                    id=submitted.id,
-                    parent_id=parent_id,
-                    order=submitted.order,
-                    move=submitted.move,
-                    fen=board.fen,
-                    turn_color=turn_color,
-                    check=board.is_checked(),
-                    san=san,
-                    san_san=san_san,
-                    eval_score=eval_score,
-                    clocks=submitted.clocks,
-                    force_variation=submitted.force_variation,
-                    annotations=StudyChapterBuilder._canonical_annotation_authors(
-                        submitted.annotations, comment_author, preserve_comment_attribution
-                    ),
-                    gamebook=submitted.gamebook,
-                )
-                rebuilt[node.id] = node
-                moves = parent_moves + (node.move,)
-                pending.append((node.id, node.fen, moves))
-
-        if len(rebuilt) != tree.count():
-            raise StudyChapterBuildError("Analysis tree is disconnected")
         return StudyTree(
             rebuilt,
             root_annotations=StudyChapterBuilder._canonical_annotation_authors(

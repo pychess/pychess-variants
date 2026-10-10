@@ -10,7 +10,7 @@
 </div>
 </br>
 
-![Some Birds](https://github.com/gbtami/pychess-variants/blob/master/static/images/AngryBirds.png)
+![Some Birds](https://github.com/pychess/pychess-variants/blob/master/static/images/AngryBirds.png)
 </br>
 
 We got a bunch of updates coming in to finish off this summer!
@@ -19,7 +19,7 @@ We got a bunch of updates coming in to finish off this summer!
 
 We’re excited to announce a new variant at Pychess! This one involves taking your supply of birds (of varying colors and sizes) and throwing them at your opponent at various angles to bring their castle down as quickly and efficiently as possible! That’s right, we’re obviously talking about… Tori Shogi!
 
-![Tori Shogi](https://github.com/gbtami/pychess-variants/blob/master/static/images/ShogiGuide/ToriIntl.png)
+![Tori Shogi](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/ToriIntl.png)
 
 Tori Shogi is a three-centuries old variant that has similar to rules of Shogi but is played on a smaller board (7x7) and starts with immediate confrontation, also unlike Shogi. We’re now bringing it to the mainstream with piece symbols that should be more accessible to everyone. Please be sure to read [the rules](https://www.pychess.org/variants/torishogi) before you play because all the pieces are new and somewhat complex. It will be *much* faster to read about the game than *winging it*.
 

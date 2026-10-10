@@ -1,6 +1,6 @@
-# ![Ajedrez Shinobi](https://github.com/gbtami/pychess-variants/blob/master/static/icons/shinobi.svg) Ajedrez Shinobi
+# ![Ajedrez Shinobi](https://github.com/pychess/pychess-variants/blob/master/static/icons/shinobi.svg) Ajedrez Shinobi
 
-![Shinobi](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Shinobi.png)
+![Shinobi](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Shinobi.png)
 
 El Ajedrez Shinobi es una variante de Ajedrez diseñada en 2021 por Couch Tomao con ayuda de Fables, cuarto en las series de juegos asimétricos. El ejército de Ajedrez occidental ("el Reino", las Negras) ha invadido la tierra del Clan Sakura (Sakura/Rosas). Aunque comienza con muchas piezas débiles, el Clan tiene muchos recursos y puede instanáneamente reclutar nuevos aliados para defender en situaciones de apuro. El Clan comienza con muchas piezas en mano que pueden ser soltadas en su mitad del tablero. A mayores, pueden promocionar al llegar al final del tablero - estas habilidades son similares al Shogi, con la gran excepción de que las piezas capturadas no van a la mano del jugador, por lo que ¡cada pieza soltada cuenta! El juego en sí mismo es increiblemente balanceado según el ordenador (más incluso que el ajedrez estándar) con un ratio aproximado de 50%/50% de victorias para Reino y Clan.
  
@@ -24,13 +24,13 @@ El Clan también tiene acceso a las piezas Torre, Alfil y Caballo del Reino a tr
 
 ### Capitán (C)
 
-![Capitán](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ClanCaptain.png)
+![Capitán](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ClanCaptain.png)
 
 El Clan comienza con un Capitán en el lugar de la Dama. Ambos bandos pueden obtener Capitanes adicionales promocionando sus Peones en la séptima fila. El Capitán tiene el mismo movimiento que un Rey. Por supuesto, a diferencia del Rey, capturar un Capitán no termina el juego.
 
 ### Ninja (J)
 
-![Ninja](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Ninja.png)
+![Ninja](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Ninja.png)
 
 El Ninja es una pieza híbrida que combina los movimientos del Alfil y el Caballo. En muchas variantes se conoce a esta pieza como el Cardenal. El Ninja es la pieza más fuerte del Clan y es una pieza muy peligrosa que puede penetrar las defensas enemigas muy fácilmante. ¡El Ninja es también la única pieza capaz de dar jaque mate por sí sola! El Ninja es ligeramente inferior a la Dama.
 
@@ -38,7 +38,7 @@ El Ninja no promociona.
 
 ### Dragón (D)
 
-![Dragón](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Dragon.png)
+![Dragón](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Dragon.png)
 
 El Dragón es una pieza híbrida que combina los movimientos de la Torre y el Rey (o para los puristas, Torre y Ferz). Es idéntica al Rey Dragón (Torre promocionada) del Shogi. El Dragón es más débil que el Ninja, pero más fuerte que la Torre.
 
@@ -46,19 +46,19 @@ El Dragón no promociona.
 
 ### Lanza (L)
 
-![Lanza](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Lance.png)
+![Lanza](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Lance.png)
 
 La Lanza es como una Torre pero solamente puede mover hacia adelante. Es idéntica a la Lanza de Shogi. Una Lanza comienza en mano y podemos pensar en ella como una enfilada soltable. Dado que no puede retroceder, ¡asegúrate de que valga la pena soltarla! Las Lanzas que empiezan en el tablero son menos flexibles y sirven para controlar el tablero. La Lanza promociona a una Torre al llegar a la séptima fila (opcionalmente) o a la octava (de forma obligatoria). La Lanza vale menos que la típica pieza menor del Reino; sin embargo, su valor oculto reside en su capacidad de promocionar a una de las piezas más fuertes del juego.
 
 ### Caballo de Madera (H)
 
-![Caballo de Madera](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Horse.png)
+![Caballo de Madera](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Horse.png)
 
 El Caballo de Madera es como un Caballo pero solamente puede mover a las dos casillas más avanzadas. Es idéntica al Caballo en Shogi. Un Caballo de Madera comienza en mano y puede pensarse en él como un ataque doble soltabler. Dado que no puede retroceder, ¡asegúrate de que valga la pena soltarlo! Los Caballos de Madera que empiezan en el tablero pueden ejercer una presión similar, pero deben ser avanzados con cuidado ya que no pueden retroceder. El Caballo de Madera promociona a un Caballo al llegar a la séptima u octava filas (siempre de forma obligatoria). El Caballo de Madera vale menos que la típica pieza menor del Reino; sin embargo, su valor oculto reside en su capacidad de promocionar a un Caballo.
 
 ### Monje (M)
 
-![Monje](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Monk.png)
+![Monje](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Monk.png)
 
 El Monje mueve una casilla en diagonal, tanto hacia adelante como hacia atrás. En otras variantes, esta pieza es conocida como Ferz/Fers. Los monjes pueden promocionar a Alfiles cuando llegan a la séptima u octava filas. El Monje es más débil que la típica pieza menor del Reino; sin embargo, su valor oculto reside en su capacidad para promocionar a un Alfil.
  

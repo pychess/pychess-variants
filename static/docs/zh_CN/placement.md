@@ -1,4 +1,4 @@
-# ![Placement](https://github.com/gbtami/pychess-variants/blob/master/static/icons/placement.svg) 自由布局国际象棋 \| Placement Chess (伯恩斯坦象棋)
+# ![Placement](https://github.com/pychess/pychess-variants/blob/master/static/icons/placement.svg) 自由布局国际象棋 \| Placement Chess (伯恩斯坦象棋)
 
 帕尔·本科(Pal Benko)将此变体的发明归功于大卫·伯恩斯坦(David Bronstein.)。
 此变体并非ChessVariants上收录的Placement Chess。在本站，它的规则如下：

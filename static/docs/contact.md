@@ -19,7 +19,7 @@ For privacy questions, GDPR/data requests, account deletion requests, Terms/Priv
   - [Close account](/account/close)
   - [Delete account](/account/delete)
 - Private channel (recommended): [Direct inbox message to site admin](/inbox/gbtami)
-- Public channel (do not include sensitive personal data): [GitHub issues](https://github.com/gbtami/pychess-variants/issues)
+- Public channel (do not include sensitive personal data): [GitHub issues](https://github.com/pychess/pychess-variants/issues)
 
 Please include your username and enough detail to help us identify the request.
 
@@ -28,7 +28,7 @@ Please include your username and enough detail to help us identify the request.
 For responsible disclosure of a security vulnerability, use:
 
 - Private channel (recommended): [Direct inbox message to site admin](/inbox/gbtami)
-- [GitHub Security Advisories](https://github.com/gbtami/pychess-variants/security/advisories)
+- [GitHub Security Advisories](https://github.com/pychess/pychess-variants/security/advisories)
 
 Do not post exploitable details publicly before maintainers can investigate and patch.
 
@@ -36,7 +36,7 @@ Do not post exploitable details publicly before maintainers can investigate and 
 
 For bug reports and feature requests, use:
 
-- [GitHub issues](https://github.com/gbtami/pychess-variants/issues)
+- [GitHub issues](https://github.com/pychess/pychess-variants/issues)
 
 ## General community contact
 

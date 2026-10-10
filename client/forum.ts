@@ -11,6 +11,7 @@ import { PyChessModel } from './types';
 import { expandGameEmbeds, makeExternalLinkPopups, renderRichText } from './richTextEnhance';
 import { boardSettings } from './boardSettings';
 import { VARIANTS } from './variants';
+import { isSameDocumentForumRedirect } from './forumNavigation';
 
 /** Supported forum UI modes mapped from URL paths. */
 type ForumMode = 'index' | 'categ' | 'topic' | 'newTopic' | 'search' | 'modFeed';
@@ -688,7 +689,7 @@ export function forumView(model: PyChessModel) {
     }
 
     /** Load one topic page including posts, reactions, and moderation metadata. */
-    function loadTopic() {
+    function loadTopic(afterLoad?: () => void) {
         fetch(`/api/forum/${encodeURIComponent(categ)}/${encodeURIComponent(slug)}?page=${page}`)
             .then(parseJsonResponse)
             .then(({ status, data }) => {
@@ -714,6 +715,7 @@ export function forumView(model: PyChessModel) {
                 }
                 loading = false;
                 redraw();
+                afterLoad?.();
             })
             .catch(err => {
                 console.warn('Failed to load forum topic.', err);
@@ -841,7 +843,18 @@ export function forumView(model: PyChessModel) {
             .then(parseJsonResponse)
             .then(({ status, data }) => {
                 if (status >= 400 || data.type === 'error') handleApiError(data, status);
-                window.location.assign(data.redirect || window.location.href);
+                const redirectHref = data.redirect || window.location.href;
+                if (!isSameDocumentForumRedirect(redirectHref)) {
+                    window.location.assign(redirectHref);
+                    return;
+                }
+
+                const redirect = new URL(redirectHref, window.location.href);
+                const postId = redirect.hash.slice(1);
+                window.history.pushState(null, '', `${redirect.pathname}${redirect.search}${redirect.hash}`);
+                composeReply = '';
+                sendingReply = false;
+                loadTopic(() => document.getElementById(postId)?.scrollIntoView?.());
             })
             .catch(err => {
                 console.warn('Failed to post reply.', err);

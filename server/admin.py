@@ -11,6 +11,7 @@ from security_evasion import (
     add_ban_signals_from_user,
     remove_ban_signals_from_user,
 )
+from session_security import revoke_user_sessions_for_username
 from settings import ADMINS
 from team import remove_user_from_teams_on_account_disable
 from user import SILENCE
@@ -185,6 +186,8 @@ async def ban(app_state: PychessGlobalAppState, raw_username: str) -> bool:
 
     if banned_user is not None:
         await logout(None, banned_user)
+    else:
+        await revoke_user_sessions_for_username(app_state, username)
 
     signal_count = await add_ban_signals_from_user(app_state.db, username)
     if signal_count > 0:

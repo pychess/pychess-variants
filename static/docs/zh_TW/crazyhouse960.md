@@ -1,4 +1,4 @@
-# ![Crazyhouse960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Crazyhouse960.svg) 隨機雙狂象棋 Crazyhouse 960
+# ![Crazyhouse960](https://github.com/pychess/pychess-variants/blob/master/static/icons/Crazyhouse960.svg) 隨機雙狂象棋 Crazyhouse 960
 
 隨機雙狂象棋結何原本雙狂象棋與菲舍爾任意制象棋Chess960的規則。 由於這視為雙狂象棋的變體，因此請先熟悉雙狂象棋的規則，
 

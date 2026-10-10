@@ -172,6 +172,38 @@ class AdminOperationsTestCase(AioHTTPTestCase):
             [entry["action"] for entry in logs],
         )
 
+    async def test_puzzle_delete_clears_daily_puzzle_references(self):
+        app_state = get_app_state(self.app)
+        self.add_live_user("mod")
+        self.set_session_user("mod")
+        await app_state.db.puzzle.insert_one({"_id": "Ab123", "v": "chess"})
+        await app_state.db.puzzle.insert_one({"_id": "Cd456", "v": "chess"})
+        today = datetime.now(UTC).date().isoformat()
+        app_state.daily_puzzle_ids = {
+            f"{today}:all": "Ab123",
+            "2020-01-01:all": "Ab123",
+            f"{today}:shogi": "Cd456",
+        }
+        await app_state.db.dailypuzzle.insert_many(
+            [
+                {"_id": f"{today}:all", "puzzleId": "Ab123"},
+                {"_id": "2020-01-01:all", "puzzleId": "Ab123"},
+                {"_id": f"{today}:shogi", "puzzleId": "Cd456"},
+            ]
+        )
+
+        with patch("admin_ops_api.ADMINS", ["mod"]):
+            response = await self.client.post(
+                "/api/admin/operations/puzzle-delete", data={"puzzle_id": "Ab123"}
+            )
+
+        self.assertEqual(response.status, 200)
+        self.assertNotIn("Ab123", app_state.daily_puzzle_ids.values())
+        self.assertEqual(app_state.daily_puzzle_ids[f"{today}:shogi"], "Cd456")
+        remaining = await app_state.db.dailypuzzle.find({"puzzleId": "Ab123"}).to_list(None)
+        self.assertEqual(remaining, [])
+        self.assertIsNotNone(await app_state.db.dailypuzzle.find_one({"_id": f"{today}:shogi"}))
+
     async def test_fishnet_key_is_revealed_once_then_revoked_by_public_id(self):
         app_state = get_app_state(self.app)
         self.add_live_user("mod")

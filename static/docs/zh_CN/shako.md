@@ -1,6 +1,6 @@
-# ![Shako](https://github.com/gbtami/pychess-variants/blob/master/static/icons/shako.svg) 中西国际象棋 | Shako
+# ![Shako](https://github.com/pychess/pychess-variants/blob/master/static/icons/shako.svg) 中西国际象棋 | Shako
 
-![Shako](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Shako.png)
+![Shako](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Shako.png)
 
 中西国际象棋（Shako）是由法国桌游设计师 Jean-Louis Cazaux 设计的棋类游戏。棋盘扩大到10×10，引入了炮和象两个新棋子。作者本人是这样说的：
 
@@ -14,12 +14,12 @@
 
 ### 象 | Elephant
 
-![Elephant](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/ShakoElephant.png)
+![Elephant](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ShakoElephant.png)
 
 象与象棋的象（相）相似，但比原本的象（相）更强。它可以斜走1~2格，并且可以越子。它和象棋的象（相）的防御定位不同，它拥有更强的机动性和短距离的攻击力。
 
 ### 炮 | Cannon
 
-![Cannon](https://github.com/gbtami/pychess-variants/blob/master/static/images/CVariantsGuide/Cannon.png)
+![Cannon](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Cannon.png)
 
 炮和中国象棋的炮完全一致。它可以直走任意格数，但必须跳过一个棋子吃子。在本棋中，因为相对环境的不同，炮属于弱子。但是开局的位置使得炮能够发挥象棋那种远程威胁的作用。如同象棋一样，炮在残局的价值因为炮架的减少而下降。

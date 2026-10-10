@@ -10,7 +10,7 @@
 </div>
 </br>
 
-![Chess and Tennis?](https://github.com/gbtami/pychess-variants/blob/master/static/images/ChessTennis.jpg)
+![Chess and Tennis?](https://github.com/pychess/pychess-variants/blob/master/static/images/ChessTennis.jpg)
 
 Hi chess fans! Tomato here, and bringing my final (!?) planned variant: Chennis!
 

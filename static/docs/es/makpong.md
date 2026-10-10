@@ -1,6 +1,6 @@
-# ![Makpong](https://github.com/gbtami/pychess-variants/blob/master/static/icons/makpong.svg) Makpong
+# ![Makpong](https://github.com/pychess/pychess-variants/blob/master/static/icons/makpong.svg) Makpong
 
-![Makpong Board](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
+![Makpong Board](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 
 Makpong es una variante del Makruk (Ajedrez Tailandés) diseñada para reducir las tablas. Se juega en Tailandia en torneos eliminatorios para decidir el ganador después de un cierto número de partidas de Makruk terminadas en tablas.
 

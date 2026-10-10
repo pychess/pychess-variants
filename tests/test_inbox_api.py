@@ -19,6 +19,7 @@ class InboxApiTestCase(AioHTTPTestCase):
         await self.client.close()
 
     def set_session_user(self, username: str) -> None:
+        self.client.session.cookie_jar.clear()
         session_data = {"session": {"user_name": username}, "created": int(time.time())}
         self.client.session.cookie_jar.update_cookies({"AIOHTTP_SESSION": json.dumps(session_data)})
 
@@ -47,7 +48,10 @@ class InboxApiTestCase(AioHTTPTestCase):
         unread_before = await (await self.client.get("/api/inbox/unread")).json()
         self.assertEqual(1, unread_before["unread"])
 
-        thread_resp = await self.client.get("/api/inbox/thread/alice")
+        thread_resp = await self.client.get(
+            "/api/inbox/thread/alice",
+            headers={"Sec-Fetch-Site": "cross-site", "Sec-Fetch-Mode": "navigate"},
+        )
         self.assertEqual(thread_resp.status, 200)
         thread_payload = await thread_resp.json()
         self.assertEqual("alice", thread_payload["contact"]["name"])
@@ -55,6 +59,23 @@ class InboxApiTestCase(AioHTTPTestCase):
         self.assertEqual(1, len(thread_payload["messages"]))
         self.assertEqual("hello bob", thread_payload["messages"][0]["text"])
         self.assertEqual("alice", thread_payload["messages"][0]["from"])
+
+        unread_after_get = await (await self.client.get("/api/inbox/unread")).json()
+        self.assertEqual(1, unread_after_get["unread"])
+
+        rejected = await self.client.post(
+            "/api/inbox/thread/alice/read", headers={"Origin": "https://attacker.test"}
+        )
+        self.assertEqual(403, rejected.status)
+        unread_after_rejected_post = await (await self.client.get("/api/inbox/unread")).json()
+        self.assertEqual(1, unread_after_rejected_post["unread"])
+
+        origin = str(self.client.make_url("/")).rstrip("/")
+        read_response = await self.client.post(
+            "/api/inbox/thread/alice/read", headers={"Origin": origin}
+        )
+        self.assertEqual(200, read_response.status)
+        self.assertTrue((await read_response.json())["ok"])
 
         unread_after = await (await self.client.get("/api/inbox/unread")).json()
         self.assertEqual(0, unread_after["unread"])

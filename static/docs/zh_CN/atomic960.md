@@ -1,4 +1,4 @@
-# ![Atomic960](https://github.com/gbtami/pychess-variants/blob/master/static/icons/Atomic960.svg) 任意制核爆象棋 Atomic 960
+# ![Atomic960](https://github.com/pychess/pychess-variants/blob/master/static/icons/Atomic960.svg) 任意制核爆象棋 Atomic 960
 
 随机核爆象棋结合原本核爆象棋与菲舍尔任意制象棋（Chess960）的规则。由于这视为核爆象棋的变体，因此请先熟悉核爆象棋的规则，
 

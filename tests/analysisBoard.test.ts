@@ -56,3 +56,37 @@ test('a changed round snapshot is still processed', () => {
     expect(ctrl.result).toBe('1/2-1/2');
     expect(ctrl.initAnalysisTreeAtPly).toHaveBeenCalledTimes(2);
 });
+
+test('compact finished history loads once and survives the repeated socket snapshot', () => {
+    const ctrl = controller();
+    const fen = '8/8/8/8/8/8/K7/7k b - - 1 1';
+    const deleteBoard = jest.fn();
+    Object.assign(ctrl, {
+        ffish: {
+            Board: class {
+                sanMove() { return 'Ka2'; }
+                push() { return true; }
+                fen() { return fen; }
+                isCheck() { return false; }
+                delete = deleteBoard;
+            },
+        },
+    });
+    const snapshot = {
+        ...board(),
+        steps: [{ ...root }],
+        history: {
+            variant: 'chess', chess960: false, moves: ['a1a2'],
+            showPromoted: false, countStarted: 0, usi: false,
+        },
+    } as MsgBoard;
+    ctrl.onMsgBoard(snapshot);
+    expect(ctrl.steps[1].fen).toBe(fen);
+    expect(ctrl.steps[1].san).toBe('Ka2');
+    expect(snapshot.steps).toHaveLength(1);
+    const loadedSteps = ctrl.steps;
+    ctrl.onMsgBoard(JSON.parse(JSON.stringify(snapshot)));
+    expect(ctrl.steps).toBe(loadedSteps);
+    expect(ctrl.initAnalysisTreeAtPly).toHaveBeenCalledTimes(1);
+    expect(deleteBoard).toHaveBeenCalledTimes(1);
+});

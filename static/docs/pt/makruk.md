@@ -1,6 +1,6 @@
-# ![Makruk](https://github.com/gbtami/pychess-variants/blob/master/static/icons/makruk.svg) Makruk
+# ![Makruk](https://github.com/pychess/pychess-variants/blob/master/static/icons/makruk.svg) Makruk
 
-![Makruk](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
+![Makruk](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 
 *Makruk*, ou Xadrez Tailandês, é um jogo de tabuleiro classico proveniente da Tailandia e é um descendente chegado do Chaturanga, o mesmo antepassado do Xadrez. É jogado na Tailandia e na Cambodia, onde é conhecido como *Ouk Chatrang* (com algumas regras diferentes). O Makruk desmonstra caracteristicas semelhantes ao Xadrez antigo na sua forma original antes de serem introduzidas regras modernas que aceleraram o seu ritmo. O jogo é muito divertido no seu estilo, com o seu próprio dinamismo. O seu ritmo mais lento demonstra ser capaz de construir a paciência e o poder estratégico de pensamento.
 
@@ -18,13 +18,13 @@ O nome das peças em Tailandês está entre parêntesis.
 
 ### Rei (*Khun*)
 
-![King](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/King.png?raw=true) 
+![King](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/King.png?raw=true)
 
 O Rei movimenta-se uma casa na ortogonal e na diagonal. Não existe roque como no Xadrez.
 
 ### Dama (*Met*)
 
-![Queen](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Queen.png?raw=true)
+![Queen](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Queen.png?raw=true)
 
 Ao contrário da Dama no Xadrez, esta é relativamente fraca sendo a única que se move apenas uma casa na diagonal.
 
@@ -32,7 +32,7 @@ A Dama vale desde 1.5 até 2 Peões no geral. A Dama é uma excelente peça para
 
 ### Bispo (*Khon*)
 
-![Bishop](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Bishop.png?raw=true)
+![Bishop](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Bishop.png?raw=true)
 
 O Bispo movimenta-se uma casa na diagonal ou uma casa para a frente, como o General Prateado em Shogi.
 
@@ -44,7 +44,7 @@ Os Bispos podem porventura ser lentos/desastrados em questões de manobra ou ret
 
 ### Cavalo (*Ma*)
 
- ![Knight](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Knight.png?raw=true)
+ ![Knight](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Knight.png?raw=true)
 
 O cavalo move-se exatamente como no Xadrez.
 
@@ -52,7 +52,7 @@ Os Cavalos não são "peças menores" em Makruk. Eles são peças relevantes. Ce
 
 ### Torre (*Ruea*)
 
- ![Rook](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Rook.png?raw=true)
+ ![Rook](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Rook.png?raw=true)
 
 A Torre move-se exatamente como no Xadrez.
 
@@ -60,7 +60,7 @@ Considerando que não existem peças como a Dama do Xadrez, as Torres têm domin
 
 ### Peão (*Bia*)
 
-![Pawn](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) ![ProPawn](https://github.com/gbtami/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true)
+![Pawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) ![ProPawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true)
 
 O Peão movimenta-se e ataca exatamente como no Xadrez. No entanto, não existem jogadas de duas casas no inicio. Os peões são promovidos e movimentam-se como a Dama quando atinjem a sexta linha.
 
