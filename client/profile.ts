@@ -238,12 +238,10 @@ function loadGames(model: PyChessModel, page: number) {
 
     const xmlhttp = new XMLHttpRequest();
     const params = new URLSearchParams({ l: lang, p: String(page) });
+    // Tab / scope filter (mutually exclusive by the nature of the profile tabs).
     if (model.level) {
         params.set('filter', 'loss');
         params.set('x', '8');
-    } else if (model.variant) {
-        params.set('filter', 'perf');
-        params.set('variant', model.variant);
     } else if (model.rated === '1') {
         params.set('filter', 'rated');
     } else if (model.rated === '2') {
@@ -252,6 +250,11 @@ function loadGames(model: PyChessModel, page: number) {
         params.set('filter', 'playing');
     } else if (model.rated === '-1') {
         params.set('filter', 'me');
+    }
+    // The variant filter is independent and combines with the tab above (AND).
+    // Fixes #648: choosing a variant no longer resets the Rated/Casual/... tab.
+    if (model.variant) {
+        params.set('variant', model.variant);
     }
     const url = `/api/games/user/${encodeURIComponent(model['profileid'])}?${params.toString()}`;
 
@@ -318,6 +321,9 @@ export function profileView(model: PyChessModel) {
 
     const profileId = model['profileid'];
     const rated = model['rated'];
+    // When a variant is active, every tab link keeps it so the two filters
+    // combine (AND) instead of resetting each other. Issue #648.
+    const variantQ = model.variant ? '?variant=' + model.variant : '';
 
     const blockEl = document.getElementById('block') as HTMLElement;
     if (blockEl !== null) renderBlock('block', profileId);
@@ -334,7 +340,7 @@ export function profileView(model: PyChessModel) {
     let tabs: VNode[] = [];
     tabs.push(
         h('div.sub-ratings', [
-            h('a', { attrs: { href: '/@/' + profileId }, class: { active: rated === 'None' } }, _('Games')),
+            h('a', { attrs: { href: '/@/' + profileId + variantQ }, class: { active: rated === 'None' } }, _('Games')),
         ]),
     );
     if (model['username'] !== profileId) {
@@ -342,7 +348,7 @@ export function profileView(model: PyChessModel) {
             h('div.sub-ratings', [
                 h(
                     'a',
-                    { attrs: { href: '/@/' + profileId + '/me' }, class: { active: rated === '-1' } },
+                    { attrs: { href: '/@/' + profileId + '/me' + variantQ }, class: { active: rated === '-1' } },
                     _('Games with you'),
                 ),
             ]),
@@ -352,7 +358,7 @@ export function profileView(model: PyChessModel) {
         h('div.sub-ratings', [
             h(
                 'a',
-                { attrs: { href: '/@/' + profileId + '/rated' }, class: { active: rated === '1' } },
+                { attrs: { href: '/@/' + profileId + '/rated' + variantQ }, class: { active: rated === '1' } },
                 pgettext('UsePluralFormIfNeeded', 'Rated'),
             ),
         ]),
@@ -361,14 +367,14 @@ export function profileView(model: PyChessModel) {
         h('div.sub-ratings', [
             h(
                 'a',
-                { attrs: { href: '/@/' + profileId + '/playing' }, class: { active: rated === '-2' } },
+                { attrs: { href: '/@/' + profileId + '/playing' + variantQ }, class: { active: rated === '-2' } },
                 pgettext('UsePluralFormIfNeeded', 'Playing'),
             ),
         ]),
     );
     tabs.push(
         h('div.sub-ratings', [
-            h('a', { attrs: { href: '/@/' + profileId + '/import' }, class: { active: rated === '2' } }, _('Imported')),
+            h('a', { attrs: { href: '/@/' + profileId + '/import' + variantQ }, class: { active: rated === '2' } }, _('Imported')),
         ]),
     );
 

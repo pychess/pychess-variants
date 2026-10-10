@@ -357,74 +357,102 @@ def _build_user_games_filter_cond(
     selected_variant: str | None,
     level: str | None,
 ) -> dict[str, object] | None:
-    filter_cond: dict[str, object] = {}
+    # Tab/scope condition. ``None`` means "all of this user's games" (no tab
+    # restriction); the variant condition below then narrows the full list.
+    tab_cond: dict[str, object] | None = None
 
     if selected_filter == "win":
-        filter_cond["$or"] = [
-            {"r": "a", "us.0": profile_id},
-            {"r": "b", "us.1": profile_id},
-        ]
+        tab_cond = {
+            "$or": [
+                {"r": "a", "us.0": profile_id},
+                {"r": "b", "us.1": profile_id},
+            ]
+        }
     elif selected_filter == "loss":
         if level is not None:
-            filter_cond["$and"] = [
-                {"$or": [{"r": "a", "us.1": profile_id}, {"r": "b", "us.0": profile_id}]},
-                {"x": int(level)},
-                {"$or": [{"if": None}, {"v": "j"}]},  # Janggi games always have initial FEN!
-                {
-                    "$or": [
-                        {"s": MATE},
-                        {"s": VARIANTEND},
-                        {"s": INVALIDMOVE},
-                        {"s": CLAIM},
-                    ]
-                },
-            ]
+            tab_cond = {
+                "$and": [
+                    {"$or": [{"r": "a", "us.1": profile_id}, {"r": "b", "us.0": profile_id}]},
+                    {"x": int(level)},
+                    {"$or": [{"if": None}, {"v": "j"}]},  # Janggi games always have initial FEN!
+                    {
+                        "$or": [
+                            {"s": MATE},
+                            {"s": VARIANTEND},
+                            {"s": INVALIDMOVE},
+                            {"s": CLAIM},
+                        ]
+                    },
+                ]
+            }
         else:
-            filter_cond["$or"] = [
-                {"r": "a", "us.1": profile_id},
-                {"r": "b", "us.0": profile_id},
-            ]
+            tab_cond = {
+                "$or": [
+                    {"r": "a", "us.1": profile_id},
+                    {"r": "b", "us.0": profile_id},
+                ]
+            }
     elif selected_filter == "rated":
-        filter_cond["$or"] = [{"y": 1, "us.1": profile_id}, {"y": 1, "us.0": profile_id}]
+        tab_cond = {
+            "$or": [
+                {"y": 1, "us.1": profile_id},
+                {"y": 1, "us.0": profile_id},
+            ]
+        }
     elif selected_filter == "playing":
-        filter_cond["$and"] = [
-            {"$or": [{"c": True, "us.1": profile_id}, {"c": True, "us.0": profile_id}]},
-            {"s": STARTED},
-        ]
+        tab_cond = {
+            "$and": [
+                {"$or": [{"c": True, "us.1": profile_id}, {"c": True, "us.0": profile_id}]},
+                {"s": STARTED},
+            ]
+        }
     elif selected_filter == "import":
-        filter_cond["by"] = profile_id
-        filter_cond["y"] = 2
-    elif selected_filter == "perf":
-        if selected_variant not in VARIANTS:
-            return None
+        tab_cond = {"by": profile_id, "y": 2}
+    elif selected_filter == "me":
+        tab_cond = {
+            "$or": [
+                {"us.0": session_user, "us.1": profile_id},
+                {"us.1": session_user, "us.0": profile_id},
+            ]
+        }
+    # "all" and "perf" carry no tab condition -- the variant condition (when
+    # present) narrows the full game list instead.
 
+    variant_cond: dict[str, object] | None = None
+    if selected_variant is not None:
+        if selected_variant not in VARIANTS:
+            # An unknown variant was requested: nothing can match.
+            return None
         variant960 = selected_variant.endswith("960")
         uci_variant = selected_variant[:-3] if variant960 else selected_variant
 
         v = get_server_variant(uci_variant, variant960)
         z = 1 if variant960 else 0
 
-        filter_cond["$or"] = [
-            {"v": v.code, "z": z, "us.1": profile_id},
-            {"v": v.code, "z": z, "us.0": profile_id},
-        ]
-    elif selected_filter == "me":
-        filter_cond["$or"] = [
-            {"us.0": session_user, "us.1": profile_id},
-            {"us.1": session_user, "us.0": profile_id},
-        ]
-    else:
-        filter_cond["us"] = profile_id
-
-    if selected_filter != "import":
-        filter_cond = {
-            "$and": [
-                filter_cond,
-                {"y": {"$ne": 2}},
+        variant_cond = {
+            "$or": [
+                {"v": v.code, "z": z, "us.1": profile_id},
+                {"v": v.code, "z": z, "us.0": profile_id},
             ]
         }
 
-    return filter_cond
+    if tab_cond is None and variant_cond is None:
+        # No tab and no variant: every game belonging to the user (excluding
+        # imported games, matching the previous behaviour).
+        return {"us": profile_id}
+
+    conds: list[dict[str, object]] = []
+    if tab_cond is not None:
+        conds.append(tab_cond)
+    if variant_cond is not None:
+        conds.append(variant_cond)
+    # Imported games are only ever returned by the explicit import tab.
+    if selected_filter != "import":
+        conds.append({"y": {"$ne": 2}})
+
+    if len(conds) == 1:
+        return conds[0]
+    return {"$and": conds}
 
 
 def _apply_category_filter(

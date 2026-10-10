@@ -3,10 +3,17 @@
 <div id="main-wrap">
 <main class="page-menu">
 <aside>
+    {# Preserve the active tab (Rated/Playing/Imported/Games-with-you) when a
+       variant is chosen, so the two filters combine instead of resetting. #}
+    {% set tab_seg = '' %}
+    {% if rated == 1 %}{% set tab_seg = '/rated' %}
+    {% elif rated == -2 %}{% set tab_seg = '/playing' %}
+    {% elif rated == 2 %}{% set tab_seg = '/import' %}
+    {% elif rated == -1 %}{% set tab_seg = '/me' %}{% endif %}
     <ul class="perfs">
     {% for key in ratings %}
     <div class="sub-ratings">
-    <a class="info0 icon {% if ratings[key][1] == 0 %} empty {% endif %} {% if variant == key %} active {% endif %}" data-icon="{{ icons[key] }}" href="{{ home }}/@/{{ profile }}/perf/{{ key }}">
+    <a class="info0 icon {% if ratings[key][1] == 0 %} empty {% endif %} {% if variant == key %} active {% endif %}" data-icon="{{ icons[key] }}" href="{% if tab_seg %}{{ home }}/@/{{ profile }}{{ tab_seg }}?variant={{ key }}{% else %}{{ home }}/@/{{ profile }}/perf/{{ key }}{% endif %}">
         <div class="info2">
             <span><h3>{{ variant_display_name(key) }}</h3><rating><strong class="user-rating-strong">{{ ratings[key][0] }}</strong> <span>{% trans count=ratings[key][1] %}{{ count }} game{% pluralize %}{{ count }} games{% endtrans %}</span></rating></span>
         </div>

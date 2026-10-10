@@ -43,7 +43,10 @@ async def profile(request: web.Request) -> ViewContext:
     user, context = await get_user_context(request)
 
     profileId = request.match_info["profileId"]
-    variant = request.match_info.get("variant")
+    # Variant may come from the URL path (/@/<profile>/perf/<key>) or from the
+    # query string (/@/<profile>/rated?variant=<key>), so the profile page tabs
+    # and the variant filter can be combined instead of resetting each other.
+    variant = request.match_info.get("variant") or request.rel_url.query.get("variant")
     if (variant is not None) and (variant not in VARIANTS):
         raise web.HTTPNotFound()
 
