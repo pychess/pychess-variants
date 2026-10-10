@@ -1,0 +1,99 @@
+.shogi piece.p-piece.black {
+    background-image: url('../../images/pieces/Greenwade/5wp.svg');
+}
+.shogi piece.pp-piece.black {
+    background-image: url('../../images/pieces/Greenwade/5wp2.svg');
+}
+.shogi piece.b-piece.black {
+    background-image: url('../../images/pieces/Greenwade/5wb.svg');
+}
+.shogi piece.pb-piece.black {
+    background-image: url('../../images/pieces/Greenwade/5wb2.svg');
+}
+.shogi piece.n-piece.black {
+    background-image: url('../../images/pieces/Greenwade/5wn.svg');
+}
+.shogi piece.pn-piece.black {
+    background-image: url('../../images/pieces/Greenwade/5wn2.svg');
+}
+.shogi piece.r-piece.black {
+    background-image: url('../../images/pieces/Greenwade/5wr.svg');
+}
+.shogi piece.pr-piece.black {
+    background-image: url('../../images/pieces/Greenwade/5wr2.svg');
+}
+.shogi piece.l-piece.black {
+    background-image: url('../../images/pieces/Greenwade/5wl.svg');
+}
+.shogi piece.pl-piece.black {
+    background-image: url('../../images/pieces/Greenwade/5wl2.svg');
+}
+.shogi piece.s-piece.black {
+    background-image: url('../../images/pieces/Greenwade/5ws.svg');
+}
+.shogi piece.ps-piece.black {
+    background-image: url('../../images/pieces/Greenwade/5ws2.svg');
+}
+.shogi piece.g-piece.black {
+    background-image: url('../../images/pieces/Greenwade/5wg.svg');
+}
+.shogi piece.k-piece.black {
+    background-image: url('../../images/pieces/Greenwade/5wk.svg');
+}
+
+
+.shogi piece.p-piece.white {
+    background-image: url('../../images/pieces/Greenwade/5bp.svg');
+}
+.shogi piece.pp-piece.white {
+    background-image: url('../../images/pieces/Greenwade/5bp2.svg');
+}
+.shogi piece.b-piece.white {
+    background-image: url('../../images/pieces/Greenwade/5bb.svg');
+}
+.shogi piece.pb-piece.white {
+    background-image: url('../../images/pieces/Greenwade/5bb2.svg');
+}
+.shogi piece.n-piece.white {
+    background-image: url('../../images/pieces/Greenwade/5bn.svg');
+}
+.shogi piece.pn-piece.white {
+    background-image: url('../../images/pieces/Greenwade/5bn2.svg');
+}
+.shogi piece.r-piece.white {
+    background-image: url('../../images/pieces/Greenwade/5br.svg');
+}
+.shogi piece.pr-piece.white {
+    background-image: url('../../images/pieces/Greenwade/5br2.svg');
+}
+.shogi piece.l-piece.white {
+    background-image: url('../../images/pieces/Greenwade/5bl.svg');
+}
+.shogi piece.pl-piece.white {
+    background-image: url('../../images/pieces/Greenwade/5bl2.svg');
+}
+.shogi piece.s-piece.white {
+    background-image: url('../../images/pieces/Greenwade/5bs.svg');
+}
+.shogi piece.ps-piece.white {
+    background-image: url('../../images/pieces/Greenwade/5bs2.svg');
+}
+.shogi piece.g-piece.white {
+    background-image: url('../../images/pieces/Greenwade/5bg.svg');
+}
+.shogi piece.k-piece.white {
+    background-image: url('../../images/pieces/Greenwade/5bk.svg');
+}
+
+.shogi piece.e-piece.black {
+    background-image: url('../../images/pieces/Greenwade/bdrunkelephant.svg');
+}
+.shogi piece.pe-piece.black {
+    background-image: url('../../images/pieces/Greenwade/bprince.svg');
+}
+.shogi piece.e-piece.white {
+    background-image: url('../../images/pieces/Greenwade/wdrunkelephant.svg');
+}
+.shogi piece.pe-piece.white {
+    background-image: url('../../images/pieces/Greenwade/wprince.svg');
+}
