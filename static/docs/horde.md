@@ -1,4 +1,4 @@
-# ![Horde](https://github.com/pychess/pychess-variants/blob/master/static/icons/horde.svg) Horde
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/horde.svg) Horde
 
 _Destroy the horde to win!_
 

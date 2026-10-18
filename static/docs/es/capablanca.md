@@ -1,4 +1,4 @@
-# ![capablanca](https://github.com/pychess/pychess-variants/blob/master/static/icons/capablanca.svg) Ajedrez Capablanca
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/capablanca.svg) Ajedrez Capablanca
 
 ![Posición inicial en Capablanca](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Capablanca.png)
 

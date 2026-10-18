@@ -1,4 +1,4 @@
-# ![Synochess](https://github.com/pychess/pychess-variants/blob/master/static/icons/synochess.svg) Synochess
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/synochess.svg) Synochess
 
 ![Synochess](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Synochess.png)
 

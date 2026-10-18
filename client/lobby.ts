@@ -25,6 +25,7 @@ import {
     variantKey,
 } from './variants';
 import { timeControlStr, changeTabs, setAriaTabClick } from './view';
+import { srHeading } from './accessibility/headings';
 import { notify } from './notification';
 import { PyChessModel } from './types';
 import { model } from './main';
@@ -681,9 +682,9 @@ export class LobbyController {
         return h('dialog#id01.modal', [
             h('form.modal-content', [
                 h('span#closecontainer', [
-                    h('span.close', {
+                    h('button.close', {
                         on: { click: this.closeSeekDialog },
-                        attrs: { 'data-icon': 'j' },
+                        attrs: { type: 'button', 'data-icon': 'j', 'aria-label': _('Cancel') },
                         props: { title: _('Cancel') },
                     }),
                 ]),
@@ -702,6 +703,7 @@ export class LobbyController {
                             ),
                         ]),
                         h('input#fen', {
+                            attrs: { 'aria-label': 'FEN' },
                             props: {
                                 name: 'fen',
                                 placeholder:
@@ -857,6 +859,7 @@ export class LobbyController {
                             _('Rating range'),
                             h('div.rating-range', [
                                 h('input#rating-min.slider', {
+                                    attrs: { 'aria-label': `${_('Rating range')} −` },
                                     props: {
                                         name: 'rating-min',
                                         type: 'range',
@@ -877,6 +880,7 @@ export class LobbyController {
                                 h('span', '/'),
                                 h('div.rating-max', '+1000'),
                                 h('input#rating-max.slider', {
+                                    attrs: { 'aria-label': `${_('Rating range')} +` },
                                     props: {
                                         name: 'rating-max',
                                         type: 'range',
@@ -912,7 +916,7 @@ export class LobbyController {
                         ]),
                         // A.I.Level (1-8 buttons)
                         h('form#ailevel', [
-                            h('h4', _('A.I. Level')),
+                            h('h3', _('A.I. Level')),
                             h(
                                 'div.radio-group',
                                 [0, 1, 2, 3, 4, 5, 6, 7, 8]
@@ -1337,7 +1341,7 @@ export class LobbyController {
                 on: { click: () => this.onClickSeek(seek) },
             },
             [
-                h('td', [this.colorIcon(seek.color)]),
+                h('td', [this.seekAction(seek, displayName)]),
                 h('td', [this.challengeIcon(seek), this.seekTitle(seek), this.user(seek)]),
                 h('td', seek.rating),
                 h('td', timeControlStr(seek.base, seek.inc, seek.byoyomi, seek.day)),
@@ -1386,6 +1390,19 @@ export class LobbyController {
             }
             this.doSend({ type: 'accept_seek', seekID: seek['seekID'], player: this.username });
         }
+    }
+
+    // The row's keyboard control. It has no handler: Enter or Space clicks it, and the click reaches
+    // the row's own, so mouse and keyboard take one path.
+    private seekAction(seek: Seek, displayName: string): VNode {
+        const time = timeControlStr(seek.base, seek.inc, seek.byoyomi, seek.day);
+        const label =
+            seek.user === this.username
+                ? `${_('Cancel')}: ${time}, ${displayName}`
+                : `${_('Join')}: ${displayUsername(seek.user)}, ${time}, ${displayName}`;
+        return h('button.seek-action', { attrs: { type: 'button', 'aria-label': label } }, [
+            this.colorIcon(seek.color),
+        ]);
     }
 
     private colorIcon(color: string) {
@@ -1535,7 +1552,7 @@ export class LobbyController {
 
         return h('div#leaders.lobby-ranking', [
             h('a.lobby-ranking-top', { attrs: { href: '/players' } }, [
-                h('strong', _('Leaderboard')),
+                h('strong', { attrs: { role: 'heading', 'aria-level': '2' } }, _('Leaderboard')),
                 h('span.more', _('More') + ' »'),
             ]),
             h('div.lobby-ranking-content', [h('table', [h('tbody', rows)])]),
@@ -1567,7 +1584,7 @@ export class LobbyController {
 
         return h('div#winners.lobby-ranking', [
             h('a.lobby-ranking-top', { attrs: { href: '/tournaments/winners' } }, [
-                h('strong', _('Tournament winners')),
+                h('strong', { attrs: { role: 'heading', 'aria-level': '2' } }, _('Tournament winners')),
                 h('span.more', _('More') + ' »'),
             ]),
             h('div.lobby-ranking-content', [h('table', [h('tbody', rows)])]),
@@ -1738,6 +1755,7 @@ export class LobbyController {
             _('Rating range'),
             h('div.rating-range', [
                 h('input#auto-rating-min.slider', {
+                    attrs: { 'aria-label': `${_('Rating range')} −` },
                     props: { name: 'rating-min', type: 'range', min: -1000, max: 0, step: 50, value: aRatingMin },
                     on: { input: e => this.setAutoRatingMin(parseInt((e.target as HTMLInputElement).value)) },
                     hook: { insert: vnode => this.setAutoRatingMin(parseInt((vnode.elm as HTMLInputElement).value)) },
@@ -1746,6 +1764,7 @@ export class LobbyController {
                 h('span', '/'),
                 h('div.auto-rating-max', '+1000'),
                 h('input#auto-rating-max.slider', {
+                    attrs: { 'aria-label': `${_('Rating range')} +` },
                     props: { name: 'rating-max', type: 'range', min: 0, max: 1000, step: 50, value: aRatingMax },
                     on: { input: e => this.setAutoRatingMax(parseInt((e.target as HTMLInputElement).value)) },
                     hook: { insert: vnode => this.setAutoRatingMax(parseInt((vnode.elm as HTMLInputElement).value)) },
@@ -2041,7 +2060,7 @@ export function lobbyView(model: PyChessModel): VNode[] {
 
         dailyPuzzle = [
             h('span.vstext', [
-                h('span.text', _('Puzzle of the day')),
+                h('span.text', { attrs: { role: 'heading', 'aria-level': '2' } }, _('Puzzle of the day')),
                 h('span.text', _('%1 to play', turnColor === 'white' ? first : second)),
             ]),
             h(
@@ -2078,29 +2097,29 @@ export function lobbyView(model: PyChessModel): VNode[] {
     let tabs = [];
     tabs.push(
         h(
-            'span',
-            { attrs: { role: 'tab', 'aria-selected': false, 'aria-controls': 'panel-1', id: 'tab-1', tabindex: '-1' } },
+            'button.site-tab',
+            { attrs: { role: 'tab', 'aria-selected': false, 'aria-controls': 'panel-1', id: 'tab-1', type: 'button' } },
             _('Lobby'),
         ),
     );
     tabs.push(
         h(
-            'span',
-            { attrs: { role: 'tab', 'aria-selected': false, 'aria-controls': 'panel-2', id: 'tab-2', tabindex: '-1' } },
+            'button.site-tab',
+            { attrs: { role: 'tab', 'aria-selected': false, 'aria-controls': 'panel-2', id: 'tab-2', type: 'button' } },
             _('Correspondence'),
         ),
     );
     if (corrGames.length > 0) {
         tabs.push(
             h(
-                'span',
+                'button.site-tab',
                 {
                     attrs: {
                         role: 'tab',
                         'aria-selected': false,
                         'aria-controls': 'panel-3',
                         id: 'tab-3',
-                        tabindex: '-1',
+                        type: 'button',
                     },
                 },
                 [
@@ -2113,14 +2132,14 @@ export function lobbyView(model: PyChessModel): VNode[] {
     if (!anonUser) {
         tabs.push(
             h(
-                'span',
+                'button.site-tab',
                 {
                     attrs: {
                         role: 'tab',
                         'aria-selected': false,
                         'aria-controls': 'panel-4',
                         id: 'tab-4',
-                        tabindex: '-1',
+                        type: 'button',
                     },
                 },
                 _('Auto pairing'),
@@ -2129,7 +2148,7 @@ export function lobbyView(model: PyChessModel): VNode[] {
     }
 
     let containers = [];
-    containers.push(h('div', { attrs: { role: 'tablist', 'aria-label': 'Seek Tabs' } }, tabs));
+    containers.push(h('div', { attrs: { role: 'tablist' } }, tabs));
     containers.push(
         h(
             'div.seek-container',
@@ -2192,10 +2211,30 @@ export function lobbyView(model: PyChessModel): VNode[] {
     }
 
     return [
-        h('aside.sidebar-first', [h('div#streams'), h('div#spotlights'), timelinePanel(timelineEntries, anonUser)]),
-        h('div.seeks', containers),
+        srHeading('h1', _('Lobby')),
+        /* NAMED, BECAUSE THE LOBBY HAS TWO OF THESE. `<aside>` carries the `complementary` landmark
+           implicitly, and an unnamed one is announced as just "complementary" -- so a landmark list
+           on this page read "complementary, complementary" and neither could be told from the
+           other. The name is also spoken every time a reader passes it, which is the argument for
+           keeping it short.
+
+           IT COVERS THREE THINGS, not only the one that happens to be populated: streams,
+           tournament spotlights and the timeline. Naming it for the tournaments would go stale the
+           moment a stream is live. */
+        h('aside.sidebar-first', { attrs: { 'aria-label': _("What's up") } }, [
+            srHeading('h2', _("What's up")),
+            h('div#streams'),
+            h('div#spotlights'),
+            srHeading('h3', _('Timeline')),
+            timelinePanel(timelineEntries, anonUser),
+        ]),
+        h('div.seeks', [srHeading('h2', _('Challenges')), ...containers]),
+        srHeading('h2', _('Variants')),
         h('div#variants-catalog'),
-        h('aside.sidebar-second', [
+        // The buttons that start a game, plus the online counters. "New game" is what the region is
+        // FOR; the counters are incidental to it.
+        h('aside.sidebar-second', { attrs: { 'aria-label': _('Create a game') } }, [
+            srHeading('h2', _('Create a game')),
             h('div.seekbuttons'),
             h('div.lobby-count', [
                 h('a', { attrs: { href: '/players' } }, [h('counter#u_cnt')]),

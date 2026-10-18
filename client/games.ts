@@ -13,6 +13,7 @@ import { sizeMiniBoardHost } from './miniBoard';
 import { getLastMoveFen, VARIANTS } from './variants';
 import { subscribeOngoingRealtime } from './ongoingRealtime';
 import { displayUsername } from './user';
+import { _ } from './i18n';
 
 export interface Game {
     gameId: string;
@@ -39,6 +40,10 @@ function gameView(games: Games, game: Game) {
     const variant = VARIANTS[game.variant];
     let lastMove, fen;
     [lastMove, fen] = getLastMoveFen(variant.name, game.lastMove, game.fen);
+    const tc = timeControlStr(game.base, game.inc, game.byoyomi, game.day);
+    const black = displayUsername(aiDisplayName(game.b, game.variant)) + aiLevel(game.b, game.level);
+    const white = displayUsername(aiDisplayName(game.w, game.variant)) + aiLevel(game.w, game.level);
+    const open = () => window.location.assign('/' + game.gameId);
     return h(
         `minigame#${game.gameId}.${variant.boardFamily}.${variant.pieceFamily}.${variant.ui.boardMark}`,
         {
@@ -46,7 +51,17 @@ function gameView(games: Games, game: Game) {
                 'with-pockets': !!variant.pocket,
                 'smaller-text': game.bTitle == 'BOT',
             },
-            on: { click: () => window.location.assign('/' + game.gameId) },
+            attrs: {
+                role: 'link',
+                tabindex: '0',
+                'aria-label': `${_('Open game')}: ${white} – ${black}, ${variant.displayName(game.chess960)}, ${tc}`,
+            },
+            on: {
+                click: open,
+                keydown: (e: KeyboardEvent) => {
+                    if (e.key === 'Enter') open();
+                },
+            },
         },
         h('div', [
             h('div.row', [
@@ -55,12 +70,9 @@ function gameView(games: Games, game: Game) {
                         props: { title: variant.displayName(game.chess960) },
                         attrs: { 'data-icon': variant.icon(game.chess960) },
                     }),
-                    h('div.tc', timeControlStr(game.base, game.inc, game.byoyomi, game.day)),
+                    h('div.tc', tc),
                 ]),
-                h('div.name.row-name', [
-                    h('player-title', ' ' + game.bTitle + ' '),
-                    displayUsername(aiDisplayName(game.b, game.variant)) + aiLevel(game.b, game.level),
-                ]),
+                h('div.name.row-name', [h('player-title', ' ' + game.bTitle + ' '), black]),
             ]),
             h(`div.cg-wrap.${variant.board.cg}.mini`, {
                 hook: {
@@ -81,10 +93,7 @@ function gameView(games: Games, game: Game) {
                     },
                 },
             }),
-            h('div.name', [
-                h('player-title', ' ' + game.wTitle + ' '),
-                displayUsername(aiDisplayName(game.w, game.variant)) + aiLevel(game.w, game.level),
-            ]),
+            h('div.name', [h('player-title', ' ' + game.wTitle + ' '), white]),
         ]),
     );
 }

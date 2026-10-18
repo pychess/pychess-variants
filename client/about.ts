@@ -23,7 +23,7 @@ export function aboutView(model: PyChessModel): VNode[] {
     ];
     return [
         h('div.about', [
-            h('img.center', { attrs: { src: `${model.assetURL}/favicon/favicon-96x96.png` } }),
+            h('img.center', { attrs: { src: `${model.assetURL}/favicon/favicon-96x96.png`, alt: '' } }),
             h('h1', { attrs: { align: 'center' } }, _('About pychess')),
             h('p', _('Pychess is a free, open-source chess server designed to play several chess variants.')),
             h('p', [

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="{{ lang|replace('_', '-') }}">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <meta name="description" content="Free Online Chess Variants">
@@ -159,6 +159,7 @@
                                 data-vapid="{{ vapid_public_key }}"
     >
         {% block header %}{% endblock %}
+        <div id="main-content"></div>
         {% block content %}{% endblock %}
         <a id="reconnecting" class="link text" data-icon="p"><info-date id="reconnecting-ts" timestamp=""></info-date></a>
     </body>

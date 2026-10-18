@@ -1,8 +1,15 @@
 import { VNode, init, classModule, attributesModule, propsModule, eventListenersModule, styleModule } from 'snabbdom';
+import type { Hooks } from 'snabbdom';
 
 import { sanitizeURL } from './url';
 
 export const patch = init([classModule, attributesModule, propsModule, eventListenersModule, styleModule]);
+
+// Open a <dialog> as modal; close() before removal so the browser returns focus to the opener.
+export const modalDialogHooks: Hooks = {
+    insert: vnode => (vnode.elm as HTMLDialogElement).showModal(),
+    destroy: vnode => (vnode.elm as HTMLDialogElement).close(),
+};
 
 export function downloadText(filename: string, text: string) {
     const element = document.createElement('a');

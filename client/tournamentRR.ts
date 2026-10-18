@@ -1,7 +1,7 @@
 import { h, VNode } from 'snabbdom';
 
 import { _ } from './i18n';
-import { patch } from './document';
+import { modalDialogHooks, patch } from './document';
 import { alertDialog } from './alertDialog';
 import { confirmDialog } from './confirmDialog';
 import { chatView, chatMessage, ChatController } from './chat';
@@ -1358,23 +1358,31 @@ export class TournamentRRController implements ChatController {
         this.modalNode = patch(
             this.modalNode,
             h(
-                'div#rr-modal.modal-overlay.modal-overlay-fullscreen',
+                'dialog#rr-modal.modal-overlay.modal-overlay-fullscreen',
                 {
                     style: { display: 'flex' },
+                    // Presence polling re-patches this element, so showModal() runs only once.
+                    hook: modalDialogHooks,
                     on: {
                         click: (evt: Event) => {
                             if (evt.target === evt.currentTarget) this.closeArrangement();
+                        },
+                        cancel: (evt: Event) => {
+                            evt.preventDefault();
+                            this.closeArrangement();
                         },
                     },
                 },
                 [
                     h('div.rr-modal-content.rr-arr-modal', [
                         h('div.rr-arr-header', [
-                            h('span.close', {
+                            h('button.close', {
                                 on: { click: () => this.closeArrangement() },
                                 attrs: {
+                                    type: 'button',
                                     'data-icon': 'j',
                                     title: _('Cancel'),
+                                    'aria-label': _('Cancel'),
                                 },
                             }),
                             h('h3', `${_('Game scheduling')} • ${_('Round')} ${cell.round}`),

@@ -1,4 +1,4 @@
-# ![Ajedrez](https://github.com/pychess/pychess-variants/blob/master/static/icons/chess.svg) Ajedrez
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/chess.svg) Ajedrez
 
 ![Posición inicial](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chess.png?raw=true)
 

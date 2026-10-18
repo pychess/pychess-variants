@@ -26,8 +26,14 @@ export interface BoardFamily {
     readonly boardCSS: string[];
 }
 
+// Names keyed by piece letter ('r', '+p'); pieceName() translates them when shown,
+// since these tables are built before the translations load.
+export type PieceNameTable = Readonly<Record<string, string>>;
+
 export interface PieceFamily {
     readonly pieceCSS: string[];
+    // What its pieces are called, unless a variant names them otherwise
+    readonly pieceNames?: PieceNameTable;
     // These styles draw at least one piece on ::before so its artwork can rotate
     // without changing the piece element's chessground-owned transform. Applying
     // the missing-piece background to the element would show both images at once.
@@ -227,11 +233,73 @@ export const BOARD_FAMILIES: Record<string, BoardFamily> = {
     },
 };
 
+const CHESS_NAMES: PieceNameTable = {
+    k: _('king'),
+    q: _('queen'),
+    r: _('rook'),
+    b: _('bishop'),
+    n: _('knight'),
+    p: _('pawn'),
+};
+const CAPA_NAMES: PieceNameTable = { ...CHESS_NAMES, a: _('archbishop'), c: _('chancellor') };
+const GRAND_NAMES: PieceNameTable = { ...CHESS_NAMES, a: _('cardinal'), c: _('marshal') };
+const SEIRAWAN_NAMES: PieceNameTable = { ...CHESS_NAMES, h: _('hawk'), e: _('elephant') };
+const MAKRUK_NAMES: PieceNameTable = {
+    k: _('king'),
+    m: _('queen'),
+    s: _('bishop'),
+    n: _('knight'),
+    r: _('rook'),
+    p: _('pawn'),
+};
+const XIANGQI_NAMES: PieceNameTable = {
+    k: _('king'),
+    a: _('advisor'),
+    b: _('elephant'),
+    n: _('horse'),
+    r: _('chariot'),
+    c: _('cannon'),
+    p: _('pawn'),
+};
+const SHOGI_NAMES: PieceNameTable = {
+    k: _('king'),
+    g: _('gold general'),
+    r: _('rook'),
+    b: _('bishop'),
+    s: _('silver general'),
+    n: _('knight'),
+    l: _('lance'),
+    p: _('pawn'),
+    '+r': _('dragon king'),
+    '+b': _('dragon horse'),
+    '+s': _('promoted silver'),
+    '+n': _('promoted knight'),
+    '+l': _('promoted lance'),
+    '+p': _('tokin'),
+};
+const SHOGUN_NAMES: PieceNameTable = {
+    ...CHESS_NAMES,
+    f: _('duchess'),
+    '+f': _('queen'),
+    '+p': _('captain'),
+    '+r': _('mortar'),
+    '+b': _('archbishop'),
+    '+n': _('general'),
+};
+const ORDA_NAMES: PieceNameTable = {
+    ...CHESS_NAMES,
+    y: _('yurt'),
+    h: _('kheshig'),
+    a: _('horse archer'),
+    l: _('lancer'),
+};
+
 export const PIECE_FAMILIES: Record<string, PieceFamily> = {
     amazons: { pieceCSS: ['classic', 'arrow', 'disguised'], wallCSS: ['classic', 'arrow'] },
     paradigm: { pieceCSS: ['paradigm0', 'paradigm1', 'paradigm2', 'paradigm3', 'disguised'] },
     ataxx: { pieceCSS: ['disguised', 'virus', 'zombie', 'cat-dog'] },
     standard: {
+        pieceNames: CHESS_NAMES,
         pieceCSS: [
             'standard',
             'green',
@@ -246,16 +314,26 @@ export const PIECE_FAMILIES: Record<string, PieceFamily> = {
             'disguised',
         ],
     },
-    capa: { pieceCSS: ['capa0', 'capa1', 'capa2', 'capa3', 'capa4', 'capa5', 'disguised'] },
+    capa: { pieceCSS: ['capa0', 'capa1', 'capa2', 'capa3', 'capa4', 'capa5', 'disguised'], pieceNames: CAPA_NAMES },
     centaur: { pieceCSS: ['centaur0', 'centaur1', 'disguised'] },
-    dragon: { pieceCSS: ['dragon1', 'dragon0', 'dragon2', 'disguised'] },
-    seirawan: { pieceCSS: ['seir1', 'seir0', 'seir2', 'seir3', 'seir4', 'seir5', 'disguised'] },
-    makruk: { pieceCSS: ['makrukwb', 'makrukwr', 'makruk', 'makruks', 'makruki', 'makrukc', 'disguised'] },
+    dragon: {
+        pieceCSS: ['dragon1', 'dragon0', 'dragon2', 'disguised'],
+        pieceNames: { ...CHESS_NAMES, d: _('dragon') },
+    },
+    seirawan: {
+        pieceCSS: ['seir1', 'seir0', 'seir2', 'seir3', 'seir4', 'seir5', 'disguised'],
+        pieceNames: SEIRAWAN_NAMES,
+    },
+    makruk: {
+        pieceCSS: ['makrukwb', 'makrukwr', 'makruk', 'makruks', 'makruki', 'makrukc', 'disguised'],
+        pieceNames: MAKRUK_NAMES,
+    },
     sittuyin: {
         pieceCSS: ['sittuyins', 'sittuyinkagr', 'sittuyinkabr', 'sittuyinm', 'sittuyini', 'sittuyincb', 'disguised'],
     },
-    asean: { pieceCSS: ['aseani', 'aseanm', 'aseanc', 'aseans', 'aseancb', 'disguised'] },
+    asean: { pieceCSS: ['aseani', 'aseanm', 'aseanc', 'aseans', 'aseancb', 'disguised'], pieceNames: CHESS_NAMES },
     shogi: {
+        pieceNames: SHOGI_NAMES,
         pieceCSS: [
             'shogik',
             'shogi',
@@ -291,6 +369,7 @@ export const PIECE_FAMILIES: Record<string, PieceFamily> = {
         imageLayerCSS: ['cz', 'czalt'],
     },
     xiangqi: {
+        pieceNames: XIANGQI_NAMES,
         pieceCSS: [
             'lishu',
             'xiangqi2di',
@@ -314,6 +393,7 @@ export const PIECE_FAMILIES: Record<string, PieceFamily> = {
         ],
     },
     janggi: {
+        pieceNames: XIANGQI_NAMES,
         pieceCSS: [
             'janggihb',
             'janggihg',
@@ -329,10 +409,16 @@ export const PIECE_FAMILIES: Record<string, PieceFamily> = {
     shatranj: { pieceCSS: ['shatranj0', 'shatranj1', 'disguised'] },
     courier: { pieceCSS: ['courier', 'disguised'] },
     opulent: { pieceCSS: ['opulent', 'disguised'] },
-    shako: { pieceCSS: ['shako0', 'shako1', 'shako2', 'disguised'] },
+    shako: {
+        pieceCSS: ['shako0', 'shako1', 'shako2', 'disguised'],
+        pieceNames: { ...CHESS_NAMES, e: _('elephant'), c: _('cannon') },
+    },
     pemba: { pieceCSS: ['alfaerie', 'disguised'] },
-    shogun: { pieceCSS: ['shogun6', 'shogun0', 'shogun1', 'shogun2', 'shogun3', 'shogun4', 'shogun5', 'disguised'] },
-    orda: { pieceCSS: ['orda0', 'orda1', 'disguised'] },
+    shogun: {
+        pieceCSS: ['shogun6', 'shogun0', 'shogun1', 'shogun2', 'shogun3', 'shogun4', 'shogun5', 'disguised'],
+        pieceNames: SHOGUN_NAMES,
+    },
+    orda: { pieceCSS: ['orda0', 'orda1', 'disguised'], pieceNames: ORDA_NAMES },
     khans: { pieceCSS: ['khans0', 'khans1', 'disguised'] },
     synochess: {
         pieceCSS: ['synochess0', 'synochess1', 'synochess2', 'synochess3', 'synochess4', 'synochess5', 'disguised'],
@@ -428,10 +514,11 @@ export interface Variant {
     };
     readonly pieceRow: Record<cg.Color, cg.Role[]>;
     readonly kingRoles: cg.Role[];
+    readonly pieceNames: PieceNameTable;
+    readonly pieceNamesByColor?: Partial<Record<cg.Color, PieceNameTable>>;
     readonly pocket?: {
         readonly roles: Record<cg.Color, cg.Role[]>;
         readonly captureToHand: boolean;
-        readonly pieceNames?: Partial<Record<cg.Role, string>>;
     };
     readonly promotion: {
         readonly type: PromotionType;
@@ -493,6 +580,13 @@ const pieceFamiliesWithMaterialDifferenceSupported = [
     'spartan',
 ];
 
+/** A piece's full name, else its letter. */
+export function pieceName(variant: Variant, role: cg.Role, color: cg.Color): string {
+    const letter = util.letterOf(role);
+    const name = variant.pieceNamesByColor?.[color]?.[letter] ?? variant.pieceNames[letter];
+    return name === undefined ? letter : _(name);
+}
+
 export function variant(config: VariantConfig): Variant {
     return {
         name: config.name,
@@ -539,6 +633,8 @@ export function variant(config: VariantConfig): Variant {
                   black: config.pieceRow.black.map(util.roleOf),
               },
         kingRoles: (config.kingRoles ?? ['k']).map(util.roleOf),
+        pieceNames: { ...PIECE_FAMILIES[config.pieceFamily]?.pieceNames, ...config.pieceNames },
+        pieceNamesByColor: config.pieceNamesByColor,
         pocket: config.pocket
             ? {
                   roles: Array.isArray(config.pocket.roles)
@@ -550,7 +646,6 @@ export function variant(config: VariantConfig): Variant {
                             white: config.pocket.roles.white.map(util.roleOf),
                             black: config.pocket.roles.black.map(util.roleOf),
                         },
-                  pieceNames: config.pocket?.pieceNames,
                   captureToHand: config.pocket.captureToHand,
               }
             : undefined,
@@ -661,12 +756,14 @@ interface VariantConfig {
     pieceRow: cg.Letter[] | Record<cg.Color, cg.Letter[]>;
     // Pieces considered king for check marking (default: ['k'])
     kingRoles?: cg.Letter[];
+    // Piece names by letter, over the piece family's (grand's cardinal and marshal on capa's pieces)
+    pieceNames?: PieceNameTable;
+    // Only where one side calls a letter something else (orda's khan)
+    pieceNamesByColor?: Partial<Record<cg.Color, PieceNameTable>>;
     pocket?: {
         // Pieces in the pocket
         // Use the record version if the pieces of each side are different
         roles: cg.Letter[] | Record<cg.Color, cg.Letter[]>;
-        // Translatable names of the pieces in the pocket (used for bug chat tooltip)
-        pieceNames?: Partial<Record<cg.Role, string>>;
         // Whether captured pieces go to the pocket (Fairy's terminology)
         captureToHand: boolean;
     };
@@ -883,13 +980,6 @@ export const VARIANTS: Record<string, Variant> = {
         pieceRow: ['k', 'q', 'r', 'b', 'n', 'p'],
         pocket: {
             roles: ['p', 'n', 'b', 'r', 'q'],
-            pieceNames: {
-                'p-piece': _('pawn'),
-                'n-piece': _('knight'),
-                'b-piece': _('bishop'),
-                'r-piece': _('rook'),
-                'q-piece': _('queen'),
-            },
             captureToHand: true,
         },
         rules: { enPassant: true },
@@ -1119,13 +1209,6 @@ export const VARIANTS: Record<string, Variant> = {
         promotion: { type: 'regular', order: ['m'] },
         pocket: {
             roles: ['p', 'm', 's', 'n', 'r'],
-            pieceNames: {
-                'p-piece': _('pawn'),
-                'm-piece': _('queen'),
-                's-piece': _('bishop'),
-                'n-piece': _('knight'),
-                'r-piece': _('rook'),
-            },
             captureToHand: true,
         },
         ui: { showPromoted: true },
@@ -1222,6 +1305,7 @@ export const VARIANTS: Record<string, Variant> = {
         notation: cg.Notation.SHOGI_ARBNUM,
         colors: { first: 'Black', second: 'White' },
         pieceRow: ['k', 'g', 'r', 'b', 's', 'n', 'l', 'p', 'e'],
+        pieceNames: { e: _('drunken elephant'), '+e': _('crown prince') },
         kingRoles: ['k', '+e'],
         promotion: { type: 'shogi', roles: ['p', 'l', 'n', 's', 'r', 'b', 'e'] },
         rules: { defaultTimeControl: 'byoyomi', noDrawOffer: true },
@@ -1433,14 +1517,6 @@ export const VARIANTS: Record<string, Variant> = {
         promotion: { type: 'regular', roles: [] },
         pocket: {
             roles: ['p', 'n', 'b', 'r', 'c', 'a'],
-            pieceNames: {
-                'p-piece': _('pawn'),
-                'n-piece': _('horse'),
-                'b-piece': _('elephant'),
-                'r-piece': _('chariot'),
-                'c-piece': _('cannon'),
-                'a-piece': _('advisor'),
-            },
             captureToHand: true,
         },
         ui: { showPromoted: true },
@@ -1662,6 +1738,7 @@ export const VARIANTS: Record<string, Variant> = {
         boardFamily: 'grand10x10',
         pieceFamily: 'capa',
         pieceRow: ['k', 'q', 'c', 'a', 'r', 'b', 'n', 'p'],
+        pieceNames: GRAND_NAMES,
         rules: { enPassant: true },
     }),
 
@@ -1673,6 +1750,7 @@ export const VARIANTS: Record<string, Variant> = {
         boardFamily: 'grand10x10',
         pieceFamily: 'capa',
         pieceRow: ['k', 'q', 'c', 'a', 'r', 'b', 'n', 'p'],
+        pieceNames: GRAND_NAMES,
         pocket: { roles: ['p', 'n', 'b', 'r', 'a', 'c', 'q'], captureToHand: true },
         rules: { enPassant: true },
     }),
@@ -1803,6 +1881,7 @@ export const VARIANTS: Record<string, Variant> = {
         pieceFamily: 'orda',
         colors: { first: 'White', second: 'Gold' },
         pieceRow: { white: ['k', 'q', 'r', 'b', 'n', 'p', 'h'], black: ['k', 'y', 'l', 'a', 'h', 'p', 'q'] },
+        pieceNamesByColor: { black: { k: _('khan') } },
         promotion: { type: 'regular', order: ['q', 'h'] },
         rules: { enPassant: true },
         ui: { boardMark: 'campmate' },
@@ -2843,6 +2922,7 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
         pieceCSSExclude: compatiblePieceSource?.pieceCSSExclude,
         pieceRow: pieces,
         kingRoles,
+        pieceNames: meta.pieceNames,
         pocket: pocketRoles.length ? { roles: pocketRoles, captureToHand } : undefined,
         promotion: { type: promotionType, roles: promotionRoles, order: promotionOrder },
         rules: {

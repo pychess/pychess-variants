@@ -1,4 +1,4 @@
-# ![Cambodian](https://github.com/pychess/pychess-variants/blob/master/static/icons/cambodian.svg) 高棉象棋
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/cambodian.svg) 高棉象棋
 
 ![Cambodian Board](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 

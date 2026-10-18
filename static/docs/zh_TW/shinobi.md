@@ -1,4 +1,4 @@
-# ![Shinobi chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/shinobi.svg) 忍棋
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/shinobi.svg) 忍棋
 
 ![Shinobi](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Shinobi.png)
 

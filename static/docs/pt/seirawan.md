@@ -1,4 +1,4 @@
-# ![Seirawan](https://github.com/pychess/pychess-variants/blob/master/static/icons/schess.svg) S-chess (Seirawan Chess, SHARPER Chess)
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/schess.svg) S-chess (Seirawan Chess, SHARPER Chess)
 
 O S-Chess foi criado por Yasser Seirawan e Bruce Harper em 2007. Esta variante é feita num tabuleiro 8x8 mas tem a particularidade de ter duas novas peças híbridas a partir de colocação (as peças são colocadas no tabuleiro substituindo casas que ficam vazias na primeira linha após um lance)
 

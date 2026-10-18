@@ -1,4 +1,4 @@
-# ![Shako](https://github.com/pychess/pychess-variants/blob/master/static/icons/shako.svg) 中西国际象棋 | Shako
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/shako.svg) 中西国际象棋 | Shako
 
 ![Shako](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Shako.png)
 

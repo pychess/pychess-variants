@@ -1,4 +1,4 @@
-# ![Khans chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/khans.svg) Khan's Chess
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/khans.svg) Khan's Chess
 
 ![Khans Chess](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Khans.png)
 

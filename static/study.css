@@ -1228,7 +1228,7 @@ button.study-gamebook-edit__legend { cursor: pointer; }
     body[data-view='study'] .hamburger { display: block; }
     body[data-view='study'] .hamburger.is-active { background: var(--bg-color0); }
     body[data-view='study'] .topnav a.navbar-show { transform: translateX(64px); color: var(--font-color); background: var(--bg-color0); }
-    body[data-view='study'] .topnav section > a { display: none; }
+    body[data-view='study'] .topnav section > .nav-section { display: none; }
     body[data-view='study'] .topnav .drp { display: flex; flex-direction: column; visibility: visible; position: static; min-width: 0; border: 0; border-radius: 0; box-shadow: none; background: transparent; }
     body[data-view='study'] .topnav .drp a { height: var(--site-header-height); padding: 0 .7rem; line-height: var(--site-header-height); border-radius: 0; }
     body[data-view='study'] .site-buttons { margin-left: 0; }

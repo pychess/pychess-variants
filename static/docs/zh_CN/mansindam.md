@@ -1,4 +1,4 @@
-# ![Mansindam](https://github.com/pychess/pychess-variants/blob/master/static/icons/mansindam.svg) 万神谈 | Mansindam
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/mansindam.svg) 万神谈 | Mansindam
 
 _一种结合了强力棋子和打入玩法的棋类游戏。_
 

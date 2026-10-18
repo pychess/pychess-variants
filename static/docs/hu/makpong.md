@@ -1,4 +1,4 @@
-# ![Makpong ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/makpong.svg) Makpong
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/makpong.svg) Makpong
 
 ![Makpong tábla](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 

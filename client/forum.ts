@@ -4,7 +4,7 @@ import { Chessground } from 'chessgroundx';
 import * as cg from 'chessgroundx/types';
 
 import { _ } from './i18n';
-import { patch } from './document';
+import { modalDialogHooks, patch } from './document';
 import { alertDialog } from './alertDialog';
 import { timeago } from './datetime';
 import { PyChessModel } from './types';
@@ -1119,6 +1119,7 @@ export function forumView(model: PyChessModel) {
                         type: 'text',
                         name: 'text',
                         placeholder: _('Search'),
+                        'aria-label': _('Search'),
                         enterkeyhint: 'search',
                     },
                     props: { value: searchTextDraft },
@@ -1472,6 +1473,7 @@ export function forumView(model: PyChessModel) {
                           [
                               h('textarea.form-control.post-text-area.edit-post-box', {
                                   attrs: {
+                                      'aria-label': _('Message'),
                                       required: true,
                                       rows: 10,
                                       maxlength: `${FORUM_MAX_POST_LEN}`,
@@ -1521,113 +1523,139 @@ export function forumView(model: PyChessModel) {
     /** Render moderator relocate modal for moving a thread between categories. */
     function renderRelocateModal(firstPostId: string) {
         if (!showRelocateModal) return null;
-        return h('div.forum-relocate-modal', [
-            h('div.forum-modal-backdrop', {
+        return h(
+            'dialog.forum-relocate-modal',
+            {
+                // A native modal: the browser moves focus in, keeps it there and closes on Escape.
+                hook: modalDialogHooks,
                 on: {
-                    click: () => {
+                    cancel: (e: Event) => {
+                        e.preventDefault();
                         showRelocateModal = false;
                         redraw();
                     },
                 },
-            }),
-            h('div.forum-modal-body', [
-                h('p', _('Move the entire thread to another forum')),
-                h(
-                    'form.form3',
-                    {
-                        on: {
-                            submit: (e: Event) => {
-                                e.preventDefault();
-                                showRelocateModal = false;
-                                redraw();
-                                relocateThread(firstPostId);
-                            },
+            },
+            [
+                h('div.forum-modal-backdrop', {
+                    on: {
+                        click: () => {
+                            showRelocateModal = false;
+                            redraw();
                         },
                     },
-                    [
-                        h(
-                            'select.form-control',
-                            {
-                                attrs: { name: 'categ' },
-                                props: { value: relocateTargetDraft },
-                                on: {
-                                    change: (e: Event) => {
-                                        relocateTargetDraft = (e.target as HTMLSelectElement).value;
-                                    },
+                }),
+                h('div.forum-modal-body', [
+                    h('p', _('Move the entire thread to another forum')),
+                    h(
+                        'form.form3',
+                        {
+                            on: {
+                                submit: (e: Event) => {
+                                    e.preventDefault();
+                                    showRelocateModal = false;
+                                    redraw();
+                                    relocateThread(firstPostId);
                                 },
                             },
-                            relocateTargets.map(target =>
-                                h(
-                                    'option',
-                                    {
-                                        attrs: { value: target._id },
-                                    },
-                                    target.name,
-                                ),
-                            ),
-                        ),
-                        h('div.form-actions', [
+                        },
+                        [
                             h(
-                                'button.button.button-empty.cancel',
+                                'select.form-control',
                                 {
-                                    props: { type: 'button' },
+                                    attrs: { name: 'categ' },
+                                    props: { value: relocateTargetDraft },
                                     on: {
-                                        click: () => {
-                                            showRelocateModal = false;
-                                            redraw();
+                                        change: (e: Event) => {
+                                            relocateTargetDraft = (e.target as HTMLSelectElement).value;
                                         },
                                     },
                                 },
-                                _('Cancel'),
+                                relocateTargets.map(target =>
+                                    h(
+                                        'option',
+                                        {
+                                            attrs: { value: target._id },
+                                        },
+                                        target.name,
+                                    ),
+                                ),
                             ),
-                            h('button.button.button-red', { props: { type: 'submit' } }, _('Relocate the thread')),
-                        ]),
-                    ],
-                ),
-            ]),
-        ]);
+                            h('div.form-actions', [
+                                h(
+                                    'button.button.button-empty.cancel',
+                                    {
+                                        props: { type: 'button' },
+                                        on: {
+                                            click: () => {
+                                                showRelocateModal = false;
+                                                redraw();
+                                            },
+                                        },
+                                    },
+                                    _('Cancel'),
+                                ),
+                                h('button.button.button-red', { props: { type: 'submit' } }, _('Relocate the thread')),
+                            ]),
+                        ],
+                    ),
+                ]),
+            ],
+        );
     }
 
     function renderDeleteModal() {
         if (!showDeleteModal || !deletePostDraftId) return null;
-        return h('div.forum-delete-modal', [
-            h('div.forum-modal-backdrop', {
+        return h(
+            'dialog.forum-delete-modal',
+            {
+                hook: modalDialogHooks,
                 on: {
-                    click: () => closeDeleteModal(),
+                    cancel: (e: Event) => {
+                        e.preventDefault();
+                        closeDeleteModal();
+                    },
                 },
-            }),
-            h('div.forum-modal-body', [
-                h('p', _('Delete the post')),
-                h(
-                    'form.form3',
-                    {
-                        on: {
-                            submit: (e: Event) => {
-                                e.preventDefault();
-                                const postId = deletePostDraftId;
-                                closeDeleteModal();
-                                deletePost(postId);
+            },
+            [
+                h('div.forum-modal-backdrop', {
+                    on: {
+                        click: () => closeDeleteModal(),
+                    },
+                }),
+                h('div.forum-modal-body', [
+                    h('p', _('Delete the post')),
+                    h(
+                        'form.form3',
+                        {
+                            on: {
+                                submit: (e: Event) => {
+                                    e.preventDefault();
+                                    const postId = deletePostDraftId;
+                                    closeDeleteModal();
+                                    deletePost(postId);
+                                },
                             },
                         },
-                    },
-                    [
-                        h('div.form-actions', [
-                            h(
-                                'button.button.button-empty.cancel',
-                                {
-                                    props: { type: 'button' },
-                                    on: {
-                                        click: () => closeDeleteModal(),
+                        [
+                            h('div.form-actions', [
+                                h(
+                                    'button.button.button-empty.cancel',
+                                    {
+                                        props: { type: 'button' },
+                                        on: {
+                                            click: () => closeDeleteModal(),
+                                        },
                                     },
-                                },
-                                _('Cancel'),
-                            ),
-                            h('button.button.button-red', { props: { type: 'submit' } }, _('Delete the post')),
-                        ]),
-                    ],
-                ),
-            ]),
-        ]);
+                                    _('Cancel'),
+                                ),
+                                h('button.button.button-red', { props: { type: 'submit' } }, _('Delete the post')),
+                            ]),
+                        ],
+                    ),
+                ]),
+            ],
+        );
     }
 
     /** Render full topic page: header, posts, actions, and reply form. */
@@ -1697,7 +1725,7 @@ export function forumView(model: PyChessModel) {
                               on: { submit: submitReply },
                           },
                           [
-                              h('label', { attrs: { for: 'forum-reply-text' } }, _('Message')),
+                              h('label.sr-only', { attrs: { for: 'forum-reply-text' } }, _('Message')),
                               h('textarea#forum-reply-text.post-text-area.form-control', {
                                   attrs: {
                                       rows: 10,

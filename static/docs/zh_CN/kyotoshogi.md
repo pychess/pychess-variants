@@ -1,4 +1,4 @@
-# ![Kyoto](https://github.com/pychess/pychess-variants/blob/master/static/icons/KyotoShogi.svg) 京都将棋 | Kyoto Shogi
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/KyotoShogi.svg) 京都将棋 | Kyoto Shogi
 
 ![Kyoto Shogi](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Kyoto.png)
 

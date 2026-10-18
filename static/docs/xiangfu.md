@@ -1,4 +1,4 @@
-# ![Xiangfu](https://github.com/pychess/pychess-variants/blob/master/static/icons/Xiangfu.svg) Xiang Fu
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/Xiangfu.svg) Xiang Fu
 
 ![Xiangfu](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Xiangfu.png)
 

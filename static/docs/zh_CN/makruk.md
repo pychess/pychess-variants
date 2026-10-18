@@ -1,4 +1,4 @@
-# ![Makruk](https://github.com/pychess/pychess-variants/blob/master/static/icons/makruk.svg) 泰国象棋 | Makruk
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/makruk.svg) 泰国象棋 | Makruk
 
 ![Makruk](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 
@@ -62,7 +62,7 @@
 
 |                                                                                                             |                                                                                                                   |
 | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| ![Pawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) | ![ProPawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true) |
+| ![Pawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) | ![Promoted pawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true) |
 
 兵走法与国际象棋的兵相类似，移动时向前走一格，斜走一格吃子。与国际象棋兵不同，泰国象棋兵的第一步不能走两格，也没有吃过路兵。在走到对方底线的倒数第3行（本方数第6行）时，必须立即升变为士。不能不升变。
 

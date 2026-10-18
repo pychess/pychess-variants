@@ -1,4 +1,4 @@
-# ![Sakk ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/chess.svg) Sakk (Chess)
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/chess.svg) Sakk (Chess)
 
 ![Sakk tábla](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chess.png?raw=true)
 

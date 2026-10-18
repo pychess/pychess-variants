@@ -1,0 +1,47 @@
+{% extends "template.html" %}
+{% block content %}
+<div id="main-wrap">
+<main class="page-menu legal-page">
+<aside></aside>
+<div class="guide legal-doc">
+<h1 id="accessibility">{% trans %}Accessibility guide{% endtrans %}</h1>
+<p>{% trans %}PyChess can be used with a screen reader and with the keyboard alone. This guide describes what works today. More is on the way, including typing moves and moving pieces with the keyboard.{% endtrans %}</p>
+
+<h2 id="finding-your-way">{% trans %}Finding your way around a page{% endtrans %}</h2>
+<ul>
+<li>{% trans %}The first Tab on every page offers two links: "Skip to main content" and this guide.{% endtrans %}</li>
+<li>{% trans %}Every page has a navigation landmark (the site menu) and a main landmark. The menu sections are buttons: Enter opens one, Escape closes it.{% endtrans %}</li>
+<li>{% trans %}Game pages have a level 1 heading naming the game, and level 2 headings for the moves, the game actions and the chat.{% endtrans %}</li>
+</ul>
+
+<h2 id="the-board">{% trans %}The board{% endtrans %}</h2>
+<p>{% trans %}The board itself is a picture. Every game, analysis and puzzle page also carries a text summary of it, hidden from sight, with these headings:{% endtrans %}</p>
+<ul>
+<li><strong>{% trans %}Pieces{% endtrans %}</strong>: {% trans %}for each side, one line per kind of piece with the squares it stands on, for example "rook: a1, h1". Shogi and janggi use their own square names.{% endtrans %}</li>
+<li><strong>{% trans %}Pockets{% endtrans %}</strong>: {% trans %}in drop variants, how many of each piece are in hand.{% endtrans %}</li>
+<li><strong>{% trans %}Last move{% endtrans %}</strong>: {% trans %}read out whenever it changes: at once in your own games, at the next pause on analysis and puzzle pages.{% endtrans %}</li>
+<li><strong>{% trans %}Time{% endtrans %}</strong>: {% trans %}each clock in words. It is not read out as it ticks; go to it whenever you want to know.{% endtrans %}</li>
+<li><strong>{% trans %}Status{% endtrans %}</strong>: {% trans %}the result of the game, and on puzzle pages whether your move was right. Read out when it changes.{% endtrans %}</li>
+</ul>
+<p>{% trans %}On two-board pages such as bughouse, each board has its own summary, headed "Board A" and "Board B".{% endtrans %}</p>
+
+<h2 id="moving-through-a-game">{% trans %}Moving through a game{% endtrans %}</h2>
+<ul>
+<li>{% trans %}Left and Right arrow: previous and next move. Up and Down arrow: first and last move. Each step is read out as the last move.{% endtrans %}</li>
+<li>{% trans %}Press the question mark key to hear all keyboard shortcuts of the page.{% endtrans %}</li>
+</ul>
+
+<h2 id="playing-and-analysing">{% trans %}Playing and analysing{% endtrans %}</h2>
+<ul>
+<li>{% trans %}Draw, takeback and rematch offers are read out when they arrive, and are answered with Accept and Decline buttons.{% endtrans %}</li>
+<li>{% trans %}On the analysis board each engine line is a button. Enter plays the line's first move; pressing Enter again follows the line move by move.{% endtrans %}</li>
+<li>{% trans %}Chat messages are read out as they arrive.{% endtrans %}</li>
+<li>{% trans %}Making moves on the board with the keyboard is not available yet.{% endtrans %}</li>
+</ul>
+</div>
+</main>
+</div>
+{% endblock %}
+{% block js %}
+<script src="{{ js }}"></script>
+{% endblock %}

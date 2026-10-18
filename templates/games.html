@@ -2,7 +2,8 @@
 {% block content %}
 <div id="main-wrap">
 <main class="page-menu">
-<aside>
+<h1 class="sr-only">{% trans %}Games{% endtrans %}</h1>
+<aside aria-label="{% trans %}Variants{% endtrans %}">
     <ul class="guide">
     {% for key in variants %}
     <li>
@@ -11,9 +12,9 @@
     {% endfor %}
     </ul>
 </aside>
-<aside>
-<div id="placeholder">
-</aside>
+<div>
+<div id="placeholder"></div>
+</div>
 </main>
 </div>
 {% endblock %}

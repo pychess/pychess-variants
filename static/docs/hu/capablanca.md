@@ -1,4 +1,4 @@
-# ![Capablanca ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/capablanca.svg) Capablanca-sakk (Capablanca Chess)
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/capablanca.svg) Capablanca-sakk (Capablanca Chess)
 
 ![Capablanca ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Capablanca.png)
 

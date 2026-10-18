@@ -1,4 +1,4 @@
-# ![capablanca](https://github.com/pychess/pychess-variants/blob/master/static/icons/capablanca.svg) Scacchi Capablanca
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/capablanca.svg) Scacchi Capablanca
 
 ![Capablanca setup](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Capablanca.png)
 

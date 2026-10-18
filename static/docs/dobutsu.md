@@ -1,5 +1,5 @@
 
-# ![Dobutsu Shogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/Dobutsu.svg) Dobutsu Shogi
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/Dobutsu.svg) Dobutsu Shogi
 
 ![Dobutsu](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Dobutsu.png)
 

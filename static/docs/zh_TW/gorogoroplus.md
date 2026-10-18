@@ -1,5 +1,5 @@
 
-# ![Gorogoro](https://github.com/pychess/pychess-variants/blob/master/static/icons/Gorogoro.svg) Gorogoro+ | 五六將棋
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/Gorogoro.svg) Gorogoro+ | 五六將棋
 
 |   |   |
 --- | ---

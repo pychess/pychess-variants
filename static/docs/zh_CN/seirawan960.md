@@ -1,4 +1,4 @@
-# ![Seirawan960](https://github.com/pychess/pychess-variants/blob/master/static/icons/S960.svg) S-Chess 960
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/S960.svg) S-Chess 960
 
 S-Chess 960 为 S-Chess 加入菲舍尔任意制的规则的变种，在游玩之前请先熟悉S-Chess的规则。
 

@@ -1,4 +1,4 @@
-# ![Grandhouse](https://github.com/pychess/pychess-variants/blob/master/static/icons/Grandhouse.svg) 雙狂大象棋
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/Grandhouse.svg) 雙狂大象棋
 
 雙狂大象棋的規則就如雙狂象棋與西洋大象棋，只是略有修改。
 

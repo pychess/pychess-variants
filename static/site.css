@@ -482,7 +482,7 @@ div.seeks {
   grid-area: app;
   border-radius: 3px;
 }
-span[role=tab], div.seeks-table thead {
+span[role=tab], button.site-tab, div.seeks-table thead {
   font-family: var(--font-sans);
 }
 .seeks [data-icon]:before {
@@ -650,6 +650,10 @@ div.guide li {
 div.closed {
   width: 610px;
 }
+div.closed h1 {
+  font-size: 1.17em;
+  padding: 0;
+}
 under-lobby {
   grid-area: blog;
 }
@@ -766,7 +770,8 @@ ul.guide li {
   padding: 0 0.7rem;
 }
 .nav-link:link,
-.nav-link:visited {
+.nav-link:visited,
+.topnav button.nav-link {
   color: var(--link-color);
 }
 .drp .nav-link {
@@ -807,14 +812,27 @@ ul.guide li {
   color: var(--font-color);
 }
 
-.topnav a {
+.topnav a,
+.topnav button.nav-link {
   float: left;
   height: var(--site-header-height);
   font-size: 14px;
   white-space: nowrap;
   overflow: visible;
 }
-.topnav section > a {
+/* A BUTTON THAT MUST LOOK LIKE THE LINKS AROUND IT. There is no global button reset in this file;
+   `div button.login-btn` (~4494) is the header's existing precedent, and this mirrors it. */
+.topnav button.nav-section {
+  appearance: none;
+  background: none;
+  border: 0;
+  margin: 0;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.topnav section > .nav-section {
     text-transform: uppercase;
 }
 .topnav span {
@@ -847,7 +865,7 @@ ul.guide li {
     flex: 1 1 max-content;
     min-width: 6ch;
   }
-  .topnav section > a {
+  .topnav section > .nav-section {
     float: none;
     display: block;
     width: 100%;
@@ -865,8 +883,7 @@ ul.guide li {
     white-space: nowrap;
   }
 
-  .topnav section:hover > a,
-  .topnav section:focus-within > a,
+  .topnav section:hover > .nav-section,
   .topnav > a.donate-link:hover,
   .topnav > a.donate-link:focus-visible {
     width: max-content;
@@ -891,10 +908,13 @@ ul.guide li {
     height: initial;
     transform: translateX(-100%);
   }
+  /* Off-screen alone would leave the closed menu's links in the Tab order and the reader's tree;
+     visibility follows the slide, so they still animate out before they go. */
   .topnav a {
     transform: translateX(-100%);
-    transition: transform 200ms;
+    transition: transform 200ms, visibility 200ms;
     width: 20rem;
+    visibility: hidden;
   }
   .hamburger {
     display: block;
@@ -903,6 +923,7 @@ ul.guide li {
     background-color: var(--bg-color0);
   }
   .topnav a.navbar-show {
+    visibility: visible;
     transform: translateX(calc(0% + 64px));
     color: var(--font-color);
     background-color: var(--bg-color0);
@@ -917,7 +938,7 @@ ul.guide li {
   .variant-name {
     display: none;
   }
-  .topnav section > a {
+  .topnav section > .nav-section {
     display: none;
   }
 }
@@ -928,11 +949,11 @@ ul.guide li {
     position: relative;
   }
 
-  .topnav section > a:first-child:hover {
+  .topnav section > .nav-section:first-child:hover {
     color: var(--font-color);
   }
 
-  div.topnav section:hover {
+  .topnav section:hover {
     background-color: var(--drop-down);
   }
 
@@ -985,7 +1006,7 @@ ul.guide li {
     box-shadow: inset 2px 0px 0px 0px #3692e7;
   }
 
-  .topnav section:hover > a {
+  .topnav section:hover > .nav-section {
     color: var(--font-color);
   }
 
@@ -993,7 +1014,10 @@ ul.guide li {
     color: white;
   }
 
-  .topnav section:hover .drp {
+  /* aria-expanded on the section button is the open state, so readers and screen agree;
+     :hover is only a pointer preview, and topNav.ts closes on mouseleave. */
+  .topnav section:hover .drp,
+  .topnav section > .nav-section[aria-expanded='true'] + .drp {
     visibility: visible;
   }
 }
@@ -2070,8 +2094,21 @@ table.seeks {
   border-bottom: 1px solid var(--chat-entry-border-top);
   z-index: 1;
 }
-.seeks tbody tr:hover {
+.seeks tbody tr:hover,
+.seeks tbody tr:has(.seek-action:focus-visible) {
   background-color: rgba(var(--rusty-rgb), 0.5);
+}
+/* The colour icon is the row's keyboard control; as a button it must look exactly as it did. */
+.seeks td button.seek-action {
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  cursor: pointer;
 }
 .catalogued-seek-name {
   display: none;
@@ -2229,8 +2266,10 @@ input {
   border-radius: 7px;
 }
 
-/* The Close Button (x) */
+/* The Close Button (x) — a button now, so without the browser's own border and padding */
 .close {
+  border: none;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2245,7 +2284,7 @@ input {
 }
 
 .close:hover,
-.close:focus {
+.close:focus-visible {
   cursor: pointer;
   color: #fff;
   background: var(--bad);
@@ -2321,7 +2360,7 @@ button[disabled] i {
   background-color: var(--green-hover);
 }
 
-.btn-controls button:focus {
+.btn-controls button:focus:not(:focus-visible) {
   outline: none;
 }
 .btn-controls button::-moz-focus-inner {
@@ -2413,7 +2452,7 @@ button.icon.icon-plus-square {
 button.icon.icon-plus-square:hover {
   opacity: 1;
 }
-button.icon:focus {
+button.icon:focus:not(:focus-visible) {
   outline: none;
 }
 button.icon::-moz-focus-inner {
@@ -3332,11 +3371,13 @@ vari-move {
   height: 15px;
   border-radius: 10px;
   background: var(--toggle-bg);
-  outline: none;
   /*  -webkit-transition: .2s;*/
   /*transition: opacity .2s;*/
   padding: 0.6em 0em;
   cursor: pointer;
+}
+.slider:focus:not(:focus-visible) {
+  outline: none;
 }
 
 .slider::-webkit-slider-thumb {
@@ -3767,7 +3808,15 @@ input:invalid {
   overflow: hidden;
 }
 
-.search-bar.active {
+/* `:focus-within` beside `.active`, because the click is not the only way in. `overflow: hidden`
+   still makes this a SCROLL CONTAINER: tabbing to `#search-input` -- which is focusable but clipped
+   outside the collapsed 50px -- makes the browser scroll it into view, leaving `scrollLeft` at 36-60
+   depending on layout. The icon is then pushed out of the aperture and the input's text sits against
+   `#username`, reading as "SearchTest-Soldie...". Nothing ever resets it -- `collapse()` only removes
+   the class -- so the header stays wrong until a reload. Expanding on focus means the content fits,
+   so there is nothing to scroll and `scrollLeft` stays 0. Mouse behaviour is unchanged. */
+.search-bar.active,
+.search-bar:focus-within {
   width: 250px;
   overflow: inherit;
 }
@@ -3913,6 +3962,9 @@ div[role=tabpanel] textarea {
     background-color: var(--bg-color);
     border: none;
     resize: none;
+}
+/* The ring only when focus came from the keyboard; a text field always counts as such. */
+div[role=tabpanel] textarea:focus:not(:focus-visible) {
     outline: none;
 }
 div[role=tablist] {
@@ -3921,7 +3973,18 @@ div[role=tablist] {
     justify-content: center;
     align-items: flex-start;
 }
-span[role=tab] {
+/* Tabs are buttons, for Tab and Enter/Space with no script; they must look as the spans did. */
+button.site-tab {
+    background: none;
+    border: none;
+    border-radius: 0;
+    margin: 0;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    color: inherit;
+}
+span[role=tab], button.site-tab {
     flex: 1 1 0;
     text-align: center;
     padding: 0.4em 0.1em;
@@ -3929,13 +3992,13 @@ span[role=tab] {
     position: relative;
     transition: color .25s,border-color .25s;
 }
-span[aria-selected=true], div[role=tablist] span:hover::after {
+span[aria-selected=true], button.site-tab[aria-selected=true], div[role=tablist] span:hover::after, div[role=tablist] button.site-tab:hover::after {
     color: var(--rusty);
     border-color: var(--rusty);
     border-bottom: 2px solid var(--rusty);
     transform: scale(1);
 }
-div > span[role=tab]::after {
+div > span[role=tab]::after, div > button.site-tab::after {
     content: '';
     background: var(--rusty);
     height: 2px;
@@ -4026,6 +4089,17 @@ img.logo {
   justify-content: center;
   align-items: center;
   padding: 1rem;
+}
+
+/* As a native <dialog> (the round-robin scheduler), without the browser's own frame and shade. */
+dialog.modal-overlay {
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: none;
+}
+dialog.modal-overlay::backdrop {
+  background: transparent;
 }
 
 .modal-overlay[style*="block"] {
@@ -4272,18 +4346,24 @@ img.logo {
   padding: 1rem;
 }
 
-.alert-dialog-wrap {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.alert-dialog-root.alert-dialog-native[open] {
+  display: block;
+  width: min(420px, calc(100vw - 2rem));
+  height: fit-content;
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
 }
 
-.alert-dialog-backdrop {
-  position: absolute;
-  inset: 0;
+.alert-dialog-native::backdrop {
   background: rgba(0, 0, 0, 0.45);
+}
+
+.alert-dialog-native .alert-dialog-content {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .alert-dialog-content {
@@ -4694,4 +4774,47 @@ div button.login-btn {
 
 .study-add-dialog-form input:disabled {
   opacity: 0.55;
+}
+
+/* Present to screen readers, invisible on screen. */
+/* First on every page, shown only while focused. */
+.skip-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.skip-links a {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    z-index: 2000;
+    padding: 0.5em 1em;
+    background: var(--modal-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--font-color);
+}
+
+.skip-links a:not(:focus) {
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
 }

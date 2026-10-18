@@ -1,4 +1,4 @@
-# ![Horde](https://github.com/pychess/pychess-variants/blob/master/static/icons/horde.svg) 人海象棋 | Horde Chess
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/horde.svg) 人海象棋 | Horde Chess
 
 _国际象棋，但是白棋在玩人海战术_
 

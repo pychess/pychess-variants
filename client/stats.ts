@@ -2,6 +2,8 @@ import Highcharts from 'highcharts';
 
 import { h, VNode } from 'snabbdom';
 
+import { pageHeading } from './accessibility/headings';
+
 function createPeriods() {
     const periodList: string[] = [];
     const date = new Date(2019, 6, 1, 0, 0, 0); // (2019-07-01) the month is 0-indexed
@@ -72,6 +74,7 @@ function buildChart() {
 
 export function statsView(): VNode[] {
     return [
+        pageHeading(),
         h('div#stats-chart', { hook: { insert: () => buildChart() } }),
         h('input#linear', { props: { type: 'checkbox' }, on: { change: () => buildChart() } }),
         h('label', { attrs: { for: 'linear' } }, 'Linear scale'),

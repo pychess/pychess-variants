@@ -1,4 +1,4 @@
-# ![Sittuyin](https://github.com/pychess/pychess-variants/blob/master/static/icons/sittuyin.svg) Sittuyin
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/sittuyin.svg) Sittuyin
 
 ![Sittuyin](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Sittuyin.png?raw=true)
 

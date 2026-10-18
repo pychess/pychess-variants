@@ -1,5 +1,6 @@
 import { h, VNode } from 'snabbdom';
 
+import { _ } from './i18n';
 import { CrossTable } from './messages';
 import { displayUsername, userLink } from './user';
 
@@ -16,21 +17,19 @@ export function crosstableView(ctable: CrossTable, gameId: string) {
     rows = rows.concat(
         games.map(game => {
             const ref = game.slice(0, -1);
-            let r1, r2;
-            switch (game.slice(-1)) {
-                case '+':
-                    r1 = h('a.info-result.win', { attrs: { href: '/' + ref } }, '1');
-                    r2 = h('a.info-result.lose', { attrs: { href: '/' + ref } }, '0');
-                    break;
-                case '-':
-                    r1 = h('a.info-result.lose', { attrs: { href: '/' + ref } }, '0');
-                    r2 = h('a.info-result.win', { attrs: { href: '/' + ref } }, '1');
-                    break;
-                default:
-                    r1 = h('a.info-result.draw', { attrs: { href: '/' + ref } }, '½');
-                    r2 = h('a.info-result.draw', { attrs: { href: '/' + ref } }, '½');
-            }
-            return h('povs', { class: { current: gameId === ref } }, [r1, r2]);
+            const scores: Record<string, string[]> = { '+': ['1', '0'], '-': ['0', '1'] };
+            const [r1, r2] = scores[game.slice(-1)] ?? ['½', '½'];
+            const label = `${_('Open game')}: ${r1}–${r2}`;
+            const link = (s: string) =>
+                h(
+                    'a.info-result',
+                    {
+                        class: { win: s === '1', lose: s === '0', draw: s === '½' },
+                        attrs: { href: '/' + ref, 'aria-label': label },
+                    },
+                    s,
+                );
+            return h('povs', { class: { current: gameId === ref } }, [link(r1), link(r2)]);
         }),
     );
 

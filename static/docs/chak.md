@@ -1,4 +1,4 @@
-# ![Chak](https://github.com/pychess/pychess-variants/blob/master/static/icons/Chak.svg) Chak
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/Chak.svg) Chak
 
 ![Chak](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/Chak.png)
 
@@ -138,17 +138,17 @@ Tempo is very, very important in Chak, as it ultimately boils down to a race to 
 Endgames often boil down to getting the king to the Altar faster then our opponent. In this section we'll focus mostly on endgames where Divine King is the only attacking piece.
 
 ### King vs King
-![KvsKzugzwang](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKzugzwang.png)
+![King versus king, zugzwang](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKzugzwang.png)
 
 With the king being the only defender's piece, the win is pretty easy. The attacker only needs to reach a position with their king on the side of the altar and the defending king in the corner with the defender to move. Then, the defender is forced to move their king away from the temple, allowing the attacker to move their king to the altar. 
 
 With the offering still there, the attacker can still win, but it's trickier. What the attacker should be aiming for is not altar mate, but rather this stalemate:
 
-![KvsKStalemate](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKStalemate.png)
+![King versus king, stalemate](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKStalemate.png)
 
 An example line on how to force this position goes like this
 
-![KvsKO](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKO.png)
+![King versus king and offering](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKO.png)
 
 1. Dd6+ 
 
@@ -162,11 +162,11 @@ An example line on how to force this position goes like this
 
 ...and we've reached the following position:
 
-![KvsKOzugzwang](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKOzugzwang.png)
+![King versus king and offering, zugzwang](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKOzugzwang.png)
 
 where green is in zugzwang; moving the king to either side allows white to respond with a stalemate.
 
-![KvsKdraw](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKdraw.png)
+![King versus king, draw](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKdraw.png)
 
 However. if the defender has one more piece (except for an immobile quetzal) things change dramatically. No matter if the offering is still there or not, there is no way for the divine king to check the defender's king and cut off all squares within the temple it could go in one move, so green can always either move their other piece, or move the king within the temple. The only thing to be concerned about is blundering the other piece, so it's recommended to keep it on the last 4 ranks as the divine king can never get there. Once it's there, the defender can just move (and safely premove) either the piece around the last 4 ranks or the king within the temple, and the attacker is left helpless.
 
@@ -183,31 +183,31 @@ All these examples are bareboned in a sense that if either side decided to move 
 #### Jaguar
 
 In a lone Jaguar vs a Divine King endgame, either side can force a draw by repetition...
-![JaguarPerpetual](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/JaguarPerpetual.png)
+![Jaguar, draw by repetition](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/JaguarPerpetual.png)
 
 ...except when the side with the Jaguar can just ignore their Jaguar being under attack and run their King towards the altar like in this position.
 
-![JaguarPerpetual2](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/JaguarPerpetual2.png)
+![Jaguar, the king runs to the altar](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/JaguarPerpetual2.png)
 
 White wins by just moving their King to c4 or c2 and to the altar on the next move.
 
 With the Offering still alive, it's a different story. 
 
-![JaguarvsKO](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/JaguarvsKO.png)
+![Jaguar versus king and offering](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/JaguarvsKO.png)
 
 In this position, green can go 1. Jf9; white's only move to keep attacking the Jaguar is Df7, but after 2. Je9+ Dg then 3. Jd9, then there is no way to attack the Jaguar in one move, and if white spends 2 moves to do so, green has one tempo to do something meaningful on the other side of the board. If white gets their King to f9, then after Jd8, there is again no way to attack in one move, so it's better to get the King to d7 so again we can force the Jaguar to move twice. If the draw by 50 move rule is close it might be important to remember those exact lines to enforce wasting as many moves as possible as green or save as many as white.
 
 #### Serpent
 
-![SerpentFortress](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/SerpentFortress.png)
+![Serpent fortress](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/SerpentFortress.png)
 
 The Serpent as a long range piece can easily move back and forth along the second rank, keeping an eye on the altar. If the Divine King stays on squares from which it can reach the altar directly, the Serpent has to stay there and is usually useless in breaking through the enemy fortress. So if green has a fortress as well, it's usually a draw.
 
-![SerpentFortressTrap](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/SerpentFortressTrap.png)
+![Serpent fortress trap](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/SerpentFortressTrap.png)
 
 However, moving away from the highlighted squares to harass the Serpent can be costly, like in this position:
 
-![SerpentFortressTrap2](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/SerpentFortressTrap2.png)
+![Serpent fortress trap, skewer](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/SerpentFortressTrap2.png)
 
 White has abandoned the altar, allowing green to go Re8 and skewering both Shamans. If white moves the King back, e.g. to d7, green takes on e2, and as the Serpent still defends the altar, green is winning. If white tries something different, green can take one of the Shamans and still win.
 

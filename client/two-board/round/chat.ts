@@ -1,4 +1,5 @@
 import { h } from 'snabbdom';
+import { presetLabel } from './chatPresets';
 
 import { patch } from '@/document';
 import { RoundControllerBughouse } from '@/two-board/round/roundCtrl';
@@ -12,9 +13,10 @@ export function resetChat() {
     container.innerHTML = '';
 }
 
-export function chatMessageBug(ply: number, ctrl: RoundControllerBughouse, x: StepChat) {
+export function chatMessageBug(ply: number, ctrl: RoundControllerBughouse, x: StepChat, history = false) {
     //TODO: first lines and very last copied from chat.ts
     const chatDiv = document.getElementById('bugroundchat-messages') as HTMLElement;
+    chatDiv.setAttribute('aria-live', history ? 'off' : 'polite');
     // You must add border widths, padding and margins to the right.
     // Only scroll the chat on a new message if the user is at the very bottom of the chat
     const isBottom = chatDiv.scrollHeight - (chatDiv.scrollTop + chatDiv.offsetHeight) < 80;
@@ -59,7 +61,8 @@ export function chatMessageBug(ply: number, ctrl: RoundControllerBughouse, x: St
                     h(
                         'div.bugchat.' + m,
                         {
-                            attrs: { title: lastMoveSan },
+                            // The icon is drawn by CSS, so it needs a name to be read at all.
+                            attrs: { title: lastMoveSan, role: 'img', 'aria-label': presetLabel(ctrl.variant, m) ?? m },
                             on: {
                                 click: () => {
                                     onchatclick(ply, ctrl);

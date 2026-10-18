@@ -15,6 +15,7 @@ import { povChances } from '../../analysis/winningChances';
 import { alertDialog } from '../../alertDialog';
 import { NumberSettings } from '../../settings';
 import { slider } from '../../view';
+import { pvLine, pvLinePending } from '../../common/engineView';
 import { Ceval } from '../../messages';
 import { MsgAnalysis } from '../../analysis/analysisType';
 import { BugBoardName } from '../../types';
@@ -239,6 +240,7 @@ export class EngineController {
         this.multipvSetting = new MultiPvSetting(this);
         this.multipv = clampMultiPv(this.multipvSetting.value);
 
+        // TODO: reuse the shared switch component (toggleSwitch in view.ts) instead of this hand-built one.
         this.vinput = h('input#input', { props: { name: 'engine', type: 'checkbox' } });
         this.vscore = h('score#score', '');
         this.vscorePartner = h('score#scorePartner', '');
@@ -364,7 +366,7 @@ export class EngineController {
             const lines = this.pvlines[board];
             for (let i = maxMultiPv - 1; i >= 0; i--) {
                 if (i + 1 <= this.multipv && this.engineOn) {
-                    lines[i] = patch(lines[i], h(`div#pv-${board}-${i + 1}.pv`, [h('pvline', h('pvline', '-'))]));
+                    lines[i] = patch(lines[i], h(`div#pv-${board}-${i + 1}.pv`, [pvLinePending()]));
                 } else {
                     lines[i] = patch(lines[i], h(`div#pv-${board}-${i + 1}`));
                 }
@@ -379,6 +381,7 @@ export class EngineController {
         return {
             attrs: {
                 disabled: false,
+                'aria-label': _('Computer analysis'),
             },
             on: {
                 change: () => {
@@ -669,11 +672,7 @@ export class EngineController {
         if (ceval?.p !== undefined) {
             const variation = this.renderVariation(boardInAnalysis.fullfen, ceval.p as string);
             if (variation.length > 0) {
-                const pvSan = h(
-                    'pv-san',
-                    { on: { click: () => this.makePvMove(ceval.p as string, boardInAnalysis) } },
-                    variation,
-                );
+                const pvSan = pvLine(() => this.makePvMove(ceval.p as string, boardInAnalysis), variation);
                 this.pvView(
                     boardInAnalysis.boardName,
                     pvlineIdx,
@@ -686,10 +685,10 @@ export class EngineController {
                 /* Not even the first ply converted. The row is BLANKED rather than left alone:
                    left alone it keeps a variation from an earlier depth, which reads as current
                    and is the more misleading of the two. */
-                this.pvView(boardInAnalysis.boardName, pvlineIdx, h('pvline', this.engineOn ? h('pvline', '-') : ''));
+                this.pvView(boardInAnalysis.boardName, pvlineIdx, this.engineOn ? pvLinePending() : h('pvline', ''));
             }
         } else {
-            this.pvView(boardInAnalysis.boardName, pvlineIdx, h('pvline', this.engineOn ? h('pvline', '-') : ''));
+            this.pvView(boardInAnalysis.boardName, pvlineIdx, this.engineOn ? pvLinePending() : h('pvline', ''));
         }
 
         // Render gauge, arrow and main score value for first PV line only
@@ -758,8 +757,14 @@ export class EngineController {
                 if (ceval.d === this.maxDepth && this.maxDepth !== 99) {
                     info.push(
                         h('a.icon.icon-plus-square', {
-                            props: { type: 'button', title: _('Go deeper') },
-                            on: { click: () => this.onMoreDepth() },
+                            attrs: { href: '#', 'aria-label': _('Go deeper') },
+                            props: { title: _('Go deeper') },
+                            on: {
+                                click: (e: Event) => {
+                                    e.preventDefault();
+                                    this.onMoreDepth();
+                                },
+                            },
                         }),
                     );
                 } else if (ceval.d !== 99) {

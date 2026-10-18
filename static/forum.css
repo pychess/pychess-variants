@@ -501,10 +501,6 @@ main.forum .button.button-empty:not(.disabled):hover {
   background: color-mix(in srgb, var(--gold) 11%, transparent);
 }
 
-.forum-topic .reply label[for='forum-reply-text'] {
-  display: none;
-}
-
 .forum-post {
   font-size: 1.1em;
   border-top: 1px solid var(--border-color);
@@ -539,8 +535,9 @@ main.forum .button.button-empty:not(.disabled):hover {
   margin-inline-end: 1em;
 }
 
-.forum-post:hover .forum-post__button {
-  visibility: visible;
+.forum-post:hover .forum-post__button,
+.forum-post:focus-within .forum-post__button {
+  opacity: 1;
 }
 
 .button.forum-post__button {
@@ -549,8 +546,9 @@ main.forum .button.button-empty:not(.disabled):hover {
 }
 
 @media (hover: hover) {
+  /* opacity, not visibility, so the buttons stay reachable by Tab */
   .button.forum-post__button {
-    visibility: hidden;
+    opacity: 0;
   }
 }
 
@@ -825,6 +823,25 @@ main.forum .button.button-empty:not(.disabled):hover {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Native <dialog>s now: without the browser's own frame, sizing and shade (the backdrop below is ours). */
+dialog.forum-relocate-modal,
+dialog.forum-delete-modal {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  overflow: visible;
+}
+dialog.forum-relocate-modal::backdrop,
+dialog.forum-delete-modal::backdrop {
+  background: transparent;
 }
 
 .forum-modal-backdrop {

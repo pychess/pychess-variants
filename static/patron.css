@@ -39,6 +39,12 @@ div.patron {
     padding: 1em;
     justify-content: space-between;
 }
+.banner p.banner-sub {
+    font-size: 0.67em;
+    font-weight: bold;
+    padding: 0;
+    margin: 0;
+}
 .patronbutton {
     width: 100px;
     text-align: center;
@@ -68,7 +74,8 @@ div.patron {
 .flex-main-box3 > div {
     flex-basis: 33%;
 }
-.flex-main-box3 div h3 {
+.flex-main-box3 div h2 {
+    font-size: 1.17em;
     padding: 0 2em 1em 0;
 }
 .flex-main-box3 div p {
@@ -78,7 +85,7 @@ div.patron {
   .flex-main-box3  { 
     flex-flow: column;
   }
-  .flex-main-box3 div h3 {
+  .flex-main-box3 div h2 {
     padding: 0 2em 0 0;
   }
 }

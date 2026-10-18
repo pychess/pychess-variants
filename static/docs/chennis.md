@@ -1,4 +1,4 @@
-# ![Chennis](https://github.com/pychess/pychess-variants/blob/master/static/icons/Chennis.svg) Chennis
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/Chennis.svg) Chennis
 
 ![Chennis](https://github.com/pychess/pychess-variants/blob/master/static/images/ChennisGuide/Chennis.png)
 

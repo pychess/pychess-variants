@@ -1,4 +1,4 @@
-# ![Synochess](https://github.com/pychess/pychess-variants/blob/master/static/icons/synochess.svg) Synochess
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/synochess.svg) Synochess
 
 ![Synochess](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Synochess.png)
 
@@ -152,10 +152,10 @@ Once this position happens, the chariot can take the pawn, forcing the rook to r
 
 Moveover, this trap can go wrong in 2 ways.
 
-![QueenslayerGoneWrongb1](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/QueenslayerGoneWrongb1.png)
+![Queenslayer trap gone wrong, b1](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/QueenslayerGoneWrongb1.png)
 
 With no pawn on d3 blocking the path of the bishop white can save their queen by going Bb5+. No matter if red takes the bishop or moves the king out of check their cannon no longer hits b1, so white can just recapture the chariot.
 
-![QueenslayerGoneWrongg1](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/QueenslayerGoneWrongg1.png)
+![Queenslayer trap gone wrong, g1](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/QueenslayerGoneWrongg1.png)
 
 Here red tries the same trick on the kingside. After Rxh2, Rxh2 Cxg1+ it seems the queen is lost as white is in check and defending by moving either the king or the bishop would allow Cxd1, except if white goes Bxb5+ red has to get out of check and white has time to move the queen out of the way.

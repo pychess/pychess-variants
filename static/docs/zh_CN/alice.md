@@ -1,4 +1,4 @@
-# ![Alice Chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/Alice.svg) 爱丽丝象棋 | Alice Chess
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/Alice.svg) 爱丽丝象棋 | Alice Chess
 
 ![Alice](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Aliceroom3.jpg)
 上图：《爱丽丝镜中世界奇遇记》穿越镜子的爱丽丝；作者：John Tenniel.

@@ -1,4 +1,4 @@
-# ![Makruk](https://github.com/pychess/pychess-variants/blob/master/static/icons/makruk.svg) Makruk
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/makruk.svg) Makruk
 
 ![Makruk](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 
@@ -60,7 +60,7 @@ En ausencia de Damas, las Torres dominan el tablero. Los jaques laterales de la 
 
 ### Peón (*Bia*)
 
-![Peón](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) ![ProPawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true)
+![Peón](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) ![Promoted pawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true)
 
 El Peón mueve y ataca igual que en Ajedrez. Sin embargo, no existe la posibilidad de mover dos casillas en la primera jugada. Los Peones promocionan y mueven como las Damas cuando llegan a la sexta fila.
 

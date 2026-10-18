@@ -1,4 +1,4 @@
-# ![Yokai Shogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/YokaiShogi.svg) Yokai Shogi
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/YokaiShogi.svg) Yokai Shogi
 
 ![Yokai Shogi Board](https://github.com/pychess/pychess-variants/blob/master/static/images/YokaiShogiGuide/YokaiBoard.png)
 

@@ -1,4 +1,4 @@
-# ![Caparandom](https://github.com/pychess/pychess-variants/blob/master/static/icons/caparandom.svg) Caparandom
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/caparandom.svg) Caparandom
 
 **Caparandom**, originally named **Capablanca Random Chess (CRC)**, was designed by **Reinhard Scharnagl**. It combines the 10×8 board and compound pieces of Capablanca Chess with randomized starting positions. All normal Capablanca Chess rules apply except for the randomized back rank and the corresponding castling rules.
 

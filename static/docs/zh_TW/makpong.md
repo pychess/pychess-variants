@@ -1,4 +1,4 @@
-# ![Makpong](https://github.com/pychess/pychess-variants/blob/master/static/icons/makpong.svg) 防禦泰國象棋
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/makpong.svg) 防禦泰國象棋
 
 ![Makpong Board](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 

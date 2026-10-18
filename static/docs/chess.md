@@ -1,4 +1,4 @@
-# ![Chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/chess.svg) Chess
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/chess.svg) Chess
 
 ![Chess board](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Chess.png?raw=true)
 

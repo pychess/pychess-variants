@@ -16,7 +16,8 @@ table {
 }
 tr{box-shadow: 0 1px 0 var(--border-color); width: 90%;}
 td, th{padding: 1em;}
-h1, h3 {color: darkgoldenrod;}
+h1, .col-title {color: darkgoldenrod;}
+.col-title {font-size: 1.17em; font-weight: normal; font-family: var(--font-sans);}
 b {color: green; font-size: 1.3em;}
 a {color: var(--link-hover);}
 span.green-text-right {

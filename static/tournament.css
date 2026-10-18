@@ -767,7 +767,7 @@ div#stats {
     border-radius: 0;
 }
 #player .close:hover,
-#player .close:focus {
+#player .close:focus-visible {
     cursor: pointer;
     opacity: 0.9;
     color: var(--bad);
@@ -936,7 +936,7 @@ td.bye {
 #top-game div.cg-wrap.mini {
     width: auto!important;
 }
-#top-game div.with-pockets div.cg-wrap.mini {
+#top-game .with-pockets div.cg-wrap.mini {
     position: relative;
     top: calc(var(--cg-height) / var(--ranks));
 }
@@ -948,6 +948,21 @@ td.bye {
 }
 #mainboard.with-pockets {
     padding-bottom: calc(var(--cg-height) / var(--ranks) * 2);
+}
+/* The top game's board is a link to the game; as an <a> it must stay a block. */
+#top-game a#mainboard {
+    display: block;
+}
+/* A row's keyboard control in the standings and the player's games; looks as the cell did. */
+button.row-action {
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
 }
 
 .duels {

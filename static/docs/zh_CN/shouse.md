@@ -1,4 +1,4 @@
-# ![S-House](https://github.com/pychess/pychess-variants/blob/master/static/icons/SHouse.svg) S-House
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/SHouse.svg) S-House
 
 S-House 结合了 S-Chess 和双狂象棋的规则。在游玩之前请先熟悉S-Chess的规则。下文简单介绍双狂象棋的打入规则。
 

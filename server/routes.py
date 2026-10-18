@@ -174,6 +174,7 @@ from user import (
 from utils import get_names, get_notifications, import_game, notified, subscribe_notify
 from views import (
     about,
+    accessibility,
     allplayers,
     analysis,
     api_docs,
@@ -287,6 +288,7 @@ get_routes: tuple[RouteDef, ...] = (
     ("/privacy", privacy.privacy),
     ("/faq", faq.faq),
     ("/page/forum-etiquette", forum_etiquette.forum_etiquette),
+    ("/page/accessibility", accessibility.accessibility),
     ("/stats", stats.stats),
     ("/players", players.players),
     ("/players/{variant}", players50.players50),

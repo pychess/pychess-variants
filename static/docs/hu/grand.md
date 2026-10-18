@@ -1,4 +1,4 @@
-# ![Grand ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/grand.svg) Grand sakk (Grand Chess)
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/grand.svg) Grand sakk (Grand Chess)
 
 ![Grand Chess ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Grand.png)
 

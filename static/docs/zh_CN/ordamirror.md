@@ -1,4 +1,4 @@
-# ![Orda Mirror](https://github.com/pychess/pychess-variants/blob/master/static/icons/ordamirror.svg) 可汗对决棋 | Orda Mirror
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/ordamirror.svg) 可汗对决棋 | Orda Mirror
 ![Orda Mirror Board](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/OrdaMirror.png)
 
 可汗对决棋(Orda Mirror)是由 Couch Tomato 于2020年推出的国际象棋变体玩法，也被认为是可汗西征棋的衍生变体。该游戏的两方均设计成可汗西征棋中加入的可汗棋组，变成了一个可汗vs可汗的对决。但是棋组相比原版又做了一个改动：原版的穹庐被替换成了新棋子战隼，一个走棋如后，吃子如马的棋子（其他棋子走子如马）。新的棋子让棋组在保留游牧民族的主题的同时又增加了些许机动性。

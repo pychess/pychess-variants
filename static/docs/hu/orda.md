@@ -1,4 +1,4 @@
-# ![Orda ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/orda.svg) Orda sakk (Horda sakk)
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/orda.svg) Orda sakk (Horda sakk)
 
 ![Orda ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Orda.png)
 

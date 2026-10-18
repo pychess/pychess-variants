@@ -512,7 +512,7 @@ class BoardStyleSettings extends NumberSettings {
                 h('input#board' + i, {
                     on: { change: evt => (this.value = Number((evt.target as HTMLInputElement).value)) },
                     props: { type: 'radio', name: 'board', value: i },
-                    attrs: { checked: vboard === i },
+                    attrs: { checked: vboard === i, 'aria-label': boardCSS[i] },
                 }),
             );
             boards.push(
@@ -571,7 +571,7 @@ class PieceStyleSettings extends NumberSettings {
                 h('input#piece' + idx, {
                     on: { change: e => (this.value = Number((e.target as HTMLInputElement).value)) },
                     props: { type: 'radio', name: 'piece', value: idx },
-                    attrs: { checked: checkedPiece === idx },
+                    attrs: { checked: checkedPiece === idx, 'aria-label': css },
                 }),
             );
             pieces.push(

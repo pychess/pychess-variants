@@ -1,4 +1,4 @@
-# ![gothic](https://github.com/pychess/pychess-variants/blob/master/static/icons/capablanca.svg) Gothic Chess
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/capablanca.svg) Gothic Chess
 
 ![Gothic setup](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Gothic.png)
 

@@ -4,6 +4,7 @@ import { h, VNode } from 'snabbdom';
 
 import { sound } from './sound';
 import { patch } from './document';
+import { ariaHiddenAttr } from './accessibility/aria';
 
 import { ngettext } from './i18n';
 
@@ -47,6 +48,7 @@ export class Clock {
     timeout: ReturnType<typeof setTimeout> | null;
     startTime: number;
     tickCallbacks: ((diff: number) => void)[];
+    renderCallback: ((time: Millis) => void) | null;
     flagCallback: (() => void) | null;
     byoyomiCallback: (() => void) | null;
     el: HTMLElement | VNode;
@@ -76,6 +78,7 @@ export class Clock {
         this.timeout = null;
         this.startTime = 0;
         this.tickCallbacks = [];
+        this.renderCallback = null;
         this.flagCallback = null;
         this.byoyomiCallback = null;
         this.el = el;
@@ -145,6 +148,11 @@ export class Clock {
             this.tickCallbacks.push(callback);
         }
         return this;
+    }
+
+    // Every repaint, ticking or not (pause, resync, flip), with the time shown.
+    onRender(callback: (time: Millis) => void) {
+        this.renderCallback = callback;
     }
 
     onFlag(callback: () => void) {
@@ -225,7 +233,7 @@ export class Clock {
 
     view(time: number) {
         if (this.corr) {
-            return h('div#' + this.id, [
+            return h('div#' + this.id, ariaHiddenAttr(), [
                 h(
                     'div.clock.corr-clock',
                     {
@@ -243,7 +251,7 @@ export class Clock {
 
         const printed = this.printTime(time);
         const millis = new Date(time).getUTCMilliseconds();
-        return h('div#' + this.id, [
+        return h('div#' + this.id, ariaHiddenAttr(), [
             h(
                 'div.clock',
                 {
@@ -272,6 +280,7 @@ export class Clock {
         if (!isNaN(time)) {
             if (this.granularity > 100 && time < HURRY) this.granularity = 100;
             this.el = patch(this.el, this.view(time));
+            this.renderCallback?.(time);
         }
     }
 }

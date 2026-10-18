@@ -8,7 +8,7 @@
             <div class="box__top team-declined-requests__top">
                 <h1><a href="/team/{{ team['_id'] }}">{{ team['name'] }}</a> <span>• {% trans %}Declined requests{% endtrans %}</span></h1>
                 <form class="team-declined-request-search" method="get" action="/team/{{ team['_id'] }}/declined-requests">
-                    <input type="search" name="search" value="{{ team_declined_requests_search }}" placeholder="{% trans %}Search user{% endtrans %}" autocomplete="off">
+                    <input type="search" name="search" value="{{ team_declined_requests_search }}" placeholder="{% trans %}Search user{% endtrans %}" aria-label="{% trans %}Search user{% endtrans %}" autocomplete="off">
                     <button class="button icon-search" type="submit" aria-label="{% trans %}Search{% endtrans %}"></button>
                 </form>
             </div>

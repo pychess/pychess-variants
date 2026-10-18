@@ -1,4 +1,4 @@
-# ![gothic](https://github.com/pychess/pychess-variants/blob/master/static/icons/capablanca.svg) Ajedrez Gótico
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/capablanca.svg) Ajedrez Gótico
 
 ![Posición inicial de Ajedrez Gótico](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Gothic.png)
 

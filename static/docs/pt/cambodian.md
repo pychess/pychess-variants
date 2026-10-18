@@ -1,4 +1,4 @@
-# ![Cambodian](https://github.com/pychess/pychess-variants/blob/master/static/icons/cambodian.svg) Cambodian Chess (Ok, Ouk Chatrang)
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/cambodian.svg) Cambodian Chess (Ok, Ouk Chatrang)
 
 ![Cambodian Board](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 

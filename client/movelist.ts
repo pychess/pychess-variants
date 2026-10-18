@@ -9,6 +9,7 @@ import type { AnalysisContext } from './analysis/analysisContext';
 import type { AnalysisExtension } from './analysis/analysisExtension';
 import { GLYPHS } from './analysis/glyphs';
 import { renderLinkifiedText } from './richTextEnhance';
+import { ariaHiddenAttr } from './accessibility/aria';
 
 type TreeCtrl = GameController & {
     analysisTree?: { root: AnalysisTreeNode };
@@ -263,9 +264,11 @@ export function createMovelistButtons(ctrl: GameController) {
 
     let buttons = [
         h('button', { on: { click: () => ctrl.toggleOrientation() }, props: { title: _('Flip board') } }, [
-            h('i.icon.icon-refresh'),
+            h('i.icon.icon-refresh', ariaHiddenAttr()),
         ]),
-        h('button', { on: { click: () => selectVariationBound(true) } }, [h('i.icon.icon-fast-backward')]),
+        h('button', { on: { click: () => selectVariationBound(true) }, props: { title: _('First move') } }, [
+            h('i.icon.icon-fast-backward', ariaHiddenAttr()),
+        ]),
         h(
             'button',
             {
@@ -278,8 +281,9 @@ export function createMovelistButtons(ctrl: GameController) {
                         } else selectMove(ctrl, ctrl.ply - 1, 0);
                     },
                 },
+                props: { title: _('Previous move') },
             },
-            [h('i.icon.icon-step-backward')],
+            [h('i.icon.icon-step-backward', ariaHiddenAttr())],
         ),
         h(
             'button',
@@ -293,15 +297,18 @@ export function createMovelistButtons(ctrl: GameController) {
                         } else selectMove(ctrl, ctrl.ply + 1, 0);
                     },
                 },
+                props: { title: _('Next move') },
             },
-            [h('i.icon.icon-step-forward')],
+            [h('i.icon.icon-step-forward', ariaHiddenAttr())],
         ),
-        h('button', { on: { click: () => selectVariationBound(false) } }, [h('i.icon.icon-fast-forward')]),
+        h('button', { on: { click: () => selectVariationBound(false) }, props: { title: _('Last move') } }, [
+            h('i.icon.icon-fast-forward', ariaHiddenAttr()),
+        ]),
     ];
     if (ctrl.variant.name === 'alice') {
         buttons.push(
             h('button#alice', { on: { click: () => ctrl.switchAliceBoards() }, props: { title: _('Switch boards') } }, [
-                h('i.icon.icon-exchange'),
+                h('i.icon.icon-exchange', ariaHiddenAttr()),
             ]),
         );
         if (ctrl.aliceSplitBoard) {
@@ -315,7 +322,7 @@ export function createMovelistButtons(ctrl: GameController) {
                             title: ctrl.aliceSplitBoards ? _('Show merged board (S)') : _('Show separate boards (S)'),
                         },
                     },
-                    [h('span.alice-split-icon', '▥')],
+                    [h('span.alice-split-icon', ariaHiddenAttr(), '▥')],
                 ),
             );
         }
@@ -323,9 +330,19 @@ export function createMovelistButtons(ctrl: GameController) {
 
     if ('localEngine' in ctrl) {
         buttons.push(
-            h('button#bars', { on: { click: () => ctrl.toggleSettings() }, props: { title: _('Menu') } }, [
-                h('i.icon.icon-bars'),
-            ]),
+            h(
+                'button#bars',
+                {
+                    on: { click: () => ctrl.toggleSettings() },
+                    props: { title: _('Menu') },
+                    attrs: {
+                        'aria-expanded': String(
+                            document.querySelector<HTMLElement>('div.analysis-settings')?.style.display === 'flex',
+                        ),
+                    },
+                },
+                [h('i.icon.icon-bars', ariaHiddenAttr())],
+            ),
         );
     } else {
         if (ctrl.corr && ctrl.variant.name !== 'fogofwar') {
@@ -334,7 +351,7 @@ export function createMovelistButtons(ctrl: GameController) {
                 h(
                     'button#corr',
                     { on: { click: () => window.location.assign(url) }, props: { title: _('Analysis board') } },
-                    [h('i.icon.icon-microscope')],
+                    [h('i.icon.icon-microscope', ariaHiddenAttr())],
                 ),
             );
         }

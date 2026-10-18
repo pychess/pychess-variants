@@ -1,5 +1,5 @@
 
-# ![Minishogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/minishogi.svg) Minishogi
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/minishogi.svg) Minishogi
 
 ![Minishogi](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Minishogi.png)
 

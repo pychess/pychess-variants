@@ -1,4 +1,4 @@
-# ![Shogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/shogi.svg) Shogi
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/shogi.svg) Shogi
 
 ![Boards](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Boards.png)
 
@@ -25,11 +25,11 @@ Acerca das peças promovidas, na maioria das representações, incluindo as que 
 
 ### Rei
 
-![BlackKings](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/BlackKings.png)
+![Black kings](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/BlackKings.png)
 
-![WhiteKings](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/WhiteKings.png)
+![White kings](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/WhiteKings.png)
 
-![KingDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/King.png)
+![King movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/King.png)
 
 O rei movimenta-se exatamente como no Xadrez: uma casa em qualquer direção. Na representação em kanji, o rei com um ponto, 玉將 gyokushō é o rei das pretas, enquanto que o Rei sem ponto, 王將 ōshō é o rei das brancas.
 
@@ -39,7 +39,7 @@ Esta é a única peça cuja representação internacional é mantida na sua form
 
 ![Rooks](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Rooks.png)
 
-![RookDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Rook.png)
+![Rook movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Rook.png)
 
 
 A Torre movimenta-se exatamente como no xadrez: quaisquer número de casas na ortogonal. A representação internacional é um Carrinho, a que se refere ao nome japonês "Carrinho Voador". Em inglês o nome da Torre (Rook) é baseado na palavra persa para Carrinho. Esta é a peça não promovida mais valiosa, excluindo o Rei.
@@ -50,13 +50,13 @@ O Bispo movimenta-se exatamente como no Xadrez: quaisquer número de casas na di
 
 ![Bishops](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Bishops.png)
 
-![BishopDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Bishop.png)
+![Bishop movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Bishop.png)
 
 ### Dragão Rei (Dragão, Torre Promovida)
 
 ![Dragons](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Dragons.png)
 
-![DragonDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Dragon.png)
+![Dragon movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Dragon.png)
 
 O Dragão-Rei é uma Torre promovida, que obtém os mesmos movimentos do Rei adicionando-os aos movimentos da Torre. Esta é a peça mais valiosa do jogo, excluindo o Rei.
 
@@ -64,7 +64,7 @@ O Dragão-Rei é uma Torre promovida, que obtém os mesmos movimentos do Rei adi
 
 ![Horses](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Horses.png)
 
-![HorseDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Horse.png)
+![Horse movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Horse.png)
 
 O Dragão-Cavalo é um bispo promovido, que tem os mesmos movimentos do Rei para além do Bispo. Esta é a segunda peça mais valiosa no jogo, excluindo o Rei.
 
@@ -74,7 +74,7 @@ Nota: Não confundir esta peça com o cavalo do Xadrez.
 
 ![Golds](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Golds.png)
 
-![GoldDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Gold.png)
+![Gold general movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Gold.png)
 
 O movimento do General-Dourado pode parecer confuso à primeira, mas a maneira mais fácil de lembrar é pensando que este se **move uma casa na ortogonal em qualquer direção** ou para as três casas da frente. Na sua representação internacional, as saliências no seu capacete (incluindo o símbolo dourado circular) também apontam para todas as possíveis direções.
 
@@ -84,7 +84,7 @@ O movimento do General-Dourado pode parecer confuso à primeira, mas a maneira m
 
 ![Silvers](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Silvers.png)
 
-![SilverDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Silver.png)
+![Silver general movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Silver.png)
 
 O movimento do General-Prateado pode parecer confuso à primeira, mas a maneira mais fácil de lembrar é pensando que este se **move uma casa na diagonal em qualquer direção** ou para as três casas da frente. Na sua representação internacional, as saliências no seu capacete também apontam para todas as possíveis direções.
 
@@ -92,7 +92,7 @@ O movimento do General-Prateado pode parecer confuso à primeira, mas a maneira 
 
 ![Knights](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Knights.png)
 
-![KnightDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Knight.png)
+![Knight movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Knight.png)
 
 Semelhante ao cavalo do Xadrez, mas este só se movimenta para as duas casas em frente, i.e. movimenta-se para a frente duas casas e uma para o lado. Tal como o Cavalo do Xadrez, esta pode saltar outras peças.
 
@@ -100,7 +100,7 @@ Semelhante ao cavalo do Xadrez, mas este só se movimenta para as duas casas em 
 
 ![Lances](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Lances.png)
 
-![LanceeDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Lance.png)
+![Lance movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Lance.png)
 
 A Lança só se movimenta para a frente, mas em qualquer número de casas (semelhante à Torre).
 
@@ -108,7 +108,7 @@ A Lança só se movimenta para a frente, mas em qualquer número de casas (semel
 
 ![Pawns](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Pawns.png)
 
-![PawnDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Pawn.png)
+![Pawn movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Pawn.png)
 
 O peão movimenta-se e captura uma casa em frente. Este é diferente do Peão do Xadrez. O seu chapéu potiagudo na representação internacional é um lembrete do seu movimento.
 

@@ -1,4 +1,4 @@
-# ![Xiangfu](https://github.com/pychess/pychess-variants/blob/master/static/icons/Xiangfu.svg) 功夫棋 | Xiang Fu
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/Xiangfu.svg) 功夫棋 | Xiang Fu
 
 ![Xiangfu](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Xiangfu.png)
 功夫棋（Xiang Fu）是首届 Pychess 设计大赛的冠军作品，作者为 Eventlesstew。

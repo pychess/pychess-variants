@@ -10,6 +10,7 @@ import { volumeSettings, soundThemeSettings } from './sound';
 import { zenModeSettings } from './zen';
 import { confirmDialog } from './confirmDialog';
 import { disablePushSubscription, initPushSubscription } from './push';
+import { setHeaderPanelExpanded } from './headerPanel';
 
 export function settingsView(modelVariant: string) {
     const anon = getDocumentData('anon') === 'True';
@@ -31,7 +32,7 @@ export function settingsView(modelVariant: string) {
 }
 
 function settingsButton() {
-    return h('button#btn-settings', { on: { click: toggleSettings }, attrs: { 'aria-label': 'Settings' } }, [
+    return h('button#btn-settings', { on: { click: toggleSettings }, attrs: { 'aria-label': _('Settings'), 'aria-expanded': 'false', 'aria-controls': 'settings' } }, [
         h('div.icon.icon-cog'),
     ]);
 }
@@ -45,12 +46,12 @@ function toggleSettings() {
 }
 
 export function hideSettings() {
-    (document.getElementById('btn-settings') as HTMLElement).classList.remove('shown');
+    setHeaderPanelExpanded('btn-settings', false);
     (document.getElementById('settings') as HTMLElement).style.display = 'none';
 }
 
-function showMainSettings() {
-    (document.getElementById('btn-settings') as HTMLElement).classList.add('shown');
+export function showMainSettings() {
+    setHeaderPanelExpanded('btn-settings', true);
     (document.getElementById('settings') as HTMLElement).style.display = 'flex';
     (document.getElementById('settings-main') as HTMLElement).style.display = 'flex';
     (document.getElementById('settings-sub') as HTMLElement).style.display = 'none';
@@ -245,7 +246,7 @@ function boardSettingsView(modelVariant: string) {
         backButton(_('Board Settings')),
         h('div', [
             h('div.labelled', [
-                h('label', { props: { for: 'settings-variant' } }, _('Variant')),
+                h('label', { attrs: { for: 'settings-variant' } }, _('Variant')),
                 selectVariant(
                     'settings-variant',
                     variant,

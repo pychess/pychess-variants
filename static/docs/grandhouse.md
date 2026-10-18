@@ -1,4 +1,4 @@
-# ![Grandhouse](https://github.com/pychess/pychess-variants/blob/master/static/icons/Grandhouse.svg) Grandhouse
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/Grandhouse.svg) Grandhouse
 
 Grandhouse is a custom variant combining the rules of Grand chess with the drop rules of Crazyhouse. The same rules apply to both games. Crazyhouse and Grandhouse rules are provided below.
 

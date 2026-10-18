@@ -344,7 +344,10 @@ export class RoundControllerBughouse extends TwoBoardController implements ChatC
     private createSeatWidgets(): void {
         this.seats.all.forEach(seat => {
             const view = this.viewOf(seat);
-            seat.clock = view.createClock(this.base, this.inc);
+            const clock = view.createClock(this.base, this.inc);
+            seat.clock = clock;
+            const summary = (seat.boardName === 'a' ? this.boardA : this.boardB).boardSummary;
+            summary.followClock(clock, () => seat.color);
             view.renderPlayerBar(seat.player, this.level);
         });
     }
@@ -660,7 +663,7 @@ export class RoundControllerBughouse extends TwoBoardController implements ChatC
     // Emitted before those notices, and once: gameOver() can run twice, from the board
     // message and from gameEnd, which is the same reason updateResult() guards itself.
     private resultAnnounced = false;
-    private announceResult = () => {
+    private announceResult = (history = false) => {
         if (this.resultAnnounced || this.status < 0) return;
         this.resultAnnounced = true;
         const teams = this.seats.teams;
@@ -683,11 +686,12 @@ export class RoundControllerBughouse extends TwoBoardController implements ChatC
         // because `i18n.gettext(msgid, vars)` takes the vars as an array — a second `%2`
         // comes out as the literal `undefined`.
         const reason = result(this.boardA.variant, this.status, this.result, teams[0].name(), teams[1].name());
-        chatMessage('', `${_('Game over')} — ${reason}`, 'bugroundchat');
+        chatMessage('', `${_('Game over')} — ${reason}`, 'bugroundchat', undefined, history);
     };
 
     private gameOver = () => {
         this.announceResult();
+        this.updateBoardSummaryStatus();
         markGameOver();
         this.controlsView.renderGameOverControls(
             this.spectator,
@@ -768,11 +772,17 @@ export class RoundControllerBughouse extends TwoBoardController implements ChatC
 
             steps.forEach((step, idx) => {
                 if (idx === 0) {
-                    chatMessage('', 'Messages visible to all 4 players for the first 4 moves', 'bugroundchat');
+                    chatMessage(
+                        '',
+                        'Messages visible to all 4 players for the first 4 moves',
+                        'bugroundchat',
+                        undefined,
+                        true,
+                    );
                 }
                 this.stampStepPlys(step, idx);
                 if (idx === 4) {
-                    chatMessage('', 'Chat visible only to your partner', 'bugroundchat');
+                    chatMessage('', 'Chat visible only to your partner', 'bugroundchat', undefined, true);
                 }
                 if (step.chat) {
                     step.chat.forEach(c => {
@@ -783,22 +793,18 @@ export class RoundControllerBughouse extends TwoBoardController implements ChatC
                                 c.username === myTeam.seats[0].player.username ||
                                 c.username === myTeam.seats[1].player.username
                             ) {
-                                chatMessageBug(idx, this, c);
+                                chatMessageBug(idx, this, c, true);
                             }
                         } else {
-                            chatMessageBug(idx, this, c);
+                            chatMessageBug(idx, this, c, true);
                         }
                     });
                 }
                 if (idx === steps.length - 1 && this.isGameOver()) {
                     // Before the housekeeping notice, which is the order this was always meant to
                     // have: how the game ended, then who may now read what.
-                    this.announceResult();
-                    chatMessage(
-                        '',
-                        'Game over. All messages visible to all.',
-                        'bugroundchat',
-                    );
+                    this.announceResult(true);
+                    chatMessage('', 'Game over. All messages visible to all.', 'bugroundchat', undefined, true);
                 }
             });
             this.movelistView.render(this, true, true, false);

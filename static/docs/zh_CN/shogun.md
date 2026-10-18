@@ -1,4 +1,4 @@
-# ![Shogun](https://github.com/pychess/pychess-variants/blob/master/static/icons/shogun.svg) 幕府象棋 | Shogun Chess
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/shogun.svg) 幕府象棋 | Shogun Chess
 
 ![Shogun](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ShogunPromotions3.png)
 

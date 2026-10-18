@@ -303,6 +303,11 @@ rating {
 .modal-content input#fen {
     width: 80%;
 }
+form#ailevel h3 {
+    font-size: 1em;
+    font-weight: bold;
+    font-family: inherit;
+}
 form#game-mode {
     padding: 1em;
 }

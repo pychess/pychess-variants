@@ -1,5 +1,5 @@
 
-# ![Seirawan](https://github.com/pychess/pychess-variants/blob/master/static/icons/schess.svg) S-chess
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/schess.svg) S-chess
 S-chess 是美國西洋棋特級大師亞西爾．塞拉萬(Yasser Seirawan)和布魯斯．哈伯(Bruce Harper)於2007年發明的變體。此遊戲引入了兩種新棋子:大象和鷹。
 
 ## 規則

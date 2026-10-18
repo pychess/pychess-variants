@@ -1,4 +1,4 @@
-# ![Shogun ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/shogun.svg) Sógun sakk (Shogun Chess)
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/shogun.svg) Sógun sakk (Shogun Chess)
 
 ![Shogun ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/ShogunPromotions_HU.png)
 

@@ -1,4 +1,4 @@
-# ![Capahouse](https://github.com/pychess/pychess-variants/blob/master/static/icons/CHouse.svg) 双狂卡帕布兰卡象棋 | Capahouse
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/CHouse.svg) 双狂卡帕布兰卡象棋 | Capahouse
 
 双狂卡帕布兰卡象棋（Capahouse）是融合了卡帕布兰卡象棋和双狂象棋打入的卡帕布兰卡象棋变种。建议您在游玩此变种前熟悉卡帕布兰卡象棋的规则。下文简单描述双狂象棋使用的打入规则。
 

@@ -1,4 +1,4 @@
-# ![Tori Shogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/ToriShogi.svg) Tori Shogi
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/ToriShogi.svg) Tori Shogi
 
 |   |   |
 --- | ---
@@ -99,7 +99,7 @@ Sidenote: the red circle above the pheasant is the "rising sun" -- the green phe
 
 |   |   |
 --- | ---
-![LeftQuail](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/LeftQuail.png) | ![RightQuail](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/RightQuail.png)
+![Left quail movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/LeftQuail.png) | ![Right quail movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/RightQuail.png)
 
 The Quails (鶉, *uzura*) start in the corners of the board and are two separate pieces called the **Left Quail** and the **Right Quail**. Their movements are mirror images of each other. Both Quails can move any number of spaces forward (like a Rook or Lance), but they can also move backwards diagonally in the direction away from their starting side of the board. For example, the *Left* Quail can move diagonally *right* (in the direction of its talons). Finally, they can also move one space diagonally backwards on the opposite side, towards the bird's tail.
 

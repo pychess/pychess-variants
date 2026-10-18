@@ -1,4 +1,4 @@
-# ![RacingKings](https://github.com/pychess/pychess-variants/blob/master/static/icons/racingkings.svg) 国王赛跑 | Racing Kings
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/racingkings.svg) 国王赛跑 | Racing Kings
 
 _比谁的王跑得更快的国际象棋_
 

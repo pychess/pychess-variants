@@ -1,4 +1,4 @@
-# ![Capahouse960](https://github.com/pychess/pychess-variants/blob/master/static/icons/Capahouse960.svg) 任意制双狂卡帕布兰卡象棋 | Capahouse 960
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/Capahouse960.svg) 任意制双狂卡帕布兰卡象棋 | Capahouse 960
 
 任意制双狂卡帕布兰卡象棋（Capahouse 960）是卡帕布兰卡象棋的变种，融合了原版游戏和双狂象棋的打入、以及任意制布局。在游玩之前，建议您熟悉卡帕布兰卡象棋的规则。
 

@@ -1,4 +1,4 @@
-# ![Synochess](https://github.com/pychess/pychess-variants/blob/master/static/icons/synochess.svg) Synochess
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/synochess.svg) Synochess
 
 ![Synochess](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Synochess.png)
 
@@ -143,6 +143,6 @@ En parte esto explica por qué 1. e3 es una apertura estándar. Y cuando no se h
 
 Esta es una táctica especialmente devastadora que puede causar la derrota inevitable de las Blancas. La situación se produce cuando un Carruaje tiene una columna abierta (con la cual ya cuenta al comienzo), y el Cañón tiene un camino abierto hacia la primera fila (b1 o g1). Esa casilla puede o no contener un Caballo, pero si está vacía la táctica solo funciona si el Caballo no la cubre.
 
-![MataDamas](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Queenslayer.png)
+![Mata damas](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Queenslayer.png)
 
 Una vez que esta posición ocurre, el Carruaje puede tomar el Peón, forzando a la Torre a retomar el carruaje. Esto expone la casilla b1/g1 para el Cañón, que o bien amenazará Y clavará la Dama en el caso de b1, o bien hará una enfilada a la Dama con el jaque desde g1. En cualquier caso, se pierde la Dama.

@@ -1,4 +1,4 @@
-# ![Shogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/shogi.svg) Sógi (Shogi)
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/shogi.svg) Sógi (Shogi)
 
 ![Boards](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Boards.png)
 
@@ -26,11 +26,11 @@ Az átváltoztatott bábukat a legtöbb készlet pirossal különbözteti meg (t
 
 ### Király
 
-![BlackKings](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/BlackKings.png)
+![Black kings](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/BlackKings.png)
 
-![WhiteKings](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/WhiteKings.png)
+![White kings](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/WhiteKings.png)
 
-![KingDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/King.png)
+![King movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/King.png)
 
 A király pontosan ugyanúgy lép, mint a sakkban: egy lépés bármelyik irányba. A kandzsi készleteknél a "vonással" jelölt király az "alacsonyabb rangú játékos" királya (玉將 gyokushō), a sötét játékosé. A "vonás" nélküli király a "magasabb rangú játékos" királya, a világos játékosé.
 
@@ -40,7 +40,7 @@ A nemzetközi készletben ez az egyetlen bábu, amely megtartotta az eredeti, ka
 
 ![Rooks](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Rooks.png)
 
-![RookDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Rook.png)
+![Rook movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Rook.png)
 
 A bástya pontosan ugyanúgy mozog, mint a sakkban: tetszőleges számú mezőt függőlegesen vagy vízszintesen. A nemzetközi bábu egy szekeret ábrázol, ami a bábu eredeti japán nevére utal: "égi szekér". Ez a legértékesebb alapbábu a királyt leszámítva.
 
@@ -48,7 +48,7 @@ A bástya pontosan ugyanúgy mozog, mint a sakkban: tetszőleges számú mezőt 
 
 ![Bishops](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Bishops.png)
 
-![BishopDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Bishop.png)
+![Bishop movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Bishop.png)
 
 A futó pontosan ugyanúgy mozog, mint a sakkban: akárhány mezőt átlósan. A nemzetközi bábu egy egy tradicionálisan kalapot ábrázol, amit a japán tisztek hordtak. Ez a második legértékesebb alapbábu a királyt leszámítva.
 
@@ -56,7 +56,7 @@ A futó pontosan ugyanúgy mozog, mint a sakkban: akárhány mezőt átlósan. A
 
 ![Dragons](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Dragons.png)
 
-![DragonDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Dragon.png)
+![Dragon movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Dragon.png)
 
 A sárkánykirály az átváltoztatott bástya, mely megkapja a király lépéslehetőségeit is a bástya lépésein felül. Ez a legértékesebb bábu a királyt leszámítva.
 
@@ -64,7 +64,7 @@ A sárkánykirály az átváltoztatott bástya, mely megkapja a király lépésl
 
 ![Horses](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Horses.png)
 
-![HorseDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Horse.png)
+![Horse movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Horse.png)
 
 A sárkányló az átváltoztatott futó, mely megkapja a király lépéslehetőségeit is a futó lépésein felül. Ez a második legértékesebb bábu a királyt leszámítva.
 
@@ -75,7 +75,7 @@ Megjegyzés: A sakkban a huszárt szokták lónak is nevezni, de a sógiban a l�
 
 ![Golds](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Golds.png)
 
-![GoldDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Gold.png)
+![Gold general movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Gold.png)
 
 Az aranytábornok lépései szokatlannak tűnhetnek elsőre. Talán a legkönnyebb úgy megjegyezni, hogy egyet léphet vízsintesen vagy függőlegesen, vagy átlósan előre egyet. A nemzetközi készletben a sisak hegyes részei (és az aranyszínű kör a sisak tetején) a lehetséges lépések irányait szimbolizálják.
 
@@ -85,7 +85,7 @@ Az aranytábornok lépései szokatlannak tűnhetnek elsőre. Talán a legkönnye
 
 ![Silvers](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Silvers.png)
 
-![SilverDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Silver.png)
+![Silver general movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Silver.png)
 
 Az ezüsttábornok lépései szokatlannak tűnhetnek elsőre. Talán a legkönnyebb úgy megjegyezni, hogy egyet léphet átlósan, vagy egyet előre. A nemzetközi készletben a sisak élei a lehetséges lépések irányait szimbolizálják.
 
@@ -93,7 +93,7 @@ Az ezüsttábornok lépései szokatlannak tűnhetnek elsőre. Talán a legkönny
 
 ![Knights](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Knights.png)
 
-![KnightDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Knight.png)
+![Knight movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Knight.png)
 
 Hasonló a sakk huszárjához, de annál kötöttebb a mozgása: csak előrefelé tud mozogni, azaz két mezőt lép előre és egyet balra vagy jobbra. A sakk huszárjához hasonlóan a lovas is át tudja ugrani a köztes bábukat.
 
@@ -101,7 +101,7 @@ Hasonló a sakk huszárjához, de annál kötöttebb a mozgása: csak előrefel�
 
 ![Lances](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Lances.png)
 
-![LanceeDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Lance.png)
+![Lance movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Lance.png)
 
 A lándzsás tetszőleges számú mezőt léphet előre. Hasonló a bástyához, de oldalirányba illetve visszafele nem léphet.
 
@@ -109,7 +109,7 @@ A lándzsás tetszőleges számú mezőt léphet előre. Hasonló a bástyához,
 
 ![Pawns](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Pawns.png)
 
-![PawnDiagram](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Pawn.png)
+![Pawn movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Pawn.png)
 
 A gyalog csak előre léphet egyet, és csak így üthet. Ebben különbözik a sakk gyalogjától.
 

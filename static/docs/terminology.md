@@ -2,7 +2,7 @@
 
 Throughout the site and in the guides, many different terms are used. Many of these terms are global and apply to all chess variants, some apply to several (byo-yomi), and some may have different implications depending on the variant (e.g. stalemate). Any terms that apply to a single variant will be discussed there (e.g. many shogi terms). This page serves as a reference to hopefully clear up any confusion!
 
-# "Chess Variants"
+## "Chess Variants"
 
 Probably the most important term to clarify first is what a "**chess variant**" is. There is no doubt that games like Bughouse and Crazyhouse are chess variants because they're derived from chess. However, regional games such as Xiangqi, Shogi, Janggi, and Makruk are all also labeled "chess variants," and this may cause confusion.
 
@@ -10,13 +10,13 @@ The biggest library for chess variants, chessvariants.com has an entire article 
 
 As chess variants can mean both variants directly based on international chess, as well as all forms of "chess" (the all-encompassing term), there is a little ambiguity here. Most of the time, we can figure out which type is being referred to based on context. Still, it is a downside of having this ambiguous term, and perhaps when discussing all kinds of chess, then a more general term "chess-like variants" could be used. Still, this is not the standard terminology used today.
 
-# Pieces
+## Pieces
 
 **Fairy piece** - A piece not used in conventional chess, with the word "fairy" connotating "invented." It's unclear if pieces native to regional variants are considered "fairy pieces," but we favor not using this term for established games. However, a xiangqi cannon appearing in a chess variant (as in Shako), or a bishop appearing in a xiangqi variant would count as "fairy pieces," because they don't exist in the native game.
 
 It should be noted that several pieces have the same piece-type, but different names. For example, the "rook" and "chariot" both refer to the same piece. The name should reflect the name used in the game being played.
 
-## Classification
+### Classification
 
 Because fairy pieces introduce dozens of possible pieces, there is a classification system for pieces. There are also notations used to describe movements, but that is outside of the scope of this page. There are three types of simple pieces:
 
@@ -30,7 +30,7 @@ Because fairy pieces introduce dozens of possible pieces, there is a classificat
 
 **Divergent pieces** are pieces that move in one way but attack differently. The chess pawn, which moves forward but attacks diagonally forward, is a classic example. Divergent pieces are especially prominent in Orda Chess/Mirror, Empire Chess, and Hoppel Poppel.
 
-# Time Control
+## Time Control
 
 Time controls determine the time restrictions that govern ending the game due to one player taking too long to move. One type of game, called **correspondence** games, uses long time controls of at least several hours, typically counted in days. Players typically play their moves whenever they happen to have a break in their day. Correspondence games are available on Pychess.
 
@@ -42,7 +42,7 @@ Games played in one sitting use a main timer set anywhere from 1 minute to 60 mi
 
 3. **Sudden death** - No extra time is given. A game that uses increment or byo-yomi can be played with sudden death by setting the respective slider to 0 seconds.
 
-# General concepts
+## General concepts
 
 **Check** - Threatening the king with a piece that can capture it next turn if not addressed.
 
@@ -68,7 +68,7 @@ Games played in one sitting use a main timer set anywhere from 1 minute to 60 mi
 
 **Promotion Zone** - The area of the board in which pieces can promote. In chess, only pawns can promote on the furthest rank. However, in shogi, the promotion zone is the last three ranks, and most pieces can promote. Other variations can vary on how the promotion zone is defined.
 
-# Tactics
+## Tactics
 
 **Fork** - Attacking two pieces at the same time. Knights most commonly deliver forks in all variants. In drop variants, rooks and bishops are also a little more capable of delivering forks, especially bishops.
 

@@ -1,4 +1,4 @@
-# ![Seirawan](https://github.com/pychess/pychess-variants/blob/master/static/icons/schess.svg) S-chess (Ajedrez Seirawan, Ajedrez SHARPER)
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/schess.svg) S-chess (Ajedrez Seirawan, Ajedrez SHARPER)
 
 S-chess fue creado por Yasser Seirawan y Bruce Harper en 2007. El juego se desarrolla en un tablero de 8x8 pero añade un giro con dos nuevas piezas a través del proceso de embarque (introducir las piezas en el tablero reemplazando vacantes en la primera fila).
 

@@ -1,5 +1,5 @@
 
-# ![Minisógi ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/minishogi.svg) Minisógi (Minishogi)
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/minishogi.svg) Minisógi (Minishogi)
 
 ![Minisógi ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Minishogi.png)
 

@@ -13,7 +13,7 @@ export function layer2army(lobbyCtrl: LobbyController, containerId: string, show
     const infoItems = [
         h('h4', _('New Army Variants')),
         h('div.generic-image-container.fourarmykings', [
-            h('img', { attrs: { src: assetUrl + '/images/4ArmyKings.svg' } }),
+            h('img', { attrs: { src: assetUrl + '/images/4ArmyKings.svg', alt: '' } }),
         ]),
         h(
             'p.variant-category-description',

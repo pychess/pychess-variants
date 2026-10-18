@@ -1,4 +1,4 @@
-# ![Xiangqi ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/xiangqi.svg) Xiangqi (Kínai sakk)
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/xiangqi.svg) Xiangqi (Kínai sakk)
 
 ![Xiangqi tábla](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Boards.png)
 

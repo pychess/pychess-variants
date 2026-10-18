@@ -7,6 +7,7 @@ import { alertDialog } from './alertDialog';
 import { sound } from './sound';
 import { VARIANTS } from './variants';
 import { subscribeHeaderRealtime } from './headerRealtime';
+import { setHeaderPanelExpanded } from './headerPanel';
 
 interface Challenge {
     id: string;
@@ -123,7 +124,7 @@ export function challengeView() {
         if (counter) counter.setAttribute('data-count', `${count}`);
         const button = document.getElementById('btn-challenge') as HTMLElement | null;
         if (button) {
-            const label = `Challenges: ${count}`;
+            const label = `${_('Challenges')}: ${count}`;
             button.setAttribute('aria-label', label);
             button.setAttribute('title', label);
         }
@@ -274,7 +275,7 @@ export function challengeView() {
     }
 
     function showChallenge() {
-        (document.getElementById('btn-challenge') as HTMLElement).classList.add('shown');
+        setHeaderPanelExpanded('btn-challenge', true);
         (document.getElementById('challenge-app') as HTMLElement).style.display = 'flex';
     }
 
@@ -295,7 +296,12 @@ export function challengeView() {
     return h('div#challenge-panel', [
         h(
             'button#btn-challenge',
-            { on: { click: toggleChallenge }, attrs: { 'aria-label': 'Challenges: 0', title: 'Challenges: 0' } },
+            { on: { click: toggleChallenge }, attrs: {
+                    'aria-label': `${_('Challenges')}: 0`,
+                    title: `${_('Challenges')}: 0`,
+                    'aria-expanded': 'false',
+                    'aria-controls': 'challenge-app',
+                } },
             [h('div.icon.icon-crossedswords.data-count', { attrs: { 'data-count': 0 } })],
         ),
         h('div#challenge-app'),
@@ -303,6 +309,6 @@ export function challengeView() {
 }
 
 export function hideChallenge() {
-    (document.getElementById('btn-challenge') as HTMLElement).classList.remove('shown');
+    setHeaderPanelExpanded('btn-challenge', false);
     (document.getElementById('challenge-app') as HTMLElement).style.display = 'none';
 }

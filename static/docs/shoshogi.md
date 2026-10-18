@@ -1,4 +1,4 @@
-# ![ShoShogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/ShoShogi.svg) Sho Shogi
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/ShoShogi.svg) Sho Shogi
 
 ![ShoShogi](https://github.com/pychess/pychess-variants/blob/master/static/images/ShoShogi.png)
 
@@ -11,11 +11,11 @@ Shō Shogi (小将棋 'small chess') is a 16th-century form of Shogi (Japanese c
 - The drunken elephant promotes to the **Crown Prince**.
 - After promotion, a side can effectively have two king-like royal pieces (king + prince).
 
-![image](https://github.com/pychess/pychess-variants/blob/master/static/images/DrunkenElephant.png)
+![Drunken elephant movement](https://github.com/pychess/pychess-variants/blob/master/static/images/DrunkenElephant.png)
 
 The **Drunken Elephant** can step one square in any direction, orthogonal or diagonal, except directly backward.
 
-![image](https://github.com/pychess/pychess-variants/blob/master/static/images/CrownPrince.png)
+![Crown prince movement](https://github.com/pychess/pychess-variants/blob/master/static/images/CrownPrince.png)
 
 The **Crown Prince** can step one square in any direction, orthogonal or diagonal. The Crown Prince effectively doubles as a second king, and must also be captured to win if present.
 

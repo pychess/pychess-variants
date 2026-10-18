@@ -1,4 +1,4 @@
-# ![Makruk ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/makruk.svg) Makruk (Thai sakk)
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/makruk.svg) Makruk (Thai sakk)
 
 ![Makruk ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 

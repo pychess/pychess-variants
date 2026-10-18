@@ -2,7 +2,7 @@
 
 A lo largo del sitio y en las guías, se utilizan muchos términos diferentes. La mayoría de ellos son globales y se aplican a todas las variantes de Ajedrez, algunos se aplican solo en algunas (byo-yomi), y otros tienen diferentes connotaciones dependiendo de la variante (por ejemplo el "ahogado"). Cualquier término que se aplica a una variante concreta será discutido aquí (por ejemplo muchos términos del Shogi). ¡Usa esta página para aclarar cualquier confusión!
 
-# "Variantes de Ajedrez"
+## "Variantes de Ajedrez"
 
 Probablemente el término más importante que aclarar en primer lugar sea el de "**variante de Ajedrez**". No hay duda de que juegos como el Pasapiezas o el Crazyhouse son variantes de Ajedrez, porque derivan del Ajedrez. Sin embargo, juegos regionales como el Xiangqi, Shogi, Janggi y Makruk también son etiquetados como "variantes de Ajedrez", y esto puede causar confusión.
 
@@ -10,13 +10,13 @@ La librería más grande de variantes de Ajedrez, chessvariants.com, tiene un ar
 
 Dado que "variante de ajedrez" puede denotar tanto variantes basadas en el Ajedrez internacional, como cualquier forma de "ajedrez" (el término más general), hay una pequeña ambigüedad aquí. La mayoría de las veces se puede entender por el contexto a qué variante nos estamos refiriendo. Aún así, es una desventaja de tener este término ambiguo, y quizás en el contexto de discusión de todos los tipos de ajedrez, se podrías usar un término más general como "variantes parecidas al ajedrez". Sin embargo, no es la terminología estándar a día de hoy.
 
-# Piezas
+## Piezas
 
 **Piezas de fantasía** - Una pieza que no se utiliza en Ajedrez convencional, con la palabra "fantasía" significando "inventada". No está claro si las piezas nativas de las variantes regionales deben considerarse "piezas de fantasía", pero preferimos no usar este término para juegos establecidos. Sin embargo, un Cañón del Xiangqi que aparece en una variante (como en el Shako), o un Alfil que aparezca en una variante del Xiangqi, cuentan como "piezas de fantasía" porque no forman parte del juego nativo.
 
 Nótese que varias piezas tienen el mismo tipo (movimientos/capturas), pero diferentes nombres. Por ejemplo, la "Torre" y el "Carruaje" se refieren a la misma pieza. El nombre debe reflejar el nombre usado en el juego que se está jugando.
 
-## Clasificación
+### Clasificación
 
 Dado que las piezas de fantasía introducen docenas de piezas posibles, hay un sistema de clasificación para las piezas. También hay notaciones usadas para describir los movimientos, aunque esto queda fuera del alcance de esta página. Hay tres tipos de piezas simples:
 
@@ -28,7 +28,7 @@ Dado que las piezas de fantasía introducen docenas de piezas posibles, hay un s
 
 Finalmente, las **piezas compuestas** son piezas que combinan los movimientos de dos piezas simples. La Dama de Ajedrez, que combina los movimientos de la Torre y el Alfil, es un ejemplo clásico. Muchas piezas de fantasía son piezas compuestas.
 
-# Control de tiempo
+## Control de tiempo
 
 Los controles de tiempo determinan las restricciones de reloj que gobiernan el final de una partida cuando un jugador toma excesivo tiempo para mover. Un tipo de partida, denominado **por correspondencia**, utiliza controles de tiempo largos de al menos varias horas, normalmente días. Los jugadores suelen hacer sus jugadas cuando tienen un hueco en su día. Actualmente el juego por correspondencia no está disponible en Pychess, donde las partidas están pensadas para ser jugadas completamente de una vez.
 
@@ -40,7 +40,7 @@ Las partidas jugadas de una vez usan un reloj principalmente que normalmente va 
 
 3. **Muerte súbita ("Sudden death")** - No hay tiempo extra. Un juego que usa incremento o byo-yomi puede ser jugado con muerte súbita ajustando la respectiva barra de increment/byo-yomi a 0 segundos.
 
-# Conceptos Generales
+## Conceptos Generales
 
 **Jaque** - Amenazar al Rey contrarion con una pieza que lo capturaría en el siguiente turno si el rival no lo evita.
 
@@ -66,7 +66,7 @@ Las partidas jugadas de una vez usan un reloj principalmente que normalmente va 
 
 **Zona de Promoción** - La zona del tablero en que las piezas pueden promocionar. En Ajedrez solamente los Peones pueden promocionar en la última fila. Sin embargo, en Shogi, la zona de promoción son las últimas tres filas, y la mayoría de piezas pueden promocionar. Otras variantes tienen distintas zonas de promoción.
 
-# Táctica
+## Táctica
 
 **Ataque doble ("Fork")** - Atacar dos piezas al mismo tiempo. Los Caballos suelen hacer este tipo de táctica en todas las variantes. En variantes de soltar, las Torres y Alfiles también son un poco más capaces de hacer ataques dobles, sobre todo los Alfiles.
 
