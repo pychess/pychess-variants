@@ -3,6 +3,7 @@ import * as cg from 'chessgroundx/types';
 import { uci2LastMove } from '../chess';
 import { Step } from '../messages';
 import { BugBoardName, PyChessModel } from '../types';
+import { ChessgroundKeyboard } from '../accessibility/chessgroundKeyboard';
 import { Variant, VARIANTS } from '../variants';
 import { boardSettings } from '@/boardSettings';
 import { ChessgroundController } from '@/cgCtrl';
@@ -98,6 +99,7 @@ export abstract class TwoBoardController {
         el2Pocket1: HTMLElement,
         el2Pocket2: HTMLElement,
         model: PyChessModel,
+        keyboards: Record<BugBoardName, ChessgroundKeyboard>,
         movelistView: MovelistView,
         gameInfoView: GameInfoView,
     ) {
@@ -114,8 +116,8 @@ export abstract class TwoBoardController {
 
         this.seats = twoBoardSeats(model, this.username);
 
-        this.boardA = new GameControllerBughouse(el1, el1Pocket1, el1Pocket2, 'a', model);
-        this.boardB = new GameControllerBughouse(el2, el2Pocket1, el2Pocket2, 'b', model);
+        this.boardA = new GameControllerBughouse(el1, el1Pocket1, el1Pocket2, 'a', model, keyboards.a);
+        this.boardB = new GameControllerBughouse(el2, el2Pocket1, el2Pocket2, 'b', model, keyboards.b);
         this.boardA.partnerCC = this.boardB;
         this.boardB.partnerCC = this.boardA;
         this.boardA.parent = this;

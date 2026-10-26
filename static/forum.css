@@ -364,11 +364,15 @@ main.forum .forum-captcha.failure {
 main.forum .forum-captcha__challenge {
   flex: 0 1 320px;
   min-width: 0;
+  /* After the explanation in reading order (its heading leads to the board), drawn before it. */
+  order: -1;
 }
 
 main.forum .forum-captcha__challenge .forum-captcha-board {
   display: inline-block;
   max-width: 100%;
+  /* The keyboard board is laid over it. */
+  position: relative;
 }
 
 main.forum .forum-captcha__challenge .cg-wrap.mini {
@@ -384,6 +388,7 @@ main.forum .forum-captcha__explanation .form-label {
   display: block;
   padding: 0;
   margin: 0.45rem 0;
+  font-size: inherit;
   font-weight: 700;
   cursor: default;
 }

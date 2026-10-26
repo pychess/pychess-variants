@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globa
 import { h, type VNode } from 'snabbdom';
 
 import type { AnalysisController } from '../client/analysis/analysisCtrl';
+import type { ChessgroundKeyboard } from '../client/accessibility/chessgroundKeyboard';
 import { addOrSelectChild, createAnalysisTree, mainlinePathAtPly } from '../client/analysis/analysisTree';
 import { patch } from '../client/document';
 import { Step } from '../client/messages';
@@ -20,7 +21,12 @@ jest.unstable_mockModule('../client/analysis/analysisCtrl', () => ({
         username = 'tester';
         onFSFline = jest.fn();
 
-        constructor(_el: HTMLElement, _model: PyChessModel, extensionFactory?: (ctrl: unknown) => unknown) {
+        constructor(
+            _el: HTMLElement,
+            _model: PyChessModel,
+            _keyboard: unknown,
+            extensionFactory?: (ctrl: unknown) => unknown,
+        ) {
             extensionFactory?.(this);
         }
     },
@@ -196,6 +202,7 @@ describe('analysis page smoke coverage', () => {
                 side: h('div.study-side', 'Study chapters'),
                 underboard: h('div.study-underboard', 'Study notes'),
                 mountBoard,
+                keyboard: { boardView: () => h('div'), pocketView: () => h('div') } as unknown as ChessgroundKeyboard,
                 ongoing: false,
                 toolsAfterMoves: h('div.study-gamebook-edit', 'Lesson authoring'),
             }),

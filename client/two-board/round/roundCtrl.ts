@@ -29,6 +29,7 @@ import {
     MsgViewRematch,
 } from '../../roundType';
 import { BoardName, BugBoardName, JSONObject, PyChessModel } from '../../types';
+import { ChessgroundKeyboard } from '../../accessibility/chessgroundKeyboard';
 import { GameControllerBughouse } from '../common/gameCtrl';
 import { BLACK, WHITE, getTurnColor, uci2LastMove } from '../../chess';
 import { result } from '../../result';
@@ -121,13 +122,14 @@ export class RoundControllerBughouse extends TwoBoardController implements ChatC
         el2Pocket1: HTMLElement,
         el2Pocket2: HTMLElement,
         model: PyChessModel,
+        keyboards: Record<BugBoardName, ChessgroundKeyboard>,
         movelistView: MovelistView,
         gameInfoView: GameInfoView,
         spectatorsView: SpectatorsView,
         seatViews: RoundSeatViews,
         chatPresetsView: ChatPresetsView | undefined,
     ) {
-        super(el1, el1Pocket1, el1Pocket2, el2, el2Pocket1, el2Pocket2, model, movelistView, gameInfoView);
+        super(el1, el1Pocket1, el1Pocket2, el2, el2Pocket1, el2Pocket2, model, keyboards, movelistView, gameInfoView);
 
         this.spectatorsView = spectatorsView;
 

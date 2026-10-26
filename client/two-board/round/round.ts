@@ -4,7 +4,8 @@ import { VARIANTS } from '../../variants';
 import { GameInfoView } from '../common/gameInfo';
 import { SpectatorsView } from '../common/spectatorsView';
 import { renderTimeago } from '../../datetime';
-import { PyChessModel } from '../../types';
+import { BugBoardName, PyChessModel } from '../../types';
+import { ChessgroundKeyboard } from '../../accessibility/chessgroundKeyboard';
 import { RoundControllerBughouse } from './roundCtrl';
 import { MovelistView } from '../common/movelist';
 import { RoundSeatView, RoundSeatViews } from './roundSeatView';
@@ -38,6 +39,7 @@ function createBoards(
     bugboardPocket0: VNode,
     bugboardPocket1: VNode,
     model: PyChessModel,
+    keyboards: Record<BugBoardName, ChessgroundKeyboard>,
     movelistView: MovelistView,
     gameInfoView: GameInfoView,
     spectatorsView: SpectatorsView,
@@ -52,6 +54,7 @@ function createBoards(
         bugboardPocket0.elm as HTMLElement,
         bugboardPocket1.elm as HTMLElement,
         model,
+        keyboards,
         movelistView,
         gameInfoView,
         spectatorsView,
@@ -90,6 +93,7 @@ export function roundView(model: PyChessModel): VNode[] {
 
     const movelistView = new MovelistView();
     const gameInfoView = new GameInfoView();
+    const keyboards = { a: new ChessgroundKeyboard(variant, 'a'), b: new ChessgroundKeyboard(variant, 'b') };
     const spectatorsView = new SpectatorsView();
 
     // A spectator has no partner to tell anything, so they get no presets — the
@@ -108,17 +112,37 @@ export function roundView(model: PyChessModel): VNode[] {
     // One pocket per seat, handed to that seat's strip. The element itself still
     // belongs to the caller — chessgroundx is constructed against it below — but
     // where it sits is the strip's business, not the grid's.
-    const pocket = (cls: string, id: string, keep: (vnode: VNode) => void): VNode =>
+    const pocket = (cls: string, id: string, keep: (vnode: VNode) => void, layer: VNode): VNode =>
         h(`div.${cls}`, [
             h('div.' + variant.pieceFamily + '.twoboards', [
-                h('div.cg-wrap.pocket', [h(`div#${id}`, { hook: { insert: keep } })]),
+                h('div.cg-wrap.pocket', [h(`div#${id}`, { hook: { insert: keep } }), layer]),
             ]),
         ]);
 
-    const pocketA0 = pocket('pocket-top', 'pocket00', vnode => (mainboardPocket0 = vnode));
-    const pocketA1 = pocket('pocket-bot', 'pocket01', vnode => (mainboardPocket1 = vnode));
-    const pocketB0 = pocket('pocket-top-partner', 'pocket10', vnode => (bugboardPocket0 = vnode));
-    const pocketB1 = pocket('pocket-bot-partner', 'pocket11', vnode => (bugboardPocket1 = vnode));
+    const pocketA0 = pocket(
+        'pocket-top',
+        'pocket00',
+        vnode => (mainboardPocket0 = vnode),
+        keyboards.a.pocketView('top'),
+    );
+    const pocketA1 = pocket(
+        'pocket-bot',
+        'pocket01',
+        vnode => (mainboardPocket1 = vnode),
+        keyboards.a.pocketView('bottom'),
+    );
+    const pocketB0 = pocket(
+        'pocket-top-partner',
+        'pocket10',
+        vnode => (bugboardPocket0 = vnode),
+        keyboards.b.pocketView('top'),
+    );
+    const pocketB1 = pocket(
+        'pocket-bot-partner',
+        'pocket11',
+        vnode => (bugboardPocket1 = vnode),
+        keyboards.b.pocketView('bottom'),
+    );
 
     // Each panel holds exactly one existing element, embedded as it is defined
     // elsewhere — their own `grid-area` declarations come along and are simply
@@ -152,6 +176,7 @@ export function roundView(model: PyChessModel): VNode[] {
                                     h('div.cg-wrap.' + variant.board.cg, {
                                         hook: { insert: vnode => (bugboardVNode = vnode) },
                                     }),
+                                    keyboards.b.boardView(),
                                 ],
                             ),
                             seatViews.b[1].view(pocketB1),
@@ -248,6 +273,7 @@ export function roundView(model: PyChessModel): VNode[] {
                             bugboardPocket0,
                             bugboardPocket1,
                             model,
+                            keyboards,
                             movelistView,
                             gameInfoView,
                             spectatorsView,
@@ -275,6 +301,7 @@ export function roundView(model: PyChessModel): VNode[] {
                         h('div.cg-wrap.' + variant.board.cg, {
                             hook: { insert: vnode => (mainboardVNode = vnode) /*runGround(vnode, model)*/ },
                         }),
+                        keyboards.a.boardView(),
                     ]),
                     seatViews.a[1].view(pocketA1),
                 ]),

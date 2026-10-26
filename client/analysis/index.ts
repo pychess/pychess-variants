@@ -7,6 +7,7 @@ import { selectVariant, VARIANTS, validVariant } from '../variants';
 import { renderTimeago } from '../datetime';
 import { spinner } from '../view';
 import { srHeading } from '../accessibility/headings';
+import { ChessgroundKeyboard } from '../accessibility/chessgroundKeyboard';
 import { PyChessModel } from '../types';
 import { analysisContext, type AnalysisContext } from './analysisContext';
 import { renderAnalysisPage } from './analysisPage';
@@ -17,9 +18,14 @@ import { extractPgnTags } from '../pgn';
 export { analysisTools, gauge, renderAnalysisPage } from './analysisPage';
 export type { AnalysisPageParts } from './analysisPage';
 
-function runGround(vnode: VNode, model: PyChessModel, onReady?: (ctrl: AnalysisController) => void) {
+function runGround(
+    vnode: VNode,
+    model: PyChessModel,
+    keyboard: ChessgroundKeyboard,
+    onReady?: (ctrl: AnalysisController) => void,
+) {
     const el = vnode.elm as HTMLElement;
-    const ctrl = new AnalysisController(el, model);
+    const ctrl = new AnalysisController(el, model, keyboard);
     window['onFSFline'] = ctrl.onFSFline;
     onReady?.(ctrl);
 }
@@ -54,6 +60,7 @@ function analysisSide(model: PyChessModel, context: AnalysisContext) {
 
 export function renderEmbedPage(
     model: PyChessModel,
+    keyboard: ChessgroundKeyboard,
     mountBoard: (vnode: VNode) => void,
     footer: VNode,
     overlay?: VNode,
@@ -64,11 +71,12 @@ export function renderEmbedPage(
         h('div.embed-app', [
             h(`selection#mainboard.${variant.boardFamily}.${variant.pieceFamily}.${variant.ui.boardMark}`, [
                 h('div.cg-wrap.' + variant.board.cg, { hook: { insert: mountBoard } }),
+                keyboard.boardView(),
             ]),
 
             h('div.pocket-top', [
                 h('div.' + variant.pieceFamily + '.' + model['variant'], [
-                    h('div.cg-wrap.pocket', [h('div#pocket0.pocketrow')]),
+                    h('div.cg-wrap.pocket', [h('div#pocket0.pocketrow'), keyboard.pocketView('top')]),
                 ]),
             ]),
 
@@ -81,7 +89,7 @@ export function renderEmbedPage(
 
             h('div.pocket-bot', [
                 h('div.' + variant.pieceFamily + '.' + model['variant'], [
-                    h('div.cg-wrap.pocket', [h('div#pocket1.pocketrow')]),
+                    h('div.cg-wrap.pocket', [h('div#pocket1.pocketrow'), keyboard.pocketView('bottom')]),
                 ]),
             ]),
 
@@ -94,9 +102,11 @@ export function renderEmbedPage(
 export function embedView(model: PyChessModel): VNode[] {
     const variant = VARIANTS[model.variant];
     const chess960 = model.chess960 === 'True';
+    const keyboard = new ChessgroundKeyboard(variant, '');
     return renderEmbedPage(
         model,
-        vnode => runGround(vnode, model),
+        keyboard,
+        vnode => runGround(vnode, model, keyboard),
         h(
             'a.gamelink',
             { attrs: { rel: 'noopener', target: '_blank', href: '/' + model['gameId'] } },
@@ -300,10 +310,12 @@ export function analysisView(model: PyChessModel): VNode[] {
         }
     };
 
+    const keyboard = new ChessgroundKeyboard(VARIANTS[model.variant], '');
     return renderAnalysisPage(model, {
         side: analysisSide(model, context),
         underboard: analysisUnderboard(model, context, isOngoingGame, addToStudy),
-        mountBoard: vnode => runGround(vnode, model, mounted => (ctrl = mounted)),
+        mountBoard: vnode => runGround(vnode, model, keyboard, mounted => (ctrl = mounted)),
+        keyboard,
         ongoing: isOngoingGame,
     });
 }

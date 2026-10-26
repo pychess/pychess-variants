@@ -8,6 +8,7 @@ import { VARIANTS, selectVariant, validVariant } from '../../variants';
 
 import { renderTimeago } from '../../datetime';
 import { BugBoardName, PyChessModel } from '../../types';
+import { ChessgroundKeyboard } from '../../accessibility/chessgroundKeyboard';
 import AnalysisControllerBughouse from './analysisCtrl';
 import { gauge } from '@/analysis';
 import { TabbedPanels, TabPanelDef } from '../common/tabs';
@@ -61,6 +62,7 @@ function createBoards(
     bugboardPocket0: VNode,
     bugboardPocket1: VNode,
     model: PyChessModel,
+    keyboards: Record<BugBoardName, ChessgroundKeyboard>,
     movelistView: MovelistView,
     gameInfoView: GameInfoView,
     engine: EngineController,
@@ -77,6 +79,7 @@ function createBoards(
         bugboardPocket0.elm as HTMLElement,
         bugboardPocket1.elm as HTMLElement,
         model,
+        keyboards,
         movelistView,
         gameInfoView,
         engine,
@@ -90,6 +93,7 @@ function createBoards(
 
 export function analysisView(model: PyChessModel): VNode[] {
     const variant = VARIANTS[model.variant];
+    const keyboards = { a: new ChessgroundKeyboard(variant, 'a'), b: new ChessgroundKeyboard(variant, 'b') };
     const isAnalysisBoard = model['gameId'] === '';
 
     /* MUST run before the boards are constructed, for the same reason it must on the round
@@ -315,6 +319,7 @@ export function analysisView(model: PyChessModel): VNode[] {
             h('div.cg-wrap.' + variant.board.cg, {
                 hook: { insert: vnode => (mainboardVNode = vnode) },
             }),
+            keyboards.a.boardView(),
             ...mainClocks.bottom,
         ],
     );
@@ -325,6 +330,7 @@ export function analysisView(model: PyChessModel): VNode[] {
             h('div.cg-wrap.' + variant.board.cg, {
                 hook: { insert: vnode => (bugboardVNode = vnode) },
             }),
+            keyboards.b.boardView(),
             ...bugClocks.bottom,
         ],
     );
@@ -339,16 +345,26 @@ export function analysisView(model: PyChessModel): VNode[] {
        the board the gauge reports on rather than to the seam between the two. */
     const boardLabel = (board: BugBoardName) => h('div.board-label', board.toUpperCase());
 
-    const pocket = (cls: string, id: string, keep: (vnode: VNode) => void) =>
+    const pocket = (cls: string, id: string, keep: (vnode: VNode) => void, layer: VNode) =>
         h('div.' + cls, [
             h('div.' + variant.pieceFamily + '.twoboards', [
-                h('div.cg-wrap.pocket', [h('div#' + id, { hook: { insert: keep } })]),
+                h('div.cg-wrap.pocket', [h('div#' + id, { hook: { insert: keep } }), layer]),
             ]),
         ]);
-    const pocketA0 = pocket('pocket-top', 'pocket00', v => (mainboardPocket0 = v));
-    const pocketA1 = pocket('pocket-bot', 'pocket01', v => (mainboardPocket1 = v));
-    const pocketB0 = pocket('pocket-top-partner', 'pocket10', v => (bugboardPocket0 = v));
-    const pocketB1 = pocket('pocket-bot-partner', 'pocket11', v => (bugboardPocket1 = v));
+    const pocketA0 = pocket('pocket-top', 'pocket00', v => (mainboardPocket0 = v), keyboards.a.pocketView('top'));
+    const pocketA1 = pocket('pocket-bot', 'pocket01', v => (mainboardPocket1 = v), keyboards.a.pocketView('bottom'));
+    const pocketB0 = pocket(
+        'pocket-top-partner',
+        'pocket10',
+        v => (bugboardPocket0 = v),
+        keyboards.b.pocketView('top'),
+    );
+    const pocketB1 = pocket(
+        'pocket-bot-partner',
+        'pocket11',
+        v => (bugboardPocket1 = v),
+        keyboards.b.pocketView('bottom'),
+    );
 
     /* A SEAT STRIP: one seat's pocket beside its player bar, as a single stack row.
        The round page's element, class for class, so the strip skeleton and the whole
@@ -439,6 +455,7 @@ export function analysisView(model: PyChessModel): VNode[] {
                             bugboardPocket0,
                             bugboardPocket1,
                             model,
+                            keyboards,
                             movelistView,
                             gameInfoView,
                             engine,

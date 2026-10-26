@@ -2,6 +2,7 @@ import * as cg from 'chessgroundx/types';
 import * as util from 'chessgroundx/util';
 import { GameController } from '../../gameCtrl';
 import { BugBoardName, PyChessModel } from '../../types';
+import { ChessgroundKeyboard } from '../../accessibility/chessgroundKeyboard';
 import type { TwoBoardController } from '../twoBoardCtrl';
 import { premove } from 'chessgroundx/premove';
 import { predrop } from 'chessgroundx/predrop';
@@ -27,6 +28,7 @@ export class GameControllerBughouse extends GameController {
         elPocket2: HTMLElement,
         boardName: BugBoardName,
         model: PyChessModel,
+        keyboard: ChessgroundKeyboard,
     ) {
         super(
             el,
@@ -35,6 +37,8 @@ export class GameControllerBughouse extends GameController {
             elPocket1,
             elPocket2,
             boardName,
+            undefined,
+            keyboard,
         );
         this.setGround();
         this.mycolor = 'white';
@@ -242,6 +246,7 @@ export class GameControllerBughouse extends GameController {
     // The game status belongs to both boards, so the parent reports it (on one board only).
     updateBoardSummary(lastMove: string | undefined): void {
         this.boardSummary.setPosition(this.chessground.state.boardState, lastMove);
+        this.keyboard.update();
     }
 
     renderState = () => {

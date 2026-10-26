@@ -10,6 +10,7 @@ import { _ } from '../i18n';
 import { sound } from '../sound';
 import { uci2LastMove, uci2cg, getTurnColor } from '../chess';
 import { crosstableView } from '../crosstable';
+import { ChessgroundKeyboard } from '../accessibility/chessgroundKeyboard';
 import { chatView } from '../chat';
 import { createMovelistButtons, updateMovelist, selectMove } from '../movelist';
 import { povChances } from './winningChances';
@@ -171,7 +172,12 @@ export class AnalysisController extends GameController {
     private resolveEngineConfig?: () => void;
     private readonly onEngineBoardUnload = () => this.fsfEngineBoard?.delete();
 
-    constructor(el: HTMLElement, model: PyChessModel, extensionFactory?: AnalysisExtensionFactory) {
+    constructor(
+        el: HTMLElement,
+        model: PyChessModel,
+        keyboard: ChessgroundKeyboard,
+        extensionFactory?: AnalysisExtensionFactory,
+    ) {
         super(
             el,
             model,
@@ -179,6 +185,8 @@ export class AnalysisController extends GameController {
             document.getElementById('pocket0') as HTMLElement,
             document.getElementById('pocket1') as HTMLElement,
             '',
+            undefined,
+            keyboard,
         );
         this.analysisContext = analysisContext(model);
         this.externalAllowed =
