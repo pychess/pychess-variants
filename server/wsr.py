@@ -120,31 +120,19 @@ CLIENT_FLAG_TOLERANCE_MS = 1000
 MIN_CEVAL_REPORT_PLY = 6
 MIN_CEVAL_REPORT_PLY_CHESS960 = 1
 
-# Round sockets are public: spectators legitimately request boards, presence and
-# chat. Never allow those same sockets to issue actions on a player's behalf.
-PARTICIPANT_ONLY_ROUND_MESSAGES = frozenset(
+# Default-deny spectator messages. Future round actions must be explicitly
+# approved for spectators rather than silently inheriting player privileges.
+# Chat handlers separately enforce spectator/player room access.
+SPECTATOR_ALLOWED_ROUND_MESSAGES = frozenset(
     {
-        "move",
-        "reconnect",
-        "berserk",
-        "ready",
-        "setup",
-        "rematch",
-        "reject_rematch",
-        "draw",
-        "reject_draw",
-        "byoyomi",
-        "takeback",
-        "reject_takeback",
-        "abort",
-        "resign",
-        "abandon",
-        "flag",
-        "moretime",
-        "leave",
-        "count",
-        "ceval_detected",
-        "overlay_detected",
+        "board",
+        "analysis",
+        "analysis_move",
+        "embed_user_connected",
+        "is_user_present",
+        "roundchat",
+        "bugroundchat",
+        "updateTV",
     }
 )
 
@@ -254,7 +242,14 @@ async def process_message(
     if data["type"] != "delete" and "gameId" in data and data["gameId"] != game.id:
         return
 
-    if data["type"] in PARTICIPANT_ONLY_ROUND_MESSAGES and not game.is_player(user):
+    # Imported-game deletion has separate ownership checks in handle_delete().
+    # All other unlisted message types require a real player, including any
+    # new controls added to the dispatcher in the future.
+    if (
+        data["type"] != "delete"
+        and data["type"] not in SPECTATOR_ALLOWED_ROUND_MESSAGES
+        and not game.is_player(user)
+    ):
         log.info("Ignoring %s from non-player %s in %s", data["type"], user.username, game.id)
         return
 

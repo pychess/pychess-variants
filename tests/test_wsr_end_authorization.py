@@ -357,6 +357,71 @@ class RoundEndAuthorizationTestCase(AioHTTPTestCase):
                 broadcast.assert_not_awaited()
         self.assertFalse(game.rematch_offers)
 
+    async def test_spectator_allowlist_preserves_legitimate_requests(self):
+        from wsr import SPECTATOR_ALLOWED_ROUND_MESSAGES
+
+        handlers = {
+            "board": "handle_board",
+            "analysis": "handle_analysis",
+            "analysis_move": "handle_analysis_move",
+            "embed_user_connected": "handle_embed_user_connected",
+            "is_user_present": "handle_is_user_present",
+            "roundchat": "handle_roundchat",
+            "bugroundchat": "handle_bugroundchat",
+            "updateTV": "handle_updateTV",
+        }
+        self.assertEqual(SPECTATOR_ALLOWED_ROUND_MESSAGES, handlers.keys())
+        state, game, _players = await self.new_game()
+        spectator = User(state, username="allowed-spectator")
+        for message_type, handler in handlers.items():
+            with (
+                self.subTest(message_type=message_type),
+                patch(f"wsr.{handler}", new=AsyncMock()) as routed,
+                patch.object(game, "is_player", wraps=game.is_player) as is_player,
+            ):
+                await process_message(
+                    state,
+                    spectator,
+                    AsyncMock(),
+                    {
+                        "type": message_type,
+                        "gameId": game.id,
+                        "username": spectator.username,
+                        "room": "spectator",
+                        "message": "hello",
+                    },
+                    game,
+                )
+                routed.assert_awaited_once()
+                is_player.assert_not_called()
+
+    async def test_unlisted_or_new_message_types_default_to_player_only(self):
+        state, game, _players = await self.new_game()
+        spectator = User(state, username="unlisted-spectator")
+        for message_type in (
+            "ready",
+            "draw",
+            "ceval_detected",
+            "overlay_detected",
+            "future_control",
+        ):
+            with (
+                self.subTest(message_type=message_type),
+                patch.object(game, "is_player", wraps=game.is_player) as is_player,
+                patch("wsr.handle_ready", new=AsyncMock()) as ready,
+                patch("wsr.handle_draw", new=AsyncMock()) as draw,
+                patch("wsr.handle_ceval_detected", new=AsyncMock()) as ceval,
+                patch("wsr.handle_overlay_detected", new=AsyncMock()) as overlay,
+            ):
+                await process_message(
+                    state, spectator, AsyncMock(), {"type": message_type, "gameId": game.id}, game
+                )
+                is_player.assert_called_once_with(spectator)
+                ready.assert_not_awaited()
+                draw.assert_not_awaited()
+                ceval.assert_not_awaited()
+                overlay.assert_not_awaited()
+
     async def test_payload_game_id_cannot_redirect_actions(self):
         state, game, players = await self.new_game()
         with patch("wsr.round_broadcast", new=AsyncMock()) as broadcast:
