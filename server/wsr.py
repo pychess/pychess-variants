@@ -120,6 +120,34 @@ CLIENT_FLAG_TOLERANCE_MS = 1000
 MIN_CEVAL_REPORT_PLY = 6
 MIN_CEVAL_REPORT_PLY_CHESS960 = 1
 
+# Round sockets are public: spectators legitimately request boards, presence and
+# chat. Never allow those same sockets to issue actions on a player's behalf.
+PARTICIPANT_ONLY_ROUND_MESSAGES = frozenset(
+    {
+        "move",
+        "reconnect",
+        "berserk",
+        "ready",
+        "setup",
+        "rematch",
+        "reject_rematch",
+        "draw",
+        "reject_draw",
+        "byoyomi",
+        "takeback",
+        "reject_takeback",
+        "abort",
+        "resign",
+        "abandon",
+        "flag",
+        "moretime",
+        "leave",
+        "count",
+        "ceval_detected",
+        "overlay_detected",
+    }
+)
+
 
 def min_ceval_report_ply(game: game.Game) -> int:
     return MIN_CEVAL_REPORT_PLY_CHESS960 if bool(game.chess960) else MIN_CEVAL_REPORT_PLY
@@ -220,14 +248,27 @@ async def process_message(
     data: RoundInboundMessage,
     game: game.Game,
 ) -> None:
+    # A round socket is bound to the URL's game; payload game IDs must not
+    # redirect notifications, chat or analysis to a different game.
+    # Delete intentionally ignores any payload ID and uses the socket's game.
+    if data["type"] != "delete" and "gameId" in data and data["gameId"] != game.id:
+        return
+
+    if data["type"] in PARTICIPANT_ONLY_ROUND_MESSAGES and not game.is_player(user):
+        log.info("Ignoring %s from non-player %s in %s", data["type"], user.username, game.id)
+        return
+
     if data["type"] == "move":
         await handle_move(app_state, user, data, game)
     elif data["type"] == "reconnect":
+        if not game.server_variant.two_boards:
+            return
         if TYPE_CHECKING:
             assert isinstance(game, GameBug)
         await handle_reconnect_bughouse(app_state, user, data, game)
     elif data["type"] == "berserk":
-        await handle_berserk(data, game)
+        if not game.server_variant.two_boards:
+            await handle_berserk(user, data, game)
     elif data["type"] == "analysis_move":
         await handle_analysis_move(user, data, game)
     elif data["type"] == "ready":
@@ -297,7 +338,10 @@ async def process_message(
     elif data["type"] == "is_user_present":
         await handle_is_user_present(ws, app_state.users, data["username"], game)
     elif data["type"] == "moretime":
-        if not game.server_variant.two_boards and game.simulId is not None:
+        # The two-board game clock has no single recipient/colour to credit.
+        if game.server_variant.two_boards:
+            return
+        if game.simulId is not None:
             await ws_send_json(
                 ws, {"type": "error", "message": "Adding time is disabled in simuls"}
             )
@@ -418,20 +462,26 @@ async def handle_move(
                 )
 
 
-async def handle_berserk(data: BerserkMessage, game: game.Game) -> None:
+async def handle_berserk(user: User, data: BerserkMessage, game: game.Game) -> None:
     # Berserk can race with the first move. Serialize both operations and make
     # the durable write happen before clients are told that berserk succeeded.
     # A process death after the broadcast can therefore never make an
     # acknowledged berserk disappear after restart.
     async with game.move_lock:
+        if not game.is_player(user) or game.server_variant.two_boards:
+            return
         # If the first move won the lock, the berserk request is too late. This
         # mirrors the client rule (berserk is offered only before game start)
         # and makes the move/berserk race deterministic in either order.
-        if game.status >= STARTED:
+        if game.status >= STARTED or game.tournamentId is None:
             return
-        game.berserk(data["color"])
+        color = "white" if user.username == game.wplayer.username else "black"
+        # The supplied colour cannot authorize an action for the other seat.
+        if data["color"] != color:
+            return
+        game.berserk(color)
         await game.save_berserk()
-        response: BerserkMessage = {"type": "berserk", "color": data["color"]}
+        response: BerserkMessage = {"type": "berserk", "color": color}
         await round_broadcast(game, response, full=True)
 
 
@@ -510,8 +560,19 @@ async def handle_board(ws: WebSocketResponse, user: User, game: game.Game) -> No
 
     if game.corr and game.status <= STARTED and len(game.draw_offers) > 0:
         offerer = game.wplayer if game.wplayer.username in game.draw_offers else game.bplayer
-        response = await draw(game, offerer)
-        await ws_send_json(ws, response)
+        # A board refresh only replays the pending offer. Calling draw() here
+        # would also *claim and save* a draw if the position became claimable,
+        # even for a spectator, without the move lock.
+        await ws_send_json(
+            ws,
+            {
+                "type": "draw_offer",
+                "username": offerer.username,
+                "message": "Pass" if game.variant == "janggi" else "Draw offer sent",
+                "room": "player",
+                "user": "",
+            },
+        )
 
     if game.is_player(user) and game.takeback_offer is not None:
         offerer_name, _offer_ply = game.takeback_offer
@@ -938,19 +999,28 @@ async def handle_draw(
     data: DrawMessage,
     game: game.Game,
 ) -> None:
-    color = WHITE if user.username == game.wplayer.username else BLACK
-    opp_name = game.wplayer.username if color == BLACK else game.bplayer.username
+    # Serialize offer/accept and result persistence with moves and resignations.
+    # Otherwise two simultaneous offers or a move ending the game can race a draw.
+    async with game.move_lock:
+        if not game.is_player(user) or game.status > STARTED:
+            return
+        opp_name = (
+            game.bplayer.username
+            if user.username == game.wplayer.username
+            else game.wplayer.username
+        )
+        agreement = opp_name in game.draw_offers
+        if not agreement:
+            game.draw_offers.add(user.username)
+        response = await draw(game, user, agreement=agreement)
+        game_ended = response["type"] == "gameEnd"
 
-    if opp_name not in game.draw_offers:
-        game.draw_offers.add(user.username)
-
-    response = await draw(game, user, agreement=opp_name in game.draw_offers)
     await ws_send_json(ws, response)
 
     if opp_name in users:
         opp_player = users[opp_name]
         if opp_player.bot:
-            if game.status > STARTED and data["gameId"] in opp_player.game_queues:
+            if game_ended and data["gameId"] in opp_player.game_queues:
                 await opp_player.game_queues[data["gameId"]].put(game.game_end)
         else:
             try:
@@ -962,10 +1032,11 @@ async def handle_draw(
 
 
 async def handle_reject_draw(user: User, game: game.Game) -> None:
-    color = WHITE if user.username == game.wplayer.username else BLACK
-    opp_user = game.wplayer if color == BLACK else game.bplayer
-
-    response = await reject_draw(game, opp_user)
+    async with game.move_lock:
+        if not game.is_player(user) or game.status > STARTED:
+            return
+        opp_user = game.bplayer if user.username == game.wplayer.username else game.wplayer
+        response = await reject_draw(game, opp_user)
     if response is not None:
         await round_broadcast(game, response, full=True)
 
@@ -1318,24 +1389,31 @@ async def handle_is_user_present(
 
 
 async def handle_moretime(users: Users, user: User, data: MoreTimeRequest, game: game.Game) -> None:
-    opp_color = WHITE if user.username == game.bplayer.username else BLACK
     async with game.move_lock:
-        if not game.corr:
-            # Board updates and the next countdown use these saved balances,
-            # including when the opponent is waiting for their turn.
-            opp_clocks = game.clocks_w if opp_color == WHITE else game.clocks_b
-            opp_clocks[-1] += MORE_TIME
-            if game.stopwatch.running and opp_color == game.stopwatch.color:
-                if TYPE_CHECKING:
-                    assert isinstance(game.stopwatch, Clock)
-                opp_time = game.stopwatch.stop()
-                game.stopwatch.restart(opp_time + MORE_TIME)
+        if (
+            not game.is_player(user)
+            or game.server_variant.two_boards
+            or game.corr
+            or game.status > STARTED
+            or game.rated != CASUAL
+            or game.bot_game
+            or game.tournamentId is not None
+            or game.simulId is not None
+        ):
+            return
 
-        opp_name = (
-            game.wplayer.username
-            if user.username == game.bplayer.username
-            else game.bplayer.username
-        )
+        opp_color = BLACK if user.username == game.wplayer.username else WHITE
+        # Board updates and the next countdown use these saved balances,
+        # including when the opponent is waiting for their turn.
+        opp_clocks = game.clocks_w if opp_color == WHITE else game.clocks_b
+        opp_clocks[-1] += MORE_TIME
+        if game.stopwatch.running and opp_color == game.stopwatch.color:
+            if TYPE_CHECKING:
+                assert isinstance(game.stopwatch, Clock)
+            opp_time = game.stopwatch.stop()
+            game.stopwatch.restart(opp_time + MORE_TIME)
+
+        opp_name = game.bplayer.username if opp_color == BLACK else game.wplayer.username
         if opp_name in users:
             opp_player = users[opp_name]
             if not opp_player.bot:
@@ -1353,6 +1431,9 @@ async def handle_bugroundchat(
     gameId = data["gameId"]
     message = sanitize_user_message(data["message"])
     room = data["room"]
+    # A spectator can chat with spectators, not impersonate a player-room sender.
+    if room != "spectator" and not game.is_player(user):
+        return
     if bool(getattr(user, "shadowban", False)):
         elapsed = 0
         if hasattr(game, "gameClocks") and hasattr(game.gameClocks, "elapsed_since_last_move"):
@@ -1417,6 +1498,8 @@ async def handle_roundchat(
     gameId = data["gameId"]
     message = sanitize_user_message(data["message"])
     room = data["room"]
+    if room != "spectator" and not game.is_player(user):
+        return
 
     # Users running a fishnet worker can ask server side analysis with chat message: !analysis
     if data["message"] == "!analysis" and user.username in app_state.fishnet_versions:
