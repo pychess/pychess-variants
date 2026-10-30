@@ -15,7 +15,7 @@ from bot_accounts import (
     upgrade_user_to_bot_account,
 )
 from broadcast import round_broadcast
-from const import RESIGN, STARTED
+from const import INVALIDMOVE, RESIGN, STARTED
 from csrf import csrf_exempt
 from game import Game
 from json_utils import json_dumps, json_response
@@ -541,7 +541,18 @@ async def bot_move(request: web.Request) -> web.StreamResponse:
     user = app_state.users[username]
     game = await _load_authorized_game(app_state, gameId, username)
 
+    previous_status = game.status
     await play_move(app_state, user, game, move)
+    if previous_status <= STARTED and game.status == INVALIDMOVE:
+        log.warning(
+            "Invalid external BOT API move (game=%s user=%s variant=%s move=%s ply=%s fen=%s)",
+            gameId,
+            username,
+            game.variant,
+            move,
+            game.board.ply,
+            game.board.fen,
+        )
 
     return json_response({"ok": True})
 

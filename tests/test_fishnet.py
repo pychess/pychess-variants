@@ -287,6 +287,69 @@ class FishnetTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(app_state.fishnet_works["work123"]["move_failure_count"], 1)
         self.assertEqual(app_state.fishnet_queue.qsize(), 1)
 
+    async def test_invalid_fishnet_move_logs_worker_and_game_after_game_ends(self):
+        work = {
+            "work": {"type": "move", "id": "work123", "level": 1},
+            "game_id": "g1",
+            "position": "startpos",
+            "variant": "xiangqi",
+            "chess960": False,
+            "moves": "",
+            "nnue": True,
+            "time": 100.0,
+        }
+        bot = SimpleNamespace(username="Fairy-Stockfish", bot=True)
+        human = SimpleNamespace(username="human", bot=False)
+        app_state = SimpleNamespace(
+            fishnet_monitor=defaultdict(list, {"worker1": []}),
+            fishnet_queue=asyncio.PriorityQueue(),
+            fishnet_works={"work123": work},
+            workers={"k"},
+            fishnet_worker_last_seen={"k": 100.0},
+            users={"Fairy-Stockfish": bot},
+            catalogued_variants={},
+        )
+        game = SimpleNamespace(
+            id="g1",
+            variant="xiangqi",
+            status=fishnet.STARTED,
+            wplayer=bot,
+            bplayer=human,
+            board=SimpleNamespace(fen="fen", move_stack=[], ply=0),
+            move_lock=asyncio.Lock(),
+        )
+        request = cast(web.Request, AsyncMock())
+        request.match_info = {"workId": "work123"}
+        request.app = {pychess_global_app_state_key: app_state}
+        request.rel_url = SimpleNamespace(path="/fishnet/move/work123")
+        request.remote = "10.1.1.1"
+        request.json = AsyncMock(
+            return_value={
+                "fishnet": {"apikey": "k"},
+                "move": {"bestmove": "b2g2", "fen": "fen"},
+            }
+        )
+
+        async def mark_invalid(*_args):
+            game.status = fishnet.INVALIDMOVE
+
+        with (
+            patch.dict(fishnet.FISHNET_KEYS, {"k": "worker1"}, clear=True),
+            patch("fishnet.load_game", AsyncMock(return_value=game)),
+            patch("fishnet.play_move", AsyncMock(side_effect=mark_invalid)),
+            patch("fishnet._record_terminal_catalogued_ai_failure", AsyncMock()),
+            self.assertLogs("fishnet", level="WARNING") as captured,
+        ):
+            response = await fishnet.fishnet_move(request)
+
+        self.assertEqual(response.status, 204)
+        self.assertNotIn("work123", app_state.fishnet_works)
+        message = "\n".join(captured.output)
+        self.assertIn("game=g1", message)
+        self.assertIn("worker=worker1", message)
+        self.assertIn("bot=Fairy-Stockfish", message)
+        self.assertIn("move=b2g2", message)
+
     async def test_fishnet_move_applies_when_worker_fen_mismatches_but_move_stack_matches(self):
         work = {
             "work": {"type": "move", "id": "work123", "level": 1},

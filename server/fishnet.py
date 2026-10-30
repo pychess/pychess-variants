@@ -1269,6 +1269,7 @@ async def fishnet_move(request: web.Request) -> web.Response:
 
     try:
         async with game.move_lock:
+            previous_status = game.status
             await play_move(app_state, user, game, move)
     except Exception:
         log.exception(
@@ -1280,6 +1281,18 @@ async def fishnet_move(request: web.Request) -> web.Response:
         return web.Response(status=204)
 
     if game.status == INVALIDMOVE:
+        if previous_status <= STARTED:
+            log.warning(
+                "Invalid fishnet move (game=%s work=%s worker=%s bot=%s variant=%s move=%s ply=%s fen=%s)",
+                gameId,
+                work_id,
+                worker,
+                user.username,
+                game.variant,
+                move,
+                game.board.ply,
+                game.board.fen,
+            )
         app_state.fishnet_works.pop(work_id, None)
         await _record_terminal_catalogued_ai_failure(app_state, work, INVALID_FISHNET_MOVE_REASON)
         return web.Response(status=204)
