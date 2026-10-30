@@ -10,7 +10,6 @@ from operator import neg
 from time import monotonic
 from typing import TYPE_CHECKING, Any, TypeVar
 
-import aiohttp_jinja2
 from aiohttp import web
 from aiohttp.web_ws import WebSocketResponse
 from pymongo import UpdateOne
@@ -74,13 +73,8 @@ from settings import (
     DISCORD_TOKEN,
     FISHNET_KEYS,
     LOCALHOST,
-    NNUE_DOWNLOAD_ROOT,
     PROD,
-    SOURCE_VERSION,
-    STATIC_ROOT,
     URI,
-    local_static_url,
-    static_url,
 )
 from simul.simul import Simul
 from simul.simuls import load_active_simuls
@@ -109,9 +103,8 @@ from users import NotInDbUsers, Users
 from utils import load_game_from_doc, send_bot_game_start_unless_streaming
 from variants import RATED_VARIANTS, VARIANTS, get_server_variant
 from videos import VIDEOS
+from views.templating import configure_template_environment
 from youtube import Youtube
-
-from lang import LOCALE
 
 log = logging.getLogger(__name__)
 
@@ -810,28 +803,7 @@ class PychessGlobalAppState:
         # gets its own copy while test apps share the immutable base translations.
         self.tourneynames = {lang: names.copy() for lang, names in tourney_names.items()}
 
-        # https://github.com/aio-libs/aiohttp-jinja2/issues/187#issuecomment-2519831516
-        class _Translations:
-            @staticmethod
-            def gettext(message: str):
-                return self.translations[LOCALE.get()].gettext(message)
-
-            @staticmethod
-            def ngettext(singular: str, plural: str, num: int):
-                return self.translations[LOCALE.get()].ngettext(singular, plural, num)
-
-        env: Any = aiohttp_jinja2.get_env(self.app)
-        env.install_gettext_translations(_Translations, newstyle=True)
-
-        env.globals["static"] = static_url
-        env.globals["local_static"] = local_static_url
-        env.globals["js"] = "/static/pychess-variants.js%s" % SOURCE_VERSION
-        env.globals["dev"] = DEV
-        env.globals["app_name"] = "PyChess"
-        env.globals["languages"] = LANGUAGES
-        env.globals["asseturl"] = STATIC_ROOT
-        env.globals["nnue_download_root"] = NNUE_DOWNLOAD_ROOT
-        env.globals["home"] = URI
+        configure_template_environment(self.app, self.translations, dev=DEV)
 
     def __start_bots(self):
         rm = self.users["Random-Mover"]
