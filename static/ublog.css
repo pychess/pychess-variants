@@ -5,6 +5,11 @@
   align-items: flex-start;
 }
 
+/* Match Lichess's page-small post width, independent of board sizing. */
+#main-wrap.ublog-post-wrap {
+  --main-max-width: 1000px;
+}
+
 .ublog-page .ublog-box {
   width: 100%;
   min-width: 0;
