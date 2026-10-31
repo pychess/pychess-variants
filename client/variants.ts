@@ -2149,7 +2149,7 @@ export const noPuzzleVariants = [
 export const twoBoarsVariants = variants.filter(v => VARIANTS[v].twoBoards);
 export const unsupportedAiVariants = ['fogofwar', 'jieqi'];
 
-export const devVariants = ['borderlands', 'cwda', 'makbug', 'supply', 'yokai'];
+export const devVariants = ['borderlands', 'cwda', 'makbug', 'supply'];
 export const CATALOGUED_VARIANT_ICON = '☐';
 
 export interface CataloguedVariantClientDocument {

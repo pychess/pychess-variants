@@ -169,10 +169,14 @@ def normalize_topics(tags: list[str], category: Any) -> list[str]:
 
 
 def to_ublog_doc(
-    legacy: dict[str, Any], author_policy: str, strip_preamble: bool
+    legacy: dict[str, Any],
+    author_policy: str,
+    strip_preamble: bool,
+    *,
+    markdown: str | None = None,
 ) -> dict[str, Any]:
     legacy_id = str(legacy["_id"])
-    md = markdown_path(legacy_id).read_text(encoding="utf-8")
+    md = markdown_path(legacy_id).read_text(encoding="utf-8") if markdown is None else markdown
     tags = [str(tag) for tag in legacy.get("tags", []) if isinstance(tag, str)]
     official = any(tag in OFFICIAL_TAGS for tag in tags)
     author = str(legacy.get("author") or "")

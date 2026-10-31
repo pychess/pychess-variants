@@ -233,7 +233,6 @@ DEV_VARIANTS: tuple[ServerVariants, ...] = (
     ServerVariants.MAKBUG,
     ServerVariants.SUPPLY,
     ServerVariants.BORDERLANDS,
-    ServerVariants.YOKAI,
     ServerVariants.CWDA,
 )
 
