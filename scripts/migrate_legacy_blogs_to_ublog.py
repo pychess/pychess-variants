@@ -70,6 +70,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--topics", help="Comma-separated blog topics, e.g. announcement,shogi.")
     parser.add_argument("--official", action="store_true", help="Import the file as a site blog.")
     parser.add_argument(
+        "--sticky", action="store_true", help="Pin the file above unpinned posts in blog listings."
+    )
+    parser.add_argument(
         "--publish",
         action="store_true",
         help="Publish the file immediately; otherwise create a draft.",
@@ -92,6 +95,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             for name in ("author", "title", "intro", "date", "image", "image_alt", "topics")
         )
         or args.official
+        or args.sticky
         or args.publish
     ):
         parser.error("Author/content/publishing options require --markdown-file")
@@ -120,6 +124,7 @@ def prepare_docs(args: argparse.Namespace) -> list[dict[str, Any]]:
         )
         doc["topics"] = normalize_topics(args.topics or "")
         doc["live"] = args.publish
+        doc["sticky"] = args.sticky
         if not args.publish:
             doc["publishedAt"] = None
         for field, minimum, maximum in (
@@ -180,7 +185,8 @@ async def migrate(args: argparse.Namespace) -> None:
     for doc in docs:
         print(
             f"- {doc['legacyBlogId']} -> {doc['_id']} author={doc['author']} "
-            f"official={doc['isOfficial']} live={doc['live']} date={doc['createdAt'].date()} "
+            f"official={doc['isOfficial']} live={doc['live']} sticky={doc['sticky']} "
+            f"date={doc['createdAt'].date()} "
             f"title={doc['title']!r} image={doc['image']!r} "
             f"markdown_len={len(doc['markdown'])}\n  {post_url(doc)}",
             flush=True,

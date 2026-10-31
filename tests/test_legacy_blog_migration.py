@@ -84,6 +84,10 @@ class LegacyBlogImportTest(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(draft["publishedAt"])
         self.assertEqual(draft["_id"], published["_id"])
         self.assertFalse(draft["discuss"])
+        self.assertFalse(draft["sticky"])
+
+    def test_sticky_import(self):
+        self.assertTrue(self.prepare("--sticky")["sticky"])
 
     def test_community_file_and_explicit_id(self):
         options = self.options.copy()
@@ -115,6 +119,7 @@ class LegacyBlogImportTest(unittest.IsolatedAsyncioTestCase):
             ["--markdown-file", str(self.path)],
             ["--author", "CouchTomato87"],
             ["--publish"],
+            ["--sticky"],
             ["--blog-id", "Selected", "--limit", "1"],
             self.options + ["--from-id", "Selected"],
             self.options + ["--author-policy", "official-as-pychess"],
