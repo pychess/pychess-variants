@@ -7,12 +7,14 @@ from unittest.mock import patch
 import bot_api
 from aiohttp.test_utils import AioHTTPTestCase
 from bot_accounts import create_bot_token
+from const import INVALIDMOVE, STARTED
 from game import Game
 from glicko2.glicko2 import new_default_perf_map
 from mongomock_motor import AsyncMongoMockClient
 from pychess_global_app_state_utils import get_app_state
 from seek import BOT_CHALLENGE_DECLINED, Seek
 from user import User
+from utils import play_move
 from variants import VARIANTS
 
 from server import make_app
@@ -260,6 +262,84 @@ class BotApiSecurityTestCase(AioHTTPTestCase):
         self.assertTrue(bot_api._enqueue_bot_ping_if_idle(queue))
         self.assertFalse(bot_api._enqueue_bot_ping_if_idle(queue))
         self.assertEqual(queue.qsize(), 1)
+
+    async def create_external_bot_game(self) -> tuple[Game, str, User]:
+        app_state = get_app_state(self.app)
+        bot, token = await self.create_bot("retry-bot")
+        human = User(app_state, username="retry-human", perfs=PERFS)
+        app_state.users[human.username] = human
+        game = Game(app_state, "retry123", "chess", "", bot, human, rated=False)
+        app_state.games[game.id] = game
+        bot.game_queues[game.id] = asyncio.Queue()
+        return game, token, human
+
+    async def test_external_bot_move_retry_after_opponent_reply_does_not_forfeit(self):
+        game, token, human = await self.create_external_bot_game()
+        url = f"/api/bot/game/{game.id}/move/"
+        headers = self.auth_headers(token)
+
+        response = await self.client.post(url + "e2e4", headers=headers)
+        self.assertEqual(response.status, 200)
+        self.assertEqual(await response.json(), {"ok": True})
+        self.assertEqual(game.board.move_stack, ["e2e4"])
+
+        # The original POST succeeded, but the BOT timed out before reading its
+        # response. The human replies while pychess-bot retries that same POST.
+        async with game.move_lock:
+            await play_move(get_app_state(self.app), human, game, "e7e5")
+        self.assertEqual(game.board.move_stack, ["e2e4", "e7e5"])
+
+        response = await self.client.post(url + "e2e4", headers=headers)
+        self.assertEqual(response.status, 200)
+        self.assertEqual(await response.json(), {"ok": True})
+        self.assertEqual(game.board.move_stack, ["e2e4", "e7e5"])
+        self.assertEqual(game.status, STARTED)
+        self.assertEqual(game.result, "*")
+
+        # Normal play still works after the harmless retry.
+        response = await self.client.post(url + "g1f3", headers=headers)
+        self.assertEqual(response.status, 200)
+        self.assertEqual(game.board.move_stack, ["e2e4", "e7e5", "g1f3"])
+        self.assertEqual(game.status, STARTED)
+
+    async def test_legal_repeated_external_bot_move_is_not_suppressed(self):
+        game, token, human = await self.create_external_bot_game()
+        headers = self.auth_headers(token)
+        await self.client.post(f"/api/bot/game/{game.id}/move/e2e4", headers=headers)
+        async with game.move_lock:
+            await play_move(get_app_state(self.app), human, game, "e7e5")
+
+        # A second move with identical notation can be legal in a drop variant.
+        # Simulate that legal-move result to ensure the retry heuristic does not
+        # swallow moves merely because their notation repeats.
+        async def check_locked(*_args):
+            self.assertTrue(game.move_lock.locked())
+
+        with (
+            patch.object(game.board, "legal_moves", return_value=["e2e4"]),
+            patch("bot_api.play_move", side_effect=check_locked) as mock_play,
+        ):
+            response = await self.client.post(f"/api/bot/game/{game.id}/move/e2e4", headers=headers)
+        self.assertEqual(response.status, 200)
+        mock_play.assert_awaited_once_with(get_app_state(self.app), game.wplayer, game, "e2e4")
+
+    async def test_unrelated_invalid_external_bot_move_still_forfeits(self):
+        game, token, human = await self.create_external_bot_game()
+        response = await self.client.post(
+            f"/api/bot/game/{game.id}/move/e2e4",
+            headers=self.auth_headers(token),
+        )
+        self.assertEqual(response.status, 200)
+        async with game.move_lock:
+            await play_move(get_app_state(self.app), human, game, "e7e5")
+
+        response = await self.client.post(
+            f"/api/bot/game/{game.id}/move/e2e5",
+            headers=self.auth_headers(token),
+        )
+        self.assertEqual(response.status, 200)
+        self.assertEqual(game.status, INVALIDMOVE)
+        self.assertEqual(game.result, "0-1")
 
     async def test_bot_game_endpoints_require_authenticated_bot_to_be_player(self):
         app_state = get_app_state(self.app)

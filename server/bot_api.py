@@ -541,18 +541,42 @@ async def bot_move(request: web.Request) -> web.StreamResponse:
     user = app_state.users[username]
     game = await _load_authorized_game(app_state, gameId, username)
 
-    previous_status = game.status
-    await play_move(app_state, user, game, move)
-    if previous_status <= STARTED and game.status == INVALIDMOVE:
-        log.warning(
-            "Invalid external BOT API move (game=%s user=%s variant=%s move=%s ply=%s fen=%s)",
-            gameId,
-            username,
-            game.variant,
-            move,
-            game.board.ply,
-            game.board.fen,
-        )
+    # Lichess-compatible BOT clients retry a POST when its response times out.
+    # If the original move succeeded and the opponent has already replied, the
+    # duplicate arrives on the BOT's next turn. The ordinary last-move guard in
+    # utils.play_move() no longer recognizes it, and would forfeit the game.
+    # Check the move BEFORE calling play_move(), and only swallow an illegal
+    # repeat: some drop variants can legitimately play the same move again.
+    async with game.move_lock:
+        if (
+            game.status <= STARTED
+            and game.turn_player == username
+            and len(game.board.move_stack) >= 2
+            and game.board.move_stack[-2] == move
+            and move not in game.board.legal_moves()
+        ):
+            log.info(
+                "Ignoring retried external BOT move after opponent reply "
+                "(game=%s user=%s move=%s ply=%s)",
+                gameId,
+                username,
+                move,
+                game.board.ply,
+            )
+            return json_response({"ok": True})
+
+        previous_status = game.status
+        await play_move(app_state, user, game, move)
+        if previous_status <= STARTED and game.status == INVALIDMOVE:
+            log.warning(
+                "Invalid external BOT API move (game=%s user=%s variant=%s move=%s ply=%s fen=%s)",
+                gameId,
+                username,
+                game.variant,
+                move,
+                game.board.ply,
+                game.board.fen,
+            )
 
     return json_response({"ok": True})
 

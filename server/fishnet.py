@@ -1267,10 +1267,17 @@ async def fishnet_move(request: web.Request) -> web.Response:
             game.board.fen,
         )
 
+    # Recheck under the same lock that serializes all game moves. A new move
+    # may have arrived after the first stale-work check but before lock entry.
+    stale_after_lock = False
+    previous_status = game.status
     try:
         async with game.move_lock:
-            previous_status = game.status
-            await play_move(app_state, user, game, move)
+            if not _fishnet_work_matches_current_position(work, game):
+                stale_after_lock = True
+            else:
+                previous_status = game.status
+                await play_move(app_state, user, game, move)
     except Exception:
         log.exception(
             "Fishnet move %s for work %s failed while being applied",
@@ -1279,6 +1286,17 @@ async def fishnet_move(request: web.Request) -> web.Response:
         )
         await _handle_invalid_fishnet_move(app_state, work_id, work, "play_move raised")
         return web.Response(status=204)
+
+    if stale_after_lock:
+        log.info(
+            "DISCARD FISHNET move %s for stale work %s after lock (work moves=%r, game moves=%r)",
+            move,
+            work_id,
+            work.get("moves", ""),
+            _game_move_stack_string(game),
+        )
+        app_state.fishnet_works.pop(work_id, None)
+        return await get_work(app_state, data)
 
     if game.status == INVALIDMOVE:
         if previous_status <= STARTED:

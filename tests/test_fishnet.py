@@ -510,6 +510,74 @@ class FishnetTestCase(unittest.IsolatedAsyncioTestCase):
         play_move.assert_not_awaited()
         self.assertNotIn("work123", app_state.fishnet_works)
 
+    async def test_fishnet_move_rechecks_stale_work_after_lock(self):
+        work = {
+            "work": {"type": "move", "id": "work123", "level": 1},
+            "game_id": "g1",
+            "position": "startpos",
+            "variant": "chess",
+            "chess960": False,
+            "moves": "",
+            "nnue": True,
+            "time": 100.0,
+        }
+        app_state = SimpleNamespace(
+            fishnet_monitor=defaultdict(list, {"worker1": []}),
+            fishnet_queue=asyncio.PriorityQueue(),
+            fishnet_works={"work123": work},
+            workers={"k"},
+            fishnet_worker_last_seen={"k": 100.0},
+            users={"Fairy-Stockfish": SimpleNamespace(online=True)},
+            catalogued_variants={},
+        )
+        game = SimpleNamespace(
+            id="g1",
+            status=fishnet.STARTED,
+            board=SimpleNamespace(fen="fen", move_stack=[]),
+            move_lock=asyncio.Lock(),
+        )
+        request = cast(web.Request, AsyncMock())
+        request.match_info = {"workId": "work123"}
+        request.app = {pychess_global_app_state_key: app_state}
+        request.rel_url = SimpleNamespace(path="/fishnet/move/work123")
+        request.remote = "10.1.1.1"
+        request.json = AsyncMock(
+            return_value={"fishnet": {"apikey": "k"}, "move": {"bestmove": "e2e4", "fen": "fen"}}
+        )
+        first_checked = asyncio.Event()
+        original_matches = fishnet._fishnet_work_matches_current_position
+        checks = 0
+
+        def check_position(work_arg, game_arg):
+            nonlocal checks
+            checks += 1
+            if checks == 1:
+                first_checked.set()
+            return original_matches(work_arg, game_arg)
+
+        await game.move_lock.acquire()
+        try:
+            with (
+                patch.dict(fishnet.FISHNET_KEYS, {"k": "worker1"}, clear=True),
+                patch("fishnet.load_game", AsyncMock(return_value=game)),
+                patch("fishnet.play_move", AsyncMock()) as move_handler,
+                patch("fishnet.get_work", AsyncMock(return_value=web.Response(status=204))),
+                patch("fishnet._fishnet_work_matches_current_position", side_effect=check_position),
+                patch("fishnet.monotonic", return_value=101.0),
+            ):
+                task = asyncio.create_task(fishnet.fishnet_move(request))
+                await asyncio.wait_for(first_checked.wait(), timeout=2)
+                game.board.move_stack.append("d2d4")
+                game.move_lock.release()
+                response = await task
+                self.assertEqual(response.status, 204)
+                move_handler.assert_not_awaited()
+                self.assertNotIn("work123", app_state.fishnet_works)
+                self.assertGreaterEqual(checks, 2)
+        finally:
+            if game.move_lock.locked():
+                game.move_lock.release()
+
     async def test_fishnet_move_malformed_bestmove_requeues_without_loading_game(self):
         work = {
             "work": {"type": "move", "id": "work123", "level": 1},
