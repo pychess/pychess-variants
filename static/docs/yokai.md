@@ -70,7 +70,7 @@ Upon promotion, they become the more powerful Nine-tailed fox. They gain King mo
 
 Tanuki are supernatural versions of their real life versions (tanuki/raccoon dog). They can move but not capture as a Bishop (any number of squares diagonally), but can capture as a Rook (any number of squares orthogonally).
 
-Upon promotion, they become the more powerful a more powerful Tanuki (bake-danuki is just a Youkai name for a shapeshifting tanuki). They gain King movement (can move or capture any square adjacent to them) on top of their original movement.
+Upon promotion, they become a more powerful Tanuki (bake-danuki is just a Youkai name for a shapeshifting tanuki). They gain King movement (can move or capture any square adjacent to them) on top of their original movement.
 
 ### Nurikabe (N)
 
