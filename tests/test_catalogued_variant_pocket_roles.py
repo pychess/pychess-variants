@@ -1,6 +1,6 @@
 import unittest
 
-from catalogued_variants import (
+from catalogued.variants import (
     _catalogued_piece_roles_from_ini,
     _catalogued_pocket_roles_from_doc,
     catalogued_king_roles,

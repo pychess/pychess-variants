@@ -10,7 +10,7 @@ from time import monotonic
 from typing import TYPE_CHECKING, Literal, cast
 
 from broadcast import round_broadcast
-from catalogued_variants import (
+from catalogued.variants import (
     catalogued_variant_games_are_persisted,
     increment_catalogued_variant_game_count,
     increment_catalogued_variant_game_count_once,

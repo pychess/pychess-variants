@@ -35,7 +35,7 @@ from tournament.arena import ArenaTournament
 if TYPE_CHECKING:
     from game import Game
     from pychess_global_app_state import PychessGlobalAppState
-from catalogued_variants import (
+from catalogued.variants import (
     CATALOGUED_VARIANT_COLLECTION,
     is_public_catalogued_variant,
     register_historical_catalogued_variant_doc,

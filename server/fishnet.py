@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, cast
 
 from aiohttp import web
 from broadcast import round_broadcast
-from catalogued_variants import (
+from catalogued.variants import (
     CATALOGUED_SOURCE_FSF_BUILTIN,
     catalogued_variant_ai_disabled,
     catalogued_variant_allows_fishnet,

@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, patch
 
 import test_logger
 from aiohttp import web
-from catalogued_variants import (
+from catalogued.variants import (
     _canonical_piece_set_filename,
     _catalogued_board_svg_css,
     _catalogued_disguised_piece_css,
@@ -381,7 +381,7 @@ class CataloguedVariantStartFenValidationTestCase(unittest.IsolatedAsyncioTestCa
 
         with (
             patch(
-                "catalogued_variants._run_process",
+                "catalogued.variants._run_process",
                 new=AsyncMock(return_value=(0, output)),
             ),
             self.assertRaises(web.HTTPBadRequest) as exc,
@@ -516,9 +516,9 @@ class CataloguedVariantPieceMetadataTestCase(unittest.TestCase):
 """
 
         with (
-            patch("catalogued_variants.sf.load_variant_config"),
+            patch("catalogued.variants.sf.load_variant_config"),
             patch(
-                "catalogued_variants.sf.start_fen",
+                "catalogued.variants.sf.start_fen",
                 return_value="r3k2r/8/8/8/8/8/8/4K2P w - - 0 1",
             ),
         ):
@@ -546,9 +546,9 @@ startFen = 8/8/8/8/8/8/8/8
 """
 
         with (
-            patch("catalogued_variants.sf.load_variant_config"),
+            patch("catalogued.variants.sf.load_variant_config"),
             patch(
-                "catalogued_variants.sf.start_fen",
+                "catalogued.variants.sf.start_fen",
                 return_value="8/8/8/8/8/8/8/8",
             ),
             self.assertRaises(web.HTTPBadRequest) as exc,

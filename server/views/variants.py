@@ -3,7 +3,7 @@ import os
 
 import aiohttp_jinja2
 from aiohttp import web
-from catalogued_variants import (
+from catalogued.variants import (
     catalogued_variant_client_doc_for_name,
     catalogued_variant_rule_context,
     community_catalogued_variants_page,

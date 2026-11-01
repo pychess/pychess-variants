@@ -1,6 +1,6 @@
 import aiohttp_jinja2
 from aiohttp import web
-from catalogued_variants import public_catalogued_variants_for_forms
+from catalogued.variants import public_catalogued_variants_for_forms
 from const import ARENA, T_CREATED, T_STARTED
 from pychess_global_app_state import PychessGlobalAppState
 from settings import ADMINS

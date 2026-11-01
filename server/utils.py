@@ -290,7 +290,7 @@ async def _load_game_from_doc(
     game_id = doc["_id"]
 
     if doc.get("vini") and doc["v"] not in C2V:
-        from catalogued_variants import ensure_catalogued_variant_from_game_doc
+        from catalogued.variants import ensure_catalogued_variant_from_game_doc
 
         ensure_catalogued_variant_from_game_doc(app_state, doc)
 
@@ -759,7 +759,7 @@ async def join_seek(
         return {"type": "error", "message": "You cannot accept this seek."}
 
     if is_catalogued_variant(seek.variant):
-        from catalogued_variants import can_create_catalogued_seek
+        from catalogued.variants import can_create_catalogued_seek
 
         # AI games are created as a human-owned seek that the internal engine
         # user immediately joins.  Access for that internal bot join should be
@@ -1394,7 +1394,7 @@ def pgn(doc):
         class _NoState:
             catalogued_variants: ClassVar[dict] = {}
 
-        from catalogued_variants import ensure_catalogued_variant_from_game_doc
+        from catalogued.variants import ensure_catalogued_variant_from_game_doc
 
         ensure_catalogued_variant_from_game_doc(_NoState(), doc)
     variant = C2V[doc["v"]]

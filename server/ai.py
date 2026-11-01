@@ -7,7 +7,7 @@ from time import monotonic
 from typing import TYPE_CHECKING
 
 import msgspec
-from catalogued_variants import catalogued_variant_allows_fishnet
+from catalogued.variants import catalogued_variant_allows_fishnet
 from const import MOVE, STARTED
 from fairy import WHITE
 from fishnet import has_available_fishnet_worker

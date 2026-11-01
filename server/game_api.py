@@ -10,7 +10,7 @@ import pymongo
 from aiohttp import web
 from aiohttp.client_exceptions import ClientConnectionResetError
 from aiohttp_swagger3 import swagger_doc
-from catalogued_variants import (
+from catalogued.variants import (
     CATALOGUED_VARIANT_COLLECTION,
     register_historical_catalogued_variant_doc,
 )

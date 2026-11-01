@@ -1,6 +1,6 @@
 import unittest
 
-from catalogued_rules import catalogued_rule_summary, parse_catalogued_ini
+from catalogued.rules import catalogued_rule_summary, parse_catalogued_ini
 
 
 class CataloguedRulesTestCase(unittest.TestCase):

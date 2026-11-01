@@ -6,7 +6,8 @@ from functools import lru_cache
 from pathlib import Path
 
 from aiohttp import web
-from catalogued_rules import PIECE_OPTION_NAMES, parse_catalogued_ini
+
+from .rules import PIECE_OPTION_NAMES, parse_catalogued_ini
 
 # pyffish does not expose inherited promotion mappings. These are the built-in
 # shogi-style mappings from Fairy-Stockfish's src/variant.cpp; site definitions
@@ -57,7 +58,7 @@ _PROMOTION_PAIR = re.compile(r"([A-Za-z])\s*:\s*([A-Za-z-])")
 @lru_cache(maxsize=1)
 def _site_definitions() -> dict[str, str]:
     parser = ConfigParser(interpolation=None, strict=False, inline_comment_prefixes=("#",))
-    parser.read(Path(__file__).resolve().parents[1] / "variants.ini", encoding="utf-8")
+    parser.read(Path(__file__).resolve().parents[2] / "variants.ini", encoding="utf-8")
     return {
         section.split(":", 1)[0].strip(): (
             f"[{section}]\n" + "\n".join(f"{key}={value}" for key, value in parser[section].items())

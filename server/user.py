@@ -13,7 +13,7 @@ import aiohttp_session
 from aiohttp import web
 from aiohttp.web_ws import WebSocketResponse
 from broadcast import round_broadcast
-from catalogued_rules import PIECE_OPTION_NAMES
+from catalogued.rules import PIECE_OPTION_NAMES
 from const import (
     ANON_PREFIX,
     BLOCK,

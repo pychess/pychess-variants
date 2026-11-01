@@ -7,7 +7,7 @@ import test_logger
 from aiohttp.test_utils import AioHTTPTestCase
 from bug.game_bug import GameBug
 from bug.wsr_bug import handle_rematch_bughouse
-from catalogued_variants import register_catalogued_variant_doc
+from catalogued.variants import register_catalogued_variant_doc
 from const import RATED
 from fairy import FairyBoard
 from fairy.fairy_board import STANDARD_FEN

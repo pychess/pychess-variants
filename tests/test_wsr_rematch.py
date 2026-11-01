@@ -4,7 +4,7 @@ from typing import cast
 from unittest.mock import AsyncMock, patch
 
 import test_logger
-from catalogued_variants import (
+from catalogued.variants import (
     FSF_CATALOGUED_BUILTIN_VARIANTS,
     _build_fsf_builtin_doc,
     register_catalogued_variant_doc,

@@ -3,7 +3,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
-from catalogued_variants import (
+from catalogued.variants import (
     CATALOGUED_VARIANT_COLLECTION,
     _remove_catalogued_variant_favorites,
     _rename_catalogued_variant_favorites,
@@ -56,13 +56,13 @@ class CataloguedVariantFavoriteTestCase(unittest.IsolatedAsyncioTestCase):
         request = SimpleNamespace(app=object(), match_info={"name": "variant"})
 
         with (
-            patch("catalogued_variants.get_app_state", return_value=app_state),
+            patch("catalogued.variants.get_app_state", return_value=app_state),
             patch(
-                "catalogued_variants._current_human_username",
+                "catalogued.variants._current_human_username",
                 new=AsyncMock(return_value="alice"),
             ),
             patch(
-                "catalogued_variants.read_json_data",
+                "catalogued.variants.read_json_data",
                 new=AsyncMock(return_value={"favorite": favorite}),
             ),
         ):

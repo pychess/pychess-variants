@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TypedDict
 
-from catalogued_betza import CataloguedBetzaDiagram, betza_diagram
+from catalogued.betza import CataloguedBetzaDiagram, betza_diagram
 
 
 @dataclass(frozen=True)

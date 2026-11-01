@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 
 import test_logger
 from aiohttp import web
-from catalogued_variants import (
+from catalogued.variants import (
     ensure_catalogued_display_name_available,
     ensure_catalogued_variant_name_available,
     extract_variant_name,

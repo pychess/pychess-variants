@@ -2,7 +2,7 @@ import unittest
 
 import test_logger
 from aiohttp import web
-from catalogued_variants import (
+from catalogued.variants import (
     _ensure_catalogued_rules_supported,
     _strip_pychess_pieces_metadata,
     catalogued_king_roles,

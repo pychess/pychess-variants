@@ -5,7 +5,7 @@ from collections.abc import Iterable
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, NotRequired, TypedDict
 
-from catalogued_variants import (
+from catalogued.variants import (
     can_create_catalogued_seek,
     catalogued_variant_games_are_persisted,
 )

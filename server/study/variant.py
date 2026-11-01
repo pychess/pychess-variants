@@ -5,8 +5,8 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any
 
-from catalogued_rules import catalogued_random_start
-from catalogued_variants import (
+from catalogued.rules import catalogued_random_start
+from catalogued.variants import (
     CATALOGUED_SOURCE_USER,
     CATALOGUED_VARIANT_COLLECTION,
     CATALOGUED_VISIBILITY_PRIVATE,

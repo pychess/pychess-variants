@@ -19,7 +19,7 @@ from bug.wsr_bug import (
     handle_rematch_bughouse,
     handle_resign_bughouse,
 )
-from catalogued_variants import catalogued_variant_allows_fishnet
+from catalogued.variants import catalogued_variant_allows_fishnet
 from chat import chat_response
 from cheat_report import (
     CEVAL_REPORT_ACTION_AUTO_FORFEIT,

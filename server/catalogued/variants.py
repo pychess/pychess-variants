@@ -16,9 +16,6 @@ from urllib.parse import unquote, urlparse
 
 import aiohttp_session
 from aiohttp import web
-from catalogued_betza import catalogued_betza_diagrams, catalogued_betza_pieces
-from catalogued_promotions import ensure_no_promotion_chaining
-from catalogued_rules import catalogued_random_start, catalogued_rule_summary
 from compress import MAX_COMPRESSED_BOARD_HEIGHT, MAX_COMPRESSED_BOARD_WIDTH
 from const import ANON_PREFIX, STARTED, T_STARTED
 from fairy.fairy_board import sf
@@ -38,6 +35,10 @@ from variants import (
     register_catalogued_server_variant,
     unregister_catalogued_server_variant,
 )
+
+from .betza import catalogued_betza_diagrams, catalogued_betza_pieces
+from .promotions import ensure_no_promotion_chaining
+from .rules import catalogued_random_start, catalogued_rule_summary
 
 log = logging.getLogger(__name__)
 
@@ -269,7 +270,7 @@ def _fsf_builtin_references(*urls: str) -> tuple[dict[str, str], ...]:
 #   a variant whose other client defaults are Chess-like).
 #
 # More specific visual choices still belong in ``pieceFamilyOverride`` /
-# ``boardFamilyOverride``; Betza movement exceptions belong in catalogued_betza.
+# ``boardFamilyOverride``; Betza movement exceptions belong in catalogued.betza.
 FSF_CATALOGUED_BUILTIN_VARIANTS: Mapping[str, Mapping[str, Any]] = {
     "5check": {
         "displayName": "Five-Check Chess",
@@ -1073,7 +1074,7 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
 FSF_CATALOGUED_RETIRED_BUILTIN_VARIANTS = frozenset({"chigorin"})
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 FSF_CHECK_TIMEOUT_SECONDS = 8.0
 BUILTIN_VARIANT_NAMES = frozenset(variant.server_name for variant in ServerVariants)
 BUILTIN_FSF_VARIANT_NAMES = frozenset(sf.variants())

@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
-from catalogued_variants import (
+from catalogued.variants import (
     CATALOGUED_SOURCE_FSF_BUILTIN,
     FSF_CATALOGUED_BUILTIN_DESCRIPTION,
     CataloguedVariantValidation,
@@ -99,13 +99,13 @@ class CataloguedVariantAppearanceAccessTestCase(unittest.IsolatedAsyncioTestCase
 
         with (
             patch(
-                "catalogued_variants._load_owned_doc",
+                "catalogued.variants._load_owned_doc",
                 new=AsyncMock(return_value=(app_state, "admin", "yarishogi", existing)),
             ),
-            patch("catalogued_variants._read_upload_payload", new=AsyncMock(return_value=payload)),
-            patch("catalogued_variants.register_catalogued_variant_doc"),
-            patch("catalogued_variants._game_count", new=AsyncMock(return_value=0)),
-            patch("catalogued_variants._client_doc", return_value={"name": "yarishogi"}),
+            patch("catalogued.variants._read_upload_payload", new=AsyncMock(return_value=payload)),
+            patch("catalogued.variants.register_catalogued_variant_doc"),
+            patch("catalogued.variants._game_count", new=AsyncMock(return_value=0)),
+            patch("catalogued.variants._client_doc", return_value={"name": "yarishogi"}),
         ):
             response = await update_catalogued_variant(request)
 
@@ -123,30 +123,30 @@ class CataloguedVariantAppearanceAccessTestCase(unittest.IsolatedAsyncioTestCase
         request = SimpleNamespace(app=object())
 
         with (
-            patch("catalogued_variants.get_app_state", return_value=app_state),
+            patch("catalogued.variants.get_app_state", return_value=app_state),
             patch(
-                "catalogued_variants._current_human_username",
+                "catalogued.variants._current_human_username",
                 new=AsyncMock(return_value="alice"),
             ),
             patch(
-                "catalogued_variants._read_upload_payload",
+                "catalogued.variants._read_upload_payload",
                 new=AsyncMock(return_value=PAYLOAD),
             ),
             patch(
-                "catalogued_variants._ensure_catalogued_variant_quota",
+                "catalogued.variants._ensure_catalogued_variant_quota",
                 new=AsyncMock(),
             ),
             patch(
-                "catalogued_variants.ensure_catalogued_variant_name_available",
+                "catalogued.variants.ensure_catalogued_variant_name_available",
                 new=AsyncMock(),
             ),
             patch(
-                "catalogued_variants.check_catalogued_ini_without_mutating_server",
+                "catalogued.variants.check_catalogued_ini_without_mutating_server",
                 new=AsyncMock(),
             ),
-            patch("catalogued_variants.validate_catalogued_ini", return_value=VALIDATION),
-            patch("catalogued_variants.register_catalogued_variant_doc"),
-            patch("catalogued_variants._is_admin_username", return_value=False) as is_admin,
+            patch("catalogued.variants.validate_catalogued_ini", return_value=VALIDATION),
+            patch("catalogued.variants.register_catalogued_variant_doc"),
+            patch("catalogued.variants._is_admin_username", return_value=False) as is_admin,
         ):
             response = await upload_catalogued_variant(request)
 
@@ -195,20 +195,20 @@ class CataloguedVariantAppearanceAccessTestCase(unittest.IsolatedAsyncioTestCase
 
         with (
             patch(
-                "catalogued_variants._load_owned_doc",
+                "catalogued.variants._load_owned_doc",
                 new=AsyncMock(return_value=(app_state, "alice", VALIDATION.name, existing)),
             ),
             patch(
-                "catalogued_variants._read_upload_payload",
+                "catalogued.variants._read_upload_payload",
                 new=AsyncMock(return_value=PAYLOAD),
             ),
             patch(
-                "catalogued_variants._update_catalogued_variant_document",
+                "catalogued.variants._update_catalogued_variant_document",
                 new=AsyncMock(side_effect=return_updated),
             ),
-            patch("catalogued_variants.register_catalogued_variant_doc"),
-            patch("catalogued_variants._game_count", new=AsyncMock(return_value=0)),
-            patch("catalogued_variants._is_admin_username", return_value=False) as is_admin,
+            patch("catalogued.variants.register_catalogued_variant_doc"),
+            patch("catalogued.variants._game_count", new=AsyncMock(return_value=0)),
+            patch("catalogued.variants._is_admin_username", return_value=False) as is_admin,
         ):
             response = await update_catalogued_variant(request)
 

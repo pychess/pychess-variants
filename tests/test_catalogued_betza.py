@@ -3,8 +3,8 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-import catalogued_betza
-from catalogued_betza import catalogued_betza_diagrams, catalogued_betza_pieces
+import catalogued.betza as catalogued_betza
+from catalogued.betza import catalogued_betza_diagrams, catalogued_betza_pieces
 
 
 class CataloguedBetzaDiagramTestCase(unittest.TestCase):
@@ -230,7 +230,7 @@ class CataloguedBetzaDiagramTestCase(unittest.TestCase):
         }
 
         with patch(
-            "catalogued_betza._custom_piece_definitions",
+            "catalogued.betza._custom_piece_definitions",
             wraps=catalogued_betza._custom_piece_definitions,
         ) as definitions:
             first = catalogued_betza_diagrams(doc)

@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 import pyffish as sf
-from catalogued_variants import ensure_catalogued_variant_from_game_doc
+from catalogued.variants import ensure_catalogued_variant_from_game_doc
 from compress import R2C
 from const import CASUAL, INVALIDMOVE, STARTED
 from convert import mirror5, mirror9, zero2grand

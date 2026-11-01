@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 import aiohttp_session
 from aiohttp import web
-from catalogued_variants import (
+from catalogued.variants import (
     catalogued_variant_client_doc_for_game,
     catalogued_variants_for_client,
 )

@@ -2,7 +2,7 @@ import json
 
 import aiohttp_jinja2
 from aiohttp import web
-from catalogued_variants import catalogued_variant_client_doc_for_name
+from catalogued.variants import catalogued_variant_client_doc_for_name
 from fairy import FairyBoard
 from json_utils import json_dumps
 from pychess_global_app_state_utils import get_app_state

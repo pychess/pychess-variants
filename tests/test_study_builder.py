@@ -6,7 +6,7 @@ from types import SimpleNamespace
 from typing import Any, cast
 from unittest.mock import AsyncMock, patch
 
-from catalogued_variants import (
+from catalogued.variants import (
     FSF_CATALOGUED_BUILTIN_VARIANTS,
     _build_fsf_builtin_doc,
     register_catalogued_variant_doc,

@@ -5,7 +5,7 @@ from typing import Any
 from unittest.mock import AsyncMock
 
 from aiohttp import web
-from catalogued_variants import (
+from catalogued.variants import (
     _catalogued_rename_source_query,
     _catalogued_same_name_update,
     _rename_catalogued_variant_document,

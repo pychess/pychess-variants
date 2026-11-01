@@ -3,7 +3,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
-from catalogued_variants import (
+from catalogued.variants import (
     CATALOGUED_FSF_BUILTIN_AUTHOR,
     MAX_CATALOGUED_VARIANTS_PER_USER,
     _management_sort_spec,
@@ -109,15 +109,15 @@ class CataloguedVariantManagementPaginationTestCase(unittest.IsolatedAsyncioTest
         request = SimpleNamespace(app=object(), rel_url=URL(url))
 
         with (
-            patch("catalogued_variants.get_app_state", return_value=app_state),
+            patch("catalogued.variants.get_app_state", return_value=app_state),
             patch(
-                "catalogued_variants._current_human_username",
+                "catalogued.variants._current_human_username",
                 new=AsyncMock(return_value=username),
             ),
-            patch("catalogued_variants._is_admin_username", return_value=admin),
-            patch("catalogued_variants._game_count", new=AsyncMock(return_value=7)),
+            patch("catalogued.variants._is_admin_username", return_value=admin),
+            patch("catalogued.variants._game_count", new=AsyncMock(return_value=7)),
             patch(
-                "catalogued_variants._client_doc",
+                "catalogued.variants._client_doc",
                 side_effect=lambda doc, game_count: {
                     "name": doc["name"],
                     "gameCount": game_count,

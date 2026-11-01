@@ -59,7 +59,7 @@ import logging
 
 import logger
 from bug.utils_bug import handle_accept_seek_bughouse, handle_leave_seek_bughouse
-from catalogued_variants import can_create_catalogued_seek, catalogued_variant_games_are_persisted
+from catalogued.variants import can_create_catalogued_seek, catalogued_variant_games_are_persisted
 from lobby_spotlights import lobby_spotlights
 from pychess_global_app_state_utils import get_app_state
 from seek import (

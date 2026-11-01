@@ -431,7 +431,7 @@ class PychessGlobalAppState:
                 if is_test_run():
                     self.catalogued_variants = {}
                 else:
-                    from catalogued_variants import init_catalogued_variants
+                    from catalogued.variants import init_catalogued_variants
 
                     await init_catalogued_variants(self)
 

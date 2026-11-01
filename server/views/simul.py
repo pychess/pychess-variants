@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 import aiohttp_jinja2
 from admin_api import record_mod_action
 from aiohttp import web
-from catalogued_variants import is_public_catalogued_variant, public_catalogued_variants_for_forms
+from catalogued.variants import is_public_catalogued_variant, public_catalogued_variants_for_forms
 from const import T_CREATED
 from fairy import FairyBoard
 from misc import time_control_str

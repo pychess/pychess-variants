@@ -20,12 +20,12 @@ from aiohttp import web
 from aiohttp.web_response import StreamResponse
 from bson import Int64
 from bug.game_bug import GameBug
-from catalogued_betza import (
+from catalogued.betza import (
     _cached_betza_svg,
     _cached_catalogued_betza_diagrams,
     _cached_piece_diagram_definitions,
 )
-from catalogued_rules import _cached_catalogued_rule_summary
+from catalogued.rules import _cached_catalogued_rule_summary
 from clock import Clock
 from const import STARTED, reserved
 from fairy.fairy_board import FairyBoard, get_fog_fen

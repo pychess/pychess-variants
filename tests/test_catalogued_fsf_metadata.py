@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import AsyncMock, patch
 
-from catalogued_variants import (
+from catalogued.variants import (
     CATALOGUED_CHESS_PROMOTION_ORDER,
     CATALOGUED_SOURCE_FSF_BUILTIN,
     FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -181,12 +181,12 @@ class FsfBuiltinDescriptionStorageTestCase(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch(
-                "catalogued_variants.FSF_CATALOGUED_BUILTIN_VARIANTS",
+                "catalogued.variants.FSF_CATALOGUED_BUILTIN_VARIANTS",
                 {"yarishogi": {"description": FSF_CATALOGUED_BUILTIN_DESCRIPTION}},
             ),
-            patch("catalogued_variants.FSF_CATALOGUED_RETIRED_BUILTIN_VARIANTS", frozenset()),
-            patch("catalogued_variants.BUILTIN_FSF_VARIANT_NAMES", {"yarishogi"}),
-            patch("catalogued_variants._build_fsf_builtin_doc", return_value=rebuilt),
+            patch("catalogued.variants.FSF_CATALOGUED_RETIRED_BUILTIN_VARIANTS", frozenset()),
+            patch("catalogued.variants.BUILTIN_FSF_VARIANT_NAMES", {"yarishogi"}),
+            patch("catalogued.variants._build_fsf_builtin_doc", return_value=rebuilt),
         ):
             await ensure_fsf_catalogued_builtin_variants(app_state)
 
@@ -210,12 +210,12 @@ class FsfBuiltinDescriptionStorageTestCase(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch(
-                "catalogued_variants.FSF_CATALOGUED_BUILTIN_VARIANTS",
+                "catalogued.variants.FSF_CATALOGUED_BUILTIN_VARIANTS",
                 {"yarishogi": {"description": FSF_CATALOGUED_BUILTIN_DESCRIPTION}},
             ),
-            patch("catalogued_variants.FSF_CATALOGUED_RETIRED_BUILTIN_VARIANTS", frozenset()),
-            patch("catalogued_variants.BUILTIN_FSF_VARIANT_NAMES", {"yarishogi"}),
-            patch("catalogued_variants._build_fsf_builtin_doc", return_value=rebuilt),
+            patch("catalogued.variants.FSF_CATALOGUED_RETIRED_BUILTIN_VARIANTS", frozenset()),
+            patch("catalogued.variants.BUILTIN_FSF_VARIANT_NAMES", {"yarishogi"}),
+            patch("catalogued.variants._build_fsf_builtin_doc", return_value=rebuilt),
         ):
             await ensure_fsf_catalogued_builtin_variants(app_state)
 
