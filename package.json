@@ -19,7 +19,7 @@
   },
   "funding": "patreon.com/pychess",
   "dependencies": {
-    "@fullcalendar/core": "^6.1.21",
+    "@fullcalendar/core": "^6.1.22",
     "@fullcalendar/daygrid": "^6.1.21",
     "@fullcalendar/interaction": "^6.1.21",
     "@fullcalendar/list": "^6.1.21",
