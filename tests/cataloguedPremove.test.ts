@@ -5,11 +5,7 @@ import { premove } from 'chessgroundx/premove';
 import * as cg from 'chessgroundx/types';
 import * as util from 'chessgroundx/util';
 
-import {
-    premoveForVariant,
-    registerCataloguedPremove,
-    unregisterCataloguedPremove,
-} from '../client/cataloguedPremove';
+import { premoveForVariant, registerCataloguedPremove, unregisterCataloguedPremove } from '../client/premove';
 
 const dimensions: cg.BoardDimensions = { width: 8, height: 8 };
 

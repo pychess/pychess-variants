@@ -4,7 +4,7 @@ import * as cg from 'chessgroundx/types';
 import * as util from 'chessgroundx/util';
 import { read as readFen } from 'chessgroundx/fen';
 
-import { registerCataloguedPremove, unregisterCataloguedPremove } from './cataloguedPremove';
+import { registerCataloguedPremove, unregisterCataloguedPremove } from './premove';
 
 import {
     BoardMarkType,

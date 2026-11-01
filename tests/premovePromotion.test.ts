@@ -13,7 +13,8 @@ import { DuckInput } from '../client/input/duck';
 import { ArrowingInput } from '../client/input/arrowing';
 import { VARIANTS } from '../client/variants';
 import { moveDests, UCIMove } from '../client/chess';
-import { premoveForVariant } from '../client/cataloguedPremove';
+import { premoveForVariant } from '../client/premove';
+import { variantsIni } from '../client/variantsIni';
 import { predrop } from 'chessgroundx/predrop';
 
 let ffish: FairyStockfish;
@@ -29,6 +30,7 @@ beforeAll(async () => {
         printErr: () => {},
     });
     ffish.loadVariantConfig('[limitedpromo:chess]\npromotionLimit = q:1\n');
+    ffish.loadVariantConfig(variantsIni);
 });
 
 beforeEach(() => {
@@ -301,30 +303,66 @@ describe('promotion premoves', () => {
         expect(sent).toEqual([{ move: 'a7a8n', premove: true }]);
     });
 
-    test('supports choosing optional shogi promotion before the opponent moves', async () => {
-        const { ctrl, el, sent } = controller('k8/9/P8/9/9/9/9/9/8K[-] b - - 0 1', 'shogi');
-        await queue(ctrl);
-        expect(el.querySelectorAll('#extension_choice square')).toHaveLength(2);
-        choose(el, 'pp-piece');
-        await reply(ctrl, 'a9b9');
-        expect(sent).toEqual([{ move: 'a7a8+', premove: true }]);
-    });
+    test.each(['shogi', 'yokai'])(
+        'supports choosing optional %s promotion before the opponent moves',
+        async variant => {
+            const { ctrl, el, sent } = controller('k8/9/P8/9/9/9/9/9/8K[-] b - - 0 1', variant);
+            await queue(ctrl);
+            expect(el.querySelectorAll('#extension_choice square')).toHaveLength(2);
+            choose(el, 'pp-piece');
+            await reply(ctrl, 'a9b9');
+            expect(sent).toEqual([{ move: 'a7a8+', premove: true }]);
+        },
+    );
 
-    test('retains a deliberately declined optional shogi promotion', async () => {
-        const { ctrl, el, sent } = controller('k8/9/P8/9/9/9/9/9/8K[-] b - - 0 1', 'shogi');
+    test.each(['shogi', 'yokai'])('retains a deliberately declined optional %s promotion', async variant => {
+        const { ctrl, el, sent } = controller('k8/9/P8/9/9/9/9/9/8K[-] b - - 0 1', variant);
         await queue(ctrl);
         choose(el, 'p-piece');
         await reply(ctrl, 'a9b9');
         expect(sent).toEqual([{ move: 'a7a8', premove: true }]);
     });
 
-    test('automatically prepares mandatory shogi promotion', async () => {
-        const { ctrl, el, sent } = controller('k8/P8/9/9/9/9/9/9/8K[-] b - - 0 1', 'shogi');
+    test.each(['shogi', 'yokai'])('automatically prepares mandatory %s promotion', async variant => {
+        const { ctrl, el, sent } = controller('k8/P8/9/9/9/9/9/9/8K[-] b - - 0 1', variant);
         await queue(ctrl, 'a8', 'a9');
         expect(el.querySelector('#extension_choice')).toBeNull();
         expect(sent).toEqual([]);
         await reply(ctrl, 'a9b9');
         expect(sent).toEqual([{ move: 'a8a9+', premove: true }]);
+    });
+
+    test('prepares promotion of a Yokai Kitsune before the opponent moves', async () => {
+        const { ctrl, el, sent } = controller('k8/9/9/4F4/9/9/9/9/8K[-] b - - 0 1', 'yokai');
+        await queue(ctrl, 'e6', 'e7');
+        expect(el.querySelectorAll('#extension_choice square')).toHaveLength(2);
+        choose(el, 'pf-piece');
+        await reply(ctrl, 'a9a8');
+        expect(sent).toEqual([{ move: 'e6e7+', premove: true }]);
+    });
+
+    test('an already promoted Yokai Tengu can premove backwards as a full knight', async () => {
+        const { ctrl, sent } = controller('k8/9/9/9/4+G4/9/9/9/8K[-] b - - 0 1', 'yokai');
+        await queue(ctrl, 'e5', 'c4');
+        await reply(ctrl, 'a9b9');
+        expect(sent).toEqual([{ move: 'e5c4', premove: true }]);
+    });
+
+    test('rejects a Yokai premove when the opponent drops a blocker', async () => {
+        const { ctrl, el, sent } = controller('1k7/9/9/9/4F4/9/9/9/8K[n] b - - 0 1', 'yokai');
+        await queue(ctrl, 'e5', 'e7');
+        choose(el, 'f-piece');
+        await reply(ctrl, 'N@e6');
+        expect(sent).toEqual([]);
+        expect(ctrl.premove).toBeUndefined();
+        expect(ctrl.chessground.state.boardState.pieces.get('e5')?.role).toBe('f-piece');
+    });
+
+    test('a Yokai capture premove can target a piece the opponent has yet to drop', async () => {
+        const { ctrl, sent } = controller('1k7/9/9/9/4F4/9/9/9/8K[n] b - - 0 1', 'yokai');
+        await queue(ctrl, 'e5', 'f6');
+        await reply(ctrl, 'N@f6');
+        expect(sent).toEqual([{ move: 'e5f6', premove: true }]);
     });
 
     test('canceling a queued choice ignores a click from the removed picker', async () => {

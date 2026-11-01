@@ -51,7 +51,7 @@ import { bindPocketHotkeys } from './pocketHotkeys';
 import { OngoingRoundGamesController } from './ongoingRoundGames';
 import { confirmDialog } from './confirmDialog';
 import { animatePassMove } from './passMove';
-import { premoveForVariant } from './cataloguedPremove';
+import { premoveForVariant } from './premove';
 import {
     parsePendingMove,
     pendingMoveOnOpenAction,

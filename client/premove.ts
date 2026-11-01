@@ -2,8 +2,9 @@ import { createBetzaPremove, type BetzaPremove } from '@pychess/betza';
 import { premove } from 'chessgroundx/premove';
 import * as cg from 'chessgroundx/types';
 import * as util from 'chessgroundx/util';
+import { variantsIni } from './variantsIni';
 
-interface CataloguedPremoveMetadata {
+interface PremoveMetadata {
     readonly name: string;
     readonly source?: 'user' | 'fairy-stockfish-builtin';
     readonly ini?: string;
@@ -18,7 +19,7 @@ interface CataloguedPremoveMetadata {
     readonly betzaPieces?: Readonly<Record<string, string>>;
 }
 
-interface CataloguedPremoveDefinition {
+interface PremoveDefinition {
     readonly fallbackVariant?: string;
     readonly movements: ReadonlyMap<string, BetzaPremove>;
     readonly promotedPieceTypes: ReadonlyMap<string, string>;
@@ -30,7 +31,35 @@ interface ParsedIniOption {
     readonly value: string;
 }
 
-const cataloguedPremoveDefinitions = new Map<string, CataloguedPremoveDefinition>();
+const cataloguedPremoveDefinitions = new Map<string, PremoveDefinition>();
+const sitePremoveDefinitions = new Map<string, PremoveDefinition>();
+
+// Site variants opt in individually; all others retain chessgroundx premoves.
+const sitePremoveFallbacks: ReadonlyMap<string, string> = new Map([['yokai', 'shogi']]);
+
+// Named Fairy-Stockfish piece assignments used by the opted-in site variants.
+// The king keeps the fallback's variant-specific geometry and castling rules.
+const namedPieceBetza: ReadonlyMap<string, string> = new Map([
+    ['shogipawn', 'fW'],
+    ['gold', 'WfF'],
+    ['knight', 'N'],
+]);
+
+function sitePremoveDefinition(name: string): PremoveDefinition | undefined {
+    const fallback = sitePremoveFallbacks.get(name);
+    if (!fallback) return undefined;
+
+    let definition = sitePremoveDefinitions.get(name);
+    if (!definition) {
+        // The compiler expects one section, not the complete site rules file.
+        const ini = variantsIni
+            .split(/(?=^\[)/m)
+            .find(section => section.startsWith(`[${name}]`) || section.startsWith(`[${name}:`));
+        definition = parsePremoveDefinition({ name, ini, premoveVariant: fallback });
+        sitePremoveDefinitions.set(name, definition);
+    }
+    return definition;
+}
 
 function iniOptions(ini: string): ParsedIniOption[] {
     const options: ParsedIniOption[] = [];
@@ -40,11 +69,7 @@ function iniOptions(ini: string): ParsedIniOption[] {
 
         const [left, ...right] = stripped.split('=');
         const key = left.trim();
-        const value = right
-            .join('=')
-            .split('#', 1)[0]
-            .split(';', 1)[0]
-            .trim();
+        const value = right.join('=').split('#', 1)[0].split(';', 1)[0].trim();
         if (key) options.push({ key, value });
     }
     return options;
@@ -68,7 +93,7 @@ function promotedPieceTypes(options: readonly ParsedIniOption[]): Map<string, st
     return result;
 }
 
-function parsePremoveDefinition(meta: CataloguedPremoveMetadata): CataloguedPremoveDefinition {
+function parsePremoveDefinition(meta: PremoveMetadata): PremoveDefinition {
     const options = iniOptions(meta.ini ?? '');
     const movements = new Map<string, BetzaPremove>();
     let kingRoleLetter: string | undefined;
@@ -80,6 +105,12 @@ function parsePremoveDefinition(meta: CataloguedPremoveMetadata): CataloguedPrem
 
     for (const { key, value } of options) {
         const normalizedKey = key.toLowerCase();
+        const namedMovement = namedPieceBetza.get(normalizedKey);
+        if (namedMovement) {
+            const roleLetter = normalRoleLetter(value);
+            if (roleLetter) movements.set(roleLetter, createBetzaPremove(namedMovement));
+            continue;
+        }
         if (!(normalizedKey === 'king' || /^custompiece\d+$/i.test(key)) || value === '-') continue;
 
         const explicit = /^([a-z]):(.*)$/i.exec(value);
@@ -97,10 +128,9 @@ function parsePremoveDefinition(meta: CataloguedPremoveMetadata): CataloguedPrem
     };
 }
 
-export function registerCataloguedPremove(meta: CataloguedPremoveMetadata): void {
-    // Site variants never register here and keep chessgroundx's established
-    // premoves. Catalogued variants can supplement their client compatibility
-    // fallback with Betza movement definitions resolved by the server.
+export function registerCataloguedPremove(meta: PremoveMetadata): void {
+    // Catalogued registrations have their own lifecycle; permanent site
+    // definitions are compiled separately from the shared site rules.
     if (!meta.name) return;
     cataloguedPremoveDefinitions.set(meta.name, parsePremoveDefinition(meta));
 }
@@ -158,19 +188,13 @@ function specialFallbackDestinations(
         ? fallbackAsRole(fallback, boardState, key, true, roleLetter)
         : fallback(boardState, key, true);
     const withoutSpecial = new Set(
-        roleLetter
-            ? fallbackAsRole(fallback, boardState, key, false, roleLetter)
-            : fallback(boardState, key, false),
+        roleLetter ? fallbackAsRole(fallback, boardState, key, false, roleLetter) : fallback(boardState, key, false),
     );
     return withSpecial.filter(destination => !withoutSpecial.has(destination));
 }
 
-export function premoveForVariant(
-    variantName: string,
-    chess960: boolean,
-    dimensions: cg.BoardDimensions,
-): cg.Premove {
-    const definition = cataloguedPremoveDefinitions.get(variantName);
+export function premoveForVariant(variantName: string, chess960: boolean, dimensions: cg.BoardDimensions): cg.Premove {
+    const definition = cataloguedPremoveDefinitions.get(variantName) ?? sitePremoveDefinition(variantName);
     if (!definition) return premove(variantName, chess960, dimensions);
 
     const fallback = premove(definition.fallbackVariant ?? variantName, chess960, dimensions);
