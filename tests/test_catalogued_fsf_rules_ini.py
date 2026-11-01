@@ -3,9 +3,11 @@ from __future__ import annotations
 from unittest import TestCase
 from unittest.mock import patch
 
-from catalogued.variants import (
+from catalogued.builtin_data import (
     FSF_CATALOGUED_BUILTIN_DESCRIPTION,
     FSF_CATALOGUED_BUILTIN_VARIANTS,
+)
+from catalogued.documents import (
     _build_fsf_builtin_doc,
     _client_doc,
     _fsf_builtin_description_for_doc,
@@ -18,7 +20,7 @@ class FsfBuiltinRulesIniTestCase(TestCase):
         metadata = FSF_CATALOGUED_BUILTIN_VARIANTS["yarishogi"]
         start_fen = "rnnkbbr/7/ppppppp/7/7/7/PPPPPPP/7/RBBKNNR[-] w 0 1"
 
-        with patch("catalogued.variants.sf.start_fen", return_value=start_fen):
+        with patch("catalogued.validation.sf.start_fen", return_value=start_fen):
             doc = _build_fsf_builtin_doc("yarishogi", metadata)
 
         self.assertEqual(doc["ini"], "")

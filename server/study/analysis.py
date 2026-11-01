@@ -16,7 +16,8 @@ from analysis_advice import (
     analysis_score,
     prepare_analysis_line,
 )
-from catalogued.variants import catalogued_variant_allows_fishnet, replace_variant_section_name
+from catalogued.validation import replace_variant_section_name
+from catalogued.variants import catalogued_variant_allows_fishnet
 from const import ANALYSIS
 from fairy.fairy_board import FairyBoard
 from typing_defs import AnalysisStep, FishnetAnalysisItem, FishnetWork
@@ -758,7 +759,7 @@ async def merge_study_server_analysis(
         await _broadcast_server_eval(app_state, chapter, server_eval, pending=not complete)
         if complete:
             app_state.fishnet_works.pop(work_id, None)
-            from catalogued.variants import clear_catalogued_variant_ai_failures
+            from catalogued.repository import clear_catalogued_variant_ai_failures
 
             await clear_catalogued_variant_ai_failures(app_state, str(work.get("variant") or ""))
 

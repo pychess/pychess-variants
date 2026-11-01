@@ -10,11 +10,11 @@ from time import monotonic
 from typing import TYPE_CHECKING, Literal, cast
 
 from broadcast import round_broadcast
-from catalogued.variants import (
-    catalogued_variant_games_are_persisted,
+from catalogued.repository import (
     increment_catalogued_variant_game_count,
     increment_catalogued_variant_game_count_once,
 )
+from catalogued.variants import catalogued_variant_games_are_persisted
 from clock import Clock, CorrClock
 from compress import R2C
 from const import (

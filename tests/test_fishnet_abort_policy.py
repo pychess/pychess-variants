@@ -5,9 +5,9 @@ from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
 import fishnet
-from catalogued.variants import (
-    CATALOGUED_AI_FAILURE_LIMIT,
-    catalogued_variant_ai_disabled,
+from catalogued.documents import catalogued_variant_ai_disabled
+from catalogued.models import CATALOGUED_AI_FAILURE_LIMIT
+from catalogued.repository import (
     clear_catalogued_variant_ai_failures,
     record_catalogued_variant_ai_failure,
 )

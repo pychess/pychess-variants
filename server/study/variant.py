@@ -5,12 +5,14 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any
 
-from catalogued.rules import catalogued_random_start
-from catalogued.variants import (
+from catalogued.models import (
     CATALOGUED_SOURCE_USER,
     CATALOGUED_VARIANT_COLLECTION,
     CATALOGUED_VISIBILITY_PRIVATE,
     CataloguedVariantValidation,
+)
+from catalogued.rules import catalogued_random_start
+from catalogued.validation import (
     catalogued_legal_moves_need_history,
     check_catalogued_ini_tree_without_mutating_server,
     extract_variant_name,

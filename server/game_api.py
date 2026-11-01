@@ -10,10 +10,8 @@ import pymongo
 from aiohttp import web
 from aiohttp.client_exceptions import ClientConnectionResetError
 from aiohttp_swagger3 import swagger_doc
-from catalogued.variants import (
-    CATALOGUED_VARIANT_COLLECTION,
-    register_historical_catalogued_variant_doc,
-)
+from catalogued.models import CATALOGUED_VARIANT_COLLECTION
+from catalogued.variants import register_historical_catalogued_variant_doc
 from compress import C2R, decode_move_standard
 from const import (
     CATEGORY_VARIANT_SETS,

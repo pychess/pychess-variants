@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from catalogued.variants import _client_doc
+from catalogued.documents import _client_doc
 from nnue_identity import canonicalize_fsf_ini_v1, fsf_ini_v1_fingerprint
 
 

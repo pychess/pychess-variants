@@ -6,22 +6,24 @@ from unittest.mock import AsyncMock, patch
 
 import test_logger
 from aiohttp import web
-from catalogued.variants import (
+from catalogued.assets import (
     _canonical_piece_set_filename,
     _catalogued_board_svg_css,
     _catalogued_disguised_piece_css,
     _catalogued_piece_set_css,
     _catalogued_piece_set_is_directional,
     _catalogued_piece_set_required_filenames,
-    _check_ini_with_pyffish_child,
     _copy_catalogued_uploaded_assets,
     _has_complete_piece_set,
-    _read_bool_metadata,
     _sanitize_catalogued_board_svg,
     _sanitize_catalogued_piece_svg,
-    register_catalogued_variant_doc,
+)
+from catalogued.validation import (
+    _check_ini_with_pyffish_child,
+    _read_bool_metadata,
     validate_catalogued_ini,
 )
+from catalogued.variants import register_catalogued_variant_doc
 
 test_logger.init_test_logger()
 
@@ -381,7 +383,7 @@ class CataloguedVariantStartFenValidationTestCase(unittest.IsolatedAsyncioTestCa
 
         with (
             patch(
-                "catalogued.variants._run_process",
+                "catalogued.validation._run_process",
                 new=AsyncMock(return_value=(0, output)),
             ),
             self.assertRaises(web.HTTPBadRequest) as exc,
@@ -516,9 +518,9 @@ class CataloguedVariantPieceMetadataTestCase(unittest.TestCase):
 """
 
         with (
-            patch("catalogued.variants.sf.load_variant_config"),
+            patch("catalogued.validation.sf.load_variant_config"),
             patch(
-                "catalogued.variants.sf.start_fen",
+                "catalogued.validation.sf.start_fen",
                 return_value="r3k2r/8/8/8/8/8/8/4K2P w - - 0 1",
             ),
         ):
@@ -546,9 +548,9 @@ startFen = 8/8/8/8/8/8/8/8
 """
 
         with (
-            patch("catalogued.variants.sf.load_variant_config"),
+            patch("catalogued.validation.sf.load_variant_config"),
             patch(
-                "catalogued.variants.sf.start_fen",
+                "catalogued.validation.sf.start_fen",
                 return_value="8/8/8/8/8/8/8/8",
             ),
             self.assertRaises(web.HTTPBadRequest) as exc,

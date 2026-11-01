@@ -4,7 +4,7 @@ import unittest
 
 import test_logger
 from aiohttp import web
-from catalogued.variants import _ensure_catalogued_rules_supported
+from catalogued.validation import _ensure_catalogued_rules_supported
 
 test_logger.init_test_logger()
 

@@ -7,13 +7,13 @@ from unittest.mock import AsyncMock, patch
 
 import test_logger
 from aiohttp import web
-from catalogued.variants import (
-    _ensure_catalogued_rule_changes,
+from catalogued.http import (
     check_catalogued_variant_rules,
     clone_catalogued_variant,
     update_catalogued_variant,
     upload_catalogued_variant,
 )
+from catalogued.validation import _ensure_catalogued_rule_changes
 
 test_logger.init_test_logger()
 
@@ -84,16 +84,16 @@ class CataloguedVariantRuleChangesApiTestCase(unittest.IsolatedAsyncioTestCase):
         )
         self.request = SimpleNamespace(app=object())
         self.json_body = {"ini": COSMETIC_INI}
-        self.enterContext(patch("catalogued.variants.get_app_state", return_value=self.app_state))
+        self.enterContext(patch("catalogued.http.get_app_state", return_value=self.app_state))
         self.enterContext(
-            patch("catalogued.variants._current_human_username", AsyncMock(return_value="alice"))
+            patch("catalogued.http._current_human_username", AsyncMock(return_value="alice"))
         )
         self.enterContext(
-            patch("catalogued.variants.read_json_data", AsyncMock(return_value=self.json_body))
+            patch("catalogued.http.read_json_data", AsyncMock(return_value=self.json_body))
         )
         self.read_payload = self.enterContext(
             patch(
-                "catalogued.variants._read_upload_payload",
+                "catalogued.http._read_upload_payload",
                 AsyncMock(
                     return_value=(COSMETIC_INI, "Chinese skin", "", "", False, "", "", "private")
                 ),
@@ -101,25 +101,25 @@ class CataloguedVariantRuleChangesApiTestCase(unittest.IsolatedAsyncioTestCase):
         )
         self.enterContext(
             patch(
-                "catalogued.variants._load_owned_doc",
+                "catalogued.http._load_owned_doc",
                 AsyncMock(
                     return_value=(self.app_state, "alice", "chinesechesscambulac", self.existing)
                 ),
             )
         )
         self.enterContext(
-            patch("catalogued.variants._ensure_catalogued_variant_quota", AsyncMock())
+            patch("catalogued.repository._ensure_catalogued_variant_quota", AsyncMock())
         )
         self.enterContext(
-            patch("catalogued.variants.ensure_catalogued_variant_name_available", AsyncMock())
+            patch("catalogued.repository.ensure_catalogued_variant_name_available", AsyncMock())
         )
         self.child_check = self.enterContext(
             patch(
-                "catalogued.variants.check_catalogued_ini_without_mutating_server",
+                "catalogued.validation.check_catalogued_ini_without_mutating_server",
                 AsyncMock(return_value=self.existing["startFen"]),
             )
         )
-        self.load_config = self.enterContext(patch("catalogued.variants.sf.load_variant_config"))
+        self.load_config = self.enterContext(patch("catalogued.validation.sf.load_variant_config"))
 
     def assert_no_registration_or_writes(self) -> None:
         self.child_check.assert_not_awaited()
@@ -172,11 +172,11 @@ class CataloguedVariantRuleChangesApiTestCase(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch(
-                "catalogued.variants._update_catalogued_variant_document",
+                "catalogued.repository._update_catalogued_variant_document",
                 AsyncMock(side_effect=return_updated),
             ),
             patch("catalogued.variants.register_catalogued_variant_doc"),
-            patch("catalogued.variants._game_count", AsyncMock(return_value=0)),
+            patch("catalogued.repository._game_count", AsyncMock(return_value=0)),
         ):
             response = await update_catalogued_variant(self.request)
         self.assertEqual(response.status, 200)

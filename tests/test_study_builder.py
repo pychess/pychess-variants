@@ -6,11 +6,9 @@ from types import SimpleNamespace
 from typing import Any, cast
 from unittest.mock import AsyncMock, patch
 
-from catalogued.variants import (
-    FSF_CATALOGUED_BUILTIN_VARIANTS,
-    _build_fsf_builtin_doc,
-    register_catalogued_variant_doc,
-)
+from catalogued.builtin_data import FSF_CATALOGUED_BUILTIN_VARIANTS
+from catalogued.documents import _build_fsf_builtin_doc
+from catalogued.variants import register_catalogued_variant_doc
 from fairy import FairyBoard
 from mongomock_motor import AsyncMongoMockClient
 from study import variant as study_variant

@@ -12,14 +12,14 @@ from typing import TYPE_CHECKING, cast
 
 from aiohttp import web
 from broadcast import round_broadcast
-from catalogued.variants import (
-    CATALOGUED_SOURCE_FSF_BUILTIN,
-    catalogued_variant_ai_disabled,
-    catalogued_variant_allows_fishnet,
+from catalogued.documents import catalogued_variant_ai_disabled
+from catalogued.models import CATALOGUED_SOURCE_FSF_BUILTIN
+from catalogued.repository import (
     clear_catalogued_variant_ai_failures,
-    extract_variant_base_name,
     record_catalogued_variant_ai_failure,
 )
+from catalogued.validation import extract_variant_base_name
+from catalogued.variants import catalogued_variant_allows_fishnet
 from const import ANALYSIS, INVALIDMOVE, MOVE, STARTED
 from csrf import csrf_exempt
 from typing_defs import (

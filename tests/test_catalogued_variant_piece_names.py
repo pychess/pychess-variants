@@ -3,7 +3,8 @@ from __future__ import annotations
 import unittest
 
 from aiohttp import web
-from catalogued.variants import _client_doc, parse_catalogued_piece_names
+from catalogued.documents import _client_doc
+from catalogued.validation import parse_catalogued_piece_names
 
 
 class CataloguedVariantPieceNamesTestCase(unittest.TestCase):

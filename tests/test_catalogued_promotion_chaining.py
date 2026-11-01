@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, patch
 
 from aiohttp import web
 from catalogued.promotions import _BUILTIN_PROMOTIONS, _site_definitions
-from catalogued.variants import (
+from catalogued.validation import (
     _check_ini_with_pyffish_child,
     _ensure_catalogued_rules_supported,
     validate_catalogued_ini,
@@ -72,7 +72,7 @@ class PromotionChainingTestCase(unittest.TestCase):
                 ensure_no_promotion_chaining(f"[promotiontest:{name}]\n")
 
     def test_rejects_before_registering_rules_in_pyffish(self) -> None:
-        with patch("catalogued.variants.sf.load_variant_config") as load_config:
+        with patch("catalogued.validation.sf.load_variant_config") as load_config:
             with self.assertRaises(web.HTTPBadRequest):
                 validate_catalogued_ini("[promotiontest:chess]\npromotedPieceType=p:g g:r")
             load_config.assert_not_called()
@@ -80,7 +80,7 @@ class PromotionChainingTestCase(unittest.TestCase):
 
 class PromotionChainingChildTestCase(unittest.IsolatedAsyncioTestCase):
     async def test_rejects_before_starting_engine_validation(self) -> None:
-        with patch("catalogued.variants._run_process", new_callable=AsyncMock) as run_process:
+        with patch("catalogued.validation._run_process", new_callable=AsyncMock) as run_process:
             with self.assertRaises(web.HTTPBadRequest) as exc:
                 await _check_ini_with_pyffish_child(
                     "[promotiontest:shogi]\npromotedPieceType=g:r", "promotiontest"

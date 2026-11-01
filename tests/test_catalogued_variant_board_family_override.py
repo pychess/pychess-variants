@@ -1,7 +1,7 @@
 import unittest
 
 from aiohttp import web
-from catalogued.variants import (
+from catalogued.validation import (
     _clean_board_family_override,
     _ensure_board_family_dimensions,
     _read_board_family_override,

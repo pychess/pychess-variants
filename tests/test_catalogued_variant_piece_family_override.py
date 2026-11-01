@@ -1,7 +1,7 @@
 import unittest
 
 from aiohttp import web
-from catalogued.variants import _clean_piece_family_override, _read_piece_family_override
+from catalogued.validation import _clean_piece_family_override, _read_piece_family_override
 
 
 class CataloguedVariantPieceFamilyOverrideTestCase(unittest.TestCase):

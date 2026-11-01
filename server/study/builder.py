@@ -5,7 +5,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any, Literal, cast
 
-from catalogued.variants import CATALOGUED_SOURCE_FSF_BUILTIN, find_catalogued_variant_doc
+from catalogued.models import CATALOGUED_SOURCE_FSF_BUILTIN
+from catalogued.repository import find_catalogued_variant_doc
 from fairy.fairy_board import FEN_OK, FairyBoard, validate_fen
 from settings import URI
 from utils import MAX_CUSTOM_FEN_LENGTH, load_game, sanitize_fen

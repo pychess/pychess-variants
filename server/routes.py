@@ -33,7 +33,7 @@ from bot_api import (
     upgrade_account,
 )
 from bug.import_bugh_game import import_game_bpgn
-from catalogued.variants import (
+from catalogued.http import (
     archive_catalogued_variant,
     check_catalogued_variant_rules,
     clone_catalogued_variant,

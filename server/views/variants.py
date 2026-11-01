@@ -3,12 +3,10 @@ import os
 
 import aiohttp_jinja2
 from aiohttp import web
-from catalogued.variants import (
-    catalogued_variant_client_doc_for_name,
-    catalogued_variant_rule_context,
-    community_catalogued_variants_page,
-    find_catalogued_variant_doc,
-)
+from catalogued.documents import catalogued_variant_rule_context
+from catalogued.http import community_catalogued_variants_page
+from catalogued.repository import find_catalogued_variant_doc
+from catalogued.variants import catalogued_variant_client_doc_for_name
 from fairy.cwda import cwda_betza_diagram_groups
 from json_utils import json_dumps
 from pychess_global_app_state_utils import get_app_state
