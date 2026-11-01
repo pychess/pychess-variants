@@ -17,6 +17,7 @@ from urllib.parse import unquote, urlparse
 import aiohttp_session
 from aiohttp import web
 from catalogued_betza import catalogued_betza_diagrams, catalogued_betza_pieces
+from catalogued_promotions import ensure_no_promotion_chaining
 from catalogued_rules import catalogued_random_start, catalogued_rule_summary
 from compress import MAX_COMPRESSED_BOARD_HEIGHT, MAX_COMPRESSED_BOARD_WIDTH
 from const import ANON_PREFIX, STARTED, T_STARTED
@@ -1712,6 +1713,7 @@ def _ini_option_has_non_neutral_value(ini: str, key: str) -> bool:
 
 
 def _ensure_catalogued_rules_supported(ini: str) -> None:
+    ensure_no_promotion_chaining(ini)
     unsupported: list[str] = []
 
     for key, reason in UNSUPPORTED_CATALOGUED_BOOL_RULES.items():
