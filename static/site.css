@@ -1894,9 +1894,6 @@ button .icon-bar-chart:before {
 i-side {
   margin-right: 3px;
 }
-.online.icon.icon-online {
-  margin-right: 0px;
-}
 .icon-blue:before {
   content: '\62';
   color: var(--blue-text);
@@ -1919,12 +1916,9 @@ i-side {
 }
 .icon-online::before {
   color: var(--good);
-  margin-right: 0.3em;
-  font-size: 0.85em;
 }
 .icon-offline::before {
   color: LightGray;
-  margin-right: 0.4em;
 }
 
 .icon-patron-wing::before {
