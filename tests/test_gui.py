@@ -143,6 +143,55 @@ class TestGUI:
 
             await browser.close()
 
+    async def test_correspondence_notification_settings(self, aiohttp_server):
+        app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+        server = await aiohttp_server(app, host="127.0.0.1")
+        app_state = get_app_state(app)
+        username = "notification-settings-user"
+        await app_state.db.user.insert_one(
+            {"_id": username, "enabled": True, "ct": "all", "cps": False}
+        )
+        base_url = f"http://{server.host}:{server.port}"
+
+        async with async_playwright() as playwright:
+            browser = await self._launch_browser(playwright)
+            try:
+                context, page = await self._playwright_page_for_user(browser, base_url, username)
+                await context.grant_permissions(["notifications"])
+                other_page = await context.new_page()
+                for tab in (page, other_page):
+                    await tab.goto(base_url)
+                    await tab.locator("#btn-settings").click()
+                    await tab.locator("#btn-notifications").click()
+                browser_toggle = page.locator("#corr-browser-enabled")
+                await expect(browser_toggle).to_be_checked()
+                await expect(page.locator("#corr-push-enabled")).not_to_be_checked()
+
+                async with page.expect_response("**/pref/corr-browser") as saved:
+                    await browser_toggle.uncheck()
+                assert (await saved.value).status == 204
+                await expect(browser_toggle).to_be_enabled()
+                await expect(other_page.locator("#corr-browser-enabled")).not_to_be_checked()
+                stored = await app_state.db.user.find_one({"_id": username})
+                assert stored["cbs"] is False
+                assert stored["cps"] is False
+
+                await page.reload()
+                await page.locator("#btn-settings").click()
+                await page.locator("#btn-notifications").click()
+                await expect(browser_toggle).not_to_be_checked()
+                async with page.expect_response("**/pref/corr-browser") as saved:
+                    await browser_toggle.check()
+                assert (await saved.value).status == 204
+                await expect(other_page.locator("#corr-browser-enabled")).to_be_checked()
+
+                await page.locator("#settings-notifications .back").click()
+                await page.locator("#btn-privacy").click()
+                await expect(page.locator("#settings-privacy input")).to_have_count(1)
+                await expect(page.get_by_label("Only friends can message me")).to_be_visible()
+            finally:
+                await browser.close()
+
     @pytest.mark.parametrize("periods", [1, 3])
     async def test_zero_main_time_byoyomi_resets_after_moves_and_refresh(
         self, aiohttp_server, periods

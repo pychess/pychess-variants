@@ -999,12 +999,12 @@ export class RoundController extends GameController {
         );
     };
 
-    private notifyMsg = (msg: string) => {
+    private notifyMsg = (msg: string, correspondenceMove = false) => {
         if (this.status >= 0) return;
 
         const opp_name = this.username === this.wplayer ? this.bplayer : this.wplayer;
         const logoUrl = `${this.home}/static/favicon/android-icon-192x192.png`;
-        notify('pychess.org', { body: `${opp_name}\n${msg}`, icon: logoUrl });
+        notify('pychess.org', { body: `${opp_name}\n${msg}`, icon: logoUrl }, correspondenceMove);
     };
 
     private onMsgBerserk = (msg: MsgBerserk) => {
@@ -1455,7 +1455,7 @@ export class RoundController extends GameController {
 
                     if (!this.focus) {
                         const sanMove = this.fog ? 'a move' : step.san;
-                        this.notifyMsg(`Played ${sanMove}\nYour turn.`);
+                        this.notifyMsg(`Played ${sanMove}\nYour turn.`, this.corr);
                     }
 
                     // prevent sending premove/predrop when (auto)reconnecting websocked asks server to (re)sends the same board to us

@@ -1078,7 +1078,7 @@ ul.guide li {
   right: 0;
   border-radius: 5px 0px 0px 5px;
 }
-#settings-lang, #settings-board {
+#settings-lang, #settings-board, #settings-notifications {
   overflow: auto;
   max-height: min(100vh - 70px, 91vh);
 }
@@ -1386,6 +1386,27 @@ span.notification.empty span.text {
   margin: 5px;
 }
 
+#settings-notifications {
+  width: min(24rem, calc(100vw - 1rem));
+}
+#settings-notifications > div {
+  padding: 0.5rem;
+}
+#settings-notifications .notification-toggle {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.5rem;
+}
+#settings-notifications .notification-toggle input {
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+#settings-notifications .notification-toggle small {
+  margin-top: 0.25rem;
+  opacity: 0.8;
+}
+
 #settings-lang label:last-child,
 #soundtheme label:last-child,
 #settings-background label:last-child,
@@ -1500,6 +1521,7 @@ button#btn-board:hover,
 button#btn-zen:hover,
 button#btn-inbox-menu:hover,
 button#btn-privacy:hover,
+button#btn-notifications:hover,
 button#btn-account:hover {
   background-color: var(--green-hover);
 }

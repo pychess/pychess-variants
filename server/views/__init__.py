@@ -230,6 +230,7 @@ async def get_user_context(request: web.Request) -> tuple[User, ViewContext]:
         ),
         "pm_friends_only": user.pm_friends_only,
         "corr_push_enabled": user.corr_push_enabled,
+        "corr_browser_enabled": user.corr_browser_enabled,
         "rr_push_enabled": user.rr_push_enabled,
         "menu_variant": menu_variant,
         "title": "%s • PyChess" % view.capitalize(),

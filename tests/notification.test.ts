@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, expect, jest, test } from '@jest/globals';
 
-import { notify } from '../client/notification';
+import { notify, setCorrBrowserEnabled } from '../client/notification';
 
 const originalNotification = Object.getOwnPropertyDescriptor(window, 'Notification');
 
 beforeEach(() => {
     jest.useFakeTimers();
+    document.body.innerHTML = '<div id="pychess-variants" data-username="Alice" data-anon="False"></div>';
+    localStorage.clear();
 });
 
 afterEach(() => {
@@ -112,4 +114,59 @@ test('denied permission does not prompt again', async () => {
 
     expect(requestPermission).not.toHaveBeenCalled();
     expect(construct).not.toHaveBeenCalled();
+});
+
+test('browser opt-out suppresses correspondence moves without prompting, but leaves live alerts enabled', async () => {
+    const { construct, requestPermission } = installNotification('default');
+    requestPermission.mockResolvedValue('granted');
+    setCorrBrowserEnabled(false);
+
+    notify('Your turn', { body: 'Correspondence move' }, true);
+    await jest.runAllTimersAsync();
+    expect(requestPermission).not.toHaveBeenCalled();
+    expect(construct).not.toHaveBeenCalled();
+
+    notify('Your turn', { body: 'Live move' });
+    await jest.runAllTimersAsync();
+    expect(construct).toHaveBeenCalledWith('Your turn', { body: 'Live move' });
+});
+
+test('correspondence browser alerts are enabled by default and independent of push opt-out', () => {
+    const { construct } = installNotification();
+    document.getElementById('pychess-variants')!.setAttribute('data-corr-push-enabled', 'False');
+
+    notify('Your turn', undefined, true);
+    jest.runAllTimers();
+    expect(construct).toHaveBeenCalledTimes(1);
+});
+
+test('a later opt-out prevents an already scheduled correspondence alert', () => {
+    const { construct } = installNotification();
+    notify('Your turn', undefined, true);
+    setCorrBrowserEnabled(false);
+    jest.runAllTimers();
+    expect(construct).not.toHaveBeenCalled();
+});
+
+test('other tabs synchronize this account browser preference but ignore other accounts', () => {
+    const { construct } = installNotification();
+    document.body.insertAdjacentHTML('beforeend', '<input id="corr-browser-enabled" type="checkbox" checked>');
+    const input = document.getElementById('corr-browser-enabled') as HTMLInputElement;
+    const updateFromTab = (username: string, enabled: boolean) => window.dispatchEvent(new StorageEvent('storage', {
+        key: `corr-browser:${username}`, newValue: enabled ? 'True' : 'False',
+    }));
+
+    updateFromTab('Alice', false);
+    expect(input.checked).toBe(false);
+    notify('Your turn', undefined, true);
+    jest.runAllTimers();
+    expect(construct).not.toHaveBeenCalled();
+
+    updateFromTab('Bob', true);
+    expect(input.checked).toBe(false);
+    updateFromTab('Alice', true);
+    expect(input.checked).toBe(true);
+    notify('Your turn', undefined, true);
+    jest.runAllTimers();
+    expect(construct).toHaveBeenCalledTimes(1);
 });
