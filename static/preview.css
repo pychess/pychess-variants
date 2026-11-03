@@ -309,8 +309,14 @@ label.piece.piece14.shogi {
 label.piece.piece15.shogi {
     background-image: url('images/pieces/firi/bb.svg');
 }
-label.piece.piece16.shogi {
+label.piece.piece17.shogi {
+    background-image: url('images/pieces/shogi/Greenwade/5bb.svg');
+}
+label.piece.piece18.shogi {
     background-image: url('images/pieces/disguised/shogi-ally.svg');
+}
+label.piece.piece19.shogi {
+    background-image: url('images/pieces/mansindam/intl/wn.svg');
 }
 
 label.piece.piece0.kyoto {
