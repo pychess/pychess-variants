@@ -37,6 +37,7 @@ import { boardSettings } from './boardSettings';
 import { aliceBoardFen } from './aliceBoard';
 import type { AliceBoardName } from './aliceBoard';
 import { BoardSummaryView } from './accessibility/boardSummary';
+import { ChessgroundKeyboard } from './accessibility/chessgroundKeyboard';
 import { result } from './result';
 
 export abstract class GameController extends ChessgroundController implements ChatController {
@@ -121,6 +122,7 @@ export abstract class GameController extends ChessgroundController implements Ch
 
     keyboardHelpOpen: boolean;
     boardSummary: BoardSummaryView;
+    keyboard: ChessgroundKeyboard;
     private readonly onGameKeyboardHelpKeyDown: (event: KeyboardEvent) => void;
 
     get pocketHotkeyRoles(): readonly cg.Role[] | undefined {
@@ -135,11 +137,14 @@ export abstract class GameController extends ChessgroundController implements Ch
         fullfen: string,
         pocket0: HTMLElement,
         pocket1: HTMLElement,
-        boardName: BoardName = '',
-        aliceBoardEl?: HTMLElement,
+        boardName: BoardName,
+        aliceBoardEl: HTMLElement | undefined,
+        keyboard: ChessgroundKeyboard,
     ) {
         super(el, model, fullfen, pocket0, pocket1, boardName);
         this.boardSummary = new BoardSummaryView(this.variant, boardName);
+        this.keyboard = keyboard;
+        keyboard.attach(this.chessground, this.boardSummary);
 
         this.gameId = model['gameId'] as string;
         this.tournamentId = model['tournamentId'];
@@ -394,6 +399,7 @@ export abstract class GameController extends ChessgroundController implements Ch
     toggleOrientation(): void {
         super.toggleOrientation();
         this.aliceSplitBoard?.toggleOrientation();
+        this.keyboard.update();
     }
 
     flipped() {
@@ -637,6 +643,7 @@ export abstract class GameController extends ChessgroundController implements Ch
     updateBoardSummary(lastMove: string | undefined): void {
         if (this.gameId) this.boardSummary.setStatus(result(this.variant, this.status, this.result));
         this.boardSummary.setPosition(this.chessground.state.boardState, lastMove);
+        this.keyboard.update();
     }
 
     doSend = (message: JSONObject) => {

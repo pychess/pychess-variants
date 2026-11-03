@@ -1,6 +1,7 @@
 import { h, VNode } from 'snabbdom';
 import * as cg from 'chessgroundx/types';
 import * as util from 'chessgroundx/util';
+import { writeBoard } from 'chessgroundx/fen';
 
 import { _, ngettext } from '@/i18n';
 import { patch } from '@/document';
@@ -30,12 +31,25 @@ export type Politeness = 'assertive' | 'polite';
 
 const COLORS: cg.Color[] = ['white', 'black'];
 
+// level: its top heading's, under the page's own (the forum captcha sits lower than a game page).
+// lastMove: false where a position has no history (the forum captcha).
+interface SummaryOptions {
+    level?: number;
+    lastMove?: boolean;
+}
+
+// A live region speaks only when its text changes, so the same words again (Nxd5 answered by Nxd5)
+// get a trailing no-break space, added and dropped in turn.
+function respoken(shown: string, text: string): string {
+    return shown === text ? `${text}\u00a0` : text;
+}
+
 function elementId(boardName: BoardName): string {
     return boardName === '' ? 'board-summary' : `board-summary-${boardName}`;
 }
 
 // The variant's own square names, so the Pieces lines agree with the move list.
-function squareName(key: cg.Key, notation: cg.Notation, bd: cg.BoardDimensions): string {
+export function squareName(key: cg.Key, notation: cg.Notation, bd: cg.BoardDimensions): string {
     const [file, rank] = util.key2pos(key);
     switch (notation) {
         case cg.Notation.SHOGI_ARBNUM: // files from the right, ranks from the top: "76"
@@ -45,6 +59,10 @@ function squareName(key: cg.Key, notation: cg.Notation, bd: cg.BoardDimensions):
         default:
             return cg.files[file] + ranksUCI[rank];
     }
+}
+
+export function colorName(variant: Variant, color: cg.Color): string {
+    return _(color === 'white' ? variant.colors.first : variant.colors.second);
 }
 
 function bySquare(a: cg.Key, b: cg.Key): number {
@@ -59,12 +77,15 @@ export class BoardSummaryView {
     private live: Politeness = 'polite';
     private boardState: cg.BoardState | undefined;
     private lastMove: string | undefined;
+    private lastMoveShown = '';
+    private pieces = '';
     private status: string | undefined;
     private clocks: Partial<Record<cg.Color, string>> = {};
 
     constructor(
         private readonly variant: Variant,
         private readonly boardName: BoardName,
+        private readonly options: SummaryOptions = {},
     ) {}
 
     /** The page decides where the summary goes and how urgently it speaks. */
@@ -73,8 +94,14 @@ export class BoardSummaryView {
     }
 
     setPosition(boardState: cg.BoardState, lastMove: string | undefined): void {
+        // A new move changes the pieces; a redraw, a flip or a bughouse pocket change does not.
+        const pieces = writeBoard(boardState.pieces, this.variant.board.dimensions);
+        const moved = pieces !== this.pieces;
         this.boardState = boardState;
+        this.pieces = pieces;
         this.lastMove = lastMove;
+        const text = this.lastMoveText();
+        if (moved || this.lastMoveShown.trimEnd() !== text) this.lastMoveShown = respoken(this.lastMoveShown, text);
         this.redraw();
     }
 
@@ -92,8 +119,27 @@ export class BoardSummaryView {
         this.setClock(color(), clock.duration);
     }
 
-    setStatus(status: string): void {
-        this.status = status;
+    /** What the "Last move" section says, for the board's `l` key; empty where there is none. */
+    lastMoveText(): string {
+        if (this.options.lastMove === false) return '';
+        return this.lastMove ?? _('Initial position');
+    }
+
+    /** Both clocks in one line, for the board's `t` key; empty when the game has none. */
+    clockText(): string {
+        return this.clockLines().join(', ');
+    }
+
+    private clockLines(): string[] {
+        return COLORS.filter(color => this.clocks[color] !== undefined).map(
+            color => `${this.colorName(color)}: ${this.clocks[color]}`,
+        );
+    }
+
+    // An event (a puzzle's "Best move!") is spoken even in the words the status already holds;
+    // the game result is set again on every move and must not be.
+    setStatus(status: string, event = false): void {
+        this.status = event ? respoken(this.status ?? '', status) : status;
         this.redraw();
     }
 
@@ -112,7 +158,7 @@ export class BoardSummaryView {
     }
 
     private colorName(color: cg.Color): string {
-        return _(color === 'white' ? this.variant.colors.first : this.variant.colors.second);
+        return colorName(this.variant, color);
     }
 
     // Roles in the variant's own piece order, anything else (promoted pieces) after it.
@@ -155,8 +201,9 @@ export class BoardSummaryView {
     private render(): VNode {
         // A two-board page heads each board's summary, so the sections sit one level lower.
         const titled = this.boardName !== '';
-        const section = titled ? 'h3' : 'h2';
-        const side = titled ? 'h4' : 'h3';
+        const top = this.options.level ?? 2;
+        const section = `h${titled ? top + 1 : top}`;
+        const side = `h${titled ? top + 2 : top + 1}`;
         const region = { 'aria-live': this.live, 'aria-atomic': 'true' };
 
         const byColor = (title: string, rows: (color: cg.Color) => VNode[]) => [
@@ -166,19 +213,19 @@ export class BoardSummaryView {
         ];
 
         return h(`div#${elementId(this.boardName)}.sr-only`, { attrs: { 'data-live': this.live } }, [
-            ...(titled ? [h('h2', `${_('Board')} ${this.boardName.toUpperCase()}`)] : []),
+            // "Summary", so it is told apart from the keyboard board's own "Board A" heading.
+            ...(titled ? [h(`h${top}`, `${_('Board')} ${this.boardName.toUpperCase()}: ${_('Summary')}`)] : []),
             ...byColor(_('Pieces'), color => this.piecesByColor(color)),
             ...(this.variant.pocket ? byColor(_('Pockets'), color => this.pocketByColor(color)) : []),
-            h(section, _('Last move')),
-            h('p', { attrs: region }, this.lastMove ?? _('Initial position')),
+            ...(this.options.lastMove === false
+                ? []
+                : [h(section, _('Last move')), h('p', { attrs: region }, this.lastMoveShown)]),
             // role="timer" is never announced as it changes; the time is read when the reader gets there.
             ...(Object.keys(this.clocks).length === 0
                 ? []
                 : [
                       h(section, _('Time')),
-                      ...COLORS.filter(color => this.clocks[color] !== undefined).map(color =>
-                          h('p', { attrs: { role: 'timer' } }, `${this.colorName(color)}: ${this.clocks[color]}`),
-                      ),
+                      ...this.clockLines().map(line => h('p', { attrs: { role: 'timer' } }, line)),
                   ]),
             ...(this.status === undefined
                 ? []
