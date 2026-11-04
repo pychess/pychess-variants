@@ -120,6 +120,10 @@ async def record_catalogued_variant_ai_failure(
 
     doc.update(update_set)
     if disabled:
+        # Import locally: variants.py imports this repository module.
+        from .variants import invalidate_public_catalogued_variants_json
+
+        invalidate_public_catalogued_variants_json(app_state)
         log.warning(
             "Temporarily disabled Fairy-Stockfish AI for catalogued variant %s after %s failures "
             "(latest reason=%s)",
@@ -158,6 +162,11 @@ async def clear_catalogued_variant_ai_failures(app_state: Any, name: str) -> Non
 
     for field in fields:
         doc.pop(field, None)
+
+    # A cached public payload may still advertise aiDisabled after recovery.
+    from .variants import invalidate_public_catalogued_variants_json
+
+    invalidate_public_catalogued_variants_json(app_state)
 
 
 async def _remove_catalogued_variant_seeks(app_state: Any, name: str) -> int:
