@@ -426,6 +426,52 @@ class RequestLobbyTestCase(AioHTTPTestCase):
         self.assertIn('data-variant="chess"', text)
         self.assertIn('data-chess960="True"', text)
 
+    async def test_editor_play_links_preload_only_selected_variant_and_ancestors(self):
+        import html
+        import json
+        import re
+
+        app_state = get_app_state(self.app)
+        name = "editor-play-sample"
+        parent = "editor-play-parent"
+        sample = {
+            "startFen": FairyBoard.start_fen("chess"),
+            "width": 8,
+            "height": 8,
+            "pieces": ["k"],
+            "visibility": "public",
+        }
+        app_state.catalogued_variants[parent] = {
+            **sample,
+            "name": parent,
+            "ini": f"[{parent}:chess]",
+            "baseVariant": "chess",
+        }
+        app_state.catalogued_variants[name] = {
+            **sample,
+            "name": name,
+            "ini": f"[{name}:{parent}]",
+            "baseVariant": parent,
+        }
+        register_catalogued_server_variant(name, "Editor Play Sample")
+        try:
+            resp = await self.client.get(f"/seek/{name}", params={"fen": sample["startFen"]})
+            self.assertEqual(resp.status, 200)
+            text = await resp.text()
+            self.assertIn(f'data-variant="{name}"', text)
+            match = re.search(r'data-catalogued-variants="([^"]*)"', text)
+            self.assertIsNotNone(match)
+            self.assertEqual(
+                [doc["name"] for doc in json.loads(html.unescape(match.group(1)))],
+                [parent, name],
+            )
+            resp = await self.client.get("/api/catalogued-variants", params={"name": name})
+            self.assertEqual(
+                [doc["name"] for doc in (await resp.json())["variants"]], [parent, name]
+            )
+        finally:
+            unregister_catalogued_server_variant(name)
+
     async def test_editor_960_route_normalizes_variant_and_chess960(self):
         resp = await self.client.request("GET", "/editor/chess960")
         self.assertEqual(resp.status, 200)

@@ -4,7 +4,7 @@ import { FairyStockfish } from 'ffish-es6';
 
 import { _ } from './i18n';
 import { variantsIni } from './variantsIni';
-import { allVariantsIni, ensureCataloguedVariantsLoaded } from './variants';
+import { allVariantsIni, ensureCataloguedVariantKeysLoaded, isBuiltinVariantName } from './variants';
 import { cwdaEngineVariant, VARIANTS } from './variants';
 import { alertDialog } from './alertDialog';
 import { parseKif, resultString } from '../client/kif';
@@ -68,13 +68,18 @@ export function pasteView(model: PyChessModel): VNode[] {
             let namedVariant: string | undefined;
             try {
                 const tag = parseFirstPgnGame(pgn)?.tags['Variant'];
-                if (tag) namedVariant = parsePgnVariantTag(tag).variant;
+                if (
+                    tag &&
+                    (tag.trim().toLowerCase().endsWith('960') || !isBuiltinVariantName(parsePgnVariantTag(tag).variant))
+                ) {
+                    namedVariant = tag.trim().toLowerCase();
+                }
             } catch {
                 // Keep malformed-PGN reporting in the existing import validation.
             }
             if (namedVariant && !VARIANTS[namedVariant]) {
                 try {
-                    await ensureCataloguedVariantsLoaded([namedVariant]);
+                    await ensureCataloguedVariantKeysLoaded([namedVariant]);
                 } catch (error) {
                     console.warn('Failed to load PGN variant metadata', error);
                 }

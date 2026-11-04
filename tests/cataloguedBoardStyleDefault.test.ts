@@ -244,6 +244,32 @@ test('rules and community previews mount read-only Chessgrounds with the detecte
     expect(bindResize).toHaveBeenCalledTimes(1);
 });
 
+test('community previews fetch only their missing definition before mounting', async () => {
+    const originalFetch = globalThis.fetch;
+    const name = 'lazy-community-preview';
+    const fetchMetadata = jest.fn(async () => ({
+        ok: true,
+        json: async () => ({ variants: [{
+            name, ini: `[${name}:chess]`, baseVariant: 'chess',
+            startFen: '4k3/8/8/8/8/8/8/4K3 w - - 0 1', width: 8, height: 8, pieces: ['k'],
+        }] }),
+    } as Response));
+    globalThis.fetch = fetchMetadata as typeof fetch;
+    document.body.innerHTML = `<a class="catalogued-start-board-preview" data-variant="${name}"></a>`;
+    const createChessground = jest.fn(() => ({ state: {} }) as Api) as unknown as typeof Chessground;
+    try {
+        mountCataloguedStartBoards('/static', createChessground, () => () => undefined);
+        // Wait for the metadata request and the asynchronous preview mount.
+        await new Promise(resolve => setTimeout(resolve, 0));
+        expect(fetchMetadata).toHaveBeenCalledWith(`/api/catalogued-variants?name=${name}`);
+        expect(document.querySelector<HTMLElement>('.catalogued-start-board-preview')?.dataset.chessgroundMounted).toBe('true');
+        expect(createChessground).toHaveBeenCalledTimes(1);
+    } finally {
+        globalThis.fetch = originalFetch;
+        unregisterCataloguedVariant(name);
+    }
+});
+
 test('pocket variants render both pocket rows around the starting board', () => {
     register({
         name: 'testshogiboardpreview',

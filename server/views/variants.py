@@ -1,4 +1,3 @@
-import json
 import os
 
 import aiohttp_jinja2
@@ -8,13 +7,12 @@ from catalogued.http import community_catalogued_variants_page
 from catalogued.repository import find_catalogued_variant_doc
 from catalogued.variants import catalogued_variant_client_doc_for_name
 from fairy.cwda import cwda_betza_diagram_groups
-from json_utils import json_dumps
 from pychess_global_app_state_utils import get_app_state
 from typing_defs import ViewContext
 from variants import VARIANT_ICONS, VARIANTS
 
 from lang import get_locale_ext
-from views import get_user_context
+from views import add_catalogued_client_docs_context, get_user_context
 
 
 def _positive_page(value: str | None) -> int:
@@ -81,10 +79,7 @@ async def variants(request: web.Request) -> ViewContext:
             app_state, variant, user.username if not user.anon else None
         )
         if catalogued_client_doc is not None:
-            catalogued_variants = json.loads(str(context.get("catalogued_variants") or "[]"))
-            if not any(item.get("name") == variant for item in catalogued_variants):
-                catalogued_variants.append(catalogued_client_doc)
-                context["catalogued_variants"] = json_dumps(catalogued_variants)
+            add_catalogued_client_docs_context(app_state, user, context, [catalogued_client_doc])
 
         context["catalogued_variant"] = catalogued_variant_rule_context(catalogued_doc)
         context["title"] = f"{context['catalogued_variant']['displayName']} • PyChess"

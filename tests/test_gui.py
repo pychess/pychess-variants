@@ -25,6 +25,101 @@ test_logger.init_test_logger()
 
 @pytest.mark.asyncio
 class TestGUI:
+    async def test_catalogued_loading_for_previews_editor_and_simul(self, aiohttp_server):
+        from catalogued.variants import register_catalogued_variant_doc
+        from fairy import FairyBoard
+        from simul.simul import Simul
+        from variants import unregister_catalogued_server_variant
+
+        app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+        server = await aiohttp_server(app, host="127.0.0.1")
+        app_state = get_app_state(app)
+        parent, child = "loading-parent", "loading-child"
+        fen = FairyBoard.start_fen("chess")
+        for name, base, rule in (
+            (parent, "chess", "doubleStep = false"),
+            (child, parent, "stalemateValue = draw"),
+        ):
+            doc = {
+                "_id": name,
+                "name": name,
+                "displayName": name,
+                "ini": f"[{name}:{base}]\n{rule}\n",
+                "baseVariant": base,
+                "startFen": fen,
+                "width": 8,
+                "height": 8,
+                "pieces": ["p", "n", "b", "r", "q", "k"],
+                "visibility": "public",
+                "updatedAt": datetime.now(UTC),
+            }
+            register_catalogued_variant_doc(app_state, doc)
+            await app_state.db.catalogued_variant.insert_one(doc)
+
+        host = User(app_state, username="LoadingHost")
+        players = [User(app_state, username=f"LoadingPlayer{i}") for i in range(2)]
+        for user in [host, *players]:
+            app_state.users[user.username] = user
+            await app_state.db.user.insert_one({"_id": user.username, "enabled": True})
+        simul = await Simul.create(
+            app_state,
+            "loadsimu",
+            name="Loading Simul",
+            created_by=host.username,
+            variants=["chess", child],
+            base=30,
+        )
+        app_state.simuls[simul.id] = simul
+        for player, variant in zip(players, ["chess", child]):
+            assert simul.join(player, variant)
+            assert simul.approve(player.username)
+        assert await simul.start()
+        chess_game = next(game for game in simul.games.values() if game.variant == "chess")
+        base_url = f"http://{server.host}:{server.port}"
+
+        try:
+            async with async_playwright() as playwright:
+                browser = await self._launch_browser(playwright)
+                try:
+                    anon = await browser.new_page()
+                    await anon.goto(base_url + "/variants/community")
+                    preview = anon.locator(
+                        f'.catalogued-start-board-preview[data-variant="{child}"]'
+                    )
+                    await preview.scroll_into_view_if_needed()
+                    await expect(preview).to_have_attribute("data-chessground-mounted", "true")
+                    await expect(preview.locator(".cg-wrap cg-board")).to_be_visible()
+                    await anon.close()
+
+                    context, page = await self._playwright_page_for_user(
+                        browser, base_url, host.username
+                    )
+                    errors = []
+                    page.on("pageerror", lambda error: errors.append(str(error)))
+                    for path in (f"/seek/{child}", f"/@/Fairy-Stockfish/play/{child}"):
+                        await page.goto(base_url + path + "?fen=" + fen)
+                        await expect(page.locator("main.lobby")).to_be_visible()
+                        await expect(page.locator("#variant")).to_have_value(child)
+                        payload = json.loads(
+                            await page.locator("body").get_attribute("data-catalogued-variants")
+                        )
+                        assert [doc["name"] for doc in payload] == [parent, child]
+
+                    await page.goto(base_url + "/analysis/" + child)
+                    await expect(page.locator(".cg-wrap cg-board").first).to_be_visible()
+                    await page.goto(base_url + "/" + chess_game.id)
+                    await expect(
+                        page.locator(".ongoing-games-container .cg-wrap cg-board")
+                    ).to_be_visible()
+                    assert await page.locator(".ongoing-game-error").count() == 0
+                    assert errors == []
+                    await context.close()
+                finally:
+                    await browser.close()
+        finally:
+            for name in (child, parent):
+                unregister_catalogued_server_variant(name)
+
     async def _launch_browser(self, playwright):
         try:
             return await playwright.chromium.launch(headless=True)

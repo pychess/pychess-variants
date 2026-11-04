@@ -40,11 +40,15 @@ async def get_catalogued_variants(request: web.Request) -> web.Response:
         docs = getattr(app_state, "catalogued_variants", {})
         return json_response(
             {
-                "variants": [
-                    documents._client_doc(docs[name], favorite_names=favorite_names)
-                    for name in dict.fromkeys(names)
-                    if name in docs and documents._can_open_catalogued_doc(username, docs[name])
-                ]
+                "variants": variants.catalogued_variant_client_docs_with_dependencies(
+                    app_state,
+                    [
+                        documents._client_doc(docs[name], favorite_names=favorite_names)
+                        for name in dict.fromkeys(names)
+                        if name in docs and documents._can_open_catalogued_doc(username, docs[name])
+                    ],
+                    username,
+                )
             }
         )
 

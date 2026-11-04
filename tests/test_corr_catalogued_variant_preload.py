@@ -6,7 +6,11 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import ANY, AsyncMock, patch
 
-from views import add_catalogued_variant_context, add_corr_games_context
+from views import (
+    add_catalogued_client_docs_context,
+    add_catalogued_variant_context,
+    add_corr_games_context,
+)
 
 
 class FakeCursor:
@@ -159,6 +163,19 @@ if __name__ == "__main__":
 
 
 class OnDemandGameVariantMetadataTestCase(unittest.IsolatedAsyncioTestCase):
+    def test_replacing_a_favorite_with_snapshot_metadata_preserves_its_favorite_marker(self):
+        user = SimpleNamespace(
+            username="participant", anon=False, catalogued_variant_favorites={"custom"}
+        )
+        context = {"catalogued_variants": '[{"name":"custom","favorite":true,"ini":"live"}]'}
+        add_catalogued_client_docs_context(
+            SimpleNamespace(), user, context, [{"name": "custom", "ini": "snapshot"}]
+        )
+        self.assertEqual(
+            json.loads(context["catalogued_variants"]),
+            [{"name": "custom", "ini": "snapshot", "favorite": True}],
+        )
+
     async def test_spectators_can_load_public_game_variant(self):
         user = SimpleNamespace(username="spectator", anon=False)
         game = SimpleNamespace(variant="custom")

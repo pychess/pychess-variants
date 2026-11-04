@@ -9,9 +9,11 @@ from typing import TYPE_CHECKING, Any
 
 import aiohttp_session
 from aiohttp import web
+from catalogued.models import CataloguedVariantClientDocument
 from catalogued.variants import (
     catalogued_variant_client_doc_for_game,
     catalogued_variant_client_doc_for_name,
+    catalogued_variant_client_docs_with_dependencies,
     catalogued_variants_for_client,
 )
 from const import (
@@ -256,6 +258,26 @@ async def get_user_context(
     return (user, context)
 
 
+def add_catalogued_client_docs_context(
+    app_state: Any,
+    user: User,
+    context: ViewContext,
+    client_docs: list[CataloguedVariantClientDocument],
+) -> None:
+    existing = json.loads(str(context.get("catalogued_variants") or "[]"))
+    favorites = getattr(user, "catalogued_variant_favorites", set())
+    client_docs = [
+        {**doc, "favorite": True} if doc["name"] in favorites else doc for doc in client_docs
+    ]
+    context["catalogued_variants"] = json_dumps(
+        catalogued_variant_client_docs_with_dependencies(
+            app_state,
+            existing + client_docs,
+            None if getattr(user, "anon", False) else user.username,
+        )
+    )
+
+
 async def add_catalogued_variant_context(
     app_state: Any,
     user: User,
@@ -281,8 +303,7 @@ async def add_catalogued_variant_context(
     if doc is None and game is not None:
         doc = await catalogued_variant_client_doc_for_game(app_state, game, user.username)
     if doc is not None:
-        existing.append(doc)
-        context["catalogued_variants"] = json_dumps(existing)
+        add_catalogued_client_docs_context(app_state, user, context, [doc])
 
 
 async def _ensure_user_correspondence_games_loaded(app_state: Any, user: User) -> None:
@@ -355,7 +376,7 @@ async def add_corr_games_context(
         if catalogued_doc is not None:
             catalogued_variants.append(catalogued_doc)
 
-    context["catalogued_variants"] = json_dumps(catalogued_variants)
+    add_catalogued_client_docs_context(app_state, user, context, catalogued_variants)
 
 
 def add_game_context(

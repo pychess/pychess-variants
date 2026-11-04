@@ -76,5 +76,9 @@ async def round_view(request: web.Request) -> ViewContext:
         ):
             context["simulhost"] = True
             context["simul_games"] = json_dumps(simul_games(simul.games.values()))
+            for simul_game in simul.games.values():
+                await add_catalogued_variant_context(
+                    app_state, user, context, simul_game.variant, game=simul_game
+                )
 
     return context

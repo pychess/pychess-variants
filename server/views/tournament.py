@@ -1,10 +1,7 @@
-import json
-
 import aiohttp_jinja2
 from aiohttp import web
 from catalogued.variants import catalogued_variant_client_doc_for_tournament
 from const import ARENA, T_CREATED
-from json_utils import json_dumps
 from pychess_global_app_state_utils import get_app_state
 from team import get_team
 from tournament.tournaments import (
@@ -16,7 +13,7 @@ from tournament_director import is_tournament_director
 from typing_defs import ViewContext
 from variants import is_catalogued_variant
 
-from views import get_user_context
+from views import add_catalogued_client_docs_context, get_user_context
 
 
 @aiohttp_jinja2.template("index.html")
@@ -32,14 +29,11 @@ async def tournament(request: web.Request) -> ViewContext:
         raise web.HTTPNotFound(text="Tournament not found.")
 
     if is_catalogued_variant(tournament.variant):
-        catalogued_variants = json.loads(str(context.get("catalogued_variants") or "[]"))
-        if not any(item.get("name") == tournament.variant for item in catalogued_variants):
-            catalogued_doc = await catalogued_variant_client_doc_for_tournament(
-                app_state, tournament.variant
-            )
-            if catalogued_doc is not None:
-                catalogued_variants.append(catalogued_doc)
-                context["catalogued_variants"] = json_dumps(catalogued_variants)
+        catalogued_doc = await catalogued_variant_client_doc_for_tournament(
+            app_state, tournament.variant
+        )
+        if catalogued_doc is not None:
+            add_catalogued_client_docs_context(app_state, user, context, [catalogued_doc])
 
     director = is_tournament_director(user, app_state)
     creator_can_manage = (

@@ -1,5 +1,3 @@
-import json
-
 import aiohttp_jinja2
 import aiohttp_session
 from aiohttp import web
@@ -13,7 +11,7 @@ from typing_defs import ViewContext
 from utils import get_blogs
 from variants import ALL_VARIANTS, is_catalogued_variant
 
-from views import add_corr_games_context, get_user_context
+from views import add_catalogued_client_docs_context, add_corr_games_context, get_user_context
 
 
 @aiohttp_jinja2.template("index.html")
@@ -51,10 +49,7 @@ async def lobby(request: web.Request) -> ViewContext:
                 app_state, selected_variant, user.username if not user.anon else None
             )
             if catalogued_doc is not None:
-                catalogued_variants = json.loads(str(context.get("catalogued_variants") or "[]"))
-                if not any(item.get("name") == selected_variant for item in catalogued_variants):
-                    catalogued_variants.append(catalogued_doc)
-                    context["catalogued_variants"] = json_dumps(catalogued_variants)
+                add_catalogued_client_docs_context(app_state, user, context, [catalogued_doc])
         if catalogued_doc is not None or not is_catalogued_variant(selected_variant):
             context["variant"] = selected_variant
 
@@ -62,6 +57,16 @@ async def lobby(request: web.Request) -> ViewContext:
         context["variant"] = variant
         context["fen"] = fen.replace(".", "+").replace("_", " ")
         context["view_css"] = "lobby.css"
+
+    # Editor play links carry the variant in the path rather than the query.
+    if variant is not None and is_catalogued_variant(variant):
+        catalogued_doc = catalogued_variant_client_doc_for_name(
+            app_state, variant, None if user.anon else user.username
+        )
+        if catalogued_doc is None:
+            context["variant"] = "chess"
+        else:
+            add_catalogued_client_docs_context(app_state, user, context, [catalogued_doc])
 
     # Challenge user from user's profile or FSF from Editor
     profileId = request.match_info.get("profileId")

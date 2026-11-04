@@ -122,13 +122,57 @@ def catalogued_variants_for_client(
     selected_docs = (
         docs.values() if names is None else (docs[name] for name in set(names) if name in docs)
     )
-    return [
+    client_docs = [
         documents._client_doc(doc, favorite_names=favorite_names)
         for doc in sorted(
             selected_docs, key=lambda item: str(item.get("displayName", item["name"])).casefold()
         )
         if documents._can_preload_catalogued_doc(username, doc)
     ]
+    return (
+        catalogued_variant_client_docs_with_dependencies(app_state, client_docs, username)
+        if names is not None
+        else client_docs
+    )
+
+
+def catalogued_variant_client_docs_with_dependencies(
+    app_state: Any,
+    client_docs: list[models.CataloguedVariantClientDocument],
+    username: str | None = None,
+) -> list[models.CataloguedVariantClientDocument]:
+    """Order authorized roots and accessible catalogue ancestors before their children.
+
+    Callers authorize the roots (including historical game or Study snapshots).
+    Dependencies still obey normal visibility checks; a public child must never
+    disclose a private parent's definition to an unrelated viewer.
+    """
+    roots = {doc["name"]: doc for doc in client_docs}
+    docs = getattr(app_state, "catalogued_variants", {})
+    visited: set[str] = set()
+    result: list[models.CataloguedVariantClientDocument] = []
+
+    def visit(doc: models.CataloguedVariantClientDocument, depth: int = 0) -> None:
+        name = doc["name"]
+        if name in visited or depth >= 64:
+            return
+        visited.add(name)
+        base = str(doc.get("baseVariant") or "")
+        if base and base not in visited:
+            parent = roots.get(base)
+            if parent is None:
+                stored_parent = docs.get(base)
+                if stored_parent is not None and documents._can_open_catalogued_doc(
+                    username, stored_parent
+                ):
+                    parent = documents._client_doc(stored_parent)
+            if parent is not None:
+                visit(parent, depth + 1)
+        result.append(doc)
+
+    for doc in roots.values():
+        visit(doc)
+    return result
 
 
 def invalidate_public_catalogued_variants_json(app_state: Any) -> None:

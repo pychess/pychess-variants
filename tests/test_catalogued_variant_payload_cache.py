@@ -11,6 +11,7 @@ from catalogued.repository import (
     record_catalogued_variant_ai_failure,
 )
 from catalogued.variants import (
+    catalogued_variant_client_docs_with_dependencies,
     catalogued_variants_for_client,
     invalidate_public_catalogued_variants_json,
     public_catalogued_variants_json,
@@ -80,6 +81,32 @@ class CataloguedAiQuarantinePayloadCacheTestCase(unittest.IsolatedAsyncioTestCas
 
 
 class SelectedCataloguedVariantsTestCase(unittest.TestCase):
+    def test_dependencies_are_ordered_and_private_ancestors_stay_private(self):
+        parent = {"name": "parent", "visibility": "private", "author": "owner"}
+        child = {"name": "child", "baseVariant": "parent"}
+        app_state = SimpleNamespace(catalogued_variants={"parent": parent})
+        with patch("catalogued.variants.documents._client_doc", side_effect=lambda doc: dict(doc)):
+            self.assertEqual(
+                catalogued_variant_client_docs_with_dependencies(app_state, [child], "owner"),
+                [parent, child],
+            )
+            self.assertEqual(
+                catalogued_variant_client_docs_with_dependencies(app_state, [child], "visitor"),
+                [child],
+            )
+
+    def test_snapshot_roots_override_live_definitions_and_cycles_are_bounded(self):
+        snapshot = {"name": "child", "baseVariant": "parent", "ini": "snapshot"}
+        parent = {"name": "parent", "baseVariant": "child", "visibility": "public"}
+        app_state = SimpleNamespace(catalogued_variants={"parent": parent})
+        with patch("catalogued.variants.documents._client_doc", side_effect=lambda doc: dict(doc)):
+            self.assertEqual(
+                catalogued_variant_client_docs_with_dependencies(
+                    app_state, [{"name": "child", "ini": "live"}, snapshot]
+                ),
+                [parent, snapshot],
+            )
+
     def test_names_prevent_unneeded_document_construction(self):
         app_state = SimpleNamespace(
             catalogued_variants={

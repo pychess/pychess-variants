@@ -119,7 +119,7 @@ from typing_defs import ViewContext
 from utils import USERNAME_PREFIX_RE
 from variants import ALL_VARIANTS, is_catalogued_variant
 
-from views import get_user_context
+from views import add_catalogued_client_docs_context, get_user_context
 
 
 def _require_owner_user(user: Any) -> None:
@@ -1007,19 +1007,13 @@ async def _populate_study_chapter_context(
     )
 
     if snapshot_client_doc is not None:
-        variants = json.loads(str(context.get("catalogued_variants") or "[]"))
-        variants = [item for item in variants if item.get("name") != chapter.variant]
-        variants.append(snapshot_client_doc)
-        context["catalogued_variants"] = json_dumps(variants)
+        add_catalogued_client_docs_context(app_state, user, context, [snapshot_client_doc])
     elif is_catalogued_variant(chapter.variant):
         catalogued_doc = catalogued_variant_client_doc_for_name(
             app_state, chapter.variant, user.username
         )
         if catalogued_doc is not None:
-            variants = json.loads(str(context.get("catalogued_variants") or "[]"))
-            if not any(item.get("name") == chapter.variant for item in variants):
-                variants.append(catalogued_doc)
-                context["catalogued_variants"] = json_dumps(variants)
+            add_catalogued_client_docs_context(app_state, user, context, [catalogued_doc])
     elif chapter.variant not in ALL_VARIANTS:
         raise web.HTTPNotFound(text="Study variant is unavailable")
 

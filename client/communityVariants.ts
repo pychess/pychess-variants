@@ -3,7 +3,7 @@ import { Chessground } from 'chessgroundx/chessground';
 
 import { boardSettings } from './boardSettings';
 import { bindMiniBoardResize } from './miniBoard';
-import { VARIANTS } from './variants';
+import { ensureCataloguedVariantsLoaded, VARIANTS } from './variants';
 
 type ChessgroundFactory = typeof Chessground;
 type MiniBoardResizeBinder = typeof bindMiniBoardResize;
@@ -14,14 +14,23 @@ type CataloguedStartBoardMount = {
 
 const cataloguedStartBoardMounts = new WeakMap<HTMLElement, CataloguedStartBoardMount>();
 
-function mountCataloguedStartBoard(
+async function mountCataloguedStartBoard(
     preview: HTMLElement,
     createChessground: ChessgroundFactory,
     bindResize: MiniBoardResizeBinder,
-): void {
+): Promise<void> {
     if (preview.dataset.chessgroundMounted === 'true') return;
 
     const variantName = preview.dataset.variant;
+    if (variantName && !VARIANTS[variantName]) {
+        try {
+            await ensureCataloguedVariantsLoaded([variantName]);
+        } catch (error) {
+            console.warn(`Failed to load the ${variantName} starting position`, error);
+            return;
+        }
+        if (!preview.isConnected || preview.dataset.chessgroundMounted === 'true') return;
+    }
     const variant = variantName ? VARIANTS[variantName] : undefined;
     if (!variant?.startFen) return;
 
@@ -84,7 +93,7 @@ export function mountCataloguedStartBoards(
     boardSettings.assetURL = assetURL;
     const previews = document.querySelectorAll<HTMLElement>('.catalogued-start-board-preview');
     if (!('IntersectionObserver' in window)) {
-        previews.forEach(preview => mountCataloguedStartBoard(preview, createChessground, bindResize));
+        previews.forEach(preview => { void mountCataloguedStartBoard(preview, createChessground, bindResize); });
         return;
     }
 
@@ -95,7 +104,7 @@ export function mountCataloguedStartBoards(
                 const preview = entry.target;
                 if (!(preview instanceof HTMLElement)) return;
                 observer.unobserve(preview);
-                mountCataloguedStartBoard(preview, createChessground, bindResize);
+                void mountCataloguedStartBoard(preview, createChessground, bindResize);
             });
         },
         { rootMargin: '256px 0px' },

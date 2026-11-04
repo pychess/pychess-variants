@@ -6,6 +6,7 @@ import { FairyStockfish } from 'ffish-es6';
 
 import { pasteView, recordImportFfishError } from '../client/paste';
 import { PyChessModel } from '../client/types';
+import { unregisterCataloguedVariant, VARIANTS } from '../client/variants';
 
 const GRAND_PGN = `[Event "PyChess rated game"]
 [Site "https://www.pychess.org/7sApQgpB"]
@@ -105,14 +106,14 @@ function makeModel(): PyChessModel {
     } as unknown as PyChessModel;
 }
 
-function triggerImport(model: PyChessModel, pgn: string): void {
+function triggerImport(model: PyChessModel, pgn: string): Promise<void> {
     document.body.innerHTML = '<textarea id="pgnpaste"></textarea>';
     const textarea = document.getElementById('pgnpaste') as HTMLTextAreaElement;
     textarea.value = pgn;
 
     const root: any = pasteView(model)[0];
-    const clickImport = root.children[0].children[2].children[0].data.on.click as () => void;
-    clickImport();
+    const clickImport = root.children[0].children[2].children[0].data.on.click as () => Promise<void>;
+    return clickImport();
 }
 
 function latestAlertText(): string {
@@ -181,13 +182,38 @@ test('imports CwDA PGN with the rules profile selected by its starting FEN', () 
     expect(document.querySelector('#alert-dialog')).toBeNull();
 });
 
-test('shows a clear error for unsupported Variant tags', () => {
+test('shows a clear error for unsupported Variant tags', async () => {
     const unsupportedVariantPgn = GRAND_PGN.replace('[Variant "Grand"]', '[Variant "NoSuchVariant"]');
 
-    triggerImport(makeModel(), unsupportedVariantPgn);
+    await triggerImport(makeModel(), unsupportedVariantPgn);
 
     expect(sentBodies).toHaveLength(0);
     expect(latestAlertText()).toBe('Unsupported PGN Variant tag: NoSuchVariant.');
+});
+
+test('imports a literal catalogue name ending in 960 using the fetched rules', async () => {
+    const originalFetch = globalThis.fetch;
+    const name = 'literal-pgn960';
+    const fetchMetadata = jest.fn(async () => ({
+        ok: true,
+        json: async () => ({ variants: [{
+            name, ini: `[${name}:chess]\nstalemateValue = draw\n`, baseVariant: 'chess',
+            startFen: VARIANTS.chess.startFen, width: 8, height: 8,
+            pieces: ['p', 'n', 'b', 'r', 'q', 'k'],
+        }] }),
+    } as Response));
+    globalThis.fetch = fetchMetadata as typeof fetch;
+    queueXhrResponse({ status: 200, body: { gameId: 'Named960' }, skipReadyState: true });
+    try {
+        await triggerImport(makeModel(), `[Variant "${name}"]\n[Result "*"]\n\n1. e4 *`);
+        expect(fetchMetadata).toHaveBeenCalledWith(`/api/catalogued-variants?name=${name}`);
+        expect(sentBodies).toHaveLength(1);
+        expect(String(sentBodies[0].get('Variant')).toLowerCase()).toBe(name);
+        expect(sentBodies[0].get('moves')).toBe('e2e4');
+    } finally {
+        globalThis.fetch = originalFetch;
+        unregisterCataloguedVariant(name);
+    }
 });
 
 test('shows mapped FEN validation errors', () => {

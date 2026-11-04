@@ -1,15 +1,12 @@
-import json
-
 import aiohttp_jinja2
 from aiohttp import web
 from catalogued.variants import catalogued_variant_client_doc_for_name
 from fairy import FairyBoard
-from json_utils import json_dumps
 from pychess_global_app_state_utils import get_app_state
 from typing_defs import ViewContext
 from variants import ALL_VARIANTS, is_catalogued_variant
 
-from views import get_user_context
+from views import add_catalogued_client_docs_context, get_user_context
 
 
 @aiohttp_jinja2.template("index.html")
@@ -29,10 +26,9 @@ async def editor(request: web.Request) -> ViewContext:
     if server_variant is None:
         server_variant = ALL_VARIANTS["chess"]
     elif catalogued_doc is not None:
-        catalogued_variants = json.loads(str(context.get("catalogued_variants") or "[]"))
-        if not any(item.get("name") == variant_key for item in catalogued_variants):
-            catalogued_variants.append(catalogued_doc)
-            context["catalogued_variants"] = json_dumps(catalogued_variants)
+        add_catalogued_client_docs_context(
+            get_app_state(request.app), user, context, [catalogued_doc]
+        )
 
     chess960 = bool(server_variant.chess960)
     variant = server_variant.uci_variant

@@ -5,7 +5,7 @@ import { _, ngettext } from './i18n';
 import { boardSettings } from './boardSettings';
 import { timeago } from './datetime';
 import { sizeMiniBoardHost } from './miniBoard';
-import { ensureCataloguedVariantsLoaded, getLastMoveFen, splitVariantKey, VARIANTS } from './variants';
+import { ensureCataloguedVariantKeysLoaded, getLastMoveFen, splitVariantKey, VARIANTS } from './variants';
 import { displayUsername } from './user';
 import { renderFollowButtonState } from './followButton';
 import { subscribeOngoingRealtime } from './ongoingRealtime';
@@ -306,10 +306,10 @@ class UserMiniWidget {
             if (seq !== this.requestSeq || this.anchorUser !== profileId) return;
             // Rating performances are built-in variants only.  A current casual
             // game, however, can be a catalogued variant and needs board metadata.
-            const playingVariant = payload.playing ? splitVariantKey(payload.playing.variant).base : null;
+            const playingVariant = payload.playing?.variant;
             if (playingVariant && !VARIANTS[playingVariant]) {
                 try {
-                    await ensureCataloguedVariantsLoaded([playingVariant]);
+                    await ensureCataloguedVariantKeysLoaded([playingVariant]);
                 } catch (error) {
                     console.warn('Failed to load catalogued variants for user mini', error);
                 }

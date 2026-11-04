@@ -3001,6 +3001,15 @@ export function ensureCataloguedVariantsLoaded(names: readonly string[]): Promis
     return Promise.all(requested.map(name => pendingCataloguedVariants.get(name))).then(() => undefined);
 }
 
+// An unknown key ending in 960 may be a literal catalogue name. Resolve that
+// exact name before treating the suffix as a shuffle flag.
+export async function ensureCataloguedVariantKeysLoaded(keys: readonly string[]): Promise<void> {
+    const unknown = [...new Set(keys)].filter(key => key && !VARIANTS[key]);
+    await ensureCataloguedVariantsLoaded(unknown);
+    const bases = unknown.filter(key => !VARIANTS[key]).map(key => splitVariantKey(key).base);
+    await ensureCataloguedVariantsLoaded(bases);
+}
+
 export function disabledVariantsForCreateMode(
     createMode: 'createGame' | 'playFriend' | 'playAI' | 'playBOT' | 'createHost',
     profileid: string,
