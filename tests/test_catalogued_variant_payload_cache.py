@@ -85,7 +85,9 @@ class SelectedCataloguedVariantsTestCase(unittest.TestCase):
         parent = {"name": "parent", "visibility": "private", "author": "owner"}
         child = {"name": "child", "baseVariant": "parent"}
         app_state = SimpleNamespace(catalogued_variants={"parent": parent})
-        with patch("catalogued.variants.documents._client_doc", side_effect=lambda doc: dict(doc)):
+        with patch(
+            "catalogued.variants.documents._client_doc", side_effect=lambda doc, **_: dict(doc)
+        ):
             self.assertEqual(
                 catalogued_variant_client_docs_with_dependencies(app_state, [child], "owner"),
                 [parent, child],
@@ -99,7 +101,9 @@ class SelectedCataloguedVariantsTestCase(unittest.TestCase):
         snapshot = {"name": "child", "baseVariant": "parent", "ini": "snapshot"}
         parent = {"name": "parent", "baseVariant": "child", "visibility": "public"}
         app_state = SimpleNamespace(catalogued_variants={"parent": parent})
-        with patch("catalogued.variants.documents._client_doc", side_effect=lambda doc: dict(doc)):
+        with patch(
+            "catalogued.variants.documents._client_doc", side_effect=lambda doc, **_: dict(doc)
+        ):
             self.assertEqual(
                 catalogued_variant_client_docs_with_dependencies(
                     app_state, [{"name": "child", "ini": "live"}, snapshot]

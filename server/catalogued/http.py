@@ -48,6 +48,7 @@ async def get_catalogued_variants(request: web.Request) -> web.Response:
                         if name in docs and documents._can_open_catalogued_doc(username, docs[name])
                     ],
                     username,
+                    favorite_names=favorite_names,
                 )
             }
         )

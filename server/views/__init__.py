@@ -274,6 +274,7 @@ def add_catalogued_client_docs_context(
             app_state,
             existing + client_docs,
             None if getattr(user, "anon", False) else user.username,
+            favorite_names=favorites,
         )
     )
 

@@ -130,7 +130,9 @@ def catalogued_variants_for_client(
         if documents._can_preload_catalogued_doc(username, doc)
     ]
     return (
-        catalogued_variant_client_docs_with_dependencies(app_state, client_docs, username)
+        catalogued_variant_client_docs_with_dependencies(
+            app_state, client_docs, username, favorite_names=favorite_names
+        )
         if names is not None
         else client_docs
     )
@@ -140,6 +142,8 @@ def catalogued_variant_client_docs_with_dependencies(
     app_state: Any,
     client_docs: list[models.CataloguedVariantClientDocument],
     username: str | None = None,
+    *,
+    favorite_names: set[str] | None = None,
 ) -> list[models.CataloguedVariantClientDocument]:
     """Order authorized roots and accessible catalogue ancestors before their children.
 
@@ -165,7 +169,7 @@ def catalogued_variant_client_docs_with_dependencies(
                 if stored_parent is not None and documents._can_open_catalogued_doc(
                     username, stored_parent
                 ):
-                    parent = documents._client_doc(stored_parent)
+                    parent = documents._client_doc(stored_parent, favorite_names=favorite_names)
             if parent is not None:
                 visit(parent, depth + 1)
         result.append(doc)

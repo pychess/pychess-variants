@@ -3,12 +3,15 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
-from catalogued.http import set_catalogued_variant_favorite
+from catalogued.http import get_catalogued_variants, set_catalogued_variant_favorite
 from catalogued.models import CATALOGUED_VARIANT_COLLECTION
 from catalogued.repository import (
     _remove_catalogued_variant_favorites,
     _rename_catalogued_variant_favorites,
 )
+from catalogued.variants import catalogued_variants_for_client
+from multidict import MultiDict
+from views import add_catalogued_client_docs_context
 
 
 class FakeUsers:
@@ -115,6 +118,63 @@ class CataloguedVariantFavoriteTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(app_state.users.user.catalogued_variant_favorites, set())
         update = variant_collection.find_one_and_update.await_args.args[1]
         self.assertEqual(update[0]["$set"]["favoriteCount"]["$max"][0], 0)
+
+
+class CataloguedVariantDependencyFavoriteTestCase(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        sample = {
+            "startFen": "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+            "width": 8,
+            "height": 8,
+            "pieces": ["k"],
+            "visibility": "public",
+        }
+        self.parent = {**sample, "name": "favorite-parent", "baseVariant": "chess"}
+        self.child = {**sample, "name": "favorite-child", "baseVariant": "favorite-parent"}
+        self.user = SimpleNamespace(
+            username="alice", anon=False, catalogued_variant_favorites={"favorite-parent"}
+        )
+        self.app_state = SimpleNamespace(
+            catalogued_variants={
+                "favorite-parent": self.parent,
+                "favorite-child": self.child,
+            },
+            users=FakeUsers(self.user),
+        )
+
+    async def test_named_api_preserves_favorite_on_an_inherited_parent(self):
+        request = SimpleNamespace(
+            app=object(), rel_url=SimpleNamespace(query=MultiDict({"name": "favorite-child"}))
+        )
+        with (
+            patch("catalogued.http.get_app_state", return_value=self.app_state),
+            patch("catalogued.http._optional_human_username", AsyncMock(return_value="alice")),
+        ):
+            response = await get_catalogued_variants(request)
+
+        parent, child = json.loads(response.text)["variants"]
+        self.assertEqual(parent["name"], "favorite-parent")
+        self.assertTrue(parent["favorite"])
+        self.assertEqual(child["name"], "favorite-child")
+        self.assertNotIn("favorite", child)
+
+    def test_selective_preloads_preserve_inherited_favorites_per_viewer(self):
+        for favorites in ({"favorite-parent"}, set()):
+            with self.subTest(favorites=favorites):
+                parent, child = catalogued_variants_for_client(
+                    self.app_state, "alice", favorite_names=favorites, names={"favorite-child"}
+                )
+                self.assertEqual(parent.get("favorite", False), bool(favorites))
+                self.assertNotIn("favorite", child)
+        self.assertNotIn("favorite", self.parent)
+
+    def test_html_context_preserves_favorite_on_an_inherited_parent(self):
+        context = {}
+        add_catalogued_client_docs_context(self.app_state, self.user, context, [self.child])
+        parent, child = json.loads(context["catalogued_variants"])
+        self.assertTrue(parent["favorite"])
+        self.assertNotIn("favorite", child)
+        self.assertNotIn("favorite", self.parent)
 
 
 class CataloguedVariantFavoriteCleanupTestCase(unittest.IsolatedAsyncioTestCase):
