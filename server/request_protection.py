@@ -5,13 +5,14 @@ from collections import deque
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from time import monotonic
+from typing import NoReturn
 
 import aiohttp_session
 from aiohttp import web
 from client_ip import get_client_ip
 from const import ANON_PREFIX
 from request_utils import request_log_fingerprint, safe_log_value
-from settings import LOCALHOST, URI
+from settings import ANON_HTML_MAX_INFLIGHT, ANON_HTML_REQUESTS_PER_MINUTE, LOCALHOST, URI
 from typedefs import (
     REQUEST_RATE_LIMIT_BUCKET_KEY,
     request_protection_state_key,
@@ -54,6 +55,7 @@ class SlidingWindowLimiter:
 
     def __init__(self, max_keys: int = 20_000, cleanup_interval_seconds: float = 15.0) -> None:
         self._events: dict[str, deque[float]] = {}
+        self._expires_at: dict[str, float] = {}
         self._max_keys = max_keys
         self._cleanup_interval_seconds = cleanup_interval_seconds
         self._last_cleanup = 0.0
@@ -65,7 +67,7 @@ class SlidingWindowLimiter:
         events = self._events.get(key)
         if events is None:
             if len(self._events) >= self._max_keys:
-                self._cleanup(now, force=True)
+                self._cleanup(now)
                 # If still full, fail open for this request.
                 # Keeping gameplay available is preferable to a memory-driven outage.
                 if len(self._events) >= self._max_keys:
@@ -81,26 +83,20 @@ class SlidingWindowLimiter:
             return False
 
         events.append(now)
+        self._expires_at[key] = now + window_seconds
         return True
 
     def _cleanup_if_needed(self, now: float) -> None:
         if now - self._last_cleanup >= self._cleanup_interval_seconds:
-            self._cleanup(now, force=False)
+            self._cleanup(now)
 
-    def _cleanup(self, now: float, force: bool) -> None:
-        # Slow-path cleanup: drop empty/stale buckets.
+    def _cleanup(self, now: float) -> None:
+        # Cleanup cadence is not the rate window. Removing a bucket after only
+        # 15 idle seconds would silently reset a 30/60/120-second budget.
         for key, events in tuple(self._events.items()):
-            if not events:
+            if not events or self._expires_at.get(key, now) <= now:
                 del self._events[key]
-                continue
-            if force:
-                # Forced cleanup is used only when key-map reached capacity.
-                # Use a broad stale cutoff to recover memory quickly.
-                stale_cutoff = now - 120.0
-            else:
-                stale_cutoff = now - self._cleanup_interval_seconds
-            if events[-1] <= stale_cutoff:
-                del self._events[key]
+                self._expires_at.pop(key, None)
         self._last_cleanup = now
 
 
@@ -133,6 +129,67 @@ class RequestProtectionState:
         "anon_profile_global", max_requests=120, window_seconds=60.0
     )
     _ANON_PROFILE_MAX_INFLIGHT = 30
+    _ANON_HTML_IP_LIMIT = RouteRateLimit("anon_html", max_requests=30, window_seconds=30.0)
+    _ANON_HTML_GLOBAL_LIMIT = RouteRateLimit(
+        "anon_html_global", max_requests=ANON_HTML_REQUESTS_PER_MINUTE, window_seconds=60.0
+    )
+    _ANON_HTML_MAX_INFLIGHT = ANON_HTML_MAX_INFLIGHT
+    # Match resolved route templates, not Accept/UA/Referer headers or arbitrary
+    # URL prefixes. APIs, static files, auth, streams, game views, and live
+    # tournament/simul/Study pages must not compete for this browsing budget.
+    _ANON_HTML_ROUTES = frozenset(
+        {
+            "/",
+            "/about",
+            "/authors",
+            "/contact",
+            "/terms",
+            "/privacy",
+            "/faq",
+            "/stats",
+            "/players",
+            "/allplayers",
+            "/calendar",
+            "/features",
+            "/friendly-sites",
+            "/forum",
+            "/blogs",
+            "/video",
+            "/variants",
+            "/tournaments",
+            "/simul",
+            "/simuls",
+            "/team",
+            "/patron",
+            "/patron/thanks",
+            "/level8win",
+            "/memory",
+            "/practice",
+            "/practice/{variant}",
+            "/study",
+            "/study/all",
+            "/study/member",
+            "/study/likes",
+            "/study/public",
+            "/study/private",
+            "/study/search",
+            "/study/topic",
+            "/study/topic/{topic}",
+            "/study/by/{username}",
+        }
+    )
+    _ANON_HTML_ROUTE_PREFIXES = (
+        "/analysis/",
+        "/editor/",
+        "/variants/",
+        "/blogs/",
+        "/video/",
+        "/forum/",
+        "/players/",
+        "/page/",
+        "/team/",
+        "/tournaments/",
+    )
     _NEW_ANON_IDENTITY_LIMIT = RouteRateLimit(
         "new_anon_identity", max_requests=10, window_seconds=1.0
     )
@@ -183,6 +240,10 @@ class RequestProtectionState:
         self._last_block_log_cleanup = 0.0
         self._local_dev_mode = URI == LOCALHOST
         self._anonymous_profile_inflight = 0
+        self._anonymous_html_inflight = 0
+        # A fixed global deque cannot fail open when per-IP keys reach capacity,
+        # and its full window is preserved even after an idle cleanup interval.
+        self._anonymous_html_events: deque[float] = deque()
 
     def classify(self, path: str) -> RouteRateLimit | None:
         # Keep checks cheap and explicit; this runs on every request.
@@ -276,6 +337,41 @@ class RequestProtectionState:
             and (session_user is None or session_user.startswith(ANON_PREFIX))
         )
 
+    def is_public_browsing_request(self, request: web.Request) -> bool:
+        if request.method not in {"GET", "HEAD"}:
+            return False
+        resource = request.match_info.route.resource
+        if resource is None:
+            return False
+        route = resource.canonical
+        return route in self._ANON_HTML_ROUTES or route.startswith(self._ANON_HTML_ROUTE_PREFIXES)
+
+    def enter_anonymous_html(self, client: str | None = None) -> tuple[bool, str | None]:
+        if self._anonymous_html_inflight >= self._ANON_HTML_MAX_INFLIGHT:
+            return False, "concurrency"
+
+        now = monotonic()
+        route_limit = self._ANON_HTML_GLOBAL_LIMIT
+        cutoff = now - route_limit.window_seconds
+        events = self._anonymous_html_events
+        while events and events[0] <= cutoff:
+            events.popleft()
+        if len(events) >= route_limit.max_requests:
+            return False, "rate"
+        # Check the fixed-size global budget first. A distributed flood already
+        # rejected there must not allocate a per-IP bucket or trigger map cleanup.
+        if client is not None and not self.allow(
+            f"{self._ANON_HTML_IP_LIMIT.name}:{client}", self._ANON_HTML_IP_LIMIT
+        ):
+            return False, "ip_rate"
+        events.append(now)
+        self._anonymous_html_inflight += 1
+        return True, None
+
+    def leave_anonymous_html(self) -> None:
+        if self._anonymous_html_inflight > 0:
+            self._anonymous_html_inflight -= 1
+
     def enter_anonymous_profile(self) -> tuple[bool, str | None]:
         if self._anonymous_profile_inflight >= self._ANON_PROFILE_MAX_INFLIGHT:
             return False, "concurrency"
@@ -324,6 +420,42 @@ def enforce_new_anonymous_identity_limit(request: web.Request) -> None:
     raise web.HTTPTooManyRequests(headers={"Retry-After": "1"})
 
 
+def _enforce_route_rate_limit(
+    request: web.Request, state: RequestProtectionState, client: str, route_limit: RouteRateLimit
+) -> None:
+    _mark_rate_limit_bucket(request, route_limit.name)
+    bucket = f"{route_limit.name}:{client}"
+    if state.allow(bucket, route_limit):
+        return
+    _reject_route_rate_limit(request, state, client, route_limit)
+
+
+def _reject_route_rate_limit(
+    request: web.Request, state: RequestProtectionState, client: str, route_limit: RouteRateLimit
+) -> NoReturn:
+    bucket = f"{route_limit.name}:{client}"
+    if state.should_log_block(bucket):
+        user_agent, referer, http_version, session_cookie = request_log_fingerprint(request)
+        log.warning(
+            "rate-limited %s from %s at path %s (%s req / %ss) "
+            "ua=%r ref=%r http=%s session_cookie=%s bucket=%s",
+            route_limit.name,
+            safe_log_value(client),
+            safe_log_value(request.path),
+            route_limit.max_requests,
+            route_limit.window_seconds,
+            user_agent,
+            referer,
+            http_version,
+            session_cookie,
+            route_limit.name,
+        )
+    retry_after = max(1, int(route_limit.window_seconds))
+    raise web.HTTPTooManyRequests(
+        headers={"Retry-After": str(retry_after), "Cache-Control": "no-store"}
+    )
+
+
 @web.middleware
 async def request_protection_middleware(
     request: web.Request, handler: Handler
@@ -357,64 +489,63 @@ async def request_protection_middleware(
         raise web.HTTPNotFound()
 
     route_limit = state.classify(path)
-    if route_limit is None:
+    browsing_request = state.is_public_browsing_request(request)
+    if route_limit is None and not browsing_request:
         return await handler(request)
 
-    _mark_rate_limit_bucket(request, route_limit.name)
-    bucket = f"{route_limit.name}:{client}"
-    if not state.allow(bucket, route_limit):
-        if state.should_log_block(bucket):
-            user_agent, referer, http_version, session_cookie = request_log_fingerprint(request)
-            log.warning(
-                "rate-limited %s from %s at path %s (%s req / %ss) "
-                "ua=%r ref=%r http=%s session_cookie=%s bucket=%s",
-                route_limit.name,
-                safe_log_value(client),
-                safe_log_value(path),
-                route_limit.max_requests,
-                route_limit.window_seconds,
-                user_agent,
-                referer,
-                http_version,
-                session_cookie,
-                route_limit.name,
-            )
-        retry_after = max(1, int(route_limit.window_seconds))
-        raise web.HTTPTooManyRequests(headers={"Retry-After": str(retry_after)})
+    if route_limit is not None:
+        _enforce_route_rate_limit(request, state, client, route_limit)
 
     session = await aiohttp_session.get_session(request)
     session_user_value = session.get("user_name")
     session_user = session_user_value if isinstance(session_user_value, str) else None
-    if not state.is_anonymous_profile_request(request, session_user):
+    if state.is_anonymous_profile_request(request, session_user):
+        global_limit = state._ANON_PROFILE_GLOBAL_LIMIT
+        admitted, reason = state.enter_anonymous_profile()
+        inflight = state._anonymous_profile_inflight
+        max_inflight = state._ANON_PROFILE_MAX_INFLIGHT
+        leave = state.leave_anonymous_profile
+        kind = "profile"
+    elif browsing_request and (session_user is None or session_user.startswith(ANON_PREFIX)):
+        _mark_rate_limit_bucket(request, state._ANON_HTML_IP_LIMIT.name)
+        global_limit = state._ANON_HTML_GLOBAL_LIMIT
+        admitted, reason = state.enter_anonymous_html(client)
+        if reason == "ip_rate":
+            _reject_route_rate_limit(request, state, client, state._ANON_HTML_IP_LIMIT)
+        inflight = state._anonymous_html_inflight
+        max_inflight = state._ANON_HTML_MAX_INFLIGHT
+        leave = state.leave_anonymous_html
+        kind = "HTML"
+    else:
         return await handler(request)
 
-    _mark_rate_limit_bucket(request, state._ANON_PROFILE_GLOBAL_LIMIT.name)
-    admitted, reason = state.enter_anonymous_profile()
+    _mark_rate_limit_bucket(request, global_limit.name)
     if not admitted:
-        aggregate_bucket = f"{state._ANON_PROFILE_GLOBAL_LIMIT.name}:{reason}"
+        aggregate_bucket = f"{global_limit.name}:{reason}"
         if state.should_log_block(aggregate_bucket):
             user_agent, referer, http_version, session_cookie = request_log_fingerprint(request)
             log.warning(
-                "rate-limited anonymous profile traffic reason=%s from %s at path %s "
+                "rate-limited anonymous %s traffic reason=%s from %s at path %s "
                 "(inflight=%s max_inflight=%s) ua=%r ref=%r http=%s "
                 "session_cookie=%s bucket=%s",
+                kind,
                 reason,
                 safe_log_value(client),
                 safe_log_value(path),
-                state._anonymous_profile_inflight,
-                state._ANON_PROFILE_MAX_INFLIGHT,
+                inflight,
+                max_inflight,
                 user_agent,
                 referer,
                 http_version,
                 session_cookie,
-                state._ANON_PROFILE_GLOBAL_LIMIT.name,
+                global_limit.name,
             )
-        retry_after = (
-            max(1, int(state._ANON_PROFILE_GLOBAL_LIMIT.window_seconds)) if reason == "rate" else 1
+        retry_after = max(1, int(global_limit.window_seconds)) if reason == "rate" else 1
+        raise web.HTTPTooManyRequests(
+            headers={"Retry-After": str(retry_after), "Cache-Control": "no-store"}
         )
-        raise web.HTTPTooManyRequests(headers={"Retry-After": str(retry_after)})
 
     try:
         return await handler(request)
     finally:
-        state.leave_anonymous_profile()
+        leave()
