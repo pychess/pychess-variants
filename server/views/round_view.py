@@ -9,7 +9,12 @@ from tournament.tournaments import get_tournament_name, load_tournament
 from typing_defs import ViewContext
 from utils import load_game, simul_games
 
-from views import add_corr_games_context, add_game_context, get_user_context
+from views import (
+    add_catalogued_variant_context,
+    add_corr_games_context,
+    add_game_context,
+    get_user_context,
+)
 
 if TYPE_CHECKING:
     from game import Game
@@ -33,6 +38,7 @@ async def round_view(request: web.Request) -> ViewContext:
     context["view_css"] = "round.css"
 
     add_game_context(game, ply, user, context)
+    await add_catalogued_variant_context(app_state, user, context, game.variant, game=game)
 
     context["ct"] = json_dumps(game.crosstable)
 

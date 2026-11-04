@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Mapping
+from collections.abc import Collection, Mapping
 from datetime import UTC, datetime
 from typing import Any
 
@@ -114,12 +114,18 @@ def catalogued_variants_for_client(
     app_state: Any,
     username: str | None = None,
     favorite_names: set[str] | None = None,
+    *,
+    names: Collection[str] | None = None,
 ) -> list[models.CataloguedVariantClientDocument]:
     docs = getattr(app_state, "catalogued_variants", {})
+    # A selective caller must not construct client documents for every entry.
+    selected_docs = (
+        docs.values() if names is None else (docs[name] for name in set(names) if name in docs)
+    )
     return [
         documents._client_doc(doc, favorite_names=favorite_names)
         for doc in sorted(
-            docs.values(), key=lambda item: str(item.get("displayName", item["name"])).casefold()
+            selected_docs, key=lambda item: str(item.get("displayName", item["name"])).casefold()
         )
         if documents._can_preload_catalogued_doc(username, doc)
     ]

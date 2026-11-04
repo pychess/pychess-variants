@@ -147,8 +147,11 @@ export function challengeView() {
             sound.newChallenge();
         }
         redraw();
-        if (challenges.some(challenge => !VARIANTS[challenge.variant])) {
-            void ensureCataloguedVariantsLoaded()
+        const unknownVariants = challenges
+            .map(challenge => challenge.variant)
+            .filter(variant => !VARIANTS[variant]);
+        if (unknownVariants.length) {
+            void ensureCataloguedVariantsLoaded(unknownVariants)
                 .then(() => redraw())
                 .catch(error => console.warn('Failed to load challenge variant metadata', error));
         }

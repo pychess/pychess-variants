@@ -349,6 +349,76 @@ class RequestLobbyTestCase(AioHTTPTestCase):
         self.assertEqual(resp.status, 200)
         self.assertIn("data-catalogued-variants=", await resp.text())
 
+    async def test_anonymous_pages_do_not_preload_every_public_variant(self):
+        import html
+        import json
+        import re
+
+        app_state = get_app_state(self.app)
+        app_state.catalogued_variants["public-sample"] = {
+            "name": "public-sample",
+            "displayName": "Public Sample",
+            "ini": "[public-sample:chess]\n",
+            "baseVariant": "chess",
+            "startFen": "8/8/8/8/8/8/8/8 w - - 0 1",
+            "width": 8,
+            "height": 8,
+            "pieces": ["k"],
+            "visibility": "public",
+            "enabled": True,
+            "archived": False,
+        }
+        for path in ("/", "/variants/community", "/games"):
+            with self.subTest(path=path):
+                resp = await self.client.request("GET", path)
+                self.assertEqual(resp.status, 200)
+                match = re.search(r'data-catalogued-variants="([^"]*)"', await resp.text())
+                if match is not None:
+                    self.assertEqual(json.loads(html.unescape(match.group(1))), [])
+
+    async def test_named_catalogue_api_returns_only_accessible_variants(self):
+        app_state = get_app_state(self.app)
+        sample = {
+            "name": "public-sample",
+            "displayName": "Public Sample",
+            "ini": "[public-sample:chess]\n",
+            "baseVariant": "chess",
+            "startFen": "8/8/8/8/8/8/8/8 w - - 0 1",
+            "width": 8,
+            "height": 8,
+            "pieces": ["k"],
+            "enabled": True,
+            "archived": False,
+        }
+        app_state.catalogued_variants["public-sample"] = {**sample, "visibility": "public"}
+        app_state.catalogued_variants["private-sample"] = {
+            **sample,
+            "name": "private-sample",
+            "visibility": "private",
+            "author": "someone",
+        }
+        app_state.catalogued_variants["unlisted-sample"] = {
+            **sample,
+            "name": "unlisted-sample",
+            "visibility": "unlisted",
+            "author": "someone",
+        }
+        url = (
+            "/api/catalogued-variants?name=private-sample"
+            "&name=public-sample&name=unlisted-sample&name=public-sample"
+        )
+        resp = await self.client.request("GET", url)
+        self.assertEqual(resp.status, 200)
+        payload = await resp.json()
+        self.assertEqual(
+            [item["name"] for item in payload["variants"]],
+            ["public-sample", "unlisted-sample"],
+        )
+        resp = await self.client.request(
+            "GET", "/api/catalogued-variants?" + "&".join("name=sample" for _ in range(33))
+        )
+        self.assertEqual(resp.status, 400)
+
     async def test_analysis_960_route_normalizes_variant_and_chess960(self):
         resp = await self.client.request("GET", "/analysis/chess960")
         self.assertEqual(resp.status, 200)

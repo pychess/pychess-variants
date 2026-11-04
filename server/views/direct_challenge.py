@@ -4,7 +4,7 @@ from header_challenges import challenge_participants, cleanup_expired_direct_cha
 from pychess_global_app_state_utils import get_app_state
 from typing_defs import ViewContext
 
-from views import get_user_context
+from views import add_catalogued_variant_context, get_user_context
 
 
 @aiohttp_jinja2.template("index.html")
@@ -28,6 +28,7 @@ async def direct_challenge(request: web.Request) -> ViewContext:
         return context
 
     context["variant"] = seek.variant
+    await add_catalogued_variant_context(app_state, user, context, seek.variant)
     context["chess960"] = seek.chess960
     context["rated"] = seek.rated
     context["corr"] = seek.day > 0

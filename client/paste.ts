@@ -4,7 +4,7 @@ import { FairyStockfish } from 'ffish-es6';
 
 import { _ } from './i18n';
 import { variantsIni } from './variantsIni';
-import { allVariantsIni } from './variants';
+import { allVariantsIni, ensureCataloguedVariantsLoaded } from './variants';
 import { cwdaEngineVariant, VARIANTS } from './variants';
 import { alertDialog } from './alertDialog';
 import { parseKif, resultString } from '../client/kif';
@@ -24,7 +24,7 @@ export function recordImportFfishError(text: string): void {
 export function pasteView(model: PyChessModel): VNode[] {
     const ffish: FairyStockfish = model.ffish;
 
-    const importGame = (model: PyChessModel, ffish: any) => {
+    const importGame = async (model: PyChessModel, ffish: any) => {
         const e = document.getElementById('pgnpaste') as HTMLInputElement;
         //console.log('PGN:', e.value);
         let pgn = e.value;
@@ -65,6 +65,20 @@ export function pasteView(model: PyChessModel): VNode[] {
         }
 
         if (ffish !== null) {
+            let namedVariant: string | undefined;
+            try {
+                const tag = parseFirstPgnGame(pgn)?.tags['Variant'];
+                if (tag) namedVariant = parsePgnVariantTag(tag).variant;
+            } catch {
+                // Keep malformed-PGN reporting in the existing import validation.
+            }
+            if (namedVariant && !VARIANTS[namedVariant]) {
+                try {
+                    await ensureCataloguedVariantsLoaded([namedVariant]);
+                } catch (error) {
+                    console.warn('Failed to load PGN variant metadata', error);
+                }
+            }
             ffish.loadVariantConfig(allVariantsIni(variantsIni));
             const XHR = new XMLHttpRequest();
             const FD = new FormData();

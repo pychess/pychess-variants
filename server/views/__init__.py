@@ -11,8 +11,8 @@ import aiohttp_session
 from aiohttp import web
 from catalogued.variants import (
     catalogued_variant_client_doc_for_game,
+    catalogued_variant_client_doc_for_name,
     catalogued_variants_for_client,
-    public_catalogued_variants_json,
 )
 from const import (
     ANON_PREFIX,
@@ -47,7 +47,7 @@ from settings import ADMINS, SIMULING
 from typing_defs import UserDocument, ViewContext
 from user import User, mint_guest_user
 from utils import corr_games, load_game_from_doc
-from variants import ALL_VARIANTS
+from variants import ALL_VARIANTS, CataloguedServerVariant, is_catalogued_variant
 
 from lang import LOCALE
 
@@ -242,20 +242,47 @@ async def get_user_context(
         else "",
     }
     if include_catalogued_variants:
-        # Most HTML pages (and all the JSON/mutation handlers using this helper)
-        # do not need the full client-side variant registry.
-        context["catalogued_variants"] = (
-            public_catalogued_variants_json(app_state)
-            if user.anon
-            else json_dumps(
-                catalogued_variants_for_client(
-                    app_state,
-                    user.username,
-                    favorite_names=(user.catalogued_variant_favorites if not user.bot else None),
-                )
+        # The variant selector lists favorites, not the entire public catalogue.
+        # Routes that display a particular variant add that definition separately.
+        favorites = user.catalogued_variant_favorites if not user.anon and not user.bot else set()
+        context["catalogued_variants"] = json_dumps(
+            catalogued_variants_for_client(
+                app_state,
+                None if user.anon else user.username,
+                favorite_names=favorites,
+                names=favorites,
             )
         )
     return (user, context)
+
+
+async def add_catalogued_variant_context(
+    app_state: Any,
+    user: User,
+    context: ViewContext,
+    name: str,
+    *,
+    game: Game | GameBug | None = None,
+) -> None:
+    """Include only the variant needed by this view, including a player's old game."""
+    if not is_catalogued_variant(name) and not (
+        game is not None
+        and isinstance(getattr(game, "server_variant", None), CataloguedServerVariant)
+    ):
+        return
+
+    existing = json.loads(str(context.get("catalogued_variants") or "[]"))
+    if any(item.get("name") == name for item in existing):
+        return
+
+    doc = catalogued_variant_client_doc_for_name(
+        app_state, name, None if user.anon else user.username
+    )
+    if doc is None and game is not None:
+        doc = await catalogued_variant_client_doc_for_game(app_state, game, user.username)
+    if doc is not None:
+        existing.append(doc)
+        context["catalogued_variants"] = json_dumps(existing)
 
 
 async def _ensure_user_correspondence_games_loaded(app_state: Any, user: User) -> None:

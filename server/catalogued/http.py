@@ -23,23 +23,45 @@ from . import assets, builtin_data, documents, models, repository, validation, v
 
 async def get_catalogued_variants(request: web.Request) -> web.Response:
     app_state = get_app_state(request.app)
+    # Repeated ?name=... parameters let widgets request exactly the variants
+    # they encounter. Bound the list to avoid rebuilding the entire catalogue
+    # through a large query supplied by an anonymous caller.
+    names = request.rel_url.query.getall("name", [])
+    if names and (len(names) > 32 or any(not name or len(name) > 100 for name in names)):
+        raise web.HTTPBadRequest(text="Invalid catalogued variant names")
     username = await _optional_human_username(request)
+    if names:
+        user = await app_state.users.get(username) if username is not None else None
+        favorite_names = (
+            validation._clean_favorite_names(user.catalogued_variant_favorites)
+            if user is not None
+            else set()
+        )
+        docs = getattr(app_state, "catalogued_variants", {})
+        return json_response(
+            {
+                "variants": [
+                    documents._client_doc(docs[name], favorite_names=favorite_names)
+                    for name in dict.fromkeys(names)
+                    if name in docs and documents._can_open_catalogued_doc(username, docs[name])
+                ]
+            }
+        )
+
+    # Compatibility for clients running an older JS bundle during deployment.
+    # New code never requests this full-catalogue fallback.
     if username is None:
-        # Reuse the same public JSON sent to anonymous HTML views.
         return web.Response(
             text='{"variants":' + variants.public_catalogued_variants_json(app_state) + "}",
             content_type="application/json",
         )
-    favorite_names: set[str] | None = None
-    if username is not None:
-        user = await app_state.users.get(username)
-        favorite_names = validation._clean_favorite_names(
-            getattr(user, "catalogued_variant_favorites", set())
-        )
+    user = await app_state.users.get(username)
     return json_response(
         {
             "variants": variants.catalogued_variants_for_client(
-                app_state, username, favorite_names=favorite_names
+                app_state,
+                username,
+                favorite_names=validation._clean_favorite_names(user.catalogued_variant_favorites),
             )
         }
     )

@@ -10,7 +10,7 @@ import { timeControlStr } from './view';
 import { PyChessModel } from './types';
 import { aiDisplayName, aiLevel } from './result';
 import { sizeMiniBoardHost } from './miniBoard';
-import { getLastMoveFen, VARIANTS } from './variants';
+import { ensureCataloguedVariantsLoaded, getLastMoveFen, VARIANTS } from './variants';
 import { subscribeOngoingRealtime } from './ongoingRealtime';
 import { displayUsername } from './user';
 import { _ } from './i18n';
@@ -38,6 +38,9 @@ let gamesRealtime: ReturnType<typeof subscribeOngoingRealtime> | null = null;
 
 function gameView(games: Games, game: Game) {
     const variant = VARIANTS[game.variant];
+    if (!variant) {
+        return h('a', { attrs: { href: '/' + game.gameId } }, `${game.variant}: ${game.w} – ${game.b}`);
+    }
     let lastMove, fen;
     [lastMove, fen] = getLastMoveFen(variant.name, game.lastMove, game.fen);
     const tc = timeControlStr(game.base, game.inc, game.byoyomi, game.day);
@@ -104,9 +107,17 @@ export function renderGames(model: PyChessModel): VNode[] {
     const xmlhttp = new XMLHttpRequest();
     const url = '/api/games' + (variant !== '' ? `/${variant}` : '');
 
-    xmlhttp.onreadystatechange = function () {
+    xmlhttp.onreadystatechange = async function () {
         if (this.readyState === 4 && this.status === 200) {
-            const response = JSON.parse(this.responseText);
+            const response = JSON.parse(this.responseText) as Game[];
+            const missing = [...new Set(response.map(game => game.variant))].filter(name => !VARIANTS[name]);
+            if (missing.length) {
+                try {
+                    await ensureCataloguedVariantsLoaded(missing);
+                } catch (error) {
+                    console.warn('Failed to load game variant metadata', error);
+                }
+            }
             const oldVNode = document.getElementById('games');
             const games: Games = new Map();
             if (oldVNode instanceof Element) {

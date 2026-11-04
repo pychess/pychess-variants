@@ -15,6 +15,7 @@ import {
     devVariants,
     disabledVariantsForCreateMode,
     enabledVariants,
+    ensureCataloguedVariantsLoaded,
     isCataloguedVariant,
     unsupportedAiVariants,
     VARIANTS,
@@ -137,6 +138,7 @@ export class LobbyController {
     validGameData: boolean;
     readyState: number;
     seeks: Seek[];
+    seeksRevision = 0;
     streams: VNode | HTMLElement;
     spotlights: VNode | HTMLElement;
     timeline: LiveTimelinePanel | null;
@@ -1502,7 +1504,7 @@ export class LobbyController {
 
         const variant = VARIANTS[spotlight.variant];
         const chess960 = spotlight.chess960;
-        const dataIcon = variant.icon(chess960);
+        const dataIcon = variant?.icon(chess960) ?? CATALOGUED_VARIANT_ICON;
         const lang = languageSettings.value;
         const name = spotlight.names[lang] ?? spotlight.names['en'];
 
@@ -1883,9 +1885,18 @@ export class LobbyController {
         if (!this.anon) this.renderAutoPairingActions(false);
     }
 
-    private onMsgGetSeeks(msg: MsgGetSeeks) {
+    private async onMsgGetSeeks(msg: MsgGetSeeks) {
         this.seeks = msg.seeks;
-        // console.log("!!!! got get_seeks msg:", msg);
+        const revision = ++this.seeksRevision;
+        const missing = msg.seeks.map(seek => seek.variant).filter(name => !VARIANTS[name]);
+        if (missing.length) {
+            try {
+                await ensureCataloguedVariantsLoaded(missing);
+            } catch (error) {
+                console.warn('Failed to load seek variant metadata', error);
+            }
+        }
+        if (revision !== this.seeksRevision) return;
         const visibleSeeks = msg.seeks.filter(seek => this.isVariantAllowed(seek.variant));
 
         const oldSeeks = document.querySelector('.seek-container table.seeks') as Element;
@@ -1973,8 +1984,18 @@ export class LobbyController {
         this.winners = patch(this.winners, this.winnersView(msg));
     }
 
-    private onMsgSpotlights(msg: MsgSpotlights) {
+    private async onMsgSpotlights(msg: MsgSpotlights) {
         const items = msg.items.filter(spotlight => this.spotlightAllowed(spotlight));
+        const missing = items.flatMap(item =>
+            item.kind === 'simul' || VARIANTS[item.variant] ? [] : [item.variant],
+        );
+        if (missing.length) {
+            try {
+                await ensureCataloguedVariantsLoaded(missing);
+            } catch (error) {
+                console.warn('Failed to load spotlight variant metadata', error);
+            }
+        }
         this.spotlights = patch(
             this.spotlights,
             h('div#spotlights', [
@@ -1987,7 +2008,7 @@ export class LobbyController {
         );
     }
 
-    private onMsgTvGame(msg: TvGame) {
+    private async onMsgTvGame(msg: TvGame) {
         if (!this.isVariantAllowed(msg.variant)) {
             this.tvGameId = '';
             this.renderEmptyTvGame();
@@ -1995,6 +2016,14 @@ export class LobbyController {
         }
         this.tvGame = msg;
         this.renderEmptyTvGame();
+        if (!VARIANTS[msg.variant]) {
+            try {
+                await ensureCataloguedVariantsLoaded([msg.variant]);
+            } catch (error) {
+                console.warn('Failed to load TV variant metadata', error);
+            }
+        }
+        if (this.tvGame !== msg || !VARIANTS[msg.variant]) return;
         this.renderTvGame();
     }
 

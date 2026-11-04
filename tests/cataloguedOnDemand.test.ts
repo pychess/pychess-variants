@@ -11,7 +11,8 @@ const name = 'on-demand-catalogue-test';
 test('unknown variants can be loaded once when a shared widget needs them', async () => {
     const originalFetch = globalThis.fetch;
     let requests = 0;
-    globalThis.fetch = (async () => {
+    globalThis.fetch = (async (url: RequestInfo | URL) => {
+        expect(String(url)).toBe(`/api/catalogued-variants?name=${name}`);
         requests += 1;
         return {
             ok: true,
@@ -30,7 +31,10 @@ test('unknown variants can be loaded once when a shared widget needs them', asyn
         } as Response;
     }) as typeof fetch;
     try {
-        await Promise.all([ensureCataloguedVariantsLoaded(), ensureCataloguedVariantsLoaded()]);
+        await Promise.all([
+            ensureCataloguedVariantsLoaded([name]),
+            ensureCataloguedVariantsLoaded([name]),
+        ]);
         expect(requests).toBe(1);
         expect(VARIANTS[name]).toBeDefined();
     } finally {

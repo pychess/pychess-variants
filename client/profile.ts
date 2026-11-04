@@ -5,7 +5,7 @@ import * as cg from 'chessgroundx/types';
 
 import { _, ngettext, pgettext, languageSettings } from './i18n';
 import { alertDialog } from './alertDialog';
-import { getLastMoveFen, VARIANTS } from './variants';
+import { ensureCataloguedVariantsLoaded, getLastMoveFen, VARIANTS } from './variants';
 import { patch } from './document';
 import { renderTimeago } from './datetime';
 import { boardSettings } from './boardSettings';
@@ -77,9 +77,26 @@ export function gameListView(sentinel: VNode): VNode[] {
     return [h('table#games'), sentinel];
 }
 
+export async function loadGameVariantDefinitions(games: Game[]): Promise<void> {
+    const names = [...new Set(games.map(game => game.v))].filter(name => !VARIANTS[name]);
+    if (!names.length) return;
+    try {
+        await ensureCataloguedVariantsLoaded(names);
+    } catch (error) {
+        console.warn('Failed to load game variant metadata', error);
+    }
+}
+
 export function renderGames(model: PyChessModel, games: Game[]) {
     const rows = games.map(game => {
         const variant = VARIANTS[game.v];
+        // Archived or private historical variants may not be available via the
+        // public metadata API. Keep a usable link instead of failing rendering.
+        if (!variant) {
+            return h('tr', [
+                h('td', [h('a', { attrs: { href: '/' + game._id } }, game.v)]),
+            ]);
+        }
         const chess960 = game.z === 1;
         const tc = timeControlStr(game['b'], game['i'], game['bp'], game['c'] === true ? game['b'] : 0);
         const altStartName = alternateStartName(variant, game.initialFen);
@@ -222,7 +239,7 @@ export function renderGames(model: PyChessModel, games: Game[]) {
 function isWinClass(model: PyChessModel, game: Game): boolean {
     if (!model['profileid']) return false;
     const variant = VARIANTS[game.v];
-    if (variant.twoBoards) {
+    if (variant?.twoBoards) {
         const team = game['us'][0] === model['profileid'] || game['us'][3] === model['profileid'] ? 0 : 1;
         return (game['r'] === '1-0' && team === 0) || (game['r'] === '0-1' && team === 1);
     } else {
@@ -258,14 +275,15 @@ function loadGames(model: PyChessModel, page: number) {
     }
     const url = `/api/games/user/${encodeURIComponent(model['profileid'])}?${params.toString()}`;
 
-    xmlhttp.onreadystatechange = function () {
+    xmlhttp.onreadystatechange = async function () {
         if (this.readyState === 4 && this.status === 200) {
-            const response = JSON.parse(this.responseText);
+            const response = JSON.parse(this.responseText) as Game[];
 
             // If empty JSON, exit the function
             if (!response.length) {
                 return;
             }
+            await loadGameVariantDefinitions(response);
             const oldVNode = document.getElementById('games');
             if (oldVNode instanceof Element) patch(oldVNode, h('table#games', renderGames(model, response)));
             renderTimeago();

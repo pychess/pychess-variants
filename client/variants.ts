@@ -2975,23 +2975,30 @@ export function loadCataloguedVariantsFromJson(raw: string | null): void {
     }
 }
 
-// Pages without variant-specific UI omit the large inline catalogue. Fetch it
-// only if a shared widget encounters an unknown variant, and only once per page.
-let cataloguedVariantsLoadPromise: Promise<void> | null = null;
+// Lazy, per-name metadata loads for shared widgets. Never fetch the whole
+// catalogue just to render one challenge or a user's current casual game.
+const pendingCataloguedVariants = new Map<string, Promise<void>>();
 
-export function ensureCataloguedVariantsLoaded(): Promise<void> {
-    if (cataloguedVariantsLoadPromise) return cataloguedVariantsLoadPromise;
-    cataloguedVariantsLoadPromise = fetch('/api/catalogued-variants')
-        .then(async response => {
-            if (!response.ok) throw new Error(`Catalogue request failed: ${response.status}`);
-            const payload = (await response.json()) as { variants: CataloguedVariantClientDocument[] };
-            payload.variants.forEach(registerCataloguedVariant);
-        })
-        .catch(error => {
-            cataloguedVariantsLoadPromise = null;
-            throw error;
-        });
-    return cataloguedVariantsLoadPromise;
+export function ensureCataloguedVariantsLoaded(names: readonly string[]): Promise<void> {
+    const requested = [...new Set(names)].filter(Boolean);
+    const missing = requested.filter(name => !VARIANTS[name] && !pendingCataloguedVariants.has(name));
+    for (let i = 0; i < missing.length; i += 32) {
+        const batch = missing.slice(i, i + 32);
+        const query = new URLSearchParams();
+        batch.forEach(name => query.append('name', name));
+        const task = fetch(`/api/catalogued-variants?${query}`)
+            .then(async response => {
+                if (!response.ok) throw new Error(`Catalogue request failed: ${response.status}`);
+                const payload = (await response.json()) as { variants: CataloguedVariantClientDocument[] };
+                payload.variants.forEach(registerCataloguedVariant);
+            })
+            .catch(error => {
+                batch.forEach(name => pendingCataloguedVariants.delete(name));
+                throw error;
+            });
+        batch.forEach(name => pendingCataloguedVariants.set(name, task));
+    }
+    return Promise.all(requested.map(name => pendingCataloguedVariants.get(name))).then(() => undefined);
 }
 
 export function disabledVariantsForCreateMode(

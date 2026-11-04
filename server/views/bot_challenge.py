@@ -4,7 +4,7 @@ from pychess_global_app_state_utils import get_app_state
 from typing_defs import ViewContext
 from utils import load_game, remove_seek
 
-from views import get_user_context
+from views import add_catalogued_variant_context, get_user_context
 
 
 def set_bot_challenge_context(
@@ -34,6 +34,7 @@ async def bot_challenge(request: web.Request) -> ViewContext:
     if seek is not None and seek.is_bot_challenge and seek.creator.username == user.username:
         context["title"] = "Challenge • PyChess"
         context["variant"] = seek.variant
+        await add_catalogued_variant_context(app_state, user, context, seek.variant)
         context["chess960"] = seek.chess960
         context["rated"] = seek.rated
         context["corr"] = seek.day > 0

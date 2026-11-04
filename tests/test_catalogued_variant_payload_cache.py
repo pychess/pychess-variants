@@ -11,6 +11,7 @@ from catalogued.repository import (
     record_catalogued_variant_ai_failure,
 )
 from catalogued.variants import (
+    catalogued_variants_for_client,
     invalidate_public_catalogued_variants_json,
     public_catalogued_variants_json,
 )
@@ -76,3 +77,30 @@ class CataloguedAiQuarantinePayloadCacheTestCase(unittest.IsolatedAsyncioTestCas
         self.assertNotIn("aiDisabled", recovered)
         self.assertNotIn("aiDisabledUntil", recovered)
         self.assertEqual(recovered, initial)
+
+
+class SelectedCataloguedVariantsTestCase(unittest.TestCase):
+    def test_names_prevent_unneeded_document_construction(self):
+        app_state = SimpleNamespace(
+            catalogued_variants={
+                "selected": {"name": "selected", "displayName": "Selected"},
+                "unneeded": {"name": "unneeded", "displayName": "Unneeded"},
+            }
+        )
+        with (
+            patch("catalogued.variants.documents._can_preload_catalogued_doc", return_value=True),
+            patch(
+                "catalogued.variants.documents._client_doc",
+                side_effect=lambda doc, **_: {"name": doc["name"]},
+            ) as builder,
+        ):
+            self.assertEqual(
+                catalogued_variants_for_client(app_state, names={"selected"}),
+                [{"name": "selected"}],
+            )
+            self.assertEqual(builder.call_count, 1)
+            self.assertEqual(
+                catalogued_variants_for_client(app_state, names=set()),
+                [],
+            )
+            self.assertEqual(builder.call_count, 1)

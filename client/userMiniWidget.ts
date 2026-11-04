@@ -309,7 +309,7 @@ class UserMiniWidget {
             const playingVariant = payload.playing ? splitVariantKey(payload.playing.variant).base : null;
             if (playingVariant && !VARIANTS[playingVariant]) {
                 try {
-                    await ensureCataloguedVariantsLoaded();
+                    await ensureCataloguedVariantsLoaded([playingVariant]);
                 } catch (error) {
                     console.warn('Failed to load catalogued variants for user mini', error);
                 }

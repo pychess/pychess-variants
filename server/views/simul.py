@@ -25,7 +25,7 @@ from typing_defs import ViewContext
 from utils import NO_LEGAL_MOVES_START_FEN_MESSAGE, sanitize_fen
 from variants import VARIANT_ICONS, VARIANTS, get_server_variant, is_catalogued_variant
 
-from views import get_user_context
+from views import add_catalogued_variant_context, get_user_context
 
 
 # Deferred translations for select labels rendered through Jinja gettext.
@@ -615,6 +615,9 @@ async def simul(request: web.Request) -> ViewContext:
     context["simulid"] = simul.id
     context["name"] = simul.name
     context["variant"] = simul.primary_variant_key
+    for variant_key in simul.variants:
+        variant_name, _chess960 = split_simul_variant_key(variant_key)
+        await add_catalogued_variant_context(app_state, _user, context, variant_name)
     context["base"] = simul.base
     context["inc"] = simul.inc
     context["rated"] = False

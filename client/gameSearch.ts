@@ -1,6 +1,6 @@
 import { h } from 'snabbdom';
 import { patch } from './document';
-import { gameListView, renderGames, Game } from './profile';
+import { gameListView, loadGameVariantDefinitions, renderGames, Game } from './profile';
 import { renderTimeago } from './datetime';
 import { PyChessModel } from './types';
 import { _ } from './i18n';
@@ -136,6 +136,7 @@ export function initGameSearch(model: PyChessModel): void {
             resultsHeader?.removeAttribute('hidden');
             const games = data.games || [];
             if (games.length) {
+                await loadGameVariantDefinitions(games);
                 const oldVNode = document.getElementById('games');
                 if (oldVNode instanceof Element) {
                     patch(oldVNode, h('table#games', renderGames(model, games)));
