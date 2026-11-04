@@ -24,6 +24,12 @@ from . import assets, builtin_data, documents, models, repository, validation, v
 async def get_catalogued_variants(request: web.Request) -> web.Response:
     app_state = get_app_state(request.app)
     username = await _optional_human_username(request)
+    if username is None:
+        # Reuse the same public JSON sent to anonymous HTML views.
+        return web.Response(
+            text='{"variants":' + variants.public_catalogued_variants_json(app_state) + "}",
+            content_type="application/json",
+        )
     favorite_names: set[str] | None = None
     if username is not None:
         user = await app_state.users.get(username)
@@ -295,6 +301,7 @@ async def set_catalogued_variant_favorite(request: web.Request) -> web.Response:
         cached_doc = getattr(app_state, "catalogued_variants", {}).get(name)
         if cached_doc is not None:
             cached_doc["favoriteCount"] = favorite_count
+            variants.invalidate_public_catalogued_variants_json(app_state)
     else:
         current = await app_state.db[models.CATALOGUED_VARIANT_COLLECTION].find_one(
             {"_id": name}, projection={"favoriteCount": 1}
@@ -584,6 +591,7 @@ async def upload_catalogued_piece_set(request: web.Request) -> web.Response:
     if updated is None:
         raise web.HTTPNotFound(text="Catalogued variant not found after update.")
     app_state.catalogued_variants[name] = updated
+    variants.invalidate_public_catalogued_variants_json(app_state)
     count = await repository._game_count(app_state, name)
     return json_response({"ok": True, "variant": documents._client_doc(updated, game_count=count)})
 
@@ -605,6 +613,7 @@ async def delete_catalogued_piece_set(request: web.Request) -> web.Response:
     if updated is None:
         raise web.HTTPNotFound(text="Catalogued variant not found after update.")
     app_state.catalogued_variants[name] = updated
+    variants.invalidate_public_catalogued_variants_json(app_state)
     count = await repository._game_count(app_state, name)
     return json_response({"ok": True, "variant": documents._client_doc(updated, game_count=count)})
 
@@ -658,6 +667,7 @@ async def upload_catalogued_board(request: web.Request) -> web.Response:
     if updated is None:
         raise web.HTTPNotFound(text="Catalogued variant not found after update.")
     app_state.catalogued_variants[name] = updated
+    variants.invalidate_public_catalogued_variants_json(app_state)
     count = await repository._game_count(app_state, name)
     return json_response({"ok": True, "variant": documents._client_doc(updated, game_count=count)})
 
@@ -679,6 +689,7 @@ async def delete_catalogued_board(request: web.Request) -> web.Response:
     if updated is None:
         raise web.HTTPNotFound(text="Catalogued variant not found after update.")
     app_state.catalogued_variants[name] = updated
+    variants.invalidate_public_catalogued_variants_json(app_state)
     count = await repository._game_count(app_state, name)
     return json_response({"ok": True, "variant": documents._client_doc(updated, game_count=count)})
 
@@ -1056,6 +1067,7 @@ async def update_catalogued_variant(request: web.Request) -> web.Response:
         await repository._remove_catalogued_variant_seeks(app_state, old_name)
         unregister_catalogued_server_variant(old_name)
         app_state.catalogued_variants.pop(old_name, None)
+        variants.invalidate_public_catalogued_variants_json(app_state)
         updated = doc
     else:
         updated = await repository._update_catalogued_variant_document(
@@ -1107,6 +1119,7 @@ async def delete_catalogued_variant(request: web.Request) -> web.Response:
     await repository._remove_catalogued_variant_favorites(app_state, name)
     await repository._remove_catalogued_variant_seeks(app_state, name)
     app_state.catalogued_variants.pop(name, None)
+    variants.invalidate_public_catalogued_variants_json(app_state)
     unregister_catalogued_server_variant(name)
     await repository._refresh_catalogued_variant_profile_count(
         app_state, str(doc.get("author") or "")
@@ -1124,6 +1137,7 @@ async def archive_catalogued_variant(request: web.Request) -> web.Response:
     )
     await repository._remove_catalogued_variant_seeks(app_state, name)
     app_state.catalogued_variants.pop(name, None)
+    variants.invalidate_public_catalogued_variants_json(app_state)
     unregister_catalogued_server_variant(name)
     await repository._refresh_catalogued_variant_profile_count(
         app_state, str(doc.get("author") or "")

@@ -18,7 +18,7 @@ from views import add_corr_games_context, get_user_context
 
 @aiohttp_jinja2.template("index.html")
 async def lobby(request: web.Request) -> ViewContext:
-    user, context = await get_user_context(request)
+    user, context = await get_user_context(request, include_catalogued_variants=True)
     context["prefetch_ffish"] = True
 
     app_state = get_app_state(request.app)

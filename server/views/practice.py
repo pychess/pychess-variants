@@ -126,7 +126,7 @@ async def practice_study(request: web.Request) -> ViewContext | web.Response:
         reason = "; ".join(issue.message for issue in resolved.issues) or "Invalid Practice Study"
         raise web.HTTPNotFound(text=reason)
 
-    user, context = await get_user_context(request)
+    user, context = await get_user_context(request, include_catalogued_variants=True)
     progress = await _user_practice_progress(app_state, user)
     chapter_ids = tuple(chapter.id for chapter in resolved.chapters)
     requested_chapter_id = request.match_info.get("chapterId")
@@ -202,7 +202,7 @@ async def practice_preview(request: web.Request) -> web.StreamResponse:
     if not settings.DEV:
         raise web.HTTPNotFound()
 
-    user, context = await get_user_context(request)
+    user, context = await get_user_context(request, include_catalogued_variants=True)
     app_state = get_app_state(request.app)
     if app_state.db is None:
         raise web.HTTPServiceUnavailable(text="Practice requires database access.")

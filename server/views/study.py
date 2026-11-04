@@ -369,7 +369,7 @@ async def _viewable_study_and_chapter(
     if not can_view_study(study, viewer):
         raise web.HTTPNotFound()
 
-    user, context = await get_user_context(request)
+    user, context = await get_user_context(request, include_catalogued_variants=True)
     requested_chapter_id = request.match_info.get("chapterId")
     chapter_id = requested_chapter_id or study.current_chapter
     chapter = await load_chapter(app_state, study.id, chapter_id) if chapter_id else None

@@ -2975,6 +2975,25 @@ export function loadCataloguedVariantsFromJson(raw: string | null): void {
     }
 }
 
+// Pages without variant-specific UI omit the large inline catalogue. Fetch it
+// only if a shared widget encounters an unknown variant, and only once per page.
+let cataloguedVariantsLoadPromise: Promise<void> | null = null;
+
+export function ensureCataloguedVariantsLoaded(): Promise<void> {
+    if (cataloguedVariantsLoadPromise) return cataloguedVariantsLoadPromise;
+    cataloguedVariantsLoadPromise = fetch('/api/catalogued-variants')
+        .then(async response => {
+            if (!response.ok) throw new Error(`Catalogue request failed: ${response.status}`);
+            const payload = (await response.json()) as { variants: CataloguedVariantClientDocument[] };
+            payload.variants.forEach(registerCataloguedVariant);
+        })
+        .catch(error => {
+            cataloguedVariantsLoadPromise = null;
+            throw error;
+        });
+    return cataloguedVariantsLoadPromise;
+}
+
 export function disabledVariantsForCreateMode(
     createMode: 'createGame' | 'playFriend' | 'playAI' | 'playBOT' | 'createHost',
     profileid: string,

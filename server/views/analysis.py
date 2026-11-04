@@ -15,7 +15,7 @@ from views import add_game_context, get_user_context
 
 @aiohttp_jinja2.template("analysis.html")
 async def analysis(request: web.Request) -> ViewContext:
-    user, context = await get_user_context(request)
+    user, context = await get_user_context(request, include_catalogued_variants=True)
 
     gameId = request.match_info.get("gameId")
     variant_key = request.match_info.get("variant") or "chess"

@@ -34,7 +34,7 @@ def _community_page_href(request: web.Request, page: int | None) -> str:
 
 @aiohttp_jinja2.template("variants.html")
 async def variants(request: web.Request) -> ViewContext:
-    user, context = await get_user_context(request)
+    user, context = await get_user_context(request, include_catalogued_variants=True)
 
     app_state = get_app_state(request.app)
     variant = request.match_info.get("variant")

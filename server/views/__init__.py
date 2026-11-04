@@ -12,6 +12,7 @@ from aiohttp import web
 from catalogued.variants import (
     catalogued_variant_client_doc_for_game,
     catalogued_variants_for_client,
+    public_catalogued_variants_json,
 )
 from const import (
     ANON_PREFIX,
@@ -110,7 +111,9 @@ piece_sets: list[str] = [
 ]
 
 
-async def get_user_context(request: web.Request) -> tuple[User, ViewContext]:
+async def get_user_context(
+    request: web.Request, *, include_catalogued_variants: bool = False
+) -> tuple[User, ViewContext]:
     app_state = get_app_state(request.app)
 
     # Who made the request?
@@ -219,15 +222,6 @@ async def get_user_context(request: web.Request) -> tuple[User, ViewContext]:
         "category_variant_list": category_variant_list,
         "category_variant_set": category_variant_set,
         "game_category_intro": (not user.anon) and (not getattr(user, "game_category_set", False)),
-        "catalogued_variants": json_dumps(
-            catalogued_variants_for_client(
-                app_state,
-                user.username if not user.anon else None,
-                favorite_names=(
-                    user.catalogued_variant_favorites if not user.anon and not user.bot else None
-                ),
-            )
-        ),
         "pm_friends_only": user.pm_friends_only,
         "corr_push_enabled": user.corr_push_enabled,
         "corr_browser_enabled": user.corr_browser_enabled,
@@ -247,6 +241,20 @@ async def get_user_context(request: web.Request) -> tuple[User, ViewContext]:
         if app_state.push_notifier.enabled
         else "",
     }
+    if include_catalogued_variants:
+        # Most HTML pages (and all the JSON/mutation handlers using this helper)
+        # do not need the full client-side variant registry.
+        context["catalogued_variants"] = (
+            public_catalogued_variants_json(app_state)
+            if user.anon
+            else json_dumps(
+                catalogued_variants_for_client(
+                    app_state,
+                    user.username,
+                    favorite_names=(user.catalogued_variant_favorites if not user.bot else None),
+                )
+            )
+        )
     return (user, context)
 
 

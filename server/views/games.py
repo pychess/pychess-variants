@@ -8,7 +8,7 @@ from views import get_user_context
 
 @aiohttp_jinja2.template("games.html")
 async def games(request: web.Request) -> ViewContext:
-    _user, context = await get_user_context(request)
+    _user, context = await get_user_context(request, include_catalogued_variants=True)
 
     variant = request.match_info.get("variant")
     if (variant is not None) and (variant not in VARIANTS):

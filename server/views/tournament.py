@@ -21,7 +21,7 @@ from views import get_user_context
 
 @aiohttp_jinja2.template("index.html")
 async def tournament(request: web.Request) -> ViewContext:
-    user, context = await get_user_context(request)
+    user, context = await get_user_context(request, include_catalogued_variants=True)
 
     app_state = get_app_state(request.app)
 

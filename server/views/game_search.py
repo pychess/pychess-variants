@@ -7,7 +7,7 @@ from views import get_user_context
 
 @aiohttp_jinja2.template("game_search.html")
 async def game_search(request: web.Request) -> ViewContext:
-    user, context = await get_user_context(request)
+    user, context = await get_user_context(request, include_catalogued_variants=True)
     if user.anon:
         raise web.HTTPFound("/login")
 

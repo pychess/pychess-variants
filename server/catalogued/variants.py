@@ -10,6 +10,7 @@ from typing import Any
 from aiohttp import web
 from const import STARTED
 from fairy.fairy_board import sf
+from json_utils import json_dumps
 from variants import (
     CataloguedServerVariant,
     get_server_variant,
@@ -124,6 +125,41 @@ def catalogued_variants_for_client(
     ]
 
 
+def invalidate_public_catalogued_variants_json(app_state: Any) -> None:
+    """Drop the anonymous HTML payload after a catalogue update."""
+    app_state._public_catalogued_variants_json = None
+
+
+def public_catalogued_variants_json(app_state: Any) -> str:
+    """Reuse the identical public catalogue JSON across anonymous HTML views.
+
+    The cache is scoped to one app process. Writers invalidate it; the cheap
+    dictionary identity/size check also covers direct additions in tests.
+    An AI-disabled deadline must not remain cached beyond its expiration.
+    """
+    docs = getattr(app_state, "catalogued_variants", {})
+    cached = getattr(app_state, "_public_catalogued_variants_json", None)
+    now = datetime.now(UTC)
+    if cached is not None:
+        docs_id, count, expires, value = cached
+        if docs_id == id(docs) and count == len(docs) and (expires is None or now < expires):
+            return value
+
+    value = json_dumps(catalogued_variants_for_client(app_state))
+    expires = min(
+        (
+            deadline
+            for doc in docs.values()
+            if documents._can_preload_catalogued_doc(None, doc)
+            if (deadline := documents.catalogued_variant_ai_disabled_until(doc, now=now))
+            is not None
+        ),
+        default=None,
+    )
+    app_state._public_catalogued_variants_json = (id(docs), len(docs), expires, value)
+    return value
+
+
 def register_catalogued_variant_doc(
     app_state: Any,
     doc: Mapping[str, Any],
@@ -131,6 +167,7 @@ def register_catalogued_variant_doc(
     load_config: bool = True,
 ) -> None:
     name = str(doc["name"])
+    invalidate_public_catalogued_variants_json(app_state)
     if not documents._is_active_catalogued_doc(doc):
         getattr(app_state, "catalogued_variants", {}).pop(name, None)
         unregister_catalogued_server_variant(name)
@@ -281,6 +318,7 @@ def ensure_catalogued_variant_from_game_doc(app_state: Any, doc: Mapping[str, An
 
 
 async def init_catalogued_variants(app_state: Any) -> None:
+    invalidate_public_catalogued_variants_json(app_state)
     app_state.catalogued_variants = {}
 
     collection = app_state.db[models.CATALOGUED_VARIANT_COLLECTION]

@@ -72,7 +72,7 @@
                                 data-theme="{{ theme }}"
                                 data-game-category="{{ game_category }}"
                                 data-game-category-intro="{{ game_category_intro }}"
-                                data-catalogued-variants="{{ catalogued_variants }}"
+                                {% if catalogued_variants is defined %}data-catalogued-variants="{{ catalogued_variants }}"{% endif %}
                                 data-pm-friends-only="{{ pm_friends_only }}"
                                 data-corr-push-enabled="{{ corr_push_enabled }}"
                                 data-corr-browser-enabled="{{ corr_browser_enabled }}"

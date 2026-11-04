@@ -550,7 +550,7 @@ async def simul_new(request: web.Request) -> ViewContext:
     if not SIMULING:
         raise web.HTTPForbidden()
 
-    user, context = await get_user_context(request)
+    user, context = await get_user_context(request, include_catalogued_variants=True)
     if user.anon or user.bot:
         raise web.HTTPForbidden()
 
@@ -574,7 +574,7 @@ async def simul_edit(request: web.Request) -> ViewContext:
     if not SIMULING:
         raise web.HTTPForbidden()
 
-    user, context = await get_user_context(request)
+    user, context = await get_user_context(request, include_catalogued_variants=True)
     simul = await get_simul_for_request(request)
 
     if not _can_manage_simul(user, simul):
@@ -602,7 +602,7 @@ async def simul(request: web.Request) -> ViewContext:
     if not SIMULING:
         raise web.HTTPForbidden()
 
-    _user, context = await get_user_context(request)
+    _user, context = await get_user_context(request, include_catalogued_variants=True)
     app_state = get_app_state(request.app)
 
     simul_id = request.match_info["simulId"]

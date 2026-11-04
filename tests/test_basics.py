@@ -338,6 +338,17 @@ class RequestLobbyTestCase(AioHTTPTestCase):
         text = await resp.text()
         self.assertIn("<title>PyChess", text)
 
+    async def test_static_pages_do_not_embed_catalogued_variant_registry(self):
+        for path in ("/about", "/blogs", "/forum"):
+            with self.subTest(path=path):
+                resp = await self.client.request("GET", path)
+                self.assertEqual(resp.status, 200)
+                self.assertNotIn("data-catalogued-variants=", await resp.text())
+
+        resp = await self.client.request("GET", "/")
+        self.assertEqual(resp.status, 200)
+        self.assertIn("data-catalogued-variants=", await resp.text())
+
     async def test_analysis_960_route_normalizes_variant_and_chess960(self):
         resp = await self.client.request("GET", "/analysis/chess960")
         self.assertEqual(resp.status, 200)

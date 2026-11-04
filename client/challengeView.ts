@@ -5,7 +5,7 @@ import { _ } from './i18n';
 import { patch } from './document';
 import { alertDialog } from './alertDialog';
 import { sound } from './sound';
-import { VARIANTS } from './variants';
+import { ensureCataloguedVariantsLoaded, VARIANTS } from './variants';
 import { subscribeHeaderRealtime } from './headerRealtime';
 import { setHeaderPanelExpanded } from './headerPanel';
 
@@ -147,6 +147,11 @@ export function challengeView() {
             sound.newChallenge();
         }
         redraw();
+        if (challenges.some(challenge => !VARIANTS[challenge.variant])) {
+            void ensureCataloguedVariantsLoaded()
+                .then(() => redraw())
+                .catch(error => console.warn('Failed to load challenge variant metadata', error));
+        }
         if (envelope.gameId) window.location.assign(`/${envelope.gameId}`);
     }
 
