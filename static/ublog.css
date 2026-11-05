@@ -5,9 +5,10 @@
   align-items: flex-start;
 }
 
-/* Match Lichess's page-small post width, independent of board sizing. */
+/* Keep blog lines at a readable length (~50-75 chars), independent of board sizing.
+   See #2448: 1000px still produced very long lines on wide screens. */
 #main-wrap.ublog-post-wrap {
-  --main-max-width: 1000px;
+  --main-max-width: 768px;
 }
 
 .ublog-page .ublog-box {
@@ -375,6 +376,8 @@
 
 .ublog-page .ublog-markdown-render,
 .ublog-page .ublog-post__markup {
+  /* The site root is 14px; long-form posts read better slightly larger (#2448). */
+  font-size: 1.18rem;
   line-height: 1.65;
   overflow-wrap: anywhere;
   word-break: break-word;
