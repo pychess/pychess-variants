@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import asyncio
+import gzip
 import io
+import socket
 import tempfile
 import unittest
 from contextlib import redirect_stderr
@@ -9,12 +12,20 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from aiohttp import web
 from aiohttp.test_utils import TestServer
+from crawler_assets import (
+    PRODUCTION_STATIC_ROOT,
+    AssetLoad,
+    PageAssets,
+    local_asset_path,
+    slow_socket,
+)
 from crawler_snapshot import MARKER, PREFIX, validate_snapshot
 from crawler_stresstest import (
     SAMPLE_LIMIT,
     Latencies,
     Requests,
     Run,
+    cgroup_stats,
     fixture_environment,
     make_output_directory,
     parse_args,
@@ -90,6 +101,10 @@ class CrawlerStressTestCase(unittest.TestCase):
             ("--profiles", "0"),
             ("--backend-delay-ms", "-1"),
             ("--max-memory-percent", "95"),
+            ("--asset-rps", "nan"),
+            ("--asset-kib-per-second", "-1"),
+            ("--asset-concurrency", "0"),
+            ("--asset-timeout", "inf"),
         ):
             with (
                 self.subTest(option=option),
@@ -105,6 +120,36 @@ class CrawlerStressTestCase(unittest.TestCase):
         self.assertEqual(env["FISHNET_KEYS"], "{}")
         self.assertEqual(env["CLIENT_IP_MODE"], "heroku")
         self.assertEqual(env["PROD"], "true")
+        self.assertEqual(env["STATIC_ROOT"], PRODUCTION_STATIC_ROOT)
+        self.assertEqual(fixture_environment("/static")["STATIC_ROOT"], "/static")
+
+    def test_asset_only_rate_defaults_to_requested_rate(self):
+        self.assertEqual(parse_args(["--scenario", "assets", "--rps", "7"]).asset_rps, 7)
+        self.assertEqual(parse_args([]).asset_rps, 0)
+
+    def test_asset_discovery_keeps_local_js_and_wasm_but_excludes_cdn_and_other_origins(self):
+        base = "http://127.0.0.1:1234"
+        page = PageAssets()
+        page.feed(
+            '<script src="/static/pychess-variants.js?v=1"></script>'
+            '<link rel="preload" as="fetch" href="/static/ffish.wasm?v=1">'
+            '<script src="https://cdn.example/static/cardgame.js"></script>'
+        )
+        self.assertEqual(
+            [local_asset_path(base, value) for value in page.urls],
+            [
+                "/static/pychess-variants.js?v=1",
+                "/static/ffish.wasm?v=1",
+                None,
+            ],
+        )
+        for url in ("//localhost:1234/static/main.js", "/@/someone", "/static/image.png"):
+            self.assertIsNone(local_asset_path(base, url))
+
+    def test_slow_reader_bounds_the_kernel_receive_buffer(self):
+        with slow_socket((socket.AF_INET, socket.SOCK_STREAM, 0, "", ("127.0.0.1", 0))) as sock:
+            # Linux doubles SO_RCVBUF for bookkeeping.
+            self.assertLessEqual(sock.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF), 32768)
 
     def test_proc_memory_accounts_for_swap_and_startup_peak(self):
         with patch(
@@ -152,6 +197,33 @@ class CrawlerStressTestCase(unittest.TestCase):
         self.assertTrue(any("memory" in reason for reason in report["failures"]))
         self.assertTrue(any("telemetry" in reason for reason in report["failures"]))
 
+    def test_short_cgroup_memory_peaks_between_samples_count_against_quota(self):
+        run = self.make_run()
+        run.samples[-1]["cgroup"] = {"memory.peak": 450 * 1024**2}
+        report = run.report()
+        self.assertEqual(report["peak_budget_usage_mib"], 450)
+        self.assertEqual(report["peak_rss_mib"], 110)
+        self.assertFalse(report["passed"])
+        run.args.constrain = False
+        self.assertTrue(run.report()["passed"])
+
+    def test_cgroup_memory_breakdown_includes_network_transmission_buffers(self):
+        def read(path, *args, **kwargs):
+            if str(path) == "/proc/123/cgroup":
+                return "0::/crawler-test\n"
+            if path.name == "memory.stat":
+                return "sock 2097152\nanon 1048576\n"
+            if path.name in {"memory.events", "cpu.stat"}:
+                return "counter 0\n"
+            return "10\n"
+
+        with (
+            patch("crawler_stresstest.Path.read_text", autospec=True, side_effect=read),
+            patch("crawler_stresstest.Path.exists", return_value=True),
+        ):
+            stats = cgroup_stats(123)
+        self.assertEqual(stats["memory.stat"]["sock"], 2 * 1024**2)
+
     def test_normal_user_redirects_or_rate_limits_are_failures(self):
         for status in (302, 429):
             with self.subTest(status=status):
@@ -185,8 +257,159 @@ class CrawlerStressTestCase(unittest.TestCase):
         self.assertTrue(any("generator dropped" in reason for reason in report["failures"]))
         self.assertTrue(any("did not recover" in reason for reason in report["failures"]))
 
+    def test_asset_404s_incomplete_bodies_and_generator_drops_fail_the_report(self):
+        for status in (404, "BodySizeMismatch", "TimeoutError"):
+            run = self.make_run()
+            run.phase = "attack-1"
+            run.requests("asset:pychess-variants.js").record(status, 1)
+            self.assertFalse(run.report()["passed"])
+        run = self.make_run()
+        run.phase = "attack-1"
+        run.requests("asset_load").offered = 100
+        run.requests("asset_load").client_dropped = 2
+        self.assertFalse(run.report()["passed"])
+
+    def test_valid_asset_downloads_and_conditional_304s_pass(self):
+        run = self.make_run()
+        run.phase = "attack-1"
+        for status in (200, 304):
+            run.requests("asset:pychess-variants.js").record(status, 10)
+        self.assertTrue(run.report()["passed"])
+
 
 class CrawlerPacingTestCase(unittest.IsolatedAsyncioTestCase):
+    async def test_asset_preflight_handles_chunked_html_and_never_follows_external_urls(self):
+        async def page(request):
+            if "X-Forwarded-For" not in request.headers:
+                return web.Response(status=400)
+            response = web.StreamResponse(headers={"Content-Type": "text/html"})
+            await response.prepare(request)
+            await response.write(b'<script src="/static/pychess-variants.js?v=abc"></script>')
+            await asyncio.sleep(0.01)
+            await response.write(
+                b'<link rel="preload" href="/static/ffish.wasm?v=abc">'
+                b'<script src="https://cdn.invalid/external.js"></script>'
+            )
+            return response
+
+        async def asset(request):
+            if "X-Forwarded-For" not in request.headers:
+                return web.Response(status=400)
+            content_type = (
+                "application/wasm" if request.path.endswith(".wasm") else "text/javascript"
+            )
+            return web.Response(
+                body=b"asset", content_type=content_type, headers={"ETag": '"asset"'}
+            )
+
+        app = web.Application()
+        app.router.add_get("/analysis/chess", page)
+        app.router.add_get("/static/{name}", asset)
+        async with TestServer(app) as server:
+            run = Run(parse_args(["--asset-cache", "warm"]), Path("/unused"))
+            run.fixture = {"url": str(server.make_url("/")).rstrip("/")}
+            await run.assets.prepare()
+        self.assertEqual(len(run.assets.files), 8)
+        self.assertEqual(run.assets.external, ["https://cdn.invalid/external.js"])
+        worker = next(a for a in run.assets.files if a["name"] == "header-realtime-worker.js")
+        self.assertEqual(worker["path"], "/static/header-realtime-worker.js?v=abc")
+
+    async def test_missing_asset_is_a_preflight_failure(self):
+        async def page(_request):
+            return web.Response(
+                text='<script src="/static/pychess-variants.js"></script>'
+                '<link rel="preload" href="/static/ffish.wasm">'
+            )
+
+        app = web.Application()
+        app.router.add_get("/analysis/chess", page)
+        async with TestServer(app) as server:
+            run = Run(parse_args([]), Path("/unused"))
+            run.fixture = {"url": str(server.make_url("/")).rstrip("/")}
+            with self.assertRaisesRegex(RuntimeError, "returned 404"):
+                await run.assets.prepare()
+
+    async def test_asset_transfer_counts_compressed_wire_bytes_and_conditional_hits(self):
+        compressed = gzip.compress(b"compressed javascript payload" * 100)
+
+        async def asset(request):
+            if request.headers.get("If-None-Match") == '"asset-etag"':
+                return web.Response(status=304, headers={"ETag": '"asset-etag"'})
+            return web.Response(body=compressed, headers={"Content-Encoding": "gzip"})
+
+        app = web.Application()
+        app.router.add_get("/static/pychess-variants.js", asset)
+        async with TestServer(app) as server:
+            run = Run(parse_args(["--asset-encoding", "gzip"]), Path("/unused"))
+            run.fixture = {"url": str(server.make_url("/")).rstrip("/")}
+            target = {
+                "name": "pychess-variants.js",
+                "path": "/static/pychess-variants.js",
+                "wire_bytes": len(compressed),
+                "etag": '"asset-etag"',
+            }
+            load = AssetLoad(run)
+            load.files = [target]
+            import aiohttp
+
+            async with aiohttp.ClientSession(auto_decompress=False) as session:
+                stats = run.requests("asset:pychess-variants.js")
+                await load.transfer(session, target, 1, stats)
+                self.assertEqual(stats.received_bytes, len(compressed))
+                run.args.asset_cache = "warm"
+                await load.transfer(session, target, 2, stats)
+            self.assertEqual(stats.statuses, {"200": 1, "304": 1})
+            self.assertEqual(stats.received_bytes, len(compressed))
+            self.assertEqual(stats.headers.count, 2)
+
+    async def test_slow_asset_body_reads_are_paced_and_bounded_by_concurrency(self):
+        async def asset(_request):
+            return web.Response(body=b"x" * 65536)
+
+        app = web.Application()
+        app.router.add_get("/static/test.js", asset)
+        async with TestServer(app) as server:
+            args = parse_args(
+                ["--asset-rps", "50", "--asset-concurrency", "2", "--asset-kib-per-second", "256"]
+            )
+            run = Run(args, Path("/unused"))
+            run.fixture = {"url": str(server.make_url("/")).rstrip("/")}
+            run.assets.files = [
+                {
+                    "name": "test.js",
+                    "path": "/static/test.js",
+                    "wire_bytes": 65536,
+                    "etag": '"etag"',
+                }
+            ]
+            await run.assets.flood(0.1)
+            stats = run.requests("asset:test.js")
+            self.assertEqual(run.assets.peak_inflight, 2)
+            self.assertGreater(run.requests("asset_load").client_dropped, 0)
+            self.assertEqual(stats.statuses, {"200": 2})
+            self.assertGreaterEqual(stats.accepted.summary()["p50_ms"], 240)
+
+    async def test_slow_transfers_stop_promptly_when_memory_stop_event_is_set(self):
+        async def asset(_request):
+            return web.Response(body=b"x" * 65536)
+
+        app = web.Application()
+        app.router.add_get("/static/test.js", asset)
+        async with TestServer(app) as server:
+            run = Run(parse_args(["--asset-kib-per-second", "1"]), Path("/unused"))
+            run.fixture = {"url": str(server.make_url("/")).rstrip("/")}
+            target = {"path": "/static/test.js", "wire_bytes": 65536, "etag": '"etag"'}
+            import aiohttp
+
+            async with aiohttp.ClientSession(auto_decompress=False) as session:
+                stats = run.requests("asset:test.js")
+                task = asyncio.create_task(run.assets.transfer(session, target, 1, stats))
+                await asyncio.sleep(0.03)
+                run.stop_load.set()
+                await asyncio.wait_for(task, timeout=0.2)
+            self.assertEqual(stats.statuses, {"Stopped": 1})
+            self.assertEqual(run.assets.inflight, 0)
+
     async def test_snapshot_requires_scratch_name_and_marker_before_server_startup(self):
         client = MagicMock()
         collection = client.__getitem__.return_value.config
@@ -203,7 +426,6 @@ class CrawlerPacingTestCase(unittest.IsolatedAsyncioTestCase):
         collection.find_one.assert_awaited_with(MARKER)
 
     async def test_open_loop_overload_is_counted_without_unbounded_client_tasks(self):
-        import asyncio
 
         inflight = 0
         peak = 0

@@ -26,6 +26,7 @@ from typing import Any
 from urllib.parse import quote, urlencode
 
 import aiohttp
+from crawler_assets import PRODUCTION_STATIC_ROOT, AssetLoad
 from yarl import URL
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -51,6 +52,13 @@ def positive_int(value: str) -> int:
     number = int(value)
     if number <= 0:
         raise argparse.ArgumentTypeError("must be greater than zero")
+    return number
+
+
+def nonnegative(value: str) -> float:
+    number = float(value)
+    if not math.isfinite(number) or number < 0:
+        raise argparse.ArgumentTypeError("must be a finite non-negative number")
     return number
 
 
@@ -90,6 +98,7 @@ class Requests:
     accepted: Latencies = field(default_factory=Latencies)
     rejected: Latencies = field(default_factory=Latencies)
     failed: Latencies = field(default_factory=Latencies)
+    headers: Latencies = field(default_factory=Latencies)
     last_status: int | str | None = None
     received_bytes: int = 0
 
@@ -113,6 +122,7 @@ class Requests:
             "accepted": self.accepted.summary(),
             "rejected": self.rejected.summary(),
             "failed": self.failed.summary(),
+            "headers": self.headers.summary(),
         }
 
 
@@ -151,7 +161,7 @@ def cgroup_stats(pid: int) -> dict[str, Any]:
             if path.exists():
                 raw = path.read_text(encoding="ascii").strip()
                 result[name] = int(raw) if raw.isdecimal() else raw
-        for name in ("memory.events", "cpu.stat"):
+        for name in ("memory.events", "memory.stat", "cpu.stat"):
             events = directory / name
             if events.exists():
                 result[name] = {
@@ -161,7 +171,7 @@ def cgroup_stats(pid: int) -> dict[str, Any]:
     return result
 
 
-def fixture_environment() -> dict[str, str]:
+def fixture_environment(static_root: str = PRODUCTION_STATIC_ROOT) -> dict[str, str]:
     env = dict(os.environ)
     # No production services or credentials belong in this disposable fixture.
     for key in (
@@ -183,7 +193,7 @@ def fixture_environment() -> dict[str, str]:
             "PROD": "true",
             "BOT_TOKENS": "{}",
             "FISHNET_KEYS": "{}",
-            "STATIC_ROOT": "/static",
+            "STATIC_ROOT": static_root,
             "MONGO_HOST": "mongodb://127.0.0.1:27017",
             "PYTHONPATH": os.pathsep.join((str(ROOT / "server"), str(ROOT / "tests"), str(ROOT))),
         }
@@ -205,6 +215,7 @@ class Run:
         self.fixture: dict[str, Any] = {}
         self.started = time.monotonic()
         self.request_index = 0
+        self.assets = AssetLoad(self)
 
     def requests(self, kind: str) -> Requests:
         return self.stats.setdefault(self.phase, {}).setdefault(kind, Requests())
@@ -398,6 +409,7 @@ class Run:
                     sample: dict[str, Any] = {
                         "elapsed_s": round(time.monotonic() - self.started, 3),
                         "phase": self.phase,
+                        "asset_inflight": self.assets.inflight,
                     }
                     try:
                         sample.update(process_memory(self.fixture["pid"]))
@@ -411,7 +423,12 @@ class Run:
                     if self.args.constrain:
                         memory = max(memory, sample["cgroup"].get("memory.current", 0) / 1024**2)
                     sample["budget_usage_mib"] = memory
-                    if memory >= self.args.memory_budget_mib * 0.9:
+                    observed_peak = max(memory, sample["peak_rss_mib"])
+                    if self.args.constrain:
+                        observed_peak = max(
+                            observed_peak, sample["cgroup"].get("memory.peak", 0) / 1024**2
+                        )
+                    if observed_peak >= self.args.memory_budget_mib * 0.9:
                         if not self.stop_load.is_set():
                             self.failures.append(
                                 "90% memory stop threshold reached; crawler load stopped"
@@ -438,21 +455,38 @@ class Run:
         self.phase = name
         print(
             f"{name}: {seconds:g}s"
-            + (f" at {self.args.rps:g} offered requests/s" if flood else ""),
+            + (
+                f"; crawler {0 if self.args.scenario == 'assets' else self.args.rps:g}/s, "
+                f"JS/WASM {self.args.asset_rps:g}/s"
+                if flood
+                else ""
+            ),
             flush=True,
         )
         if flood:
-            await self.flood(seconds)
+            loads = []
+            if self.args.scenario != "assets":
+                loads.append(self.flood(seconds))
+            if self.args.asset_rps:
+                loads.append(self.assets.flood(seconds))
+            await asyncio.gather(*loads)
         else:
             await self.pause(seconds)
 
     def report(self) -> dict[str, Any]:
         failures = list(self.failures)
+
+        def peak_usage(sample):
+            return max(
+                sample["budget_usage_mib"],
+                sample["peak_rss_mib"],
+                sample.get("cgroup", {}).get("memory.peak", 0) / 1024**2
+                if self.args.constrain
+                else 0,
+            )
+
         peak = max(
-            (
-                max(sample["budget_usage_mib"], sample["peak_rss_mib"])
-                for sample in self.startup_samples + self.samples
-            ),
+            (peak_usage(sample) for sample in self.startup_samples + self.samples),
             default=0,
         )
         target = self.args.memory_budget_mib * self.args.max_memory_percent / 100
@@ -503,16 +537,29 @@ class Run:
                         failures.append(
                             f"{phase}/{kind}: p95 exceeds {self.args.max_probe_p95_ms:g} ms"
                         )
-                if kind == "crawler":
+                if kind in {"crawler", "asset_load"}:
                     if (
                         stats.client_dropped
                         > stats.offered * self.args.max_client_drop_percent / 100
                     ):
                         failures.append(
-                            f"{phase}: generator dropped {stats.client_dropped} offered requests"
+                            f"{phase}/{kind}: generator dropped {stats.client_dropped} offered requests"
                         )
                     if any(not key.isdecimal() or int(key) >= 500 for key in stats.statuses):
                         failures.append(f"{phase}: crawler encountered server/transport errors")
+                if kind.startswith("asset:") and any(
+                    status not in {"200", "304"} for status in stats.statuses
+                ):
+                    failures.append(f"{phase}/{kind}: asset transfer failed")
+            if "asset_load" in groups:
+                offered = groups["asset_load"]
+                completed = sum(
+                    sum(stats.statuses.values())
+                    for kind, stats in groups.items()
+                    if kind.startswith("asset:")
+                )
+                if offered.offered != completed + offered.client_dropped:
+                    failures.append(f"{phase}: asset completion counts do not match offered load")
         if self.args.recovery_seconds >= 65:
             anonymous = self.stats.get(final_phase, {}).get("anonymous_html")
             if anonymous is None or anonymous.last_status != 200:
@@ -529,13 +576,14 @@ class Run:
                 if key not in {"cookie", "probe_key", "profile_names", "catalogue_names"}
             },
             "startup_peak_mib": max(
-                (
-                    max(sample["budget_usage_mib"], sample["peak_rss_mib"])
-                    for sample in self.startup_samples
-                ),
+                (peak_usage(sample) for sample in self.startup_samples),
                 default=0,
             ),
             "peak_budget_usage_mib": round(peak, 3),
+            "peak_rss_mib": max(
+                (sample["peak_rss_mib"] for sample in self.startup_samples + self.samples),
+                default=0,
+            ),
             "baseline_median_mib": round(statistics.median(baseline), 3) if baseline else None,
             "peak_headroom_mib": round(self.args.memory_budget_mib - peak, 3),
             "target_mib": round(target, 3),
@@ -572,12 +620,19 @@ class Run:
             "peak_cgroup_memory_mib": max(
                 (
                     sample.get("cgroup", {}).get("memory.peak", 0) / 1024**2
-                    for sample in self.samples
+                    for sample in self.startup_samples + self.samples
                 ),
                 default=0,
             ),
             "memory_limit_enforced": self.args.constrain,
             "full_recovery_window_observed": self.args.recovery_seconds >= 65,
+            "assets": {
+                "files": self.assets.files,
+                "external_references_not_fetched": self.assets.external,
+                "peak_inflight": self.assets.peak_inflight,
+                "auto_decompress": False,
+                "phase_timings": self.assets.timings,
+            },
             "phases": summaries,
         }
 
@@ -627,7 +682,7 @@ async def main(args: argparse.Namespace) -> int:
     with (output / "server.log").open("w", encoding="utf-8") as log:
         process = await asyncio.create_subprocess_exec(
             *command,
-            env={**fixture_environment(), "CRAWLER_PID_FILE": str(pid_file)},
+            env={**fixture_environment(args.static_root), "CRAWLER_PID_FILE": str(pid_file)},
             cwd=ROOT,
             stdout=log,
             stderr=asyncio.subprocess.STDOUT,
@@ -679,6 +734,8 @@ async def main(args: argparse.Namespace) -> int:
                 observed = cgroup_stats(run.fixture["pid"])
                 if observed.get("memory.max") != int(args.memory_budget_mib * 1024**2):
                     raise RuntimeError("server cgroup memory limit was not applied")
+            if args.asset_rps:
+                await run.assets.prepare()
             workers = [
                 asyncio.create_task(work())
                 for work in (run.probes, run.websocket_probe, run.monitor)
@@ -789,9 +846,35 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--probe-interval", type=positive, default=1)
     parser.add_argument("--timeout", type=positive, default=3)
     parser.add_argument("--identity", choices=("single", "rotate"), default="rotate")
-    parser.add_argument("--scenario", choices=("mixed", "browsing", "catalogue"), default="mixed")
+    parser.add_argument(
+        "--scenario", choices=("mixed", "browsing", "catalogue", "assets"), default="mixed"
+    )
+    parser.add_argument(
+        "--static-root",
+        default=PRODUCTION_STATIC_ROOT,
+        help="Template STATIC_ROOT; external assets are never fetched",
+    )
+    parser.add_argument(
+        "--asset-rps",
+        type=nonnegative,
+        default=0,
+        help="Additional JS/WASM requests/s; assets-only scenario defaults to --rps",
+    )
+    parser.add_argument("--asset-concurrency", type=positive_int, default=32)
+    parser.add_argument("--asset-kind", choices=("all", "js", "wasm"), default="all")
+    parser.add_argument("--asset-encoding", choices=("br", "gzip", "identity"), default="br")
+    parser.add_argument("--asset-cache", choices=("cold", "warm", "mixed"), default="cold")
+    parser.add_argument(
+        "--asset-kib-per-second",
+        type=nonnegative,
+        default=0,
+        help="Read rate per asset connection; zero drains as quickly as possible",
+    )
+    parser.add_argument("--asset-timeout", type=positive, default=120)
     parser.add_argument("--anonymous-cookie", action="store_true")
     args = parser.parse_args(argv)
+    if args.scenario == "assets" and not args.asset_rps:
+        args.asset_rps = args.rps
     if not 0 < args.max_memory_percent < 90:
         parser.error("--max-memory-percent must be below the 90% automatic stop threshold")
     if not math.isfinite(args.backend_delay_ms) or args.backend_delay_ms < 0:
