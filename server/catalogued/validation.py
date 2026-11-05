@@ -400,8 +400,9 @@ def _ini_option_has_non_neutral_value(ini: str, key: str) -> bool:
     return value.strip().casefold() not in {"", "-", "0", "false", "no", "off", "none"}
 
 
-def _ensure_catalogued_rules_supported(ini: str) -> None:
-    ensure_no_promotion_chaining(ini)
+def _ensure_catalogued_rules_supported(ini: str, *, for_replay: bool = False) -> None:
+    if not for_replay:
+        ensure_no_promotion_chaining(ini)
     unsupported: list[str] = []
 
     for key, reason in models.UNSUPPORTED_CATALOGUED_BOOL_RULES.items():
@@ -999,14 +1000,17 @@ def _is_builtin_variant_name(name: str) -> bool:
     )
 
 
-def validate_catalogued_ini(ini: str) -> models.CataloguedVariantValidation:
+def validate_catalogued_ini(
+    ini: str, *, for_replay: bool = False
+) -> models.CataloguedVariantValidation:
     _ensure_catalogued_ini_size(ini)
-    _ensure_catalogued_rules_supported(ini)
+    _ensure_catalogued_rules_supported(ini, for_replay=for_replay)
     name = extract_variant_name(ini)
     base_variant = extract_variant_base_name(ini)
 
     try:
-        sf.load_variant_config(ini)
+        if not for_replay or name not in sf.variants():
+            sf.load_variant_config(ini)
         start_fen = sf.start_fen(name)
     except Exception:
         log.info("Fairy-Stockfish rejected catalogued variant %s", name, exc_info=True)

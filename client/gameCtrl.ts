@@ -403,6 +403,10 @@ export abstract class GameController extends ChessgroundController implements Ch
     }
 
     setDests() {
+        if (this.variant.replayOnly) {
+            this.chessground.set({ movable: { color: undefined, dests: new Map() } });
+            return;
+        }
         // console.log("gameCtrl.setDests()");
         const legalMoves = this.ffishBoard
             .legalMoves()

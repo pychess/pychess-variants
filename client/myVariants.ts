@@ -751,19 +751,19 @@ async function deleteBoard(model: PyChessModel, variant: ManagedVariant): Promis
 }
 
 function playVariant(model: PyChessModel, variant: ManagedVariant): void {
-    if (variant.archived || variant.enabled === false) return;
+    if (variant.archived || variant.enabled === false || variant.replayOnly) return;
     localStorage.seek_variant = variant.name;
     window.location.assign(`${model.home}/?any&variant=${encodeURIComponent(variant.name)}`);
 }
 
 function playVariantWithAI(model: PyChessModel, variant: ManagedVariant): void {
-    if (variant.archived || variant.enabled === false) return;
+    if (variant.archived || variant.enabled === false || variant.replayOnly) return;
     localStorage.seek_variant = variant.name;
     window.location.assign(`${model.home}/?ai&variant=${encodeURIComponent(variant.name)}`);
 }
 
 function openAnalysisBoard(model: PyChessModel, variant: ManagedVariant): void {
-    if (variant.archived || variant.enabled === false) return;
+    if (variant.archived || variant.enabled === false || variant.replayOnly) return;
     window.location.assign(`${model.home}/analysis/${encodeURIComponent(variant.name)}`);
 }
 
@@ -1614,6 +1614,7 @@ function renderRows(model: PyChessModel): VNode {
                 state.variants.map(variant => {
                     const locked = !!variant.locked;
                     const archived = !!variant.archived || variant.enabled === false;
+                    const playDisabled = archived || !!variant.replayOnly;
                     const systemManaged = isSystemManagedVariant(variant);
                     const lockTitle = locked
                         ? _('This variant already has saved public games. Clone it to change the rules.')
@@ -1637,11 +1638,13 @@ function renderRows(model: PyChessModel): VNode {
                             { attrs: { 'data-label': _('Status') } },
                             archived
                                 ? _('Archived')
-                                : systemManaged
-                                  ? _('System')
-                                  : locked
-                                    ? _('Locked')
-                                    : _('Editable'),
+                                : variant.replayOnly
+                                  ? _('Replay only')
+                                  : systemManaged
+                                    ? _('System')
+                                    : locked
+                                      ? _('Locked')
+                                      : _('Editable'),
                         ),
                         h('td', { attrs: { 'data-label': _('Visibility') } }, visibilityLabel(variant.visibility)),
                         h('td', { attrs: { 'data-label': _('Games') } }, String(variant.gameCount ?? 0)),
@@ -1652,7 +1655,7 @@ function renderRows(model: PyChessModel): VNode {
                             h(
                                 'button.button-primary.catalogued-row-button',
                                 {
-                                    props: { type: 'button', disabled: archived },
+                                    props: { type: 'button', disabled: playDisabled },
                                     on: { click: () => playVariant(model, variant) },
                                 },
                                 _('Play'),
@@ -1660,7 +1663,7 @@ function renderRows(model: PyChessModel): VNode {
                             h(
                                 'button.catalogued-row-button.catalogued-secondary-action.catalogued-ai-action',
                                 {
-                                    props: { type: 'button', disabled: archived },
+                                    props: { type: 'button', disabled: playDisabled },
                                     attrs: { title: aiTitle },
                                     on: { click: () => playVariantWithAI(model, variant) },
                                 },
@@ -1669,7 +1672,7 @@ function renderRows(model: PyChessModel): VNode {
                             h(
                                 'button.catalogued-row-button.catalogued-secondary-action.catalogued-analysis-action',
                                 {
-                                    props: { type: 'button', disabled: archived },
+                                    props: { type: 'button', disabled: playDisabled },
                                     on: { click: () => openAnalysisBoard(model, variant) },
                                 },
                                 _('Analysis'),

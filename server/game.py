@@ -178,6 +178,8 @@ class Game:
         self.bplayer: User = bplayer
 
         catalogued_casual = is_catalogued_variant(variant)
+        if create and catalogued_casual and get_server_variant(variant, False).replay_only:
+            raise ValueError("This user-defined variant is available for historical replay only.")
         self.persist_to_db: bool = (
             (not catalogued_casual)
             or (not create)
@@ -615,6 +617,8 @@ class Game:
     async def play_move(
         self, move: str, clocks: ClockValues | None = None, ply: int | None = None
     ) -> None:
+        if self.server_variant.replay_only:
+            return
         self.stopwatch.stop()
 
         self.byo_correction = 0

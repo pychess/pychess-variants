@@ -2,6 +2,7 @@ import { describe, expect, test } from '@jest/globals';
 
 import { analysisContext } from '../client/analysis/analysisContext';
 import type { PyChessModel } from '../client/types';
+import { VARIANTS } from '../client/variants';
 
 function model(overrides: Partial<PyChessModel> = {}): PyChessModel {
     return {
@@ -14,6 +15,24 @@ function model(overrides: Partial<PyChessModel> = {}): PyChessModel {
 }
 
 describe('analysis context', () => {
+    test('replay-only variants retain navigation but disable editing and all engine capabilities', () => {
+        VARIANTS.chain_replay_context = { ...VARIANTS.chess, replayOnly: true };
+        try {
+            const context = analysisContext(model({ variant: 'chain_replay_context' }));
+            expect(context.capabilities).toMatchObject({
+                localAnalysisAllowed: false,
+                editableTree: false,
+                engineTools: false,
+                positionEvaluation: false,
+                serverAnalysisRequest: false,
+                positionMetadata: true,
+                usesRoundSocket: true,
+                moveTimeChart: true,
+            });
+        } finally {
+            delete VARIANTS.chain_replay_context;
+        }
+    });
     test('standalone analysis exposes the reusable analysis capabilities', () => {
         const context = analysisContext(model({ gameId: '' }));
 

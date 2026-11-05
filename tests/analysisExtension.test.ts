@@ -119,6 +119,7 @@ test('hiding server analysis suppresses stored and server scores while allowing 
 test('move application can be rejected before the analysis board is mutated', () => {
     const beforeMoveApplied = jest.fn(() => false);
     const ctrl = Object.create(AnalysisController.prototype) as any;
+    ctrl.variant = { replayOnly: false };
     ctrl.tree = {
         analysisPath: '01',
         hasAnalysisTree: () => true,
@@ -132,6 +133,12 @@ test('move application can be rejected before the analysis board is mutated', ()
     expect(ctrl.applyAnalysisMove('e2e4', 'played-move')).toBe(false);
     expect(beforeMoveApplied).toHaveBeenCalledWith({ move: 'e2e4', origin: 'played-move', path: '01' });
     expect(ctrl.activateTreePath).toHaveBeenCalledWith('01', true, 'reset');
+});
+
+test('replay-only analysis rejects moves before touching native boards', () => {
+    const ctrl = Object.create(AnalysisController.prototype) as any;
+    ctrl.variant = { replayOnly: true };
+    expect(ctrl.applyAnalysisMove('a3a4+')).toBe(false);
 });
 
 test('extension can disable local computer search independently of ordinary analysis capability', () => {

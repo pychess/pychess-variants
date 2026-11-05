@@ -14,6 +14,7 @@ from settings import ADMINS
 
 from . import assets, builtin_data, models, validation
 from .betza import catalogued_betza_diagrams, catalogued_betza_pieces
+from .promotions import promotion_chaining_requires_replay_only
 from .rules import catalogued_random_start, catalogued_rule_summary
 
 
@@ -23,7 +24,11 @@ def _is_admin_username(username: str) -> bool:
 
 
 def _is_active_catalogued_doc(doc: Mapping[str, Any]) -> bool:
-    return bool(doc.get("enabled", True)) and not bool(doc.get("archived", False))
+    return (
+        bool(doc.get("enabled", True))
+        and not bool(doc.get("archived", False))
+        and not promotion_chaining_requires_replay_only(str(doc.get("ini") or ""))
+    )
 
 
 def _catalogued_visibility(doc: Mapping[str, Any]) -> str:
@@ -189,6 +194,7 @@ def _client_doc(
         "hasBoard": assets._has_board_svg(doc),
         "archived": bool(doc.get("archived", False)),
         "enabled": bool(doc.get("enabled", True)),
+        "replayOnly": promotion_chaining_requires_replay_only(ini),
     }
     if client_doc["source"] == models.CATALOGUED_SOURCE_USER and ini:
         nnue_base_variant = validation.extract_variant_base_name(ini)

@@ -371,6 +371,11 @@ export class StudyPracticeSession {
             this.setUnavailable(access.reason, access.message);
             return;
         }
+        if (this.ctrl.variant.replayOnly) {
+            this.engine.setBlocked('unsupported', _('This variant is available for historical replay only.'));
+            this.setUnavailable('unsupported', _('This variant is available for historical replay only.'));
+            return;
+        }
         if (this.ctrl.variant.twoBoards) {
             this.engine.setBlocked('unsupported', _('Two-board variants are not supported by computer practice.'));
             this.setUnavailable('unsupported', _('Two-board variants are not supported by computer practice.'));

@@ -725,7 +725,7 @@ async def get_catalogued_board_css(request: web.Request) -> web.Response:
     app_state = get_app_state(request.app)
     username = await _optional_human_username(request)
     name = request.match_info["name"]
-    doc = await repository.find_catalogued_variant_doc(app_state, name, username)
+    doc = await repository.find_catalogued_variant_doc(app_state, name, username, for_assets=True)
     if doc is None:
         raise web.HTTPNotFound(text="Catalogued variant not found.")
 
@@ -744,7 +744,7 @@ async def get_catalogued_piece_css(request: web.Request) -> web.Response:
     app_state = get_app_state(request.app)
     username = await _optional_human_username(request)
     name = request.match_info["name"]
-    doc = await repository.find_catalogued_variant_doc(app_state, name, username)
+    doc = await repository.find_catalogued_variant_doc(app_state, name, username, for_assets=True)
     if doc is None:
         raise web.HTTPNotFound(text="Catalogued variant not found.")
 
@@ -767,7 +767,7 @@ async def get_catalogued_disguised_piece_css(request: web.Request) -> web.Respon
     app_state = get_app_state(request.app)
     username = await _optional_human_username(request)
     name = request.match_info["name"]
-    doc = await repository.find_catalogued_variant_doc(app_state, name, username)
+    doc = await repository.find_catalogued_variant_doc(app_state, name, username, for_assets=True)
     if doc is None:
         raise web.HTTPNotFound(text="Catalogued variant not found.")
 
@@ -1174,6 +1174,7 @@ async def archive_catalogued_variant(request: web.Request) -> web.Response:
 
 async def restore_catalogued_variant(request: web.Request) -> web.Response:
     app_state, username, name, doc = await _load_owned_doc(request)
+    validation.ensure_no_promotion_chaining(str(doc.get("ini") or ""))
     if bool(doc.get("archived", False)):
         await repository._ensure_catalogued_variant_quota(app_state, username)
     now = datetime.now(UTC)

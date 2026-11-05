@@ -68,6 +68,7 @@ class CataloguedServerVariant:
     show_promoted: bool = False
     legal_moves_need_history: bool = False
     n_fold_is_draw: bool = False
+    replay_only: bool = False
     move_encoding: MoveCodec = encode_move_standard
     move_decoding: MoveCodec = decode_move_standard
 
@@ -99,6 +100,7 @@ class ServerVariants(Enum):
         self.show_promoted = variant.show_promoted
         self.legal_moves_need_history = variant.legal_moves_need_history
         self.n_fold_is_draw = variant.n_fold_is_draw
+        self.replay_only = False
         self.move_encoding = variant.move_encoding
         self.move_decoding = variant.move_decoding
 
@@ -271,6 +273,7 @@ def register_catalogued_server_variant(
     legal_moves_need_history: bool = False,
     n_fold_is_draw: bool = False,
     random_start: bool = False,
+    replay_only: bool = False,
 ) -> CataloguedServerVariant:
     """Register a casual uploaded variant in the runtime server variant maps.
 
@@ -290,6 +293,7 @@ def register_catalogued_server_variant(
         legal_moves_need_history=legal_moves_need_history,
         n_fold_is_draw=n_fold_is_draw,
         random_start=random_start,
+        replay_only=replay_only,
         move_encoding=(
             encode_move_duck
             if arrowing

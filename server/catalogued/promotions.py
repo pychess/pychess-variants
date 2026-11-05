@@ -54,6 +54,11 @@ _BUILTIN_PROMOTIONS: dict[str, tuple[str, str]] = {
 }
 _PROMOTION_PAIR = re.compile(r"([A-Za-z])\s*:\s*([A-Za-z-])")
 
+# Change only after the engine and browser-library forward/undo regressions pass
+# with the deployed upstream versions. All admission and replay restrictions
+# derive from this policy; archive state remains an independent author decision.
+FSF_SUPPORTS_PROMOTION_CHAINING = False
+
 
 @lru_cache(maxsize=1)
 def _site_definitions() -> dict[str, str]:
@@ -101,12 +106,21 @@ def _promotion_rules(ini: str) -> tuple[dict[str, str], dict[str, str]]:
     return pieces, promotions
 
 
-def ensure_no_promotion_chaining(ini: str) -> None:
+@lru_cache(maxsize=256)
+def has_promotion_chaining(ini: str) -> bool:
     pieces, promotions = _promotion_rules(ini)
     enabled_promotions = {
         source: target
         for source, target in promotions.items()
         if target != "-" and pieces.get(source) != "-" and pieces.get(target) != "-"
     }
-    if any(target in enabled_promotions for target in enabled_promotions.values()):
+    return any(target in enabled_promotions for target in enabled_promotions.values())
+
+
+def promotion_chaining_requires_replay_only(ini: str) -> bool:
+    return not FSF_SUPPORTS_PROMOTION_CHAINING and has_promotion_chaining(ini)
+
+
+def ensure_no_promotion_chaining(ini: str) -> None:
+    if promotion_chaining_requires_replay_only(ini):
         raise web.HTTPBadRequest(text="Promotion chaining is not supported by FSF.")

@@ -289,10 +289,19 @@ async def _load_game_from_doc(
     """Construct a game once; callers apply their finished-game cache policy."""
     game_id = doc["_id"]
 
-    if doc.get("vini") and doc["v"] not in C2V:
+    if doc.get("vini") and (doc["v"] not in C2V or doc["v"] not in app_state.catalogued_variants):
         from catalogued.variants import ensure_catalogued_variant_from_game_doc
 
         ensure_catalogued_variant_from_game_doc(app_state, doc)
+
+    elif doc["v"] not in C2V:
+        from catalogued.variants import register_historical_catalogued_variant_doc
+
+        stored = await app_state.db["catalogued_variant"].find_one({"_id": doc["v"]})
+        if stored is not None:
+            historical = register_historical_catalogued_variant_doc(stored)
+            if historical is not None:
+                app_state.catalogued_variants[str(doc["v"])] = historical
 
     variant = C2V[doc["v"]]
 

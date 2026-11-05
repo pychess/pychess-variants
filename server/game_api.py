@@ -767,6 +767,8 @@ async def _stream_pgn_cursor(
         async for doc in cursor:
             game_counter += 1
             try:
+                if doc["v"] not in C2V and not doc.get("vini"):
+                    await _resolve_user_game_variant(get_app_state(request.app), doc)
                 pgn_text = pgn(doc)
                 if pgn_text is not None:
                     await response.write(pgn_text.encode())

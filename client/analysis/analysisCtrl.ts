@@ -1848,6 +1848,7 @@ export class AnalysisController extends GameController {
 
     engineGo = () => {
         if (
+            this.variant.replayOnly ||
             !this.localAnalysis ||
             this.ongoing ||
             this.isLocalAnalysisBlockedByAntiCheat() ||
@@ -2302,6 +2303,7 @@ export class AnalysisController extends GameController {
     }
 
     applyAnalysisMove(move: string, origin: AnalysisMoveApplication['origin'] = 'played-move'): boolean {
+        if (this.variant.replayOnly) return false;
         const previousPath = this.analysisPath ?? '';
         if (this.analysisExtension?.beforeMoveApplied?.({ move, origin, path: previousPath }) === false) {
             if (this.hasAnalysisTree()) this.activateTreePath(previousPath, true, 'reset');

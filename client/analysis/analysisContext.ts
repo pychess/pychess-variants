@@ -1,4 +1,5 @@
 import type { PyChessModel } from '../types';
+import { VARIANTS } from '../variants';
 
 export type AnalysisMode = 'standalone' | 'game' | 'puzzle' | 'embed' | 'study';
 
@@ -35,6 +36,7 @@ export function analysisContext(model: PyChessModel): AnalysisContext {
     const practiceLearner = model.study?.practice != null;
     const analysisBoard = model.gameId === '' && !puzzle;
     const ongoing = model.status <= -1;
+    const replayOnly = VARIANTS[model.variant]?.replayOnly ?? false;
 
     const mode: AnalysisMode = study
         ? 'study'
@@ -57,11 +59,11 @@ export function analysisContext(model: PyChessModel): AnalysisContext {
             // AnalysisController. Phase 0B centralizes the answers without changing
             // behavior; later modes such as Study can extend this vocabulary cleanly.
             resizableCharts: !embed && !practiceLearner,
-            localAnalysisAllowed: !ongoing && studyComputerAllowed,
-            editableTree: !ongoing && !embed,
+            localAnalysisAllowed: !ongoing && studyComputerAllowed && !replayOnly,
+            editableTree: !ongoing && !embed && !replayOnly,
             gamePanels: !analysisBoard && !embed && !ongoing,
             roundChat: !analysisBoard && !embed && !puzzle && !ongoing,
-            engineTools: !embed && !ongoing,
+            engineTools: !embed && !ongoing && !replayOnly,
             analysisTabs: !puzzle && !ongoing && !embed && !practiceLearner,
             usesRoundSocket: !puzzle && !ongoing && model.gameId !== '',
             // Learn -> Practice deliberately omits the normal analysis FEN/PGN panel.
@@ -69,10 +71,10 @@ export function analysisContext(model: PyChessModel): AnalysisContext {
             // AnalysisController from writing into DOM nodes that Practice does not render.
             positionMetadata: !puzzle && !ongoing && !practiceLearner,
             evalCharts: !puzzle && !ongoing && !practiceLearner,
-            positionEvaluation: !ongoing,
+            positionEvaluation: !ongoing && !replayOnly,
             // Whether this page mode may ask the server for analysis. Variant/worker
             // support is intentionally decided server-side and is independent of WASM.
-            serverAnalysisRequest: !analysisBoard && !embed,
+            serverAnalysisRequest: !analysisBoard && !embed && !replayOnly,
             moveTimeChart: !embed && !practiceLearner,
         },
     };

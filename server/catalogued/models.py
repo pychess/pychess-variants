@@ -313,6 +313,7 @@ class CataloguedVariantClientDocument(TypedDict):
     locked: NotRequired[bool]
     visibility: NotRequired[str]
     aiDisabled: NotRequired[bool]
+    replayOnly: NotRequired[bool]
     aiDisabledReason: NotRequired[str]
     aiDisabledUntil: NotRequired[datetime]
     favorite: NotRequired[bool]

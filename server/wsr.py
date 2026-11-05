@@ -481,6 +481,8 @@ async def handle_berserk(user: User, data: BerserkMessage, game: game.Game) -> N
 
 
 async def handle_analysis_move(user: User, data: AnalysisMoveMessage, game: game.Game) -> None:
+    if game.server_variant.replay_only:
+        return
     await analysis_move(
         user,
         game,
@@ -724,6 +726,12 @@ async def handle_analysis(
     data: AnalysisMessage,
     game: game.Game,
 ) -> None:
+    if not catalogued_variant_allows_fishnet(app_state, game.variant):
+        await ws_send_json(
+            ws,
+            chat_response("roundchat", "", "Computer analysis is unavailable for this variant."),
+        )
+        return
     # fishnet_analysis() wants to inject analysis data into game.steps.
     # Older games can be loaded without caching for plain HTML rendering, so pin
     # the websocket's reconstructed instance before queueing server-side analysis.

@@ -492,6 +492,7 @@ export interface Variant {
     readonly chess960: boolean;
     readonly randomStart: boolean;
     readonly aiDisabled: boolean;
+    readonly replayOnly: boolean;
     readonly twoBoards: boolean;
     readonly ratingEnabled: boolean;
     readonly hiddenInfo: boolean;
@@ -604,6 +605,7 @@ export function variant(config: VariantConfig): Variant {
         chess960: !!config.chess960,
         randomStart: !!config.randomStart,
         aiDisabled: !!config.aiDisabled,
+        replayOnly: !!config.replayOnly,
         twoBoards: !!config.twoBoards,
         ratingEnabled: config.ratingEnabled ?? true,
         hiddenInfo: !!config.hiddenInfo,
@@ -718,6 +720,8 @@ interface VariantConfig {
     randomStart?: boolean;
     // Whether Fairy-Stockfish AI is temporarily disabled for this catalogued variant
     aiDisabled?: boolean;
+    // Historical rules may be loaded for display while play and search remain blocked.
+    replayOnly?: boolean;
     // Identity metadata used to gate automatic NNUE for user-defined variants.
     cataloguedSource?: 'user' | 'fairy-stockfish-builtin';
     nnueFingerprint?: string;
@@ -2201,6 +2205,7 @@ export interface CataloguedVariantClientDocument {
     readonly locked?: boolean;
     readonly visibility?: 'private' | 'unlisted' | 'public';
     readonly aiDisabled?: boolean;
+    readonly replayOnly?: boolean;
     readonly aiDisabledReason?: string;
     readonly aiDisabledUntil?: string;
     readonly favorite?: boolean;
@@ -2910,6 +2915,7 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
         randomStart: !!meta.randomStart,
         tooltip: meta.tooltip || 'Catalogued variant',
         aiDisabled: !!meta.aiDisabled,
+        replayOnly: !!meta.replayOnly,
         cataloguedSource: meta.source,
         nnueFingerprint: meta.nnueFingerprint,
         ratingEnabled: false,

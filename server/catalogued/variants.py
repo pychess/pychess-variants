@@ -20,6 +20,7 @@ from variants import (
 )
 
 from . import documents, models, repository, validation
+from .promotions import promotion_chaining_requires_replay_only
 from .rules import catalogued_random_start
 
 log = logging.getLogger(__name__)
@@ -41,18 +42,22 @@ async def catalogued_variant_client_doc_for_game(
     game: Any,
     username: str,
 ) -> models.CataloguedVariantClientDocument | None:
-    """Return variant metadata needed by a participant's existing game.
+    """Return metadata for participants and spectators of saved finished games.
 
     Existing games must remain renderable after their catalogued variant becomes
     private, unlisted, or archived.  This deliberately bypasses normal catalogue
-    visibility checks, but only after verifying that ``username`` is one of the
-    game's players.
+    visibility checks for players, and for public history already saved by the
+    site. Live private games remain restricted to their participants.
     """
 
-    if not username or username not in {
+    participant = bool(username) and username in {
         str(getattr(getattr(game, "wplayer", None), "username", "")),
         str(getattr(getattr(game, "bplayer", None), "username", "")),
-    }:
+    }
+    public_history = getattr(game, "status", STARTED) > STARTED and getattr(
+        game, "persist_to_db", False
+    )
+    if not participant and not public_history:
         return None
 
     if not isinstance(getattr(game, "server_variant", None), CataloguedServerVariant):
@@ -63,8 +68,10 @@ async def catalogued_variant_client_doc_for_game(
         return None
 
     doc = getattr(app_state, "catalogued_variants", {}).get(name)
-    if doc is None and getattr(app_state, "db", None) is not None:
-        doc = await app_state.db[models.CATALOGUED_VARIANT_COLLECTION].find_one({"_id": name})
+    if (doc is None or doc.get("archived")) and getattr(app_state, "db", None) is not None:
+        stored = await app_state.db[models.CATALOGUED_VARIANT_COLLECTION].find_one({"_id": name})
+        if stored is not None:
+            doc = {**stored, **(doc or {})}
     if doc is None:
         return None
     return documents._client_doc(doc)
@@ -90,10 +97,14 @@ def is_public_catalogued_variant(app_state: Any, name: str) -> bool:
 def catalogued_variant_allows_fishnet(app_state: Any, name: str) -> bool:
     """Return whether Fairy-Stockfish/fishnet should currently handle this variant."""
 
+    if is_catalogued_variant(name) and get_server_variant(name, False).replay_only:
+        return False
     doc = getattr(app_state, "catalogued_variants", {}).get(name)
     if doc is None:
         return not is_catalogued_variant(name)
-    return not documents.catalogued_variant_ai_disabled(doc)
+    return not promotion_chaining_requires_replay_only(str(doc.get("ini") or "")) and not (
+        documents.catalogued_variant_ai_disabled(doc)
+    )
 
 
 def public_catalogued_variants_for_forms(app_state: Any) -> dict[str, Any]:
@@ -222,18 +233,17 @@ def register_catalogued_variant_doc(
 ) -> None:
     name = str(doc["name"])
     invalidate_public_catalogued_variants_json(app_state)
+    ini = str(doc.get("ini") or "")
+    is_fsf_builtin = documents._is_fsf_builtin_catalogued_doc(doc)
+    if doc.get("enabled", True) and not doc.get("archived", False) and not is_fsf_builtin:
+        validation._ensure_catalogued_rules_supported(ini)
     if not documents._is_active_catalogued_doc(doc):
         getattr(app_state, "catalogued_variants", {}).pop(name, None)
         unregister_catalogued_server_variant(name)
         return
 
-    ini = str(doc.get("ini") or "")
     start_fen = str(doc.get("startFen") or "")
     validation._ensure_catalogued_start_fen_has_side_to_move(start_fen)
-    is_fsf_builtin = documents._is_fsf_builtin_catalogued_doc(doc)
-    if not is_fsf_builtin:
-        validation._ensure_catalogued_rules_supported(ini)
-
     if load_config and not is_fsf_builtin:
         sf.load_variant_config(ini)
 
@@ -262,7 +272,9 @@ def register_catalogued_variant_doc(
     app_state.catalogued_variants[name] = dict(doc)
 
 
-def register_historical_catalogued_variant_doc(doc: Mapping[str, Any]) -> None:
+def register_historical_catalogued_variant_doc(
+    doc: Mapping[str, Any],
+) -> dict[str, Any] | None:
     """Register server metadata for a saved/archived catalogued variant.
 
     Historical games and tournaments must remain readable after the catalogue entry
@@ -273,10 +285,10 @@ def register_historical_catalogued_variant_doc(doc: Mapping[str, Any]) -> None:
 
     name = str(doc.get("v") or doc.get("name") or "")
     ini = str(doc.get("ini") or doc.get("vini") or "")
-    if not name or not ini or is_catalogued_variant(name):
+    if not name or not ini:
         return
 
-    validated = validation.validate_catalogued_ini(ini)
+    validated = validation.validate_catalogued_ini(ini, for_replay=True)
     if validated.name != name:
         raise ValueError(
             f"Historical catalogued variant INI defines {validated.name!r}, but record uses {name!r}"
@@ -301,7 +313,41 @@ def register_historical_catalogued_variant_doc(doc: Mapping[str, Any]) -> None:
             doc.get("legalMovesNeedHistory", validation.catalogued_legal_moves_need_history(ini))
         ),
         n_fold_is_draw=bool(doc.get("nFoldIsDraw", validation.catalogued_n_fold_is_draw(ini))),
+        replay_only=promotion_chaining_requires_replay_only(ini),
     )
+    # Retain catalogue artwork/metadata, but never retain an entire game document
+    # or make a saved snapshot eligible for new games.
+    historical = dict(doc) if doc.get("ini") else {}
+    historical.update(
+        {
+            "_id": name,
+            "name": name,
+            "displayName": str(doc.get("displayName") or doc.get("vd") or name),
+            "author": str(doc.get("author") or doc.get("vby") or ""),
+            "ini": ini,
+            "baseVariant": validated.base_variant,
+            "enabled": False,
+            "archived": True,
+            "visibility": str(doc.get("visibility") or models.CATALOGUED_VISIBILITY_PUBLIC),
+            "startFen": start_fen,
+            "width": width,
+            "height": height,
+            "pieces": validated.pieces,
+            "kingRoles": validated.king_roles,
+            "pocketRoles": validated.pocket_roles,
+            "captureToHand": validated.capture_to_hand,
+            "promotionType": validated.promotion_type,
+            "promotionRoles": validated.promotion_roles,
+            "promotionOrder": validated.promotion_order,
+            "showPromoted": validated.show_promoted,
+            "rulesGate": validated.rules_gate,
+            "rulesPass": validated.rules_pass,
+            "legalMovesNeedHistory": validated.legal_moves_need_history,
+            "nFoldIsDraw": validated.n_fold_is_draw,
+            "showCheckCounters": validated.show_check_counters,
+        }
+    )
+    return historical
 
 
 async def catalogued_variant_client_doc_for_tournament(
@@ -324,51 +370,13 @@ async def catalogued_variant_client_doc_for_tournament(
 def ensure_catalogued_variant_from_game_doc(app_state: Any, doc: Mapping[str, Any]) -> None:
     """Load an inline variant definition saved with a historical game if needed."""
     code = str(doc.get("v") or "")
-    if not code or is_catalogued_variant(code) or not doc.get("vini"):
+    if not code or not doc.get("vini"):
         return
-
-    validated = validation.validate_catalogued_ini(str(doc["vini"]))
-    name = validated.name
-    if name != code:
-        raise ValueError(f"Inline game variant INI defines {name!r}, but game uses {code!r}")
-
-    now = datetime.now(UTC)
-    register_catalogued_variant_doc(
-        app_state,
-        {
-            "_id": name,
-            "name": name,
-            "displayName": str(doc.get("vd") or name),
-            "description": "Loaded from saved game",
-            "author": str(doc.get("vby") or ""),
-            "ini": str(doc["vini"]),
-            "baseVariant": validated.base_variant,
-            "enabled": True,
-            "archived": False,
-            "startFen": validated.start_fen,
-            "width": validated.width,
-            "height": validated.height,
-            "pieces": validated.pieces,
-            "kingRoles": validated.king_roles,
-            "pocketRoles": validated.pocket_roles,
-            "captureToHand": validated.capture_to_hand,
-            "promotionType": validated.promotion_type,
-            "promotionRoles": validated.promotion_roles,
-            "promotionOrder": validated.promotion_order,
-            "showPromoted": validated.show_promoted,
-            "rulesGate": validated.rules_gate,
-            "rulesPass": validated.rules_pass,
-            "rulesArrowing": False,
-            "legalMovesNeedHistory": validated.legal_moves_need_history,
-            "nFoldIsDraw": validated.n_fold_is_draw,
-            "showCheckCounters": validated.show_check_counters,
-            "category": models.CATALOGUED_CATEGORY,
-            "visibility": models.CATALOGUED_VISIBILITY_PRIVATE,
-            "createdAt": now,
-            "updatedAt": now,
-        },
-        load_config=False,
-    )
+    if is_catalogued_variant(code) and code in app_state.catalogued_variants:
+        return
+    historical = register_historical_catalogued_variant_doc(doc)
+    if historical is not None:
+        app_state.catalogued_variants[code] = historical
 
 
 async def init_catalogued_variants(app_state: Any) -> None:

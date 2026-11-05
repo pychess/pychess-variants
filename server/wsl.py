@@ -303,6 +303,9 @@ async def handle_create_ai_challenge(
     if await _reject_bot_lobby_action(ws, user):
         return
 
+    if await _reject_inaccessible_catalogued_variant(app_state, ws, user, data["variant"]):
+        return
+
     if data.get("day", 0) == 0:
         no = await send_game_in_progress_if_any(app_state, user, ws)
         if no:

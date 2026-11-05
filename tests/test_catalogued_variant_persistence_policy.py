@@ -503,7 +503,7 @@ class CataloguedVariantArchiveActiveGameTest(unittest.IsolatedAsyncioTestCase):
         ) as validate_catalogued_ini:
             ensure_catalogued_variant_from_game_doc(app_state, game_doc)
 
-        validate_catalogued_ini.assert_called_once_with(game_doc["vini"])
+        validate_catalogued_ini.assert_called_once_with(game_doc["vini"], for_replay=True)
         self.assertTrue(is_catalogued_variant(name))
         self.assertIn(name, app_state.catalogued_variants)
         restored = app_state.catalogued_variants[name]
@@ -511,8 +511,8 @@ class CataloguedVariantArchiveActiveGameTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(restored["ini"], game_doc["vini"])
         self.assertEqual(restored["displayName"], game_doc["vd"])
         self.assertEqual(restored["author"], game_doc["vby"])
-        self.assertFalse(restored["archived"])
-        self.assertTrue(restored["enabled"])
+        self.assertTrue(restored["archived"])
+        self.assertFalse(restored["enabled"])
 
 
 if __name__ == "__main__":

@@ -65,13 +65,25 @@ async def find_catalogued_variant_doc(
     app_state: Any,
     name: str,
     username: str | None = None,
+    *,
+    for_assets: bool = False,
 ) -> Mapping[str, Any] | None:
     docs = getattr(app_state, "catalogued_variants", {})
     doc = docs.get(name)
-    if doc is None and app_state.db is not None:
-        doc = await app_state.db[models.CATALOGUED_VARIANT_COLLECTION].find_one({"_id": name})
+    if (doc is None or (for_assets and doc.get("archived"))) and app_state.db is not None:
+        stored = await app_state.db[models.CATALOGUED_VARIANT_COLLECTION].find_one({"_id": name})
+        if stored is not None:
+            doc = stored if doc is None else {**stored, **doc}
     if doc is None:
         return None
+    if for_assets:
+        if documents._catalogued_visibility(doc) in {
+            models.CATALOGUED_VISIBILITY_PUBLIC,
+            models.CATALOGUED_VISIBILITY_UNLISTED,
+        }:
+            return doc
+        if username and (doc.get("author") == username or documents._is_admin_username(username)):
+            return doc
     if documents._can_open_catalogued_doc(
         username, doc
     ) or documents._is_active_catalogued_game_participant(app_state, name, username):
