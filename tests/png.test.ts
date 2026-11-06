@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals';
+import { readFileSync } from 'node:fs';
 
 import { copyBoardToPNG } from '../client/png';
 
@@ -6,6 +7,9 @@ interface StyleValues {
     backgroundColor?: string;
     backgroundImage?: string;
     backgroundSize?: string;
+    borderColor?: string;
+    borderStyle?: string;
+    borderWidth?: string;
     display?: string;
     filter?: string;
     opacity?: string;
@@ -19,6 +23,18 @@ function cssStyle(values: StyleValues = {}): CSSStyleDeclaration {
         backgroundColor: values.backgroundColor ?? 'rgba(0, 0, 0, 0)',
         backgroundImage: values.backgroundImage ?? 'none',
         backgroundSize: values.backgroundSize ?? 'auto',
+        borderTopColor: values.borderColor ?? 'rgba(0, 0, 0, 0)',
+        borderRightColor: values.borderColor ?? 'rgba(0, 0, 0, 0)',
+        borderBottomColor: values.borderColor ?? 'rgba(0, 0, 0, 0)',
+        borderLeftColor: values.borderColor ?? 'rgba(0, 0, 0, 0)',
+        borderTopStyle: values.borderStyle ?? 'none',
+        borderRightStyle: values.borderStyle ?? 'none',
+        borderBottomStyle: values.borderStyle ?? 'none',
+        borderLeftStyle: values.borderStyle ?? 'none',
+        borderTopWidth: values.borderWidth ?? '0px',
+        borderRightWidth: values.borderWidth ?? '0px',
+        borderBottomWidth: values.borderWidth ?? '0px',
+        borderLeftWidth: values.borderWidth ?? '0px',
         display: values.display ?? 'block',
         filter: values.filter ?? 'none',
         opacity: values.opacity ?? '1',
@@ -201,6 +217,148 @@ describe('board PNG export', () => {
         const canvas = document.querySelector('canvas');
         expect(canvas).toBeNull();
         expect(HTMLCanvasElement.prototype.getContext).toHaveBeenCalled();
+    });
+
+    test('exports Alice as one board with translucent opposite-board pieces and their styled borders', async () => {
+        document.body.innerHTML = `
+            <section class="alice"><div class="cg-wrap"><cg-board>
+                <piece class="white q-piece"></piece>
+                <piece class="mirror black n-piece"></piece>
+            </cg-board></div></section>`;
+        const board = document.querySelector<HTMLElement>('cg-board')!;
+        const [normal, mirror] = Array.from(board.querySelectorAll<HTMLElement>('piece'));
+        setRect(board, 10, 20, 160, 160);
+        setRect(normal, 10, 20, 20, 20);
+        setRect(mirror, 30, 40, 20, 20);
+
+        jest.spyOn(window, 'getComputedStyle').mockImplementation((element, pseudoElement) => {
+            if (element === normal && pseudoElement !== '::before') {
+                return cssStyle({ backgroundImage: 'url("/queen.svg")' });
+            }
+            if (element === mirror && pseudoElement !== '::before') {
+                return cssStyle({
+                    backgroundImage: 'url("/knight.svg")',
+                    backgroundColor: 'rgb(224, 255, 255)',
+                    borderColor: 'rgb(0, 0, 255)',
+                    borderStyle: 'solid',
+                    borderWidth: '1px',
+                    opacity: '0.2',
+                });
+            }
+            return cssStyle();
+        });
+        Object.defineProperty(globalThis, 'fetch', {
+            configurable: true,
+            writable: true,
+            value: jest.fn(async () => responseBlob('<svg />')),
+        });
+
+        await copyBoardToPNG('Q|n6/8/8/8/8/8/8/8 w - - 0 1');
+        const rendered = serializeSpy.mock.calls[0][0] as SVGSVGElement;
+        expect(rendered.getAttribute('viewBox')).toBe('0 0 160 160');
+        expect(rendered.querySelectorAll('image')).toHaveLength(2);
+        expect(rendered.querySelector('image[x="0"][y="0"]')?.getAttribute('opacity')).toBeNull();
+
+        const ghost = rendered.querySelector('g[opacity="0.2"]')!;
+        expect(ghost).not.toBeNull();
+        expect(ghost.querySelector('rect[fill="rgb(224, 255, 255)"]')).not.toBeNull();
+        const borders = ghost.querySelectorAll('rect[fill="rgb(0, 0, 255)"]');
+        expect(borders).toHaveLength(4);
+        expect(ghost.querySelector('image[x="20"][y="20"]')?.getAttribute('opacity')).toBeNull();
+        expect(rendered.querySelectorAll('g[opacity="0.2"]')).toHaveLength(1);
+    });
+
+    test('expands internal SVG board references so board textures survive PNG rasterization', async () => {
+        document.body.innerHTML = '<div class="cg-wrap"><cg-board></cg-board></div>';
+        const board = document.querySelector<HTMLElement>('cg-board')!;
+        setRect(board, 0, 0, 160, 160);
+        jest.spyOn(window, 'getComputedStyle').mockImplementation(element =>
+            element === board ? cssStyle({ backgroundImage: 'url("/brown.svg")' }) : cssStyle(),
+        );
+        const boardSvg =
+            '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 8 8">' +
+            '<rect width="8" height="8" fill="brown"/><g id="light" fill="beige"><rect width="1" height="1"/></g>' +
+            '<use xlink:href="#light" x="2" y="2"/></svg>';
+        Object.defineProperty(globalThis, 'fetch', {
+            configurable: true,
+            writable: true,
+            value: jest.fn(async (input: RequestInfo | URL) =>
+                String(input).startsWith('data:')
+                    ? ({ text: async () => boardSvg } as Response)
+                    : responseBlob(boardSvg),
+            ),
+        });
+
+        await copyBoardToPNG('8/8/8/8/8/8/8/8 w - - 0 1');
+        const rendered = serializeSpy.mock.calls[0][0] as SVGSVGElement;
+        expect(rendered.querySelector('svg[viewBox="0 0 8 8"]')).not.toBeNull();
+        expect(rendered.querySelector('use')).toBeNull();
+        expect(rendered.querySelector('g[transform="translate(2 2)"] rect')).not.toBeNull();
+    });
+
+    test.each(['g', 'symbol'])('preserves scaled %s board references and symbol viewports', async tag => {
+        document.body.innerHTML = '<div class="cg-wrap"><cg-board></cg-board></div>';
+        const board = document.querySelector<HTMLElement>('cg-board')!;
+        setRect(board, 0, 0, 160, 160);
+        jest.spyOn(window, 'getComputedStyle').mockImplementation(element =>
+            element === board ? cssStyle({ backgroundImage: 'url("/scaled-board.svg")' }) : cssStyle(),
+        );
+        const boardSvg =
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><defs>' +
+            `<${tag} id="tile" viewBox="0 0 10 10" preserveAspectRatio="xMinYMin meet" width="10" height="10">` +
+            `<rect width="10" height="10" fill="beige"/></${tag}></defs>` +
+            '<use id="instance" href="#tile" x="2" y="3" transform="scale(2)" width="20" height="30" opacity="0.5"/></svg>';
+        Object.defineProperty(globalThis, 'fetch', {
+            configurable: true,
+            writable: true,
+            value: jest.fn(async (input: RequestInfo | URL) =>
+                String(input).startsWith('data:')
+                    ? ({ text: async () => boardSvg } as Response)
+                    : responseBlob(boardSvg),
+            ),
+        });
+
+        await copyBoardToPNG('8/8/8/8/8/8/8/8 w - - 0 1');
+        const rendered = serializeSpy.mock.calls[0][0] as SVGSVGElement;
+        const instance = rendered.querySelector('#instance')!;
+        expect(instance.getAttribute('transform')).toBe('scale(2) translate(2 3)');
+        expect(instance.getAttribute('opacity')).toBe('0.5');
+        expect(instance.querySelector('rect[fill="beige"]')).not.toBeNull();
+        expect(instance.querySelector('symbol, use')).toBeNull();
+        if (tag === 'symbol') {
+            const viewport = instance.querySelector('svg')!;
+            expect(viewport.getAttribute('viewBox')).toBe('0 0 10 10');
+            expect(viewport.getAttribute('preserveAspectRatio')).toBe('xMinYMin meet');
+            expect(viewport.getAttribute('width')).toBe('20');
+            expect(viewport.getAttribute('height')).toBe('30');
+        }
+    });
+
+    test('keeps all default Borderlands board tiles renderable after expanding references', async () => {
+        document.body.innerHTML = '<div class="cg-wrap"><cg-board></cg-board></div>';
+        const board = document.querySelector<HTMLElement>('cg-board')!;
+        setRect(board, 0, 0, 450, 500);
+        jest.spyOn(window, 'getComputedStyle').mockImplementation(element =>
+            element === board ? cssStyle({ backgroundImage: 'url("/borderlands-cobalt.svg")' }) : cssStyle(),
+        );
+        const boardSvg = readFileSync('static/images/board/borderlands-cobalt.svg', 'utf8');
+        Object.defineProperty(globalThis, 'fetch', {
+            configurable: true,
+            writable: true,
+            value: jest.fn(async (input: RequestInfo | URL) =>
+                String(input).startsWith('data:')
+                    ? ({ text: async () => boardSvg } as Response)
+                    : responseBlob(boardSvg),
+            ),
+        });
+
+        await copyBoardToPNG('9/9/9/9/9/9/9/9/9/9 w - - 0 1');
+        const rendered = serializeSpy.mock.calls[0][0] as SVGSVGElement;
+        expect(rendered.querySelector('use, g > symbol')).toBeNull();
+        expect(rendered.querySelectorAll('g > svg')).toHaveLength(90);
+        expect(rendered.querySelector('#use340')?.getAttribute('transform')).toBe(
+            'matrix(1.019997,0,0,1.0199975,-111.99854,-3.9995587) translate(500 100)',
+        );
     });
 
     test('uses rotated ::before artwork when a piece style renders its image there', async () => {
