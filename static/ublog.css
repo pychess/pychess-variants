@@ -375,7 +375,7 @@
 
 .ublog-page .ublog-markdown-render,
 .ublog-page .ublog-post__markup {
-  line-height: 1.65;
+  line-height: 1.8;
   overflow-wrap: anywhere;
   word-break: break-word;
   min-width: 0;
@@ -389,6 +389,7 @@
 
 .ublog-page .ublog-markdown-render p {
   margin: 0.85em 0;
+  font-size: 1.2em;
 }
 
 /* Match old blog rendering: paragraphs containing images are centered. */
