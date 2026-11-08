@@ -31,7 +31,7 @@ export function sizeMiniBoardHost(boardWrap: HTMLElement): HTMLElement | undefin
 // Custom board styles can change a wrapper's padding-based aspect ratio after
 // Chessground renders. ResizeObserver only sees its unchanged content box, so
 // also react to the explicit resize signal sent when that stylesheet loads.
-export function bindMiniBoardResize(chessground: Api): () => void {
+export function bindBoardResize(chessground: Api): () => void {
     let resizeFrame: number | undefined;
 
     const scheduleResize = () => {

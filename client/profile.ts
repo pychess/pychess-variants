@@ -15,7 +15,7 @@ import { Ceval } from './messages';
 import { aiDisplayName, aiLevel, gameType, result, renderRdiff } from './result';
 import { renderBugTeamInfo, renderGameBoardsBug } from '@/two-board/profile';
 import { displayUsername, userLink } from './user';
-import { bindMiniBoardResize, sizeMiniBoardHost } from './miniBoard';
+import { bindBoardResize, sizeMiniBoardHost } from './miniBoard';
 
 export interface Game {
     _id: string; // mongodb document id
@@ -138,7 +138,7 @@ export function renderGames(model: PyChessModel, games: Game[]) {
                                                   addDimensionsCssVarsTo: boardHost,
                                                   pocketRoles: variant.pocket?.roles,
                                               });
-                                              const unbindResize = bindMiniBoardResize(chessground);
+                                              const unbindResize = bindBoardResize(chessground);
                                               (vnode.data as { miniBoardCleanup?: () => void }).miniBoardCleanup = () => {
                                                   unbindResize();
                                                   chessground.destroy();

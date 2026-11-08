@@ -2,11 +2,11 @@ import { _ } from './i18n';
 import { Chessground } from 'chessgroundx/chessground';
 
 import { boardSettings } from './boardSettings';
-import { bindMiniBoardResize } from './miniBoard';
+import { bindBoardResize } from './miniBoard';
 import { ensureCataloguedVariantsLoaded, VARIANTS } from './variants';
 
 type ChessgroundFactory = typeof Chessground;
-type MiniBoardResizeBinder = typeof bindMiniBoardResize;
+type MiniBoardResizeBinder = typeof bindBoardResize;
 type CataloguedStartBoardMount = {
     chessground: ReturnType<ChessgroundFactory>;
     unbindResize: ReturnType<MiniBoardResizeBinder>;
@@ -88,7 +88,7 @@ function disposeCataloguedStartBoard(preview: HTMLElement): void {
 export function mountCataloguedStartBoards(
     assetURL = '',
     createChessground: ChessgroundFactory = Chessground,
-    bindResize: MiniBoardResizeBinder = bindMiniBoardResize,
+    bindResize: MiniBoardResizeBinder = bindBoardResize,
 ): void {
     boardSettings.assetURL = assetURL;
     const previews = document.querySelectorAll<HTMLElement>('.catalogued-start-board-preview');

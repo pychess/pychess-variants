@@ -9,11 +9,13 @@ import { CGMove, uci2cg } from '@/chess';
 import { BoardName, PyChessModel } from '@/types';
 import { fogFen, Variant, VARIANTS, moddedVariant } from '@/variants';
 import { clearPassMoveAnimation } from '@/passMove';
+import { bindBoardResize } from '@/miniBoard';
 
 type MouchEvent = Event & Partial<MouseEvent & TouchEvent>;
 
 export abstract class ChessgroundController implements BoardController {
     private readonly onBoardUnload = () => this.ffishBoard.delete();
+    private readonly unbindBoardResize?: () => void;
     boardName: BoardName;
     readonly home: string;
 
@@ -74,6 +76,10 @@ export abstract class ChessgroundController implements BoardController {
             pocket1,
         );
 
+        if (this.variant.hasBoard && !this.boardName) {
+            this.unbindBoardResize = bindBoardResize(this.chessground);
+        }
+
         if (this.boardName === 'b') {
             boardSettings.ctrl2 = this;
         } else {
@@ -100,6 +106,7 @@ export abstract class ChessgroundController implements BoardController {
 
     destroy(): void {
         window.removeEventListener('beforeunload', this.onBoardUnload);
+        this.unbindBoardResize?.();
         this.chessground.destroy();
         this.ffishBoard.delete();
     }
