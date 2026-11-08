@@ -441,11 +441,11 @@ export const PIECE_FAMILIES: Record<string, PieceFamily> = {
     yokai: { pieceCSS: ['yokai', 'disguised'] },
     perfect: { pieceCSS: ['perfect0', 'disguised'] },
     decimalshogi: {
-        pieceCSS: ['shogik', 'disguised', 'firi'],
+        pieceCSS: ['shogik', 'firi', 'disguised'],
         imageLayerCSS: ['shogik'],
     },
     okisakishogi: {
-        pieceCSS: ['kanji', 'disguised', 'firi'],
+        pieceCSS: ['kanji', 'firi', 'disguised'],
         imageLayerCSS: ['kanji'],
         pieceNames: { ...SHOGI_NAMES, q: _('queen') },
     },

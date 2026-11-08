@@ -264,11 +264,11 @@ label.piece.piece0.shogi {
     filter: drop-shadow(2px 2px 2px #000);
 }
 label.piece.piece0.decimalshogi {
-    background-image: url('images/pieces/shogi/ctk/0_QUEEN.svg');
+    background-image: url('images/pieces/shogi/ctk/0KA.svg');
     filter: drop-shadow(2px 2px 2px #000);
 }
 label.piece.piece0.okisakishogi {
-    background-image: url('images/pieces/shogi/ctk/0_OKISAKI_QUEEN.svg');
+    background-image: url('images/pieces/shogi/ctk/0KA.svg');
     filter: drop-shadow(2px 2px 2px #000);
 }
 label.piece.piece1.shogi {
@@ -315,13 +315,13 @@ label.piece.piece14.shogi {
     background-image: url('images/pieces/shogi/cz/0KA.svg');
 }
 label.piece.piece15.shogi,
-label.piece.piece2.decimalshogi,
-label.piece.piece2.okisakishogi {
+label.piece.piece1.decimalshogi,
+label.piece.piece1.okisakishogi {
     background-image: url('images/pieces/firi/bb.svg');
 }
 label.piece.piece16.shogi,
-label.piece.piece1.decimalshogi,
-label.piece.piece1.okisakishogi {
+label.piece.piece2.decimalshogi,
+label.piece.piece2.okisakishogi {
     background-image: url('images/pieces/disguised/shogi-ally.svg');
 }
 
