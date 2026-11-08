@@ -75,7 +75,7 @@ test('Okisaki Shogi uses its complete directional piece style', () => {
 });
 
 test.each(['decimalshogi', 'okisakishogi'])(
-    '%s preserves disguised preferences and switches cleanly to Firi',
+    '%s offers Firi before disguised and switches styles cleanly',
     family => {
         const variant = register({
             name: 'testfiristyles',
@@ -95,10 +95,10 @@ test.each(['decimalshogi', 'okisakishogi'])(
         try {
             boardSettings.updateScopedPieceStyle(variant, board);
             const setting = boardSettings.getSettings('PieceStyle', family, '', variant);
-            setting.value = 1;
+            setting.value = 2;
             expect(boardSettings.pieceCSS(family, variant)).toBe('disguised');
 
-            setting.value = 2;
+            setting.value = 1;
             expect(boardSettings.pieceCSS(family, variant)).toBe('firi');
             expect(board.classList.contains(`piece-style-${family}-firi`)).toBe(true);
             expect(board.classList.contains(`piece-style-${family}-disguised`)).toBe(false);
