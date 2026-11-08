@@ -1,58 +1,75 @@
-/* Canonical player-facing artwork; rotate the image layer for the opponent. */
+.okisakishogi piece {
+    --ctk-shadow-size: max(
+        calc(var(--cg-width) / var(--cg-board-files, var(--files)) * 0.0385),
+        calc(var(--cg-height) / var(--cg-board-ranks, var(--ranks)) * 0.03333)
+    );
+    filter: drop-shadow(2px 2px 2px #000);
+    filter: drop-shadow(
+        var(--ctk-shadow-size)
+        var(--ctk-shadow-size)
+        var(--ctk-shadow-size)
+        #000
+    );
+}
 .okisakishogi piece::before {
     content: '';
     display: block;
     width: 100%;
     height: 100%;
     background-position: center;
-    background-size: contain;
+    background-size: cover;
     background-repeat: no-repeat;
 }
 .okisakishogi piece.enemy::before {
     transform: rotate(180deg);
 }
-.okisakishogi piece.pl-piece::before {
-    background-image: url('../../images/pieces/okisakishogi/pl.svg');
-}
-.okisakishogi piece.l-piece::before {
-    background-image: url('../../images/pieces/okisakishogi/l.svg');
-}
-.okisakishogi piece.pr-piece::before {
-    background-image: url('../../images/pieces/okisakishogi/pr.svg');
-}
-.okisakishogi piece.ps-piece::before {
-    background-image: url('../../images/pieces/okisakishogi/ps.svg');
-}
-.okisakishogi piece.pn-piece::before {
-    background-image: url('../../images/pieces/okisakishogi/pn.svg');
-}
-.okisakishogi piece.pb-piece::before {
-    background-image: url('../../images/pieces/okisakishogi/pb.svg');
+.okisakishogi piece.p-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0FU.svg');
 }
 .okisakishogi piece.pp-piece::before {
-    background-image: url('../../images/pieces/okisakishogi/pp.svg');
-}
-.okisakishogi piece.r-piece::before {
-    background-image: url('../../images/pieces/okisakishogi/r.svg');
+    background-image: url('../../images/pieces/shogi/ctk/0TO.svg');
 }
 .okisakishogi piece.b-piece::before {
-    background-image: url('../../images/pieces/okisakishogi/b.svg');
+    background-image: url('../../images/pieces/shogi/ctk/0KA.svg');
 }
-.okisakishogi piece.s-piece::before {
-    background-image: url('../../images/pieces/okisakishogi/s.svg');
-}
-.okisakishogi piece.g-piece::before {
-    background-image: url('../../images/pieces/okisakishogi/g.svg');
+.okisakishogi piece.pb-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0UM.svg');
 }
 .okisakishogi piece.n-piece::before {
-    background-image: url('../../images/pieces/okisakishogi/n.svg');
+    background-image: url('../../images/pieces/okisakishogi/n-ctk.svg');
 }
-.okisakishogi piece.k-piece::before {
-    background-image: url('../../images/pieces/okisakishogi/k.svg');
+.okisakishogi piece.pn-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0NK.svg');
 }
+.okisakishogi piece.r-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0HI.svg');
+}
+.okisakishogi piece.pr-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0RY.svg');
+}
+.okisakishogi piece.l-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0KY.svg');
+}
+.okisakishogi piece.pl-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0NY.svg');
+}
+.okisakishogi piece.s-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0GI.svg');
+}
+.okisakishogi piece.ps-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0NG.svg');
+}
+.okisakishogi piece.g-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0KI.svg');
+}
+.okisakishogi piece.k-piece.white::before {
+    background-image: url('../../images/pieces/shogi/ctk/0GY.svg');
+}
+.okisakishogi piece.k-piece.black::before {
+    background-image: url('../../images/pieces/shogi/ctk/0OU.svg');
+}
+
+/* Okisaki queen (妃). */
 .okisakishogi piece.q-piece::before {
-    background-image: url('../../images/pieces/okisakishogi/q.svg');
-}
-.okisakishogi piece.p-piece::before {
-    background-image: url('../../images/pieces/okisakishogi/p.svg');
+    background-image: url('../../images/pieces/okisakishogi/q-ctk.svg');
 }
