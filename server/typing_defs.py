@@ -555,6 +555,8 @@ class ViewContext(TypedDict, total=False):
     following_next_href: str
     site_tag: str
     site_tags: list[str]
+    prev_page_href: str | None
+    next_page_href: str | None
     community_posts: list[object]
     community_topic: str
     community_topics: list[str]
@@ -577,6 +579,7 @@ class ViewContext(TypedDict, total=False):
     team_members_next_href: str | None
     team_leaders: Sequence[Mapping[str, object]]
     team_requests: Sequence[Mapping[str, object]]
+    team_requests_total: int
     team_request_teams: Mapping[str, Mapping[str, object]]
     team_declined_requests: Sequence[Mapping[str, object]]
     team_declined_requests_total: int

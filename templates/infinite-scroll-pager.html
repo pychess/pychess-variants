@@ -1,0 +1,6 @@
+{% if prev_page_href or next_page_href %}
+<nav aria-label="{% trans %}Pagination{% endtrans %}" data-infinite-scroll-pager>
+    {% if prev_page_href %}<a class="button button-empty" href="{{ prev_page_href }}">‹ {% trans %}Previous{% endtrans %}</a>{% endif %}
+    {% if next_page_href %}<a class="button button-empty" rel="next" href="{{ next_page_href }}">{% trans %}Next{% endtrans %} ›</a>{% endif %}
+</nav>
+{% endif %}

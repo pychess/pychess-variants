@@ -1,18 +1,18 @@
 {% extends "team-base.html" %}
 {% block content %}
 <div id="main-wrap">
-    <main class="team-requests-page teams-page page-menu">
+    <main class="team-requests-page teams-page page-menu" data-infinite-scroll="team-requests">
         {% set team_menu_active = 'requests' %}
         {% include "team-menu.html" %}
         <div class="page-menu__content box box-pad">
-            <h1 class="box__top">{% trans count=team_requests|length %}{{ count }} join request{% pluralize %}{{ count }} join requests{% endtrans %}</h1>
+            <h1 class="box__top">{% trans count=team_requests_total %}{{ count }} join request{% pluralize %}{{ count }} join requests{% endtrans %}</h1>
 
             {% if team_requests %}
             <table class="team-requests team-requests--global slist requests datatable">
-                <tbody>
+                <tbody data-infinite-scroll-content>
                     {% for req in team_requests %}
                     {% set req_team = team_request_teams.get(req['team']) %}
-                    <tr>
+                    <tr data-infinite-scroll-key="{{ req['_id'] }}">
                         <td class="team-request-user">
                             <a class="user-link" href="/@/{{ req['user'] }}">{{ req['user'] }}</a>
                             <span class="team-request-team-separator">•</span>
@@ -39,6 +39,7 @@
             {% else %}
             <p class="team-empty team-requests__empty">{% trans %}No pending join requests.{% endtrans %}</p>
             {% endif %}
+            {% include "infinite-scroll-pager.html" %}
         </div>
     </main>
 </div>

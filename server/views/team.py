@@ -8,6 +8,7 @@ from admin_api import record_team_action
 from aiohttp import web
 from forum.access import can_read_forum_categ, team_forum_categ_id
 from forum.storage import ensure_team_forum
+from pagination import page_href, page_number
 from pychess_global_app_state_utils import get_app_state
 from request_utils import read_post_data
 from settings import ADMINS
@@ -149,19 +150,39 @@ async def team_requests(request: web.Request) -> ViewContext:
     team_ids = await _request_manager_team_ids(app_state, user.username)
     requests: list[dict[str, Any]] = []
     teams_by_id: dict[str, dict[str, Any]] = {}
+    page = page_number(request)
+    total = 0
     if team_ids:
-        request_cursor = app_state.db.team_request.find(
-            {"team": {"$in": team_ids}, "declined": False}
-        ).sort("createdAt", 1)
-        requests = [item async for item in request_cursor]
-        team_cursor = app_state.db.team.find({"_id": {"$in": team_ids}, "enabled": True})
-        teams_by_id = {str(team["_id"]): team async for team in team_cursor}
+        query = {"team": {"$in": team_ids}, "declined": False}
+        total = await app_state.db.team_request.count_documents(query)
+        page = min(page, max(1, (total + TEAM_REQUESTS_PAGE_SIZE - 1) // TEAM_REQUESTS_PAGE_SIZE))
+        requests = await (
+            app_state.db.team_request.find(query)
+            .sort([("createdAt", 1), ("_id", 1)])
+            .skip((page - 1) * TEAM_REQUESTS_PAGE_SIZE)
+            .limit(TEAM_REQUESTS_PAGE_SIZE)
+            .to_list(length=TEAM_REQUESTS_PAGE_SIZE)
+        )
+        visible_team_ids = list({str(item["team"]) for item in requests})
+        teams = (
+            await app_state.db.team.find(
+                {"_id": {"$in": visible_team_ids}, "enabled": True}
+            ).to_list(length=len(visible_team_ids))
+            if visible_team_ids
+            else []
+        )
+        teams_by_id = {str(team["_id"]): team for team in teams}
 
     context.update(
         {
             "team_requests": requests,
+            "team_requests_total": total,
             "team_request_teams": teams_by_id,
-            "title": f"{len(requests)} join requests • PyChess",
+            "prev_page_href": page_href(request, page - 1) if page > 1 else None,
+            "next_page_href": page_href(request, page + 1)
+            if page * TEAM_REQUESTS_PAGE_SIZE < total
+            else None,
+            "title": f"{total} join requests • PyChess",
         }
     )
     return context

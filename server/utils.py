@@ -24,7 +24,6 @@ from const import (
     T_STARTED,
     UNKNOWNFINISH,
     VARIANT_960_TO_PGN,
-    category_matches,
 )
 from convert import grand2zero, mirror5, mirror9, zero2grand
 from fairy import (
@@ -48,7 +47,6 @@ from seek import (
     is_anon_restricted_seek,
     is_targeted_two_board_seek,
 )
-from ublog import display_date, image_src, post_url
 from user import User
 from users import NotInDbUsers
 from valid_fen import VALID_FEN
@@ -76,7 +74,6 @@ if TYPE_CHECKING:
 import logging
 
 from json_utils import json_response
-from preferences import effective_game_category
 from pychess_global_app_state_utils import get_app_state
 from request_utils import read_post_data
 from session_security import session_expiry_timeout
@@ -1783,88 +1780,6 @@ async def get_names(request):
     async for doc in cursor:
         names.append((doc["_id"], doc["title"]))
     return json_response(names)
-
-
-async def get_blogs(request, tag=None, limit=0):
-    app_state = get_app_state(request.app)
-    if app_state.db is None:
-        return []
-
-    session = await aiohttp_session.get_session(request)
-    session_user = session.get("user_name")
-    user = await app_state.users.get(session_user) if session_user else None
-    game_category = effective_game_category(session, user)
-
-    async def enrich_author_titles(blogs: list[dict]) -> list[dict]:
-        titles = await app_state.public_users.get_titles(
-            str(doc.get("author") or "") for doc in blogs
-        )
-        for doc in blogs:
-            author = str(doc.get("author") or "")
-            title = titles.get(author, str(doc.get("author_title") or ""))
-            doc["author_title"] = title
-            doc["atitle"] = title or str(doc.get("atitle") or "")
-        return blogs
-
-    # Prefer migrated site blogs from ublog_post.
-    tag_filter = tag.casefold() if isinstance(tag, str) and tag.strip() != "" else None
-    site_query: dict[str, object] = {"live": True, "blogType": "site"}
-    site_cursor = app_state.db.ublog_post2.find(site_query).sort(
-        [("sticky", -1), ("publishedAt", -1), ("createdAt", -1)]
-    )
-    site_blogs: list[dict] = []
-    async for raw_doc in site_cursor:
-        author = str(raw_doc.get("author") or "")
-        author_profile = await app_state.public_users.get_profile(author)
-        if author_profile is None or not author_profile.enabled:
-            continue
-
-        category = raw_doc.get("category", "all")
-        if not category_matches(game_category, category):
-            continue
-        intro = str(raw_doc.get("intro") or raw_doc.get("subtitle") or "")
-        image_alt = str(raw_doc.get("imageAlt") or raw_doc.get("alt") or "")
-        tags_raw = raw_doc.get("tags")
-        tags = [str(tag) for tag in tags_raw] if isinstance(tags_raw, list) else []
-        topics_raw = raw_doc.get("topics")
-        topics = (
-            [str(topic) for topic in topics_raw]
-            if isinstance(topics_raw, list)
-            else [tag.lower() for tag in tags]
-        )
-        if tag_filter is not None:
-            tag_match = any(isinstance(t, str) and t.casefold() == tag_filter for t in tags)
-            topic_match = any(isinstance(t, str) and t.casefold() == tag_filter for t in topics)
-            if not (tag_match or topic_match):
-                continue
-        site_blogs.append(
-            {
-                "_id": str(raw_doc.get("legacyBlogId") or raw_doc.get("_id") or ""),
-                "post_id": str(raw_doc.get("_id") or ""),
-                "title": str(raw_doc.get("title") or ""),
-                "intro": intro,
-                "subtitle": intro,
-                "author": author,
-                "date": display_date(raw_doc),
-                "image": str(raw_doc.get("image") or ""),
-                "image_src": image_src(raw_doc),
-                "imageAlt": image_alt,
-                "alt": image_alt,
-                "tags": tags,
-                "topics": topics,
-                "category": category,
-                "categoryList": category if isinstance(category, list) else [category],
-                "isOfficial": bool(raw_doc.get("isOfficial", True)),
-                "blogType": "site",
-                "url": post_url(raw_doc),
-            }
-        )
-        if limit > 0 and len(site_blogs) >= limit:
-            break
-    if len(site_blogs) > 0:
-        return await enrich_author_titles(site_blogs)
-
-    return []
 
 
 async def get_notifications(request):
