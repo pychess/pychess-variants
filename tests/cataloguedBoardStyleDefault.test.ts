@@ -3,6 +3,7 @@ import type { Api } from 'chessgroundx/api';
 import { Chessground } from 'chessgroundx/chessground';
 
 import { boardSettings } from '../client/boardSettings';
+import { patch } from '../client/document';
 import { mountCataloguedStartBoards } from '../client/communityVariants';
 import {
     BOARD_FAMILIES,
@@ -64,6 +65,60 @@ test.each([false, true])('10x10 Shogi variants share the rectangular-cell board 
     expect(variant.board.cg).toBe('cg-shogi10x10');
     expect(variant.hasBoard).toBe(hasBoard);
     expect(boardSettings.boardCSS(variant.boardFamily, variant)).toBe('shogi10x10.svg');
+});
+
+test('an uploaded Shogi board can switch to wood and back, including newly mounted boards', () => {
+    const variant = register({
+        name: 'testshogi10x10',
+        displayName: 'Test 10x10 Shogi',
+        ini: '[testshogi10x10:shogi]',
+        baseVariant: 'shogi',
+        width: 10,
+        height: 10,
+        startFen: '9k/10/10/10/10/10/10/10/10/K9[] w - - 0 1',
+        pieces: ['k'],
+        kingRoles: ['k'],
+        hasBoard: true,
+        boardRevision: 'uploaded-r1',
+    });
+    boardSettings.assetURL = '/static';
+    document.body.innerHTML =
+        '<div class="shogi10x10"><div class="cg-wrap"></div></div><div id="board-settings"></div>';
+    const board = document.querySelector<HTMLElement>('.shogi10x10')!;
+    boardSettings.updateScopedBoardStyle(variant, board);
+    const setting = boardSettings.getSettings('BoardStyle', variant.boardFamily, '', variant);
+    patch(document.getElementById('board-settings')!, setting.view());
+
+    const custom = document.getElementById('board0') as HTMLInputElement;
+    const wood = document.getElementById('board1') as HTMLInputElement;
+    expect(custom.checked).toBe(true);
+    expect(custom.disabled).toBe(false);
+    expect(wood).not.toBeNull();
+    expect(document.querySelector<HTMLLabelElement>('label[for="board1"]')?.style.backgroundImage).toContain(
+        'Shogi10x10Wood.svg',
+    );
+
+    wood.click();
+    expect(setting.value).toBe(1);
+    expect(board.classList.contains('board-style-builtin')).toBe(true);
+    expect(board.style.getPropertyValue('--board-image')).toBe('url(/static/images/board/Shogi10x10Wood.svg)');
+    const preview = document.createElement('div');
+    preview.className = variant.boardFamily;
+    document.body.appendChild(preview);
+    boardSettings.updateScopedBoardStyle(variant, preview);
+    expect(preview.classList.contains('board-style-builtin')).toBe(true);
+    expect(preview.style.getPropertyValue('--board-image')).toBe(board.style.getPropertyValue('--board-image'));
+
+    custom.click();
+    expect(setting.value).toBe(0);
+    for (const target of [board, preview]) {
+        expect(target.classList.contains('board-style-builtin')).toBe(false);
+        expect(target.style.getPropertyValue('--board-image')).toBe('');
+    }
+    // Keep the uploaded CSS loaded so its thumbnail and re-selection still work.
+    expect(document.getElementById('board-set-catalogued-testshogi10x10')?.getAttribute('href')).toBe(
+        '/api/catalogued-variants/testshogi10x10/board-css.css?v=uploaded-r1',
+    );
 });
 
 test('catalogued variants inherit a dimension-compatible board family from their base variant', () => {

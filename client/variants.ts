@@ -111,7 +111,7 @@ export const BOARD_FAMILIES: Record<string, BoardFamily> = {
     shogi10x10: {
         dimensions: { width: 10, height: 10 },
         cg: 'cg-shogi10x10',
-        boardCSS: ['shogi10x10.svg'],
+        boardCSS: ['shogi10x10.svg', 'Shogi10x10Wood.svg', 'Shogi10x10Kaya.svg'],
     },
     shogi9x9: {
         dimensions: { width: 9, height: 9 },

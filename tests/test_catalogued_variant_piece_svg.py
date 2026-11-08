@@ -364,9 +364,10 @@ class CataloguedVariantBoardSvgTestCase(unittest.TestCase):
             {"svg": ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 1200" />')},
         )
 
-        self.assertIn('[data-board-variant="shosushogi"] cg-board', css)
-        self.assertIn('[data-board-variant="shosushogi"].cg-wrap', css)
-        self.assertIn('[data-board-variant="shosushogi"] .cg-wrap', css)
+        scope = '[data-board-variant="shosushogi"]:not(.board-style-builtin)'
+        self.assertIn(f"{scope} cg-board", css)
+        self.assertIn(f"{scope}.cg-wrap", css)
+        self.assertIn(f"{scope} .cg-wrap", css)
         self.assertIn("padding-bottom: 109.09090909% !important", css)
         self.assertIn('[data-board-variant="shosushogi"].catalogued-board-preview-surface', css)
         self.assertIn(

@@ -552,8 +552,11 @@ def _catalogued_board_svg_css(variant_name: str, board_svg: Mapping[str, Any]) -
     encoded = base64.b64encode(svg.encode("utf-8")).decode("ascii")
     image = f'url("data:image/svg+xml;base64,{encoded}")'
     scope = f'[data-board-variant="{variant_name}"]'
-    wrapper_selector = f"{scope}.cg-wrap, {scope} .cg-wrap"
-    selector = f"{scope} cg-board"
+    # Keep uploaded artwork available for its settings thumbnail while a user
+    # selects a built-in theme on the actual board.
+    custom_scope = f"{scope}:not(.board-style-builtin)"
+    wrapper_selector = f"{custom_scope}.cg-wrap, {custom_scope} .cg-wrap"
+    selector = f"{custom_scope} cg-board"
     preview_selector = f"{scope}.catalogued-board-preview-surface"
     settings_preview_selector = (
         f'label.board.catalogued-custom-board-preview[data-board-variant="{variant_name}"]'
