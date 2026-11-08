@@ -36,7 +36,7 @@
     background-image: url('../../images/pieces/shogi/ctk/0UM.svg');
 }
 .okisakishogi piece.n-piece::before {
-    background-image: url('../../images/pieces/okisakishogi/n-ctk.svg');
+    background-image: url('../../images/pieces/shogi/ctk/0_JUMPING_HORSE_BLACK.svg');
 }
 .okisakishogi piece.pn-piece::before {
     background-image: url('../../images/pieces/shogi/ctk/0NK.svg');
@@ -71,5 +71,5 @@
 
 /* Okisaki queen (妃). */
 .okisakishogi piece.q-piece::before {
-    background-image: url('../../images/pieces/okisakishogi/q-ctk.svg');
+    background-image: url('../../images/pieces/shogi/ctk/0_OKISAKI_QUEEN.svg');
 }
