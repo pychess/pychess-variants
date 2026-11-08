@@ -1,7 +1,7 @@
 {% extends "template.html" %}
 {% block content %}
 <div id="main-wrap">
-<main class="tournaments box box-pad">
+<main class="tournaments box box-pad" data-infinite-scroll="profile-tournaments">
     <div class="box-top">
         <h1><a href="{{ home }}/@/{{ profile | urlencode }}">{{ profile }}</a> • {% trans %}Tournaments{% endtrans %}</h1>
         <p><strong>{{ '%g' | format(profile_tournament_points) }}</strong> {% trans %}Tournament points{% endtrans %}</p>
@@ -12,9 +12,9 @@
             <th>{% trans %}Date{% endtrans %}</th>
             <th>{% trans %}Points{% endtrans %}</th>
         </tr></thead>
-        <tbody>
+        <tbody data-infinite-scroll-content>
         {% for entry in profile_tournament_entries %}
-            <tr>
+            <tr data-infinite-scroll-key="{{ entry.id }}">
                 <td class="header"><a href="{{ home }}/tournament/{{ entry.id }}"><span class="name">{{ entry.name }}</span></a></td>
                 <td><info-date timestamp="{{ entry.date }}"></info-date></td>
                 <td>{{ '%g' | format(entry.points) }}</td>
@@ -25,9 +25,9 @@
         </tbody>
     </table>
     {% if profile_tournament_prev or profile_tournament_next %}
-    <nav aria-label="{% trans %}Pagination{% endtrans %}">
+    <nav aria-label="{% trans %}Pagination{% endtrans %}" data-infinite-scroll-pager>
         {% if profile_tournament_prev %}<a href="{{ profile_tournament_prev }}">‹ {% trans %}Previous{% endtrans %}</a>{% endif %}
-        {% if profile_tournament_next %}<a href="{{ profile_tournament_next }}">{% trans %}Next{% endtrans %} ›</a>{% endif %}
+        {% if profile_tournament_next %}<a rel="next" href="{{ profile_tournament_next }}">{% trans %}Next{% endtrans %} ›</a>{% endif %}
     </nav>
     {% endif %}
 </main>

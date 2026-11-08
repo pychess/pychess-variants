@@ -1,7 +1,7 @@
 {% extends "template.html" %}
 {% block content %}
 <div id="main-wrap">
-<main class="following-page box">
+<main class="following-page box" data-infinite-scroll="following">
     <div class="following-page__top">
         <h1>
             <a class="following-page__back icon icon-left" href="{{ home }}/@/{{ following_profile }}" aria-label="{% trans %}Back to profile{% endtrans %}"></a>
@@ -11,9 +11,9 @@
     </div>
     {% if following_users %}
     <table class="following-page__list">
-        <tbody>
+        <tbody data-infinite-scroll-content>
         {% for followed in following_users %}
-            <tr>
+            <tr data-infinite-scroll-key="{{ followed.username }}">
                 <td class="following-page__user">
                     <i-side class="following-page__status icon {% if followed.online %}online{% else %}offline{% endif %} {% if followed.patron %}icon-patron-wing{% elif followed.online %}icon-online{% else %}icon-offline{% endif %}"{% if followed.patron %} title="{{ _('PyChess Patron') }}"{% endif %}></i-side>
                     <a class="user-link ulpt" href="{{ home }}/@/{{ followed.username }}"><player-title>{{ followed.title }}</player-title>{% if followed.title %} {% endif %}{{ followed.username }}</a>
@@ -35,9 +35,9 @@
     <p class="following-page__empty">{% trans %}No players followed yet.{% endtrans %}</p>
     {% endif %}
     {% if following_prev_href or following_next_href %}
-    <nav class="following-page__pagination" aria-label="{% trans %}Pagination{% endtrans %}">
+    <nav class="following-page__pagination" aria-label="{% trans %}Pagination{% endtrans %}" data-infinite-scroll-pager>
         {% if following_prev_href %}<a href="{{ following_prev_href }}">‹ {% trans %}Previous{% endtrans %}</a>{% endif %}
-        {% if following_next_href %}<a href="{{ following_next_href }}">{% trans %}Next{% endtrans %} ›</a>{% endif %}
+        {% if following_next_href %}<a rel="next" href="{{ following_next_href }}">{% trans %}Next{% endtrans %} ›</a>{% endif %}
     </nav>
     {% endif %}
 </main>

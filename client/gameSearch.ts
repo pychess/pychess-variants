@@ -1,7 +1,7 @@
 import { h } from 'snabbdom';
 import { patch } from './document';
-import { gameListView, loadGameVariantDefinitions, renderGames, Game } from './profile';
-import { renderTimeago } from './datetime';
+import { gameListView, loadGameVariantDefinitions, appendGames, Game } from './profile';
+import { infiniteScroll } from './infiniteScroll';
 import { PyChessModel } from './types';
 import { _ } from './i18n';
 import { boardSettings } from './boardSettings';
@@ -106,19 +106,11 @@ export function initGameSearch(model: PyChessModel): void {
     if (!meaningful) return;
 
     let page = 0;
-    let loading = false;
-    let done = false;
     const error = document.getElementById('game-search-error');
     const resultsHeader = document.getElementById('game-search-results-header');
-    const observer = new IntersectionObserver(
-        entries => {
-            if (!done && !loading && entries.some(entry => entry.isIntersecting)) void load();
-        },
-        { rootMargin: '200px' },
-    );
+    infiniteScroll(sentinel, { load });
 
-    async function load(): Promise<void> {
-        loading = true;
+    async function load(): Promise<boolean> {
         const query = new URLSearchParams(params);
         query.set('p', String(page));
         try {
@@ -130,27 +122,20 @@ export function initGameSearch(model: PyChessModel): void {
             };
             if (!response.ok || data.error) {
                 if (error) error.textContent = data.error || 'Search failed.';
-                done = true;
-                return;
+                throw new Error(data.error || 'Search failed.');
             }
             resultsHeader?.removeAttribute('hidden');
             const games = data.games || [];
             if (games.length) {
                 await loadGameVariantDefinitions(games);
-                const oldVNode = document.getElementById('games');
-                if (oldVNode instanceof Element) {
-                    patch(oldVNode, h('table#games', renderGames(model, games)));
-                }
-                renderTimeago();
+                appendGames(model, games);
             }
             page += 1;
-            done = !data.hasMore;
-        } catch {
-            if (error) error.textContent = 'Search failed.';
-            done = true;
-        } finally {
-            loading = false;
+            if (error) error.textContent = '';
+            return !!data.hasMore && games.length > 0;
+        } catch (cause) {
+            if (error && !error.textContent) error.textContent = 'Search failed.';
+            throw cause;
         }
     }
-    observer.observe(sentinel);
 }

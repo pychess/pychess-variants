@@ -40,7 +40,8 @@ import { activateStudyEngineRules } from './variants';
 import { statsView } from './stats';
 import { volumeSettings, soundThemeSettings } from './sound';
 import { notifyChessgroundResize, patch } from './document';
-import { renderTimeago } from './datetime';
+import { renderTimeago, updateTimeago } from './datetime';
+import { initInfiniteScroll } from './infiniteScroll';
 import { zenButtonView, zenModeSettings } from './zen';
 import { PyChessModel } from './types';
 import { roundView as bugRoundView } from './two-board/round/round';
@@ -64,7 +65,7 @@ import { initTopNavDisclosures } from './topNav';
 import { initUblogMarkdownV2 } from './ublogMarkdownV2';
 import { initUblogEditor } from './ublogEditor';
 import { initPushSubscription } from './push';
-import { initCommunityVariantFavorites } from './communityVariants';
+import { mountCataloguedStartBoards, initCommunityVariantFavorites } from './communityVariants';
 import { gameSearchView, initGameSearch } from './gameSearch';
 import { initProfileActionOverflow } from './profileActionOverflow';
 import { initVariantAuthors } from './variantAuthors';
@@ -433,6 +434,10 @@ function start() {
     initVariantAuthors();
     initStudyIndex();
     initPracticeIndex();
+    initInfiniteScroll(() => {
+        updateTimeago();
+        mountCataloguedStartBoards(model.assetURL);
+    });
 
     patch(document.getElementById('zen-button') as HTMLElement, zenButtonView());
 }

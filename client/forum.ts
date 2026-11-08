@@ -1,6 +1,6 @@
 import { h, VNode } from 'snabbdom';
 import { Api } from 'chessgroundx/api';
-import { Chessground } from 'chessgroundx';
+import { Chessground } from 'chessgroundx/chessground';
 import * as cg from 'chessgroundx/types';
 
 import { _ } from './i18n';
@@ -12,6 +12,7 @@ import { expandGameEmbeds, makeExternalLinkPopups, renderRichText } from './rich
 import { boardSettings } from './boardSettings';
 import { VARIANTS } from './variants';
 import { isSameDocumentForumRedirect } from './forumNavigation';
+import { infiniteScroll } from './infiniteScroll';
 
 /** Supported forum UI modes mapped from URL paths. */
 type ForumMode = 'index' | 'categ' | 'topic' | 'newTopic' | 'search' | 'modFeed';
@@ -348,9 +349,12 @@ export function forumView(model: PyChessModel) {
     let searchPosts: ForumSearchResult[] = [];
     let modFeedItems: ForumModFeedItem[] = [];
 
-    let page = pageParam();
+    const initialPage = pageParam();
+    let page = initialPage;
     let nbPages = 1;
     let total = 0;
+    let listScrollFailed = false;
+    let stopListScroll: (() => void) | undefined;
 
     let categData: ForumCategory | null = null;
     let topicData: ForumTopicSummary | null = null;
@@ -643,6 +647,62 @@ export function forumView(model: PyChessModel) {
                 _('Next'),
             ),
         ]);
+    }
+
+    /** Append list pages without changing topic-page navigation or post anchors. */
+    async function loadMoreList(): Promise<boolean> {
+        const nextPage = page + 1;
+        const endpoint = mode === 'search'
+            ? `/api/forum/search?text=${encodeURIComponent(searchParam('text').trim())}&page=${nextPage}`
+            : mode === 'modFeed'
+              ? `/api/forum/${encodeURIComponent(categ)}/mod-feed?page=${nextPage}`
+              : `/api/forum/${encodeURIComponent(categ)}/topics?page=${nextPage}`;
+        const { status, data } = await parseJsonResponse(await fetch(endpoint));
+        if (status >= 400 || data.type === 'error') handleApiError(data, status);
+        // The server can clamp the requested page after entries are deleted.
+        if ((data.page || nextPage) <= page) return false;
+
+        function appendUnique<T>(current: T[], incoming: T[], id: (item: T) => string): T[] {
+            const seen = new Set(current.map(id));
+            return current.concat(incoming.filter(item => {
+                const key = id(item);
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            }));
+        }
+        if (mode === 'search') {
+            searchPosts = appendUnique(searchPosts, data.posts || [], row => row.post._id);
+        } else if (mode === 'modFeed') {
+            modFeedItems = appendUnique(modFeedItems, data.items || [], row => row.post._id);
+        } else {
+            topics = appendUnique(topics, data.topics || [], topic => topic._id);
+        }
+        page = data.page || nextPage;
+        nbPages = data.nbPages || 1;
+        total = data.total || 0;
+        redraw();
+        return page < nbPages;
+    }
+
+    function renderListPagination(baseUrl: string): VNode | null {
+        if (listScrollFailed || !('IntersectionObserver' in window)) return renderPagination(baseUrl);
+        if (page >= nbPages) return page === initialPage ? renderPagination(baseUrl) : null;
+        return h('div.forum-list-sentinel', {
+            key: 'list-sentinel',
+            hook: {
+                insert: vnode => {
+                    stopListScroll = infiniteScroll(vnode.elm as HTMLElement, {
+                        load: loadMoreList,
+                        onError: () => {
+                            listScrollFailed = true;
+                            redraw();
+                        },
+                    });
+                },
+                destroy: () => stopListScroll?.(),
+            },
+        });
     }
 
     /** Load forum home categories and counters. */
@@ -1289,7 +1349,7 @@ export function forumView(model: PyChessModel) {
                 h(
                     'tbody',
                     topics.map(t =>
-                        h(`tr.paginated${t.sticky ? '.sticky' : ''}`, [
+                        h(`tr.paginated${t.sticky ? '.sticky' : ''}`, { key: t._id }, [
                             h('td.subject', [
                                 h(
                                     'a',
@@ -1319,7 +1379,7 @@ export function forumView(model: PyChessModel) {
                     ),
                 ),
             ]),
-            renderPagination(`/forum/${encodeURIComponent(categ)}`),
+            renderListPagination(`/forum/${encodeURIComponent(categ)}`),
         ]);
     }
 
@@ -1879,7 +1939,7 @@ export function forumView(model: PyChessModel) {
                         const post = row.post;
                         const erased = isErasedPost(post);
                         const postHref = postRedirectHref(post._id);
-                        return h('tr.stack-row', [
+                        return h('tr.stack-row', { key: post._id }, [
                             h('td', [
                                 h('a.post', { attrs: { href: postHref } }, `${forumCategoryName(row.categ._id, row.categ.name)} - ${forumTopicName(row.topic)}`),
                                 h('p', shorten(erased ? ERASED_POST_TEXT : post.text, 220)),
@@ -1893,7 +1953,7 @@ export function forumView(model: PyChessModel) {
                     }),
                 ),
             ]),
-            renderPagination(`/forum/search?text=${encodeURIComponent(text)}`),
+            renderListPagination(`/forum/search?text=${encodeURIComponent(text)}`),
         ]);
     }
 
@@ -1915,7 +1975,7 @@ export function forumView(model: PyChessModel) {
                     modFeedItems.map(item => {
                         const post = item.post;
                         const erased = isErasedPost(post);
-                        return h('tr', [
+                        return h('tr', { key: post._id }, [
                             h('td', [
                                 erased
                                     ? h('span.user-link', ERASED_POST_USER)
@@ -1942,7 +2002,7 @@ export function forumView(model: PyChessModel) {
                     }),
                 ),
             ]),
-            renderPagination(`/forum/${encodeURIComponent(categ)}/mod-feed`),
+            renderListPagination(`/forum/${encodeURIComponent(categ)}/mod-feed`),
         ]);
     }
 

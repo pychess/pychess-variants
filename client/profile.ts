@@ -7,7 +7,8 @@ import { _, ngettext, pgettext, languageSettings } from './i18n';
 import { alertDialog } from './alertDialog';
 import { ensureCataloguedVariantsLoaded, getLastMoveFen, VARIANTS } from './variants';
 import { patch } from './document';
-import { renderTimeago } from './datetime';
+import { updateTimeago } from './datetime';
+import { infiniteScroll } from './infiniteScroll';
 import { boardSettings } from './boardSettings';
 import { alternateStartName, timeControlStr } from './view';
 import { PyChessModel } from './types';
@@ -93,7 +94,7 @@ export function renderGames(model: PyChessModel, games: Game[]) {
         // Archived or private historical variants may not be available via the
         // public metadata API. Keep a usable link instead of failing rendering.
         if (!variant) {
-            return h('tr', [
+            return h('tr', { attrs: { 'data-game-id': game._id } }, [
                 h('td', [h('a', { attrs: { href: '/' + game._id } }, game.v)]),
             ]);
         }
@@ -109,7 +110,7 @@ export function renderGames(model: PyChessModel, games: Game[]) {
         }
         let lastMove, fen;
         [lastMove, fen] = getLastMoveFen(variant.name, game.lm, game.f);
-        return h('tr', [
+        return h('tr', { attrs: { 'data-game-id': game._id } }, [
             h('a', { attrs: { href: '/' + game['_id'] } }, [
                 h(
                     'td.board',
@@ -250,10 +251,26 @@ function isWinClass(model: PyChessModel, game: Game): boolean {
     }
 }
 
-function loadGames(model: PyChessModel, page: number) {
+export function appendGames(model: PyChessModel, games: Game[]): void {
+    const table = document.getElementById('games');
+    if (!table) return;
+    const seen = new Set(Array.from(table.querySelectorAll('[data-game-id]'), row => row.getAttribute('data-game-id')));
+    const fresh = games.filter(game => {
+        if (seen.has(game._id)) return false;
+        seen.add(game._id);
+        return true;
+    });
+    if (!fresh.length) return;
+    // Mount each batch in the live table so board insert hooks can measure it.
+    const body = document.createElement('tbody');
+    table.append(body);
+    patch(body, renderGames(model, fresh)[0]);
+    updateTimeago();
+}
+
+async function loadGames(model: PyChessModel, page: number): Promise<boolean> {
     const lang = languageSettings.value;
 
-    const xmlhttp = new XMLHttpRequest();
     const params = new URLSearchParams({ l: lang, p: String(page) });
     // Tab / scope filter (mutually exclusive by the nature of the profile tabs).
     if (model.level) {
@@ -275,22 +292,14 @@ function loadGames(model: PyChessModel, page: number) {
     }
     const url = `/api/games/user/${encodeURIComponent(model['profileid'])}?${params.toString()}`;
 
-    xmlhttp.onreadystatechange = async function () {
-        if (this.readyState === 4 && this.status === 200) {
-            const response = JSON.parse(this.responseText) as Game[];
-
-            // If empty JSON, exit the function
-            if (!response.length) {
-                return;
-            }
-            await loadGameVariantDefinitions(response);
-            const oldVNode = document.getElementById('games');
-            if (oldVNode instanceof Element) patch(oldVNode, h('table#games', renderGames(model, response)));
-            renderTimeago();
-        }
-    };
-    xmlhttp.open('GET', url, true);
-    xmlhttp.send();
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Games: ${response.status}`);
+    const games = (await response.json()) as Game[];
+    // The API returns an empty object for visitors without game-list access.
+    if (!Array.isArray(games)) return false;
+    await loadGameVariantDefinitions(games);
+    appendGames(model, games);
+    return games.length > 0;
 }
 
 function enableRestrictedGameLoading(model: PyChessModel) {
@@ -320,18 +329,15 @@ function restrictedGameListView(model: PyChessModel): VNode[] {
 }
 
 function observeSentinel(vnode: VNode, model: PyChessModel) {
-    const sentinel = vnode.elm as HTMLElement;
     let page = 0;
-    const options = { root: null, rootMargin: '44px', threshold: 1.0 };
-
-    const intersectionObserver = new IntersectionObserver(entries => {
-        if (entries.some(entry => entry.intersectionRatio > 0)) {
-            loadGames(model, page);
+    const destroy = infiniteScroll(vnode.elm as HTMLElement, {
+        load: async () => {
+            const hasMore = await loadGames(model, page);
             page += 1;
-        }
-    }, options);
-
-    intersectionObserver.observe(sentinel);
+            return hasMore;
+        },
+    });
+    vnode.data!.hook!.destroy = destroy;
 }
 
 export function profileView(model: PyChessModel) {

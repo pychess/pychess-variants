@@ -18,7 +18,7 @@
             {% endfor %}
         </nav>
         {% endif %}
-        <section class="study-index{% if study_list_navigation %} page-menu__content{% endif %} box">
+        <section class="study-index{% if study_list_navigation %} page-menu__content{% endif %} box" data-infinite-scroll="studies">
             {% if study_topics_index %}
             <div class="study-topics-index">
                 <h1>{% trans %}Topics{% endtrans %}</h1>
@@ -106,9 +106,9 @@
             <p class="study-search__hint">{% trans %}Enter at least 3 characters to search studies.{% endtrans %}</p>
             {% endif %}
             {% if studies %}
-            <div class="studies study-list">
+            <div class="studies study-list" data-infinite-scroll-content>
                 {% for study in studies %}
-                <article class="study-card">
+                <article class="study-card" data-infinite-scroll-key="{{ study.id }}">
                     <a class="study-card__overlay" href="/study/{{ study.id }}" title="{{ study.name }}" aria-label="{{ study.name }}"></a>
                     <div class="study-card__top">
                         <span class="study-card__icon" aria-hidden="true"></span>
@@ -192,10 +192,10 @@
             </div>
             {% endif %}
             {% if study_page is defined and study_page.pages > 1 %}
-            <nav class="study-public-pages" aria-label="{% trans %}Pagination{% endtrans %}">
+            <nav class="study-public-pages" aria-label="{% trans %}Pagination{% endtrans %}" data-infinite-scroll-pager>
                 {% if study_prev_href %}<a class="button" href="{{ study_prev_href }}">{% trans %}Previous{% endtrans %}</a>{% endif %}
                 <span>{% trans page=study_page.page, pages=study_page.pages %}Page {{ page }} / {{ pages }}{% endtrans %}</span>
-                {% if study_next_href %}<a class="button" href="{{ study_next_href }}">{% trans %}Next{% endtrans %}</a>{% endif %}
+                {% if study_next_href %}<a class="button" rel="next" href="{{ study_next_href }}">{% trans %}Next{% endtrans %}</a>{% endif %}
             </nav>
             {% endif %}
             {% endif %}

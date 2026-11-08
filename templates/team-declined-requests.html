@@ -1,7 +1,7 @@
 {% extends "team-base.html" %}
 {% block content %}
 <div id="main-wrap">
-    <main class="team-declined-requests-page page-menu page-small">
+    <main class="team-declined-requests-page page-menu page-small" data-infinite-scroll="team-declined-requests">
         {% set team_menu_active = '' %}
         {% include "team-menu.html" %}
         <div class="page-menu__content box box-pad">
@@ -14,10 +14,10 @@
             </div>
 
             <table class="team-requests team-declined-requests slist">
-                <tbody>
+                <tbody data-infinite-scroll-content>
                     {% for req in team_declined_requests %}
                     {% set request_date = req.get('processedAt') or req.get('createdAt') %}
-                    <tr>
+                    <tr data-infinite-scroll-key="{{ req['user'] }}">
                         <td class="team-request-user"><a class="user-link" href="/@/{{ req['user'] }}">{{ req['user'] }}</a></td>
                         <td class="team-request-message">{{ req.get('message', '') }}</td>
                         <td class="team-request-date"><info-date timestamp="{{ request_date.isoformat() if request_date else '' }}"></info-date></td>
@@ -35,10 +35,10 @@
             </table>
 
             {% if team_declined_requests_prev_href or team_declined_requests_next_href %}
-            <nav class="team-declined-requests__pagination" aria-label="{% trans %}Pagination{% endtrans %}">
+            <nav class="team-declined-requests__pagination" aria-label="{% trans %}Pagination{% endtrans %}" data-infinite-scroll-pager>
                 {% if team_declined_requests_prev_href %}<a class="button button-empty team-page-nav icon-left" href="{{ team_declined_requests_prev_href }}">{% trans %}Previous{% endtrans %}</a>{% else %}<span></span>{% endif %}
                 <span class="team-page-number">{% trans page=team_declined_requests_page %}Page {{ page }}{% endtrans %}</span>
-                {% if team_declined_requests_next_href %}<a class="button button-empty team-page-nav team-page-nav--next icon-right" href="{{ team_declined_requests_next_href }}">{% trans %}Next{% endtrans %}</a>{% endif %}
+                {% if team_declined_requests_next_href %}<a class="button button-empty team-page-nav team-page-nav--next icon-right" rel="next" href="{{ team_declined_requests_next_href }}">{% trans %}Next{% endtrans %}</a>{% endif %}
             </nav>
             {% endif %}
         </div>

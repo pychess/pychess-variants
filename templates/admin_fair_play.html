@@ -3,7 +3,7 @@
 <div id="main-wrap" class="admin-shell">
     <div class="admin-layout">
         {% include "admin_nav.html" %}
-        <main class="admin-page box box-pad">
+        <main class="admin-page box box-pad" data-infinite-scroll="fair-play-signals">
             <h1>Fair Play Signals</h1>
             <p class="admin-page__intro">Unverified client-side observations. A signal alone is not proof of cheating.</p>
             <form class="admin-team-search" method="get" action="/admin/fair-play">
@@ -18,9 +18,9 @@
                 <label>Game ID <input name="game" value="{{ admin_fair_play_game }}" maxlength="8"></label>
                 <button class="admin-action-button" type="submit">Filter</button>
             </form>
-            <div class="admin-team-list">
+            <div class="admin-team-list" data-infinite-scroll-content>
                 {% for report in admin_fair_play_reports %}
-                <article class="admin-team-card">
+                <article class="admin-team-card" data-infinite-scroll-key="{{ report._id }}">
                     <header>
                         <div>
                             <strong>{{ 'External overlay' if report.kind == 'external_overlay' else 'Cross-tab analysis' }}</strong>
@@ -47,13 +47,13 @@
                 <p>No fair-play signals match these filters.</p>
                 {% endfor %}
             </div>
-            <div class="admin-team-search">
+            <div class="admin-team-search" data-infinite-scroll-pager>
                 {% if admin_fair_play_page > 1 %}
                 <a href="/admin/fair-play?kind={{ admin_fair_play_kind | urlencode }}&username={{ admin_fair_play_username | urlencode }}&game={{ admin_fair_play_game | urlencode }}&page={{ admin_fair_play_page - 1 }}">Previous</a>
                 {% endif %}
                 <span>Page {{ admin_fair_play_page }}</span>
                 {% if admin_fair_play_has_next %}
-                <a href="/admin/fair-play?kind={{ admin_fair_play_kind | urlencode }}&username={{ admin_fair_play_username | urlencode }}&game={{ admin_fair_play_game | urlencode }}&page={{ admin_fair_play_page + 1 }}">Next</a>
+                <a rel="next" href="/admin/fair-play?kind={{ admin_fair_play_kind | urlencode }}&username={{ admin_fair_play_username | urlencode }}&game={{ admin_fair_play_game | urlencode }}&page={{ admin_fair_play_page + 1 }}">Next</a>
                 {% endif %}
             </div>
         </main>
