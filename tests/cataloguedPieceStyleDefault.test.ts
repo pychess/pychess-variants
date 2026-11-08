@@ -30,6 +30,7 @@ const variantNames = [
     'testamazonspieces',
     'testopulentpieces',
     'testokisakipieces',
+    'testfiristyles',
 ];
 
 function register(meta: CataloguedVariantClientDocument) {
@@ -72,6 +73,42 @@ test('Okisaki Shogi uses its complete directional piece style', () => {
     expect(boardSettings.pieceCSS(variant.pieceFamily, variant)).toBe('kanji');
     expect(PIECE_FAMILIES.okisakishogi.imageLayerCSS).toContain('kanji');
 });
+
+test.each(['decimalshogi', 'okisakishogi'])(
+    '%s preserves disguised preferences and switches cleanly to Firi',
+    family => {
+        const variant = register({
+            name: 'testfiristyles',
+            displayName: 'Test Firi Styles',
+            ini: '[testfiristyles:shogi]',
+            baseVariant: 'shogi',
+            pieceFamilyOverride: family,
+            width: 10,
+            height: 10,
+            startFen: '9k/10/10/10/10/10/10/10/10/K9[] w - - 0 1',
+            pieces: ['k', 'q', 'r', 'b', 'n', 'p', 'l', 's', 'g'],
+            kingRoles: ['k'],
+        });
+        const board = document.createElement('div');
+        board.className = family;
+        document.body.appendChild(board);
+        try {
+            boardSettings.updateScopedPieceStyle(variant, board);
+            const setting = boardSettings.getSettings('PieceStyle', family, '', variant);
+            setting.value = 1;
+            expect(boardSettings.pieceCSS(family, variant)).toBe('disguised');
+
+            setting.value = 2;
+            expect(boardSettings.pieceCSS(family, variant)).toBe('firi');
+            expect(board.classList.contains(`piece-style-${family}-firi`)).toBe(true);
+            expect(board.classList.contains(`piece-style-${family}-disguised`)).toBe(false);
+            expect(board.classList.contains('catalogued-missing-piece-fallback')).toBe(true);
+            expect(document.getElementById(`piece-set-${family}-firi`)).not.toBeNull();
+        } finally {
+            board.remove();
+        }
+    },
+);
 
 test('catalogued variants with a compatible built-in piece family default to that family', () => {
     const meta: CataloguedVariantClientDocument = {

@@ -314,7 +314,9 @@ label.piece.piece13.shogi {
 label.piece.piece14.shogi {
     background-image: url('images/pieces/shogi/cz/0KA.svg');
 }
-label.piece.piece15.shogi {
+label.piece.piece15.shogi,
+label.piece.piece2.decimalshogi,
+label.piece.piece2.okisakishogi {
     background-image: url('images/pieces/firi/bb.svg');
 }
 label.piece.piece16.shogi,
