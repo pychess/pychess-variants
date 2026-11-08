@@ -103,6 +103,7 @@ CATALOGUED_PIECE_FAMILY_OVERRIDES = frozenset(
         "yokai",
         "perfect",
         "decimalshogi",
+        "okisakishogi",
     }
 )
 
@@ -129,6 +130,7 @@ CATALOGUED_DIRECTIONAL_PIECE_FAMILIES = frozenset(
     {
         "cannonshogi",
         "decimalshogi",
+        "okisakishogi",
         "dobutsu",
         "kyoto",
         "mansindam",
@@ -150,6 +152,7 @@ CATALOGUED_BOARD_FAMILY_DIMENSIONS: dict[str, tuple[int, int]] = {
     "grand10x10": (10, 10),
     "makruk8x8": (8, 8),
     "sittuyin8x8": (8, 8),
+    "shogi10x10": (10, 10),
     "shogi9x9": (9, 9),
     "shogi7x7": (7, 7),
     "shogi7x9": (7, 9),

@@ -108,6 +108,11 @@ export const BOARD_FAMILIES: Record<string, BoardFamily> = {
             'sittuyinWood.png',
         ],
     },
+    shogi10x10: {
+        dimensions: { width: 10, height: 10 },
+        cg: 'cg-shogi10x10',
+        boardCSS: ['shogi10x10.svg'],
+    },
     shogi9x9: {
         dimensions: { width: 9, height: 9 },
         cg: 'cg-576',
@@ -438,6 +443,11 @@ export const PIECE_FAMILIES: Record<string, PieceFamily> = {
     decimalshogi: {
         pieceCSS: ['shogik', 'disguised'],
         imageLayerCSS: ['shogik'],
+    },
+    okisakishogi: {
+        pieceCSS: ['kanji', 'disguised'],
+        imageLayerCSS: ['kanji'],
+        pieceNames: { ...SHOGI_NAMES, q: _('queen') },
     },
     cwda: { pieceCSS: ['cwda', 'couchtomato'] },
     letter: { pieceCSS: ['disguised'] },
@@ -2884,6 +2894,12 @@ export function cataloguedCompatibleBoardFamily(
     const clientVariant = cataloguedClientVariant(meta);
     if (clientVariant && boardFamilyMatchesDimensions(clientVariant.boardFamily, meta.width, meta.height)) {
         return clientVariant.boardFamily;
+    }
+    if (
+        clientVariant?.boardFamily.startsWith('shogi') &&
+        boardFamilyMatchesDimensions('shogi10x10', meta.width, meta.height)
+    ) {
+        return 'shogi10x10';
     }
     return undefined;
 }

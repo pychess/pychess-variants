@@ -127,6 +127,8 @@ FSF_BUILTIN_PIECE_DIAGRAMS_BY_VARIANT: Mapping[str, tuple[_FsfBuiltinPieceDefini
 # required.
 FSF_BUILTIN_PREMOVE_BETZA_OVERRIDES_BY_VARIANT: Mapping[str, Mapping[str, str]] = {
     "courier": {"b": "B"},
+    # Okisaki's jumping horse is a chess knight, unlike the Shogi fallback.
+    "okisakishogi": {"n": "N"},
     # Raazuvaa disables the normal chess pawn double-step.
     "raazuvaa": {"p": "fmWfceF"},
     "shatar": {"b": "B"},

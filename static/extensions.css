@@ -76,7 +76,7 @@
   width: 14.2857%;
   height: 11.1111%;
 }
-.cg-640-640 #extension_choice square {
+.cg-640-640 #extension_choice square, .cg-shogi10x10 #extension_choice square {
   height: 10%;
   width: 10%;
 }

@@ -1,0 +1,58 @@
+/* Canonical player-facing artwork; rotate the image layer for the opponent. */
+.okisakishogi piece::before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+.okisakishogi piece.enemy::before {
+    transform: rotate(180deg);
+}
+.okisakishogi piece.pl-piece::before {
+    background-image: url('../../images/pieces/okisakishogi/pl.svg');
+}
+.okisakishogi piece.l-piece::before {
+    background-image: url('../../images/pieces/okisakishogi/l.svg');
+}
+.okisakishogi piece.pr-piece::before {
+    background-image: url('../../images/pieces/okisakishogi/pr.svg');
+}
+.okisakishogi piece.ps-piece::before {
+    background-image: url('../../images/pieces/okisakishogi/ps.svg');
+}
+.okisakishogi piece.pn-piece::before {
+    background-image: url('../../images/pieces/okisakishogi/pn.svg');
+}
+.okisakishogi piece.pb-piece::before {
+    background-image: url('../../images/pieces/okisakishogi/pb.svg');
+}
+.okisakishogi piece.pp-piece::before {
+    background-image: url('../../images/pieces/okisakishogi/pp.svg');
+}
+.okisakishogi piece.r-piece::before {
+    background-image: url('../../images/pieces/okisakishogi/r.svg');
+}
+.okisakishogi piece.b-piece::before {
+    background-image: url('../../images/pieces/okisakishogi/b.svg');
+}
+.okisakishogi piece.s-piece::before {
+    background-image: url('../../images/pieces/okisakishogi/s.svg');
+}
+.okisakishogi piece.g-piece::before {
+    background-image: url('../../images/pieces/okisakishogi/g.svg');
+}
+.okisakishogi piece.n-piece::before {
+    background-image: url('../../images/pieces/okisakishogi/n.svg');
+}
+.okisakishogi piece.k-piece::before {
+    background-image: url('../../images/pieces/okisakishogi/k.svg');
+}
+.okisakishogi piece.q-piece::before {
+    background-image: url('../../images/pieces/okisakishogi/q.svg');
+}
+.okisakishogi piece.p-piece::before {
+    background-image: url('../../images/pieces/okisakishogi/p.svg');
+}

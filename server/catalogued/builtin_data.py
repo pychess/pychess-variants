@@ -380,6 +380,56 @@ FSF_CATALOGUED_BUILTIN_VARIANTS: Mapping[str, Mapping[str, Any]] = {
         "promotionRoles": ("p",),
         "promotionOrder": models.CATALOGUED_CHESS_PROMOTION_ORDER,
     },
+    "okisakishogi": {
+        "displayName": "Okisaki Shogi",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Okisaki_shogi"),
+        "baseVariant": "",
+        "clientVariant": "shogi",
+        "boardFamilyOverride": "shogi10x10",
+        "pieceFamilyOverride": "okisakishogi",
+        "pieceNames": {"n": "Jumping horse", "l": "Two-way lance", "q": "Queen"},
+        "captureToHand": True,
+        "promotionType": "shogi",
+        "promotionRoles": ("p", "l", "n", "s", "b", "r"),
+        "promotionOrder": ("+", ""),
+        "showPromoted": True,
+        "legalMovesNeedHistory": True,
+        "nFoldIsDraw": True,
+        # Documentation only, transcribed from minishogi_variant_base() and
+        # okisakishogi_variant() in Fairy-Stockfish's src/variant.cpp.
+        "rulesIni": """
+[okisakishogi]
+variantTemplate = shogi
+maxRank = 10
+maxFile = 10
+king = k
+shogiPawn = p
+silver = s
+gold = g
+bishop = b
+dragonHorse = h
+rook = r
+bers = d
+customPiece1 = l:vR
+knight = n
+queen = q
+promotionRegionWhite = *8 *9 *10
+promotionRegionBlack = *1 *2 *3
+promotedPieceType = p:g l:g n:g s:g b:h r:d
+pieceDrops = true
+capturesToHand = true
+doubleStep = false
+castling = false
+dropNoDoubled = p
+immobilityIllegal = true
+shogiPawnDropMateIllegal = true
+stalemateValue = loss
+nFoldRule = 4
+nMoveRule = 0
+perpetualCheckIllegal = true
+""",
+    },
     "opulent": {
         "displayName": "Opulent Chess",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -836,14 +886,6 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
         "baseVariant": "",
         "clientVariant": "chess",
         "reviewNotes": "Alias of standard chess; pychess already exposes Chess.",
-    },
-    "okisakishogi": {
-        "displayName": "Okisaki Shogi",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Okisaki_shogi"),
-        "baseVariant": "",
-        "clientVariant": "shogi",
-        "reviewNotes": "Shogi-family drops/promotions; review piece assets and byo UI.",
     },
     "snailtrail": {
         "displayName": "Snail Trail",

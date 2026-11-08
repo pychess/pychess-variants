@@ -29,6 +29,7 @@ const variantNames = [
     'testdecimalshogiimagelayer',
     'testamazonspieces',
     'testopulentpieces',
+    'testokisakipieces',
 ];
 
 function register(meta: CataloguedVariantClientDocument) {
@@ -42,6 +43,34 @@ afterEach(() => {
         delete localStorage[`${name}-piece`];
         delete boardSettings.settings[`${name}-piece`];
     });
+});
+
+test('Okisaki Shogi uses its complete directional piece style', () => {
+    const meta: CataloguedVariantClientDocument = {
+        name: 'testokisakipieces',
+        displayName: 'Test Okisaki Shogi',
+        ini: '',
+        source: 'fairy-stockfish-builtin',
+        fsfBuiltinVariant: 'okisakishogi',
+        baseVariant: '',
+        clientVariant: 'shogi',
+        pieceFamilyOverride: 'okisakishogi',
+        width: 10,
+        height: 10,
+        startFen: 'lnsgkqgsnl/1r6b1/pppppppppp/10/10/10/10/PPPPPPPPPP/1B6R1/LNSGQKGSNL[-] w 0 1',
+        pieces: ['p', 'l', 'n', 's', 'g', 'b', 'r', 'q', 'k'],
+        kingRoles: ['k'],
+        promotionType: 'shogi',
+        promotionRoles: ['p', 'l', 'n', 's', 'b', 'r'],
+        promotionOrder: ['+', ''],
+        captureToHand: true,
+    };
+    const variant = register(meta);
+    expect(cataloguedCompatiblePieceFamily(meta)).toBe('okisakishogi');
+    expect(variant.pieceFamily).toBe('okisakishogi');
+    expect(variant.promotion.roles).toHaveLength(6);
+    expect(boardSettings.pieceCSS(variant.pieceFamily, variant)).toBe('kanji');
+    expect(PIECE_FAMILIES.okisakishogi.imageLayerCSS).toContain('kanji');
 });
 
 test('catalogued variants with a compatible built-in piece family default to that family', () => {

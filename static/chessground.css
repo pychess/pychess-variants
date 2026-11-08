@@ -31,6 +31,16 @@
   --mini-board-width: 320px;
 }
 
+/* 10x10 shogi */
+.cg-wrap.cg-shogi10x10 {
+    padding-bottom: calc(1200 * 100% / 1100);
+    --cg-board-files: 10;
+    --cg-board-ranks: 10;
+}
+.cg-wrap.cg-shogi10x10.mini {
+  --mini-board-width: 320px;
+}
+
 /* 9x9 */
 .cg-wrap.cg-576 {
     padding-bottom: calc(1200 * 100% / 1100);
@@ -223,7 +233,7 @@ cg-board square {
   width: 11.11%;
   height: 10%;
 }
-.cg-640-640 cg-board square{
+.cg-640-640 cg-board square, .cg-shogi10x10 cg-board square{
   width: 10%;
   height: 10%;
 }
@@ -325,7 +335,7 @@ cg-board square.current-premove {
   width: 11.11%;
   height: 10%;
 }
-.cg-wrap.cg-640-640 piece{
+.cg-wrap.cg-640-640 piece, .cg-wrap.cg-shogi10x10 piece{
   width: 10%;
   height: 10%;
 }

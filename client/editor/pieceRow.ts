@@ -24,7 +24,7 @@ function pieceRowView(ctrl: EditorController, color: cg.Color, position: Positio
             for (let i = len; i < width; i++) roles.push('');
             let j = 0;
             for (let i = 0; i < len; i++) {
-                if (roles[i][0] === extraRoles[j][1]) {
+                if (extraRoles[j] && roles[i][0] === extraRoles[j][1]) {
                     roles.push(extraRoles[j]);
                     j++;
                 } else {

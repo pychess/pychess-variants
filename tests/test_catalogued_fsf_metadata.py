@@ -37,6 +37,7 @@ class FsfBuiltinMetadataTestCase(TestCase):
             "losers": ("", "antichess"),
             "modern": ("", "capablanca"),
             "nocheckatomic": ("", "atomic"),
+            "okisakishogi": ("", "shogi"),
             "petrified": ("pawnsideways", "chess"),
             "shatar": ("", "shatranj"),
             "tencubed": ("", "grand"),
@@ -60,7 +61,6 @@ class FsfBuiltinMetadataTestCase(TestCase):
             "euroshogi": ("", "shogi"),
             "gorogoro": ("", "shogi"),
             "mini": ("", "minishogi"),
-            "okisakishogi": ("", "shogi"),
         }
 
         for name, (base_variant, client_variant) in expected.items():
@@ -119,6 +119,27 @@ class FsfBuiltinMetadataTestCase(TestCase):
         self.assertTrue(doc["legalMovesNeedHistory"])
         self.assertTrue(doc["nFoldIsDraw"])
         self.assertNotIn("judkins", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
+
+    def test_okisakishogi_is_seeded_with_its_board_pieces_and_shogi_rules(self) -> None:
+        metadata = FSF_CATALOGUED_BUILTIN_VARIANTS["okisakishogi"]
+        doc = _build_fsf_builtin_doc("okisakishogi", metadata)
+        self.assertEqual((doc["width"], doc["height"]), (10, 10))
+        self.assertEqual(doc["ini"], "")
+        self.assertEqual(doc["baseVariant"], "")
+        self.assertEqual(doc["boardFamilyOverride"], "shogi10x10")
+        self.assertEqual(doc["pieceFamilyOverride"], "okisakishogi")
+        self.assertEqual(set(doc["pocketRoles"]), {"p", "l", "n", "s", "g", "b", "r", "q"})
+        self.assertTrue(doc["captureToHand"])
+        self.assertEqual(doc["promotionType"], "shogi")
+        self.assertEqual(set(doc["promotionRoles"]), {"p", "l", "n", "s", "b", "r"})
+        self.assertEqual(doc["promotionOrder"], ["+", ""])
+        self.assertTrue(doc["showPromoted"])
+        self.assertTrue(doc["legalMovesNeedHistory"])
+        self.assertTrue(doc["nFoldIsDraw"])
+        synced = _fsf_builtin_synced_fields(doc)
+        self.assertEqual(synced["boardFamilyOverride"], "shogi10x10")
+        self.assertEqual(synced["pieceFamilyOverride"], "okisakishogi")
+        self.assertNotIn("okisakishogi", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
 
     def test_chigorin_is_not_seeded_until_side_specific_promotions_are_supported(self) -> None:
         self.assertNotIn("chigorin", FSF_CATALOGUED_BUILTIN_VARIANTS)

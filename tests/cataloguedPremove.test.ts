@@ -77,6 +77,23 @@ describe('catalogued variant premoves', () => {
         expect(new Set(bishopDestinations)).toEqual(new Set(expectedBishop));
     });
 
+    test('Okisaki Shogi overrides Shogi knight and lance premoves on a 10x10 board', () => {
+        const largeBoard: cg.BoardDimensions = { width: 10, height: 10 };
+        registerCataloguedPremove({
+            name: 'betza-test',
+            source: 'fairy-stockfish-builtin',
+            baseVariant: '',
+            clientVariant: 'shogi',
+            ini: '',
+            betzaPieces: { l: 'vR', n: 'N' },
+        });
+        const moves = premoveForVariant('betza-test', false, largeBoard);
+        const knight = moves(board(['e5', 'n', 'white']), 'e5', false);
+        expect(new Set(knight)).toEqual(new Set(['c4', 'c6', 'd3', 'd7', 'f3', 'f7', 'g4', 'g6']));
+        const lance = moves(board(['e5', 'l', 'white']), 'e5', false);
+        expect(new Set(lance)).toEqual(new Set(['e1', 'e2', 'e3', 'e4', 'e6', 'e7', 'e8', 'e9', 'e:']));
+    });
+
     test('premoveVariant can refine the general client fallback', () => {
         const largeBoard: cg.BoardDimensions = { width: 10, height: 10 };
         registerCataloguedPremove({

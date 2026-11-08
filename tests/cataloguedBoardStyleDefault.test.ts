@@ -23,6 +23,7 @@ const variantNames = [
     'testyarishogiboardoverride',
     'testclientvariantboarddefault',
     'judkins',
+    'testshogi10x10',
 ];
 const originalIntersectionObserver = window.IntersectionObserver;
 
@@ -43,6 +44,26 @@ afterEach(() => {
     });
     if (originalIntersectionObserver) window.IntersectionObserver = originalIntersectionObserver;
     else Reflect.deleteProperty(window, 'IntersectionObserver');
+});
+
+test.each([false, true])('10x10 Shogi variants share the rectangular-cell board (uploaded board: %s)', hasBoard => {
+    const meta: CataloguedVariantClientDocument = {
+        name: 'testshogi10x10',
+        displayName: 'Test 10x10 Shogi',
+        ini: '[testshogi10x10:shogi]\nmaxFile = 10\nmaxRank = 10',
+        baseVariant: 'shogi',
+        width: 10,
+        height: 10,
+        startFen: '9k/10/10/10/10/10/10/10/10/K9[] w - - 0 1',
+        pieces: ['k'],
+        kingRoles: ['k'],
+        hasBoard,
+    };
+    const variant = register(meta);
+    expect(cataloguedCompatibleBoardFamily(meta)).toBe('shogi10x10');
+    expect(variant.board.cg).toBe('cg-shogi10x10');
+    expect(variant.hasBoard).toBe(hasBoard);
+    expect(boardSettings.boardCSS(variant.boardFamily, variant)).toBe('shogi10x10.svg');
 });
 
 test('catalogued variants inherit a dimension-compatible board family from their base variant', () => {
