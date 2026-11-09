@@ -386,9 +386,12 @@ async def handle_user_connected(
         response["rrJoiningClosed"] = tournament.rr_joining_closed
     if tournament.frequency == SHIELD:
         variant_name = tournament.variant + ("960" if tournament.chess960 else "")
-        defender = await app_state.users.get(app_state.shield_owners[variant_name])
-        response["defender_title"] = defender.title
-        response["defender_name"] = defender.username
+        # Retired variants can still have archived Shields without a current owner.
+        defender_name = app_state.shield_owners.get(variant_name)
+        if defender_name is not None:
+            defender = await app_state.users.get(defender_name)
+            response["defender_title"] = defender.title
+            response["defender_name"] = defender.username
 
     await ws_send_json(ws, response)
 

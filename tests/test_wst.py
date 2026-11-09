@@ -5,11 +5,14 @@ from unittest.mock import AsyncMock, patch
 import test_logger
 from aiohttp.test_utils import AioHTTPTestCase
 from aiohttp.web_ws import WebSocketResponse
+from const import SHIELD, T_FINISHED
 from glicko2.glicko2 import new_default_perf_map
 from mongomock_motor import AsyncMongoMockClient
 from pychess_global_app_state_utils import get_app_state
 from session_security import GAMEPLAY_EXPIRY_GRACE_KEY
+from tournament.arena import ArenaTournament
 from tournament.rr import RRTournament
+from tournament.tournament import upsert_tournament_to_db
 from tournament.wst import finally_logic, handle_join, handle_rr_set_time, handle_user_connected
 from user import User
 from variants import VARIANTS
@@ -131,3 +134,75 @@ class TournamentSocketCleanupTestCase(AioHTTPTestCase):
             )
         management.assert_not_called()
         self.assertIn('"creatorCanManage":false', ws.send_str.call_args_list[0].args[0])
+
+    async def test_archived_shield_without_owner_sends_full_connection_payload(self):
+        app_state = get_app_state(self.app)
+        for variant, chess960 in (("shinobi", False), ("chess", False), ("chess", True)):
+            with self.subTest(variant=variant, chess960=chess960):
+                variant_name = variant + ("960" if chess960 else "")
+                tid = "old-" + variant_name
+                tournament = ArenaTournament(
+                    app_state,
+                    tid,
+                    variant=variant,
+                    chess960=chess960,
+                    starts_at=datetime(2021, 12, 16, 16, tzinfo=UTC),
+                    status=T_FINISHED,
+                    frequency=SHIELD,
+                    description="Archived Shield tournament",
+                    with_clock=False,
+                )
+                await upsert_tournament_to_db(tournament, app_state)
+                app_state.shield_owners.pop(variant_name, None)
+                self.assertNotIn(tid, app_state.tournaments)
+
+                async with self.client.ws_connect(
+                    "/wst", headers={"Origin": str(self.client.make_url("/")).rstrip("/")}
+                ) as ws:
+                    await ws.send_json({"type": "tournament_user_connected", "tournamentId": tid})
+                    connected = await ws.receive_json(timeout=2)
+                    self.assertEqual(connected["type"], "tournament_user_connected")
+                    self.assertEqual(connected["tstatus"], T_FINISHED)
+                    self.assertEqual(connected["description"], tournament.description)
+                    self.assertNotIn("defender_name", connected)
+                    self.assertNotIn("defender_title", connected)
+                    for expected_type in ("tstatus", "fullchat", "duels"):
+                        message = await ws.receive_json(timeout=2)
+                        self.assertEqual(message["type"], expected_type)
+
+                self.assertEqual(app_state.tournaments[tid].variant, variant)
+                self.assertNotIn(variant_name, app_state.shield_owners)
+
+    async def test_shield_connection_includes_current_owner_for_variant(self):
+        app_state = get_app_state(self.app)
+        for chess960 in (False, True):
+            with self.subTest(chess960=chess960):
+                variant_name = "chess960" if chess960 else "chess"
+                defender = User(app_state, username="owner-" + variant_name, title="GM")
+                app_state.users[defender.username] = defender
+                app_state.shield_owners[variant_name] = defender.username
+                tid = "shield-" + variant_name
+                tournament = ArenaTournament(
+                    app_state,
+                    tid,
+                    variant="chess",
+                    chess960=chess960,
+                    frequency=SHIELD,
+                    with_clock=False,
+                )
+                app_state.tournaments[tid] = tournament
+                app_state.tourneysockets[tid] = {}
+                ws = WebSocketResponse()
+                ws.send_str = AsyncMock()
+                ws.close = AsyncMock(return_value=True)
+                with patch("tournament.wst.ws_send_json", new=AsyncMock()) as send:
+                    await handle_user_connected(
+                        app_state,
+                        ws,
+                        self.user,
+                        {"type": "tournament_user_connected", "tournamentId": tid},
+                    )
+
+                connected = send.call_args_list[0].args[1]
+                self.assertEqual(connected["defender_name"], defender.username)
+                self.assertEqual(connected["defender_title"], defender.title)
