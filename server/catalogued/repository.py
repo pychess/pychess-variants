@@ -9,6 +9,7 @@ from typing import Any, cast
 
 from aiohttp import web
 from const import T_STARTED
+from fairy.fairy_board import sf
 from pymongo.errors import DuplicateKeyError
 from variants import CATALOGUED_VARIANTS, get_server_variant
 
@@ -27,7 +28,8 @@ async def ensure_catalogued_variant_name_available(
 
     Names are game document variant codes, FSF UCI_Variant keys, URL slugs, and
     catalog keys, so they must not collide with built-ins or any active/archived
-    catalogued variant owned by any user.
+    catalogued variant owned by any user. Deleted/renamed names can be reused
+    once they have no saved games and are absent from this process's FSF registry.
     """
     if validation._is_builtin_variant_name(name):
         raise web.HTTPConflict(
@@ -52,12 +54,20 @@ async def ensure_catalogued_variant_name_available(
     if existing is not None:
         raise web.HTTPConflict(text="A catalogued variant with this name already exists.")
 
-    reserved = await app_state.db[models.CATALOGUED_VARIANT_NAME_COLLECTION].find_one(
-        {"_id": name}, projection={"_id": 1}
-    )
-    if reserved is not None:
+    if await _has_games(app_state, name):
         raise web.HTTPConflict(
-            text="This variant name was used previously and cannot be reused with different rules."
+            text="This variant name has saved games and cannot be reused with different rules."
+        )
+
+    # Deleting the catalogue document cannot unload native FSF definitions. A
+    # restart clears them, so old reservation records need not block reuse forever.
+    # Check even without a reservation: failed uploads can also leave loaded rules.
+    if name in sf.variants():
+        raise web.HTTPConflict(
+            text=(
+                "This variant name is still loaded in Fairy-Stockfish and cannot be reused "
+                "until the server restarts. Use a different INI section name to continue now."
+            )
         )
 
 
@@ -546,7 +556,11 @@ async def _update_catalogued_variant_document(
 async def _reserve_catalogued_variant_name(
     collection: Any, name: str, existing: Mapping[str, Any]
 ) -> None:
-    """Permanently reserve an internal Fairy-Stockfish name before removing its document."""
+    """Record a withdrawn name before removing its document.
+
+    Keep this history across restarts; availability is determined by saved games,
+    catalogue documents, and the current Fairy-Stockfish registry.
+    """
 
     reservation: dict[str, Any] = {
         "_id": name,
@@ -558,7 +572,7 @@ async def _reserve_catalogued_variant_name(
     try:
         await collection.insert_one(reservation)
     except DuplicateKeyError:
-        # Retrying deletion or rename is safe; a reservation is permanent.
+        # Retrying deletion or rename is safe; retain the first withdrawal record.
         pass
 
 

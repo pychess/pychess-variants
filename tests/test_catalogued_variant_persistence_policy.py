@@ -302,7 +302,7 @@ class CataloguedVariantArchiveActiveGameTest(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(await db.catalogued_variant_name.find_one({"_id": name}))
         self.assertIsNotNone(await db.tournament.find_one({"_id": "tournament-id"}))
 
-    async def test_delete_permanently_reserves_internal_name(self) -> None:
+    async def test_delete_records_previous_internal_name(self) -> None:
         name = "deleted_name_test"
         doc = {"_id": name, "name": name, "author": "author"}
         variant_collection = SimpleNamespace(delete_one=AsyncMock())

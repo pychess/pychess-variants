@@ -479,6 +479,8 @@ async def upload_catalogued_variant(request: web.Request) -> web.Response:
     validation.ensure_catalogued_display_name_available(display_name, variant_name=name)
     await validation.check_catalogued_ini_without_mutating_server(ini, name)
 
+    # Another request may have loaded this name while the child process checked it.
+    await repository.ensure_catalogued_variant_name_available(app_state, name)
     validated = validation.validate_catalogued_ini(ini)
     name = validated.name
 
@@ -1004,6 +1006,9 @@ async def update_catalogued_variant(request: web.Request) -> web.Response:
 
     if fsf_rules_changed or new_name != old_name:
         await validation.check_catalogued_ini_without_mutating_server(ini, new_name)
+        await repository.ensure_catalogued_variant_name_available(
+            app_state, new_name, current_name=old_name
+        )
         validated = validation.validate_catalogued_ini(ini)
         new_name = validated.name
         base_variant = validated.base_variant
@@ -1219,6 +1224,7 @@ async def clone_catalogued_variant(request: web.Request) -> web.Response:
 
     ini = validation.replace_variant_section_name(str(doc["ini"]), new_name)
     await validation.check_catalogued_ini_without_mutating_server(ini, new_name)
+    await repository.ensure_catalogued_variant_name_available(app_state, new_name)
     validated = validation.validate_catalogued_ini(ini)
     new_name = validated.name
 
