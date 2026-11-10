@@ -42,7 +42,7 @@ dev = [
     "pre-commit>=4.6.2",
     "pytest<10.0.0",
     "pytest-aiohttp==1.1.1",
-    "pyrefly==1.4.0",
+    "pyrefly==1.4.1",
     "ruff==0.17.3",
     "textual==8.2.8",
     "tqdm>=4.70.0",
