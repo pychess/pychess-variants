@@ -1007,15 +1007,14 @@ class TestUser:
                                     elif data["type"] == "lobby_user_connected":
                                         if data.get("username") == self.username:
                                             print("Connected as %s" % data["username"])
-                                    elif data["type"] == "error":
-                                        if self.pending_challenges:
-                                            _, profile, _, scheduler_token = (
-                                                self.pending_challenges.popleft()
+                                    elif data["type"] == "error" and self.pending_challenges:
+                                        _, profile, _, scheduler_token = (
+                                            self.pending_challenges.popleft()
+                                        )
+                                        if self.bot_scheduler is not None:
+                                            await self.bot_scheduler.release_pending(
+                                                scheduler_token, profile
                                             )
-                                            if self.bot_scheduler is not None:
-                                                await self.bot_scheduler.release_pending(
-                                                    scheduler_token, profile
-                                                )
 
                                 elif msg.type in (
                                     aiohttp.WSMsgType.CLOSED,
