@@ -28,6 +28,7 @@ from catalogued.betza import (
 from catalogued.rules import _cached_catalogued_rule_summary
 from clock import Clock
 from const import STARTED, reserved
+from event_loop_lag import loop_lag_monitor_key
 from fairy.fairy_board import FairyBoard, get_fog_fen
 from fairy.jieqi import index_to_square, square_to_index
 from fishnet import fishnet_variants_payload_cache_bytes
@@ -485,6 +486,7 @@ def _lightweight_metrics(
         "mode": "summary",
         "timestamp": datetime.now(UTC).isoformat(),
         "process_memory": process_memory_stats(),
+        "event_loop_lag": request.app[loop_lag_monitor_key].snapshot(),
         "state": _state_summary(app_state, request),
         "registered": _registered_summary(app_state),
         "anonymous": _anonymous_summary(app_state),
@@ -1132,4 +1134,5 @@ async def _full_metrics(
     }
     log.debug("Collecting all metrics time: %s", (time.process_time() - start))
 
+    metrics["event_loop_lag"] = request.app[loop_lag_monitor_key].snapshot()
     return metrics

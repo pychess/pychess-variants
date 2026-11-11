@@ -26,6 +26,10 @@ SUMMARY_KEYS = (
     "rss_plus_swap_mib",
     "peak_rss_mib",
     "allocated_blocks",
+    "loop_lag_stalls_20ms",
+    "loop_lag_stalls_50ms",
+    "loop_lag_stalls_100ms",
+    "loop_lag_stalls_250ms",
     "users",
     "user_perf_entries",
     "user_puzzle_perf_entries",
@@ -113,7 +117,13 @@ def summarize_metrics(metrics: Mapping[str, Any]) -> dict[str, int | float]:
         queues = _number(counts, "queues")
         cache_entries = _number(counts, "caches")
 
+    loop_lag = _mapping(metrics, "event_loop_lag")
     return {
+        "loop_lag_stalls_20ms": _number(loop_lag, "stalls_20ms"),
+        "loop_lag_stalls_50ms": _number(loop_lag, "stalls_50ms"),
+        "loop_lag_stalls_100ms": _number(loop_lag, "stalls_100ms"),
+        "loop_lag_stalls_250ms": _number(loop_lag, "stalls_250ms"),
+        "loop_lag_max_ms": _number(loop_lag, "max_lag_ms"),
         "rss_mib": _number(process, "rss_mib"),
         "swap_mib": _number(process, "swap_mib"),
         "rss_plus_swap_mib": _number(
@@ -219,7 +229,9 @@ def _format_summary(sample: int, summary: Mapping[str, int | float]) -> str:
         f"game_sse={summary['game_sse']} "
         f"sse_backlog={summary['sse_queued_messages']} "
         f"sse_max={summary['sse_max_queue']} "
-        f"bot_backlog={summary['bot_event_queued_messages'] + summary['bot_game_queued_messages']}"
+        f"bot_backlog={summary['bot_event_queued_messages'] + summary['bot_game_queued_messages']} "
+        f"loop_lag_max={summary['loop_lag_max_ms']:.1f}ms "
+        f"loop_stalls_100ms={summary['loop_lag_stalls_100ms']}"
     )
 
 

@@ -18,6 +18,7 @@ from aiohttp_swagger3 import SwaggerDocs, SwaggerInfo
 from client_ip import client_ip_middleware
 from csrf import ALLOW_ORIGINLESS_LOOPBACK_KEY, csrf_protection_middleware
 from db_wrapper import AsyncDBWrapper
+from event_loop_lag import EventLoopLagMonitor, loop_lag_context, loop_lag_monitor_key
 from middlewares import (
     cross_origin_policy_middleware,
     handle_404,
@@ -106,6 +107,12 @@ def make_app(
 
         app.middlewares.append(session_security_middleware)
         app.middlewares.append(csrf_protection_middleware)
+
+        # Opt-in diagnostics only. Leave production and tests quiet by default.
+        # For local profiling, set PYCHESS_LOOP_LAG_ENABLED=1 explicitly.
+        loop_lag_enabled = os.getenv("PYCHESS_LOOP_LAG_ENABLED", "") == "1"
+        app[loop_lag_monitor_key] = EventLoopLagMonitor(enabled=loop_lag_enabled)
+        app.cleanup_ctx.append(loop_lag_context)
 
         app[request_protection_state_key] = RequestProtectionState()
         app.middlewares.append(request_protection_middleware)

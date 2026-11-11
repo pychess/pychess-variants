@@ -9,6 +9,14 @@ class MonitorRecordTestCase(unittest.TestCase):
     def test_summarize_lightweight_metrics_extracts_quota_total_and_native_state(self) -> None:
         metrics = {
             "mode": "summary",
+            "event_loop_lag": {
+                "enabled": True,
+                "stalls_20ms": 17,
+                "stalls_50ms": 8,
+                "stalls_100ms": 3,
+                "stalls_250ms": 1,
+                "max_lag_ms": 251.2,
+            },
             "process_memory": {
                 "rss_mib": 401.25,
                 "swap_mib": 98.5,
@@ -64,6 +72,8 @@ class MonitorRecordTestCase(unittest.TestCase):
         summary = summarize_metrics(metrics)
 
         self.assertEqual(summary["rss_plus_swap_mib"], 499.75)
+        self.assertEqual(summary["loop_lag_stalls_100ms"], 3)
+        self.assertEqual(summary["loop_lag_max_ms"], 251.2)
         self.assertEqual(summary["swap_mib"], 98.5)
         self.assertEqual(summary["allocated_blocks"], 123456)
         self.assertEqual(summary["user_perf_entries"], 245)
