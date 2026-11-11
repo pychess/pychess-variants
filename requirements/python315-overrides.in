@@ -1,0 +1,5 @@
+# Local Python 3.15 only. Production keeps the versions in pyproject.toml/uv.lock.
+# Until published, provide these wheels with --find-links ~/pyffish-wheels.
+pyffish==0.0.91
+# PyPI has no 3.15 wheel or sdist; build the upstream 0.3.1 release archive.
+py4swiss @ https://github.com/Moritz72/py4swiss/archive/refs/tags/v0.3.1.tar.gz#sha256=b612c7e7ce979c6708624fff4b1c29530f5c2c3260413b728693c3a920bc1363

@@ -17,7 +17,6 @@ dependencies = [
     "discord-py==2.7.1",
     "dnspython==2.9.2",
     "jinja2==3.1.6",
-    "minify-html==0.18.1",
     "pyffish==0.0.90",
     "pyffish-alice==0.0.3",
     "py4swiss==0.3.1",
