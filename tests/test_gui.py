@@ -25,6 +25,106 @@ test_logger.init_test_logger()
 
 @pytest.mark.asyncio
 class TestGUI:
+    @pytest.mark.parametrize("variant_name", ["loop", "crazyhouse"])
+    @pytest.mark.parametrize("promotion", ["q", "n"])
+    async def test_loop_promoted_capture_drop_and_replay(
+        self, aiohttp_server, variant_name, promotion
+    ):
+        from aiohttp_jinja2 import get_env
+        from catalogued.builtin_data import FSF_CATALOGUED_BUILTIN_VARIANTS
+        from catalogued.documents import _build_fsf_builtin_doc
+        from catalogued.variants import register_catalogued_variant_doc
+        from utils import load_game
+        from variants import unregister_catalogued_server_variant
+
+        app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+        server = await aiohttp_server(app, host="127.0.0.1")
+        app_state = get_app_state(app)
+        base_url = f"http://{server.host}:{server.port}"
+        get_env(app).globals["home"] = base_url
+        if variant_name == "loop":
+            register_catalogued_variant_doc(
+                app_state, _build_fsf_builtin_doc("loop", FSF_CATALOGUED_BUILTIN_VARIANTS["loop"])
+            )
+        players = []
+        for name in ("loop-white", "loop-black"):
+            await app_state.db.user.insert_one({"_id": name, "enabled": True, "ct": "all"})
+            player = User(app_state, username=name)
+            player.game_category_set = True
+            app_state.users[name] = player
+            players.append(player)
+        initial_fen = "7k/6P1/8/8/8/8/K7/6r1[] w - - 0 1"
+        game = Game(app_state, "LoopTest", variant_name, initial_fen, *players, base=5)
+        app_state.games[game.id] = game
+        await insert_game_to_db(game, app_state)
+        pocket_role = promotion if variant_name == "loop" else "p"
+        moves = [f"g7g8{promotion}", "g1g8", "a2a3", f"{pocket_role.upper()}@e5"]
+
+        async with async_playwright() as playwright:
+            browser = await self._launch_browser(playwright)
+            try:
+                pages = []
+                errors = []
+                for player in players:
+                    context, page = await self._playwright_page_for_user(
+                        browser, base_url, player.username
+                    )
+                    await context.add_init_script("localStorage.setItem('autoPromote', 'false');")
+                    page.on("pageerror", lambda error: errors.append(str(error)))
+                    await page.goto(f"{base_url}/{game.id}")
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    pages.append(page)
+
+                for ply, move in enumerate(moves):
+                    page = pages[game.board.color]
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await page.evaluate(
+                        """move => {
+                            if (move[1] === '@') {
+                                window.cg.selectPocket({role: move[0].toLowerCase() + '-piece', color: 'black'});
+                            } else window.cg.selectSquare(move.slice(0, 2));
+                            window.cg.selectSquare(move.slice(2, 4));
+                        }""",
+                        move,
+                    )
+                    if ply == 0:
+                        await page.locator(f"#extension_choice piece.{promotion}-piece").click()
+                    await self._eventually(lambda expected=ply + 1: game.board.ply == expected)
+                    if ply == 0:
+                        assert f"{promotion.upper()}~" in game.board.fen
+                    if ply == 1:
+                        assert f"[{pocket_role}]" in game.board.fen
+                        await pages[1].reload()
+                        await pages[1].wait_for_function(
+                            "role => window.cg?.state.boardState.pockets?.black.get(role + '-piece') === 1",
+                            arg=pocket_role,
+                        )
+                final_fen = game.board.fen
+                assert "[]" in final_fen
+                await game.game_ended(players[0], "resign")
+                app_state.games.pop(game.id)
+                restored = await load_game(app_state, game.id)
+                assert restored is not None
+                assert restored.board.fen == final_fen
+                assert restored.board.move_stack == moves
+
+                page = pages[1]
+                await page.goto(f"{base_url}/{game.id}?ply=2")
+                await expect(page.locator("main.analysis-app")).to_be_visible()
+                await expect(page.locator("#fullfen")).to_have_value(game.steps[2]["fen"])
+                await expect(
+                    page.locator(f"#pocket1 piece.{pocket_role}-piece.black")
+                ).to_be_visible()
+                await page.get_by_title("Last move", exact=True).click()
+                await expect(page.locator("#fullfen")).to_have_value(final_fen)
+                await page.get_by_title("First move", exact=True).click()
+                await expect(page.locator("#fullfen")).to_have_value(initial_fen)
+                assert errors == []
+            finally:
+                await browser.close()
+                if variant_name == "loop":
+                    unregister_catalogued_server_variant("loop")
+
     @pytest.mark.parametrize("capture_centre", [False, True])
     async def test_jesonmor_centre_win_and_saved_analysis(self, aiohttp_server, capture_centre):
         from aiohttp_jinja2 import get_env

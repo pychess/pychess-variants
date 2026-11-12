@@ -227,6 +227,7 @@ class CataloguedVariantDocument(TypedDict):
     author: str
     ini: str
     rulesIni: NotRequired[str]
+    dropLoop: NotRequired[bool]
     baseVariant: str
     clientVariant: NotRequired[str]
     premoveVariant: NotRequired[str]
@@ -276,6 +277,7 @@ class CataloguedVariantDocument(TypedDict):
 
 class CataloguedVariantClientDocument(TypedDict):
     name: str
+    dropLoop: NotRequired[bool]
     displayName: str
     tooltip: str
     pieceNames: NotRequired[dict[str, str]]

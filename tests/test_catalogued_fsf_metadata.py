@@ -11,7 +11,7 @@ from catalogued.builtin_data import (
     FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES,
     FSF_CATALOGUED_RETIRED_BUILTIN_VARIANTS,
 )
-from catalogued.documents import _build_fsf_builtin_doc, _fsf_builtin_synced_fields
+from catalogued.documents import _build_fsf_builtin_doc, _client_doc, _fsf_builtin_synced_fields
 from catalogued.models import CATALOGUED_CHESS_PROMOTION_ORDER, CATALOGUED_SOURCE_FSF_BUILTIN
 from catalogued.repository import (
     _remove_legacy_fsf_builtin_description_fields,
@@ -95,6 +95,18 @@ class FsfBuiltinMetadataTestCase(TestCase):
         self.assertEqual(doc["pieceFamilyOverride"], "opulent")
         self.assertEqual(_fsf_builtin_synced_fields(doc)["pieceFamilyOverride"], "opulent")
         self.assertEqual(set(doc["pieces"]), {"p", "r", "n", "b", "q", "k", "a", "c", "w", "l"})
+
+    def test_loop_preserves_promoted_captures_and_crazyhouse_pockets(self) -> None:
+        doc = _build_fsf_builtin_doc("loop", FSF_CATALOGUED_BUILTIN_VARIANTS["loop"])
+        self.assertEqual(doc["baseVariant"], "crazyhouse")
+        self.assertTrue(doc["captureToHand"])
+        self.assertTrue(doc["dropLoop"])
+        self.assertTrue(doc["showPromoted"])
+        self.assertEqual(set(doc["pocketRoles"]), {"p", "n", "b", "r", "q"})
+        self.assertEqual(doc["promotionRoles"], ["p"])
+        self.assertTrue(_client_doc(doc)["dropLoop"])
+        self.assertTrue(_fsf_builtin_synced_fields(doc)["dropLoop"])
+        self.assertNotIn("loop", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
 
     def test_jesonmor_uses_standard_knights_on_a_kingless_9x9_board(self) -> None:
         doc = _build_fsf_builtin_doc("jesonmor", FSF_CATALOGUED_BUILTIN_VARIANTS["jesonmor"])

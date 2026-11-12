@@ -210,6 +210,8 @@ def _client_doc(
                 # even if their stored INI cannot be fingerprinted conservatively.
                 pass
     client_variant = str(doc.get("clientVariant") or "").strip()
+    if "dropLoop" in doc:
+        client_doc["dropLoop"] = bool(doc["dropLoop"])
     if client_variant:
         client_doc["clientVariant"] = client_variant
     premove_variant = str(doc.get("premoveVariant") or "").strip()
@@ -595,6 +597,8 @@ def _build_fsf_builtin_doc(
     )
     doc["references"] = references
     doc["rulesIni"] = str(metadata.get("rulesIni") or "").strip()
+    if "dropLoop" in metadata:
+        doc["dropLoop"] = _fsf_metadata_bool(metadata, "dropLoop", False)
     if not description:
         doc.pop("description", None)
     return doc
@@ -613,6 +617,7 @@ def _fsf_builtin_synced_fields(doc: Mapping[str, Any]) -> dict[str, Any]:
         "author",
         "ini",
         "rulesIni",
+        "dropLoop",
         "baseVariant",
         "clientVariant",
         "premoveVariant",

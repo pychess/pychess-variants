@@ -404,6 +404,25 @@ nMoveRule = 50
         "promotionRoles": ("p",),
         "promotionOrder": ("q", "r", "n"),
     },
+    "loop": {
+        "displayName": "Loop Chess",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references(
+            "https://en.wikipedia.org/wiki/Crazyhouse#Variations",
+        ),
+        "baseVariant": "crazyhouse",
+        "captureToHand": True,
+        "dropLoop": True,
+        "promotionRoles": ("p",),
+        "promotionOrder": models.CATALOGUED_CHESS_PROMOTION_ORDER,
+        "showPromoted": True,
+        "nFoldIsDraw": True,
+        # Documentation only; runtime paths use the canonical built-in key.
+        "rulesIni": """
+[loop:crazyhouse]
+dropLoop = true
+""",
+    },
     "losers": {
         "displayName": "Losers Chess",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -923,15 +942,6 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
         ),
         "baseVariant": "bughouse",
         "reviewNotes": "Bughouse-family/two-board variant; not suitable for catalogued flow yet.",
-    },
-    "loop": {
-        "displayName": "Loop Chess",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references(
-            "https://en.wikipedia.org/wiki/Crazyhouse#Variations",
-        ),
-        "baseVariant": "crazyhouse",
-        "reviewNotes": "Drop variant; review pocket/drop UI and promoted-piece capture behavior.",
     },
     "micro": {
         "displayName": "Micro Shogi",

@@ -377,6 +377,10 @@ export function getAtaxxPoints(board: string): number[] {
     return [redPoint, bluePoint];
 }
 
+export function capturedRole(variant: Variant, piece: cg.Piece): cg.Role {
+    return variant.pocket?.dropLoop ? piece.role : unpromotedRole(variant, piece);
+}
+
 export function unpromotedRole(variant: Variant, piece: cg.Piece): cg.Role {
     if (piece.promoted) {
         if (variant.promotion.type === 'shogi') return piece.role.slice(1) as cg.Role;

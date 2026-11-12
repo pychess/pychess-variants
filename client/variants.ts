@@ -530,6 +530,7 @@ export interface Variant {
     readonly pocket?: {
         readonly roles: Record<cg.Color, cg.Role[]>;
         readonly captureToHand: boolean;
+        readonly dropLoop?: boolean;
     };
     readonly promotion: {
         readonly type: PromotionType;
@@ -659,6 +660,7 @@ export function variant(config: VariantConfig): Variant {
                             black: config.pocket.roles.black.map(util.roleOf),
                         },
                   captureToHand: config.pocket.captureToHand,
+                  dropLoop: !!config.pocket.dropLoop,
               }
             : undefined,
         promotion: {
@@ -780,6 +782,8 @@ interface VariantConfig {
         roles: cg.Letter[] | Record<cg.Color, cg.Letter[]>;
         // Whether captured pieces go to the pocket (Fairy's terminology)
         captureToHand: boolean;
+        // Keep a captured pawn's promoted type, as in Loop Chess.
+        dropLoop?: boolean;
     };
     promotion?: {
         // Promotion style
@@ -2192,6 +2196,7 @@ export interface CataloguedVariantClientDocument {
     readonly kingRoles?: cg.Letter[];
     readonly pocketRoles?: cg.Letter[];
     readonly captureToHand?: boolean;
+    readonly dropLoop?: boolean;
     readonly promotionType?: PromotionType;
     readonly promotionRoles?: cg.Letter[];
     readonly promotionOrder?: PromotionSuffix[];
@@ -2912,6 +2917,10 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
     const { pieces, kingRoles, pocketRoles, promotionType, promotionRoles, promotionOrder, clientVariant } = info;
     const captureToHand = cataloguedCaptureToHand(meta, clientVariant);
     const boardFamily = cataloguedCompatibleBoardFamily(meta) ?? ensureCataloguedBoardFamily(meta.width, meta.height);
+    const dropLoopOption = cataloguedIniOption(meta.ini, 'dropLoop');
+    const dropLoop = dropLoopOption === undefined
+        ? (meta.dropLoop ?? clientVariant?.pocket?.dropLoop ?? false)
+        : /^(true|yes|1|on)$/i.test(dropLoopOption);
     const cataloguedPieceFamily = `catalogued-${meta.name}`;
     delete PIECE_FAMILIES[cataloguedPieceFamily];
     const compatiblePieceSource = meta.hasPieceSet
@@ -2945,7 +2954,7 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
         pieceRow: pieces,
         kingRoles,
         pieceNames: meta.pieceNames,
-        pocket: pocketRoles.length ? { roles: pocketRoles, captureToHand } : undefined,
+        pocket: pocketRoles.length ? { roles: pocketRoles, captureToHand, dropLoop } : undefined,
         promotion: { type: promotionType, roles: promotionRoles, order: promotionOrder },
         rules: {
             defaultTimeControl: clientVariant?.rules.defaultTimeControl ?? 'incremental',
