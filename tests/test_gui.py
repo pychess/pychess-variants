@@ -25,6 +25,102 @@ test_logger.init_test_logger()
 
 @pytest.mark.asyncio
 class TestGUI:
+    async def test_euroshogi_play_promote_drop_and_saved_analysis(self, aiohttp_server):
+        from aiohttp_jinja2 import get_env
+        from catalogued.builtin_data import FSF_CATALOGUED_BUILTIN_VARIANTS
+        from catalogued.documents import _build_fsf_builtin_doc
+        from catalogued.variants import register_catalogued_variant_doc
+        from utils import load_game
+        from variants import unregister_catalogued_server_variant
+
+        app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+        server = await aiohttp_server(app, host="127.0.0.1")
+        app_state = get_app_state(app)
+        base_url = f"http://{server.host}:{server.port}"
+        get_env(app).globals["home"] = base_url
+        register_catalogued_variant_doc(
+            app_state,
+            _build_fsf_builtin_doc("euroshogi", FSF_CATALOGUED_BUILTIN_VARIANTS["euroshogi"]),
+        )
+        players = []
+        for name in ("euro-white", "euro-black"):
+            await app_state.db.user.insert_one({"_id": name, "enabled": True, "ct": "all"})
+            player = User(app_state, username=name)
+            player.game_category_set = True
+            app_state.users[name] = player
+            players.append(player)
+        initial_fen = "7k/8/8/P7/3N4/8/8/K7[B] w 0 1"
+        game = Game(app_state, "EuroTest", "euroshogi", initial_fen, *players, base=5)
+        app_state.games[game.id] = game
+        await insert_game_to_db(game, app_state)
+
+        async with async_playwright() as playwright:
+            browser = await self._launch_browser(playwright)
+            try:
+                pages = []
+                errors = []
+                for player in players:
+                    _, page = await self._playwright_page_for_user(
+                        browser, base_url, player.username
+                    )
+                    page.on("pageerror", lambda error: errors.append(str(error)))
+                    await page.goto(f"{base_url}/{game.id}")
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await expect(page.locator("#mainboard.standard8x8.shogi")).to_be_visible()
+                    pages.append(page)
+
+                # The sideways step is unique to EuroShogi's knight.
+                assert set(
+                    await pages[0].evaluate(
+                        "() => window.cg.state.premovable.premoveFunc("
+                        "window.cg.state.boardState, 'd4', false)"
+                    )
+                ) == {"c4", "e4", "c6", "e6"}
+                moves = ("d4e4", "h8g8", "a5a6+", "g8h8", "B@d5")
+                for ply, move in enumerate(moves):
+                    page = pages[game.board.color]
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await page.evaluate(
+                        """move => {
+                            if (move[1] === '@') {
+                                window.cg.selectPocket({ role: 'b-piece', color: 'white' });
+                            } else window.cg.selectSquare(move.slice(0, 2));
+                            window.cg.selectSquare(move.slice(2, 4));
+                        }""",
+                        move,
+                    )
+                    await self._eventually(lambda expected=ply + 1: game.board.ply == expected)
+                assert "+P" in game.board.fen
+                assert game.board.move_stack == list(moves)
+                assert await pages[0].locator("#extension_choice").count() == 0
+                await game.game_ended(players[0], "resign")
+                final_fen = game.board.fen
+                app_state.games.pop(game.id)
+                restored = await load_game(app_state, game.id)
+                assert restored is not None
+                assert restored.board.fen == final_fen
+                assert restored.board.move_stack == list(moves)
+
+                page = pages[0]
+                await page.goto(f"{base_url}/{game.id}?ply=5")
+                await expect(page.locator("main.analysis-app")).to_be_visible()
+                await page.get_by_title("Last move", exact=True).click()
+                await expect(page.locator("#fullfen")).to_have_value(final_fen)
+                await expect(page.locator("#mainboard piece.pp-piece")).to_be_visible()
+                assert await page.locator("#mainboard piece.pp-piece").evaluate(
+                    "piece => getComputedStyle(piece, '::before').backgroundImage !== 'none'"
+                    " || getComputedStyle(piece).backgroundImage !== 'none'"
+                )
+                await page.get_by_title("First move", exact=True).click()
+                await expect(page.locator("#fullfen")).to_have_value(initial_fen)
+                await page.goto(f"{base_url}/analysis/euroshogi")
+                await expect(page.locator("#mainboard.standard8x8.shogi")).to_be_visible()
+                await expect(page.locator("#mainboard cg-board piece")).to_have_count(32)
+                assert errors == []
+            finally:
+                await browser.close()
+                unregister_catalogued_server_variant("euroshogi")
+
     async def test_catalogued_loading_for_previews_editor_and_simul(self, aiohttp_server):
         from catalogued.variants import register_catalogued_variant_doc
         from fairy import FairyBoard

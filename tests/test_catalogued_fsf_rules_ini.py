@@ -16,6 +16,18 @@ from catalogued.documents import (
 
 
 class FsfBuiltinRulesIniTestCase(TestCase):
+    def test_euroshogi_rules_expose_sideways_knight_and_mandatory_promotion(self) -> None:
+        doc = _build_fsf_builtin_doc("euroshogi", FSF_CATALOGUED_BUILTIN_VARIANTS["euroshogi"])
+        client_doc = _client_doc(doc)
+        self.assertEqual(client_doc["ini"], "")
+        self.assertNotIn("rulesIni", client_doc)
+        self.assertEqual(client_doc["fsfBuiltinVariant"], "euroshogi")
+        self.assertEqual(client_doc["betzaPieces"], {"n": "fNsW"})
+        context = catalogued_variant_rule_context(doc)
+        self.assertIn("mandatoryPiecePromotion = true", context["ini"])
+        self.assertIn("nFoldRule = 4", context["ini"])
+        self.assertEqual([diagram["piece"] for diagram in context["customPieceDiagrams"]], ["n"])
+
     def test_okisakishogi_rules_document_the_vertical_lance_and_chess_knight(self) -> None:
         doc = _build_fsf_builtin_doc(
             "okisakishogi", FSF_CATALOGUED_BUILTIN_VARIANTS["okisakishogi"]

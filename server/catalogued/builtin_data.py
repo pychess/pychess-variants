@@ -198,6 +198,57 @@ FSF_CATALOGUED_BUILTIN_VARIANTS: Mapping[str, Mapping[str, Any]] = {
         "promotionRoles": ("p",),
         "promotionOrder": ("f",),
     },
+    "euroshogi": {
+        "displayName": "EuroShogi",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/EuroShogi"),
+        "baseVariant": "",
+        "clientVariant": "shogi",
+        "boardFamilyOverride": "standard8x8",
+        # Standard chess sets lack generals and the four promoted forms.
+        "pieceFamilyOverride": "shogi",
+        "pieceNames": {"g": "General"},
+        "captureToHand": True,
+        "promotionType": "shogi",
+        "promotionRoles": ("p", "n", "b", "r"),
+        "promotionOrder": ("+",),
+        "showPromoted": True,
+        "legalMovesNeedHistory": True,
+        "nFoldIsDraw": True,
+        # Documentation only, transcribed from minishogi_variant_base() and
+        # euroshogi_variant() in Fairy-Stockfish's src/variant.cpp. The built-in
+        # uses fourfold repetition, losing stalemate and no pawn-drop mate.
+        "rulesIni": """
+[euroshogi]
+variantTemplate = shogi
+maxRank = 8
+maxFile = 8
+king = k
+shogiPawn = p
+silver = s
+gold = g
+bishop = b
+dragonHorse = h
+rook = r
+bers = d
+customPiece1 = n:fNsW
+promotionRegionWhite = *6 *7 *8
+promotionRegionBlack = *1 *2 *3
+promotedPieceType = p:g s:g b:h r:d n:g
+mandatoryPiecePromotion = true
+pieceDrops = true
+capturesToHand = true
+doubleStep = false
+castling = false
+dropNoDoubled = p
+immobilityIllegal = true
+shogiPawnDropMateIllegal = true
+stalemateValue = loss
+nFoldRule = 4
+nMoveRule = 0
+perpetualCheckIllegal = true
+""",
+    },
     "extinction": {
         "displayName": "Extinction Chess",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -724,14 +775,6 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
         "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Clobber"),
         "baseVariant": "clobber",
         "reviewNotes": "Large-board non-chess game; verify board sizing and objective handling.",
-    },
-    "euroshogi": {
-        "displayName": "EuroShogi",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/EuroShogi"),
-        "baseVariant": "",
-        "clientVariant": "shogi",
-        "reviewNotes": "Shogi-family drops/promotions; review piece assets and byo UI.",
     },
     "fairy": {
         "displayName": "Fairy",

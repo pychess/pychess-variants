@@ -28,6 +28,7 @@ class FsfBuiltinMetadataTestCase(TestCase):
             "chancellor": ("", "capablanca"),
             "codrus": ("giveaway", "antichess"),
             "courier": ("", "shatranj"),
+            "euroshogi": ("", "shogi"),
             "georgian": ("amazon", "chess"),
             "giveaway": ("", "antichess"),
             "janus": ("", "capablanca"),
@@ -58,7 +59,6 @@ class FsfBuiltinMetadataTestCase(TestCase):
     def test_candidate_relationships_do_not_invent_engine_parents(self) -> None:
         expected = {
             "chessgi": ("loop", "crazyhouse"),
-            "euroshogi": ("", "shogi"),
             "gorogoro": ("", "shogi"),
             "mini": ("", "minishogi"),
         }
@@ -103,6 +103,22 @@ class FsfBuiltinMetadataTestCase(TestCase):
         self.assertTrue(doc["rulesArrowing"])
         self.assertTrue(_fsf_builtin_synced_fields(doc)["rulesArrowing"])
         self.assertNotIn("joust", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
+
+    def test_euroshogi_is_seeded_with_complete_pieces_promotions_and_pockets(self) -> None:
+        doc = _build_fsf_builtin_doc("euroshogi", FSF_CATALOGUED_BUILTIN_VARIANTS["euroshogi"])
+        self.assertEqual((doc["width"], doc["height"]), (8, 8))
+        self.assertEqual(doc["boardFamilyOverride"], "standard8x8")
+        self.assertEqual(doc["pieceFamilyOverride"], "shogi")
+        self.assertEqual(set(doc["pieces"]), {"p", "n", "b", "r", "g", "k"})
+        self.assertEqual(set(doc["pocketRoles"]), {"p", "n", "b", "r", "g"})
+        self.assertTrue(doc["captureToHand"])
+        self.assertEqual(doc["promotionType"], "shogi")
+        self.assertEqual(doc["promotionRoles"], ["p", "n", "b", "r"])
+        self.assertEqual(doc["promotionOrder"], ["+"])
+        self.assertTrue(doc["showPromoted"])
+        self.assertTrue(doc["legalMovesNeedHistory"])
+        self.assertTrue(doc["nFoldIsDraw"])
+        self.assertNotIn("euroshogi", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
 
     def test_judkins_is_seeded_with_shogi_promotions_and_board(self) -> None:
         doc = _build_fsf_builtin_doc("judkins", FSF_CATALOGUED_BUILTIN_VARIANTS["judkins"])
