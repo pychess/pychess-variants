@@ -43,6 +43,7 @@ class FsfBuiltinMetadataTestCase(TestCase):
             "okisakishogi": ("", "shogi"),
             "petrified": ("pawnsideways", "chess"),
             "shatar": ("", "shatranj"),
+            "snailtrail": ("", "chess"),
             "tencubed": ("", "grand"),
             "yarishogi": ("", "shogi"),
             "almost": ("", "chess"),
@@ -131,6 +132,18 @@ class FsfBuiltinMetadataTestCase(TestCase):
         self.assertTrue(doc["rulesArrowing"])
         self.assertTrue(_fsf_builtin_synced_fields(doc)["rulesArrowing"])
         self.assertNotIn("joust", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
+
+    def test_snailtrail_is_seeded_with_nonroyal_tokens_and_automatic_walls(self) -> None:
+        doc = _build_fsf_builtin_doc("snailtrail", FSF_CATALOGUED_BUILTIN_VARIANTS["snailtrail"])
+        self.assertEqual((doc["width"], doc["height"]), (7, 7))
+        self.assertEqual(doc["pieces"], ["p"])
+        self.assertEqual(doc["kingRoles"], [])
+        self.assertEqual(doc["pocketRoles"], [])
+        self.assertEqual(doc["promotionRoles"], [])
+        self.assertTrue(doc["rulesArrowing"])
+        self.assertEqual(doc["boardFamilyOverride"], "ataxx7x7")
+        self.assertEqual(doc["pieceFamilyOverride"], "snailtrail")
+        self.assertNotIn("snailtrail", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
 
     def test_euroshogi_is_seeded_with_complete_pieces_promotions_and_pockets(self) -> None:
         doc = _build_fsf_builtin_doc("euroshogi", FSF_CATALOGUED_BUILTIN_VARIANTS["euroshogi"])

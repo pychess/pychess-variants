@@ -94,6 +94,7 @@ CATALOGUED_PIECE_FAMILY_OVERRIDES = frozenset(
         "shogi",
         "shogun",
         "sittuyin",
+        "snailtrail",
         "spartan",
         "standard",
         "synochess",

@@ -25,6 +25,116 @@ test_logger.init_test_logger()
 
 @pytest.mark.asyncio
 class TestGUI:
+    @pytest.mark.parametrize(
+        "width,theme", [(1280, "light"), (1280, "dark"), (390, "light"), (390, "dark")]
+    )
+    async def test_snailtrail_walls_and_saved_analysis(self, aiohttp_server, width, theme):
+        import base64
+        from pathlib import Path
+
+        from aiohttp_jinja2 import get_env
+        from catalogued.builtin_data import FSF_CATALOGUED_BUILTIN_VARIANTS
+        from catalogued.documents import _build_fsf_builtin_doc
+        from catalogued.variants import register_catalogued_variant_doc
+        from utils import load_game
+        from variants import unregister_catalogued_server_variant
+
+        app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+        server = await aiohttp_server(app, host="127.0.0.1")
+        app_state = get_app_state(app)
+        base_url = f"http://{server.host}:{server.port}"
+        get_env(app).globals["home"] = base_url
+        register_catalogued_variant_doc(
+            app_state,
+            _build_fsf_builtin_doc("snailtrail", FSF_CATALOGUED_BUILTIN_VARIANTS["snailtrail"]),
+        )
+        players = []
+        for name in ("snail-white", "snail-black"):
+            await app_state.db.user.insert_one(
+                {"_id": name, "enabled": True, "ct": "all", "theme": theme}
+            )
+            player = User(app_state, username=name, theme=theme)
+            player.game_category_set = True
+            app_state.users[name] = player
+            players.append(player)
+        game = Game(app_state, "SnailTst", "snailtrail", "", *players, base=5)
+        app_state.games[game.id] = game
+        await insert_game_to_db(game, app_state)
+        moves = ["a1b2,b2a1", "g7f6,f6g7", "b2c3,c3b2", "f6e5,e5f6", "c3d4,d4c3", "e5e4,e4e5"]
+
+        async with async_playwright() as playwright:
+            browser = await self._launch_browser(playwright)
+            try:
+                pages = []
+                errors = []
+                for player in players:
+                    context, page = await self._playwright_page_for_user(
+                        browser, base_url, player.username
+                    )
+                    await context.add_init_script(f"localStorage.setItem('theme', '{theme}');")
+                    await page.set_viewport_size({"width": width, "height": 900})
+                    page.on("pageerror", lambda error: errors.append(str(error)))
+                    await page.goto(f"{base_url}/{game.id}")
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await expect(page.locator("body")).to_have_attribute("data-theme", theme)
+                    for color, image_name in (("white", "wK.svg"), ("black", "bK.svg")):
+                        artwork = base64.b64encode(
+                            Path(f"static/images/pieces/merida/{image_name}").read_bytes()
+                        ).decode()
+                        assert await page.locator(f"#mainboard piece.p-piece.{color}").evaluate(
+                            "(piece, artwork) => getComputedStyle(piece).backgroundImage.includes(artwork)",
+                            artwork,
+                        )
+                    pages.append(page)
+
+                served_css = await pages[0].evaluate(
+                    "() => [...document.styleSheets].map(sheet => sheet.href).filter(Boolean)"
+                )
+                assert any("piece-css/snailtrail/classic.css" in href for href in served_css)
+                assert any("extensions.css" in href for href in served_css)
+
+                assert set(
+                    await pages[0].evaluate(
+                        "() => window.cg.state.premovable.premoveFunc(window.cg.state.boardState, 'a1', false)"
+                    )
+                ) == {"b1", "a2", "b2"}
+                for ply, move in enumerate(moves):
+                    page = pages[game.board.color]
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await page.evaluate(
+                        "move => { window.cg.selectSquare(move.slice(0, 2)); window.cg.selectSquare(move.slice(2, 4)); }",
+                        move,
+                    )
+                    await self._eventually(lambda expected=ply + 1: game.board.ply == expected)
+                    assert game.board.move_stack[-1] == move
+                    assert game.board.fen.count("*") == ply + 1
+                    await expect(page.locator("#mainboard piece._-piece")).to_have_count(ply + 1)
+                    assert await page.locator("#mainboard piece._-piece").first.evaluate(
+                        "piece => getComputedStyle(piece).backgroundImage.includes('/images/pieces/brick.svg')"
+                    )
+                    assert not await page.evaluate(
+                        "() => window.cg.state.boardState.pieces.has('a0')"
+                    )
+                final_fen = game.board.fen
+                await game.game_ended(players[0], "resign")
+                app_state.games.pop(game.id)
+                restored = await load_game(app_state, game.id)
+                assert restored is not None
+                assert restored.board.fen == final_fen
+                assert restored.board.move_stack == moves
+                page = pages[0]
+                await page.goto(f"{base_url}/{game.id}?ply={len(moves)}")
+                await expect(page.locator("#fullfen")).to_have_value(final_fen)
+                await expect(page.locator("#mainboard piece._-piece")).to_have_count(len(moves))
+                await page.get_by_title("First move", exact=True).click()
+                await expect(page.locator("#mainboard piece._-piece")).to_have_count(0)
+                await page.get_by_title("Last move", exact=True).click()
+                await expect(page.locator("#mainboard piece._-piece")).to_have_count(len(moves))
+                assert errors == []
+            finally:
+                await browser.close()
+                unregister_catalogued_server_variant("snailtrail")
+
     async def test_chessgi_first_rank_pawn_drops_in_analysis(self, aiohttp_server):
         from urllib.parse import urlencode
 

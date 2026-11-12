@@ -1,0 +1,6 @@
+.snailtrail piece.p-piece.white {
+    background-image: url('../../images/pieces/merida/wK.svg');
+}
+.snailtrail piece.p-piece.black {
+    background-image: url('../../images/pieces/merida/bK.svg');
+}

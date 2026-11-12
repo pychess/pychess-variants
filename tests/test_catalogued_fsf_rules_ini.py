@@ -13,9 +13,29 @@ from catalogued.documents import (
     _fsf_builtin_description_for_doc,
     catalogued_variant_rule_context,
 )
+from fairy.fairy_board import sf
 
 
 class FsfBuiltinRulesIniTestCase(TestCase):
+    def test_snailtrail_exposes_non_capturing_king_moves_and_loses_when_blocked(self) -> None:
+        doc = _build_fsf_builtin_doc("snailtrail", FSF_CATALOGUED_BUILTIN_VARIANTS["snailtrail"])
+        client_doc = _client_doc(doc)
+        self.assertEqual(client_doc["ini"], "")
+        self.assertEqual(client_doc["betzaPieces"], {"p": "mK"})
+        self.assertTrue(client_doc["rulesArrowing"])
+        context = catalogued_variant_rule_context(doc)
+        self.assertIn("wallingRule = past", context["ini"])
+        fen = sf.start_fen("snailtrail")
+        self.assertEqual(
+            set(sf.legal_moves("snailtrail", fen, [])),
+            {"a1b1,b1a1", "a1a2,a2a1", "a1b2,b2a1"},
+        )
+        blocked = "6p/7/7/7/7/**5/P*5 w - - 0 1"
+        self.assertEqual(sf.legal_moves("snailtrail", blocked, []), [])
+        self.assertLess(sf.game_result("snailtrail", blocked, []), 0)
+        adjacent = "7/7/7/3p3/3P3/7/7 w - - 0 1"
+        self.assertNotIn("d3d4,d4d3", sf.legal_moves("snailtrail", adjacent, []))
+
     def test_chessgi_documents_loop_captures_and_first_rank_pawn_drops(self) -> None:
         doc = _build_fsf_builtin_doc("chessgi", FSF_CATALOGUED_BUILTIN_VARIANTS["chessgi"])
         client_doc = _client_doc(doc)

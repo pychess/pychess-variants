@@ -301,6 +301,7 @@ const ORDA_NAMES: PieceNameTable = {
 
 export const PIECE_FAMILIES: Record<string, PieceFamily> = {
     amazons: { pieceCSS: ['classic', 'arrow', 'disguised'], wallCSS: ['classic', 'arrow'] },
+    snailtrail: { pieceCSS: ['classic', 'disguised'] },
     paradigm: { pieceCSS: ['paradigm0', 'paradigm1', 'paradigm2', 'paradigm3', 'disguised'] },
     ataxx: { pieceCSS: ['disguised', 'virus', 'zombie', 'cat-dog'] },
     standard: {

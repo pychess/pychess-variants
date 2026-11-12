@@ -613,6 +613,35 @@ perpetualCheckIllegal = true
         "promotionRoles": ("p",),
         "promotionOrder": ("j",),
     },
+    "snailtrail": {
+        "displayName": "Snail Trail",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references(
+            "https://boardgamegeek.com/boardgame/37135/snailtrail",
+        ),
+        "baseVariant": "",
+        "clientVariant": "chess",
+        "boardFamilyOverride": "ataxx7x7",
+        "pieceFamilyOverride": "snailtrail",
+        "pieceNames": {"p": "Snail"},
+        "rulesArrowing": True,
+        # Documentation only, transcribed from snailtrail_variant() in
+        # Fairy-Stockfish's src/variant.cpp. Tokens are non-royal and cannot capture.
+        "rulesIni": """
+[snailtrail]
+maxRank = 7
+maxFile = 7
+pawn = -
+knight = -
+bishop = -
+rook = -
+queen = -
+king = -
+customPiece1 = p:mK
+stalemateValue = loss
+wallingRule = past
+""",
+    },
     "suicide": {
         "displayName": "Suicide Chess",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -975,16 +1004,6 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
         "baseVariant": "",
         "clientVariant": "chess",
         "reviewNotes": "Alias of standard chess; pychess already exposes Chess.",
-    },
-    "snailtrail": {
-        "displayName": "Snail Trail",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references(
-            "https://boardgamegeek.com/boardgame/37135/snailtrail",
-        ),
-        "baseVariant": "",
-        "clientVariant": "chess",
-        "reviewNotes": "Non-chess blocking game; verify move encoding and result handling.",
     },
     "sortofalmost": {
         "displayName": "Sort-of-Almost Chess",
