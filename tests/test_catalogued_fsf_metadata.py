@@ -26,6 +26,7 @@ class FsfBuiltinMetadataTestCase(TestCase):
             "atomar": ("nocheckatomic", "atomic"),
             "centaur": ("", "capablanca"),
             "chancellor": ("", "capablanca"),
+            "chessgi": ("loop", "crazyhouse"),
             "codrus": ("giveaway", "antichess"),
             "courier": ("", "shatranj"),
             "euroshogi": ("", "shogi"),
@@ -59,7 +60,6 @@ class FsfBuiltinMetadataTestCase(TestCase):
 
     def test_candidate_relationships_do_not_invent_engine_parents(self) -> None:
         expected = {
-            "chessgi": ("loop", "crazyhouse"),
             "gorogoro": ("", "shogi"),
             "mini": ("", "minishogi"),
         }
@@ -97,16 +97,18 @@ class FsfBuiltinMetadataTestCase(TestCase):
         self.assertEqual(set(doc["pieces"]), {"p", "r", "n", "b", "q", "k", "a", "c", "w", "l"})
 
     def test_loop_preserves_promoted_captures_and_crazyhouse_pockets(self) -> None:
-        doc = _build_fsf_builtin_doc("loop", FSF_CATALOGUED_BUILTIN_VARIANTS["loop"])
-        self.assertEqual(doc["baseVariant"], "crazyhouse")
-        self.assertTrue(doc["captureToHand"])
-        self.assertTrue(doc["dropLoop"])
-        self.assertTrue(doc["showPromoted"])
-        self.assertEqual(set(doc["pocketRoles"]), {"p", "n", "b", "r", "q"})
-        self.assertEqual(doc["promotionRoles"], ["p"])
-        self.assertTrue(_client_doc(doc)["dropLoop"])
-        self.assertTrue(_fsf_builtin_synced_fields(doc)["dropLoop"])
-        self.assertNotIn("loop", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
+        for name, base in (("loop", "crazyhouse"), ("chessgi", "loop")):
+            with self.subTest(name=name):
+                doc = _build_fsf_builtin_doc(name, FSF_CATALOGUED_BUILTIN_VARIANTS[name])
+                self.assertEqual(doc["baseVariant"], base)
+                self.assertTrue(doc["captureToHand"])
+                self.assertTrue(doc["dropLoop"])
+                self.assertTrue(doc["showPromoted"])
+                self.assertEqual(set(doc["pocketRoles"]), {"p", "n", "b", "r", "q"})
+                self.assertEqual(doc["promotionRoles"], ["p"])
+                self.assertTrue(_client_doc(doc)["dropLoop"])
+                self.assertTrue(_fsf_builtin_synced_fields(doc)["dropLoop"])
+                self.assertNotIn(name, FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
 
     def test_jesonmor_uses_standard_knights_on_a_kingless_9x9_board(self) -> None:
         doc = _build_fsf_builtin_doc("jesonmor", FSF_CATALOGUED_BUILTIN_VARIANTS["jesonmor"])

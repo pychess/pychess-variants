@@ -16,6 +16,17 @@ from catalogued.documents import (
 
 
 class FsfBuiltinRulesIniTestCase(TestCase):
+    def test_chessgi_documents_loop_captures_and_first_rank_pawn_drops(self) -> None:
+        doc = _build_fsf_builtin_doc("chessgi", FSF_CATALOGUED_BUILTIN_VARIANTS["chessgi"])
+        client_doc = _client_doc(doc)
+        self.assertEqual(client_doc["ini"], "")
+        self.assertEqual(client_doc["fsfBuiltinVariant"], "chessgi")
+        self.assertNotIn("rulesIni", client_doc)
+        context = catalogued_variant_rule_context(doc)
+        self.assertIn("[chessgi:loop]", context["ini"])
+        self.assertIn("dropLoop = true", context["ini"])
+        self.assertIn("firstRankPawnDrops = true", context["ini"])
+
     def test_jesonmor_documents_its_centre_goal_without_redefining_the_builtin(self) -> None:
         doc = _build_fsf_builtin_doc("jesonmor", FSF_CATALOGUED_BUILTIN_VARIANTS["jesonmor"])
         client_doc = _client_doc(doc)

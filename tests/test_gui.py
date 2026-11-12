@@ -25,7 +25,69 @@ test_logger.init_test_logger()
 
 @pytest.mark.asyncio
 class TestGUI:
-    @pytest.mark.parametrize("variant_name", ["loop", "crazyhouse"])
+    async def test_chessgi_first_rank_pawn_drops_in_analysis(self, aiohttp_server):
+        from urllib.parse import urlencode
+
+        from aiohttp_jinja2 import get_env
+        from catalogued.builtin_data import FSF_CATALOGUED_BUILTIN_VARIANTS
+        from catalogued.documents import _build_fsf_builtin_doc
+        from catalogued.variants import register_catalogued_variant_doc
+        from fairy.fairy_board import sf
+        from variants import unregister_catalogued_server_variant
+
+        app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+        server = await aiohttp_server(app, host="127.0.0.1")
+        app_state = get_app_state(app)
+        get_env(app).globals["home"] = f"http://{server.host}:{server.port}"
+        register_catalogued_variant_doc(
+            app_state,
+            _build_fsf_builtin_doc("chessgi", FSF_CATALOGUED_BUILTIN_VARIANTS["chessgi"]),
+        )
+        initial_fen = "7k/8/8/8/8/8/8/K7[Pp] w - - 0 1"
+        moves = ["P@e1", "P@e8", "e1e2", "e8e7"]
+        async with async_playwright() as playwright:
+            browser = await self._launch_browser(playwright)
+            try:
+                page = await browser.new_page()
+                errors = []
+                page.on("pageerror", lambda error: errors.append(str(error)))
+                await page.goto(
+                    f"http://{server.host}:{server.port}/analysis/chessgi?"
+                    + urlencode({"fen": initial_fen})
+                )
+                board = page.locator("#mainboard cg-board")
+                await expect(board).to_be_visible()
+
+                async def square(key):
+                    bounds = await board.bounding_box()
+                    assert bounds is not None
+                    await page.mouse.click(
+                        bounds["x"] + (ord(key[0]) - ord("a") + 0.5) * bounds["width"] / 8,
+                        bounds["y"] + (8 - int(key[1]) + 0.5) * bounds["height"] / 8,
+                    )
+
+                for ply, move in enumerate(moves):
+                    if "@" in move:
+                        color = "white" if ply == 0 else "black"
+                        await page.locator(f".pocketrow piece.p-piece.{color}").click()
+                    else:
+                        await square(move[:2])
+                    await square(move[2:4])
+                    await expect(page.locator("#fullfen")).to_have_value(
+                        sf.get_fen("chessgi", initial_fen, moves[: ply + 1])
+                    )
+                await page.get_by_title("First move", exact=True).click()
+                await expect(page.locator("#fullfen")).to_have_value(initial_fen)
+                await page.get_by_title("Last move", exact=True).click()
+                await expect(page.locator("#fullfen")).to_have_value(
+                    sf.get_fen("chessgi", initial_fen, moves)
+                )
+                assert errors == []
+            finally:
+                await browser.close()
+                unregister_catalogued_server_variant("chessgi")
+
+    @pytest.mark.parametrize("variant_name", ["loop", "chessgi", "crazyhouse"])
     @pytest.mark.parametrize("promotion", ["q", "n"])
     async def test_loop_promoted_capture_drop_and_replay(
         self, aiohttp_server, variant_name, promotion
@@ -42,9 +104,10 @@ class TestGUI:
         app_state = get_app_state(app)
         base_url = f"http://{server.host}:{server.port}"
         get_env(app).globals["home"] = base_url
-        if variant_name == "loop":
+        if variant_name in ("loop", "chessgi"):
             register_catalogued_variant_doc(
-                app_state, _build_fsf_builtin_doc("loop", FSF_CATALOGUED_BUILTIN_VARIANTS["loop"])
+                app_state,
+                _build_fsf_builtin_doc(variant_name, FSF_CATALOGUED_BUILTIN_VARIANTS[variant_name]),
             )
         players = []
         for name in ("loop-white", "loop-black"):
@@ -57,7 +120,7 @@ class TestGUI:
         game = Game(app_state, "LoopTest", variant_name, initial_fen, *players, base=5)
         app_state.games[game.id] = game
         await insert_game_to_db(game, app_state)
-        pocket_role = promotion if variant_name == "loop" else "p"
+        pocket_role = "p" if variant_name == "crazyhouse" else promotion
         moves = [f"g7g8{promotion}", "g1g8", "a2a3", f"{pocket_role.upper()}@e5"]
 
         async with async_playwright() as playwright:
@@ -122,8 +185,8 @@ class TestGUI:
                 assert errors == []
             finally:
                 await browser.close()
-                if variant_name == "loop":
-                    unregister_catalogued_server_variant("loop")
+                if variant_name in ("loop", "chessgi"):
+                    unregister_catalogued_server_variant(variant_name)
 
     @pytest.mark.parametrize("capture_centre", [False, True])
     async def test_jesonmor_centre_win_and_saved_analysis(self, aiohttp_server, capture_centre):

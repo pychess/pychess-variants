@@ -168,6 +168,27 @@ FSF_CATALOGUED_BUILTIN_VARIANTS: Mapping[str, Mapping[str, Any]] = {
         "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Chaturanga"),
         "baseVariant": "shatranj",
     },
+    "chessgi": {
+        "displayName": "Chessgi",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references(
+            "https://en.wikipedia.org/wiki/Crazyhouse#Variations",
+        ),
+        "baseVariant": "loop",
+        "clientVariant": "crazyhouse",
+        "captureToHand": True,
+        "dropLoop": True,
+        "promotionRoles": ("p",),
+        "promotionOrder": models.CATALOGUED_CHESS_PROMOTION_ORDER,
+        "showPromoted": True,
+        "nFoldIsDraw": True,
+        # Documentation only; runtime paths use the canonical built-in key.
+        "rulesIni": """
+[chessgi:loop]
+dropLoop = true
+firstRankPawnDrops = true
+""",
+    },
     "codrus": {
         "displayName": "Codrus",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -802,16 +823,6 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
             "Black: q/r/b). Keep out of the allowlist until catalogued promotion "
             "UI can model that explicitly."
         ),
-    },
-    "chessgi": {
-        "displayName": "Chessgi",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references(
-            "https://en.wikipedia.org/wiki/Crazyhouse#Variations",
-        ),
-        "baseVariant": "loop",
-        "clientVariant": "crazyhouse",
-        "reviewNotes": "Drop variant with changed pawn-drop rules; review pocket/drop UI.",
     },
     "clobber": {
         "displayName": "Clobber",

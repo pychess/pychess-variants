@@ -21,42 +21,46 @@ beforeAll(async () => {
 });
 
 beforeEach(() => {
-    registerCataloguedVariant({
-        name: 'loop',
-        displayName: 'Loop Chess',
-        source: 'fairy-stockfish-builtin',
-        fsfBuiltinVariant: 'loop',
-        baseVariant: 'crazyhouse',
-        ini: '',
-        width: 8,
-        height: 8,
-        startFen: VARIANTS.crazyhouse.startFen,
-        pieces: ['p', 'n', 'b', 'r', 'q', 'k'],
-        kingRoles: ['k'],
-        captureToHand: true,
-        pocketRoles: ['p', 'n', 'b', 'r', 'q'],
-        dropLoop: true,
-        promotionType: 'regular',
-        promotionRoles: ['p'],
-        promotionOrder: ['q', 'r', 'b', 'n'],
-        showPromoted: true,
-    });
+    for (const name of ['loop', 'chessgi']) {
+        registerCataloguedVariant({
+            name,
+            displayName: name === 'loop' ? 'Loop Chess' : 'Chessgi',
+            source: 'fairy-stockfish-builtin',
+            fsfBuiltinVariant: name,
+            baseVariant: name === 'loop' ? 'crazyhouse' : 'loop',
+            clientVariant: 'crazyhouse',
+            ini: '',
+            width: 8,
+            height: 8,
+            startFen: VARIANTS.crazyhouse.startFen,
+            pieces: ['p', 'n', 'b', 'r', 'q', 'k'],
+            kingRoles: ['k'],
+            captureToHand: true,
+            pocketRoles: ['p', 'n', 'b', 'r', 'q'],
+            dropLoop: true,
+            promotionType: 'regular',
+            promotionRoles: ['p'],
+            promotionOrder: ['q', 'r', 'b', 'n'],
+            showPromoted: true,
+        });
+    }
 });
 
 afterEach(() => {
     unregisterCataloguedVariant('loop-child-test');
+    unregisterCataloguedVariant('chessgi');
     unregisterCataloguedVariant('loop');
 });
 
 test.each(['q', 'r', 'b', 'n'] as const)('Loop keeps a promoted %s through capture, drop and undo', role => {
-    for (const variantName of ['loop', 'crazyhouse']) {
+    for (const variantName of ['loop', 'chessgi', 'crazyhouse']) {
         const board = new ffish.Board(variantName, initialFen);
         try {
             expect(board.push(`g7g8${role}`)).toBe(true);
             const promotedFen = board.fen(true);
             expect(promotedFen).toContain(`${role.toUpperCase()}~`);
             expect(board.push('g1g8')).toBe(true);
-            const pocketRole = variantName === 'loop' ? role : 'p';
+            const pocketRole = variantName === 'crazyhouse' ? 'p' : role;
             expect(board.pocket(false)).toBe(pocketRole);
             expect(
                 capturedRole(VARIANTS[variantName], {
@@ -79,33 +83,57 @@ test.each(['q', 'r', 'b', 'n'] as const)('Loop keeps a promoted %s through captu
     }
 });
 
-test.each(['loop', 'crazyhouse'])('%s updates the local pocket correctly before server acknowledgement', name => {
-    const captured: cg.Piece = { role: 'q-piece', color: 'white', promoted: true };
-    const changePocket = jest.fn();
-    const ctrl = Object.assign(Object.create(GameController.prototype), {
-        variant: VARIANTS[name],
-        mycolor: 'black',
-        duck: { inputState: '' },
-        arrowing: { inputState: '' },
-        chessground: {
-            state: {
-                boardState: { pieces: new Map([['g8', { role: 'r-piece', color: 'black' }]]) },
-                dom: { redraw: jest.fn() },
+test.each(['loop', 'chessgi', 'crazyhouse'])(
+    '%s updates the local pocket correctly before server acknowledgement',
+    name => {
+        const captured: cg.Piece = { role: 'q-piece', color: 'white', promoted: true };
+        const changePocket = jest.fn();
+        const ctrl = Object.assign(Object.create(GameController.prototype), {
+            variant: VARIANTS[name],
+            mycolor: 'black',
+            duck: { inputState: '' },
+            arrowing: { inputState: '' },
+            chessground: {
+                state: {
+                    boardState: { pieces: new Map([['g8', { role: 'r-piece', color: 'black' }]]) },
+                    dom: { redraw: jest.fn() },
+                },
+                changePocket,
             },
-            changePocket,
-        },
-        processInput: jest.fn(),
-    }) as { onUserMove(orig: cg.Key, dest: cg.Key, meta: cg.MoveMetadata): void };
-    ctrl.onUserMove('g1', 'g8', { captured });
-    expect(changePocket).toHaveBeenCalledWith(
-        {
-            role: name === 'loop' ? 'q-piece' : 'p-piece',
-            color: 'black',
-        },
-        1,
-    );
-    // Editing/demotion still refers to the original pawn, independent of capture rules.
-    expect(unpromotedRole(VARIANTS[name], captured)).toBe('p-piece');
+            processInput: jest.fn(),
+        }) as { onUserMove(orig: cg.Key, dest: cg.Key, meta: cg.MoveMetadata): void };
+        ctrl.onUserMove('g1', 'g8', { captured });
+        expect(changePocket).toHaveBeenCalledWith(
+            {
+                role: name === 'crazyhouse' ? 'p-piece' : 'q-piece',
+                color: 'black',
+            },
+            1,
+        );
+        // Editing/demotion still refers to the original pawn, independent of capture rules.
+        expect(unpromotedRole(VARIANTS[name], captured)).toBe('p-piece');
+    },
+);
+
+test.each(['white', 'black'] as const)("Chessgi permits pawn drops on %s's back rank", color => {
+    const firstRank = color === 'white' ? 'e1' : 'e8';
+    const lastRank = color === 'white' ? 'e8' : 'e1';
+    const fen = `7k/8/8/8/8/8/8/K7[${color === 'white' ? 'P' : 'p'}] ${color === 'white' ? 'w' : 'b'} - - 0 1`;
+    for (const name of ['chessgi', 'loop', 'crazyhouse']) {
+        const board = new ffish.Board(name, fen);
+        try {
+            const moves = board.legalMoves().split(' ');
+            expect(moves.includes(`P@${firstRank}`)).toBe(name === 'chessgi');
+            expect(moves).not.toContain(`P@${lastRank}`);
+            if (name === 'chessgi') {
+                expect(board.push(`P@${firstRank}`)).toBe(true);
+                expect(board.push(color === 'white' ? 'h8g8' : 'a1b1')).toBe(true);
+                expect(board.legalMoves().split(' ')).toContain(color === 'white' ? 'e1e2' : 'e8e7');
+            }
+        } finally {
+            board.delete();
+        }
+    }
 });
 
 test.each([undefined, 'false', 'true'])('Loop derivatives inherit capture rules and respect dropLoop=%s', option => {
