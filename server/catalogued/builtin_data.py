@@ -490,6 +490,65 @@ passOnStalemate = false
         "promotionRoles": ("p",),
         "promotionOrder": ("q", "r", "b", "n", "g"),
     },
+    "isolation": {
+        "displayName": "Isolation",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references(
+            "https://boardgamegeek.com/boardgame/1875/isolation",
+        ),
+        "baseVariant": "",
+        "clientVariant": "chess",
+        "pieceFamilyOverride": "snailtrail",
+        "pieceNames": {"p": "Token"},
+        "rulesArrowing": True,
+        # Documentation only, transcribed from isolation_variant() in
+        # Fairy-Stockfish's src/variant.cpp. Starting squares cannot be walled.
+        "rulesIni": """
+[isolation]
+maxRank = 8
+maxFile = 6
+pawn = -
+knight = -
+bishop = -
+rook = -
+queen = -
+king = -
+customPiece1 = p:mK
+stalemateValue = loss
+wallingRule = static
+wallingRegion = a1 b1 d1 e1 f1 *2 *3 *4 *5 *6 *7 a8 b8 c8 e8 f8
+""",
+    },
+    "isolation7x7": {
+        "displayName": "Isolation 7x7",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references(
+            "https://boardgamegeek.com/boardgame/1875/isolation",
+        ),
+        "baseVariant": "isolation",
+        "clientVariant": "chess",
+        "boardFamilyOverride": "ataxx7x7",
+        "pieceFamilyOverride": "snailtrail",
+        "pieceNames": {"p": "Token"},
+        "rulesArrowing": True,
+        # Documentation only, transcribed from isolation7x7_variant().
+        "rulesIni": """
+[isolation7x7:isolation]
+maxRank = 7
+maxFile = 7
+# Inherited token and wall rules are repeated for the rules page and premoves.
+pawn = -
+knight = -
+bishop = -
+rook = -
+queen = -
+king = -
+customPiece1 = p:mK
+stalemateValue = loss
+wallingRule = static
+wallingRegion = a1 b1 c1 e1 f1 g1 *2 *3 *4 *5 *6 a7 b7 c7 e7 f7 g7
+""",
+    },
     "janus": {
         "displayName": "Janus Chess",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -1210,25 +1269,6 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
         "baseVariant": "",
         "clientVariant": "shogi",
         "reviewNotes": "Pychess exposes Gorogoro+ separately; compare rule differences first.",
-    },
-    "isolation": {
-        "displayName": "Isolation",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references(
-            "https://boardgamegeek.com/boardgame/1875/isolation",
-        ),
-        "baseVariant": "",
-        "clientVariant": "chess",
-        "reviewNotes": "Non-chess blocking game; verify move encoding and result handling.",
-    },
-    "isolation7x7": {
-        "displayName": "Isolation 7x7",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references(
-            "https://boardgamegeek.com/boardgame/1875/isolation",
-        ),
-        "baseVariant": "isolation",
-        "reviewNotes": "Non-chess blocking game; verify move encoding and result handling.",
     },
     "koedem": {
         "displayName": "Koedem",

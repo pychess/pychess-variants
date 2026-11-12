@@ -2572,7 +2572,7 @@ function cataloguedPieceInfo(meta: CataloguedVariantClientDocument): CataloguedP
         ? (meta.promotionType ?? 'regular')
         : (clientVariant?.promotion.type ?? meta.promotionType ?? 'regular');
     const promotionRoles = (
-        hasPromotionOverride || meta.promotionRoles?.length
+        hasPromotionOverride || meta.promotionRoles !== undefined
             ? (meta.promotionRoles ?? [])
             : (clientVariant?.promotion.roles.map(role => util.letterOf(role)) ?? [])
     ) as cg.Letter[];
@@ -2935,6 +2935,9 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
     const { pieces, kingRoles, pocketRoles, promotionType, promotionRoles, promotionOrder, clientVariant } = info;
     const captureToHand = cataloguedCaptureToHand(meta, clientVariant);
     const isBreakthrough = meta.source === 'fairy-stockfish-builtin' && meta.name === 'breakthrough';
+    const usesNonCapturingTokens =
+        meta.source === 'fairy-stockfish-builtin' &&
+        ['isolation', 'isolation7x7', 'snailtrail'].includes(meta.fsfBuiltinVariant || meta.name);
     const isJanggi =
         meta.source === 'fairy-stockfish-builtin' &&
         ['janggicasual', 'janggimodern', 'janggitraditional'].includes(meta.name);
@@ -2987,8 +2990,9 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
         promotion: { type: promotionType, roles: promotionRoles, order: promotionOrder },
         rules: {
             defaultTimeControl: clientVariant?.rules.defaultTimeControl ?? 'incremental',
-            // Breakthrough permits quiet diagonal pawn moves, without en passant.
-            enPassant: !!clientVariant?.rules.enPassant && !isBreakthrough,
+            // Breakthrough has no en passant; Isolation and Snail Trail use p
+            // for non-capturing tokens rather than chess pawns.
+            enPassant: !!clientVariant?.rules.enPassant && !isBreakthrough && !usesNonCapturingTokens,
             gate: !!meta.rulesGate || !!clientVariant?.rules.gate,
             duck: !!clientVariant?.rules.duck,
             arrowing: !!meta.rulesArrowing || !!clientVariant?.rules.arrowing,

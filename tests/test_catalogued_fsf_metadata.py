@@ -32,6 +32,8 @@ class FsfBuiltinMetadataTestCase(TestCase):
             "euroshogi": ("", "shogi"),
             "georgian": ("amazon", "chess"),
             "giveaway": ("", "antichess"),
+            "isolation": ("", "chess"),
+            "isolation7x7": ("isolation", "chess"),
             "janus": ("", "capablanca"),
             "jesonmor": ("", "chess"),
             "joust": ("", "chess"),
@@ -158,6 +160,24 @@ class FsfBuiltinMetadataTestCase(TestCase):
         self.assertEqual(doc["boardFamilyOverride"], "ataxx7x7")
         self.assertEqual(doc["pieceFamilyOverride"], "snailtrail")
         self.assertNotIn("snailtrail", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
+
+    def test_isolation_variants_are_seeded_with_wall_placement_and_nonroyal_tokens(self) -> None:
+        for name, dimensions in (("isolation", (6, 8)), ("isolation7x7", (7, 7))):
+            with self.subTest(name=name):
+                doc = _build_fsf_builtin_doc(name, FSF_CATALOGUED_BUILTIN_VARIANTS[name])
+                self.assertEqual((doc["width"], doc["height"]), dimensions)
+                self.assertEqual(doc["pieces"], ["p"])
+                self.assertEqual(doc["pieceNames"], {"p": "Token"})
+                self.assertEqual(doc["kingRoles"], [])
+                self.assertEqual(doc["pocketRoles"], [])
+                self.assertEqual(doc["promotionRoles"], [])
+                self.assertTrue(doc["rulesArrowing"])
+                self.assertTrue(_client_doc(doc)["rulesArrowing"])
+                self.assertTrue(_fsf_builtin_synced_fields(doc)["rulesArrowing"])
+                self.assertEqual(doc["pieceFamilyOverride"], "snailtrail")
+                if name == "isolation7x7":
+                    self.assertEqual(doc["boardFamilyOverride"], "ataxx7x7")
+                self.assertNotIn(name, FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
 
     def test_euroshogi_is_seeded_with_complete_pieces_promotions_and_pockets(self) -> None:
         doc = _build_fsf_builtin_doc("euroshogi", FSF_CATALOGUED_BUILTIN_VARIANTS["euroshogi"])

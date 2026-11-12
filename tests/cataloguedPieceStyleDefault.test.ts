@@ -8,6 +8,7 @@ import {
     registerCataloguedVariant,
     unregisterCataloguedVariant,
     VARIANTS,
+    BOARD_FAMILIES,
 } from '../client/variants';
 
 const variantNames = [
@@ -31,6 +32,9 @@ const variantNames = [
     'testopulentpieces',
     'testokisakipieces',
     'testfiristyles',
+    'testisolation',
+    'testisolation7x7',
+    'testsnailtrail',
 ];
 
 function register(meta: CataloguedVariantClientDocument) {
@@ -44,6 +48,43 @@ afterEach(() => {
         delete localStorage[`${name}-piece`];
         delete boardSettings.settings[`${name}-piece`];
     });
+});
+
+test.each([
+    ['testisolation', 'isolation', 6, 8, '3p2/6/6/6/6/6/6/2P3 w - - 0 1'],
+    ['testisolation7x7', 'isolation7x7', 7, 7, '3p3/7/7/7/7/7/3P3 w - - 0 1'],
+    ['testsnailtrail', 'snailtrail', 7, 7, '6p/7/7/7/7/7/P6 w - - 0 1'],
+] as const)('%s uses nonroyal tokens and compound wall input', (name, builtin, width, height, startFen) => {
+    const variant = register({
+        name,
+        displayName: name,
+        ini: '',
+        source: 'fairy-stockfish-builtin',
+        fsfBuiltinVariant: builtin,
+        baseVariant: builtin === 'isolation7x7' ? 'isolation' : '',
+        clientVariant: 'chess',
+        pieceFamilyOverride: 'snailtrail',
+        boardFamilyOverride: builtin === 'isolation' ? undefined : 'ataxx7x7',
+        pieceNames: { p: 'Token' },
+        width,
+        height,
+        startFen,
+        pieces: ['p'],
+        kingRoles: [],
+        pocketRoles: [],
+        promotionRoles: [],
+        betzaPieces: { p: 'mK' },
+        rulesArrowing: true,
+    });
+    expect(variant.pieceFamily).toBe('snailtrail');
+    expect(boardSettings.pieceCSS(variant.pieceFamily, variant)).toBe('classic');
+    expect(BOARD_FAMILIES[variant.boardFamily].dimensions).toEqual({ width, height });
+    expect(variant.rules.arrowing).toBe(true);
+    expect(variant.rules.enPassant).toBe(false);
+    expect(variant.kingRoles).toEqual([]);
+    expect(variant.promotion.roles).toEqual([]);
+    expect(variant.pocket).toBeUndefined();
+    expect(variant.ratingEnabled).toBe(false);
 });
 
 test('Okisaki Shogi uses its complete directional piece style', () => {
@@ -116,6 +157,7 @@ test('catalogued variants with a compatible built-in piece family default to tha
         displayName: 'Test Built-in Default',
         tooltip: 'Catalogued variant',
         ini: '[testbuiltindefault:chess]',
+        baseVariant: 'chess',
         startFen: '8/8/8/8/8/8/8/K6k w - - 0 1',
         width: 8,
         height: 8,
@@ -126,6 +168,7 @@ test('catalogued variants with a compatible built-in piece family default to tha
 
     expect(variant.pieceFamily).toBe(cataloguedCompatiblePieceFamily(meta, { ignoreCustomPieceSet: true }));
     expect(boardSettings.pieceCSS(variant.pieceFamily, variant)).toBe(PIECE_FAMILIES[variant.pieceFamily].pieceCSS[0]);
+    expect(variant.rules.enPassant).toBe(true);
 });
 
 test('catalogued wall pieces are marked when both board and piece families are built in', () => {

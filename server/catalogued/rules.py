@@ -827,7 +827,7 @@ def _wall_lines(parsed: ParsedCataloguedIni) -> list[CataloguedRuleLine]:
         elif walling_rule == "past":
             text = "The square a piece leaves can become blocked, as in Snailtrail-like games."
         elif walling_rule == "static":
-            text = "Some squares are static walls."
+            text = "After a move, a permanent wall is placed on an eligible empty square."
         else:
             text = f"The variant uses the `{walling_rule}` wall-placement rule."
         _add(lines, text, "wallingRule", parsed.option("wallingRule"))

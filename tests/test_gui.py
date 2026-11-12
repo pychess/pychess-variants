@@ -1564,6 +1564,197 @@ class TestGUI:
                 await browser.close()
                 unregister_catalogued_server_variant("snailtrail")
 
+    @pytest.mark.parametrize("name", ["isolation", "isolation7x7"])
+    @pytest.mark.parametrize("width,theme", [(1280, "light"), (390, "dark")])
+    async def test_isolation_wall_input_and_saved_analysis(
+        self, aiohttp_server, name, width, theme
+    ):
+        from urllib.parse import urlencode
+
+        from aiohttp_jinja2 import get_env
+        from catalogued.builtin_data import FSF_CATALOGUED_BUILTIN_VARIANTS
+        from catalogued.documents import _build_fsf_builtin_doc
+        from catalogued.variants import register_catalogued_variant_doc
+        from fairy.fairy_board import sf
+        from utils import load_game
+        from variants import unregister_catalogued_server_variant
+
+        app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+        server = await aiohttp_server(app, host="127.0.0.1")
+        state = get_app_state(app)
+        base_url = f"http://{server.host}:{server.port}"
+        get_env(app).globals["home"] = base_url
+        doc = _build_fsf_builtin_doc(name, FSF_CATALOGUED_BUILTIN_VARIANTS[name])
+        register_catalogued_variant_doc(state, doc)
+        players = []
+        for side in ("white", "black"):
+            username = "isolation-" + side
+            await state.db.user.insert_one(
+                {"_id": username, "enabled": True, "ct": "all", "theme": theme}
+            )
+            player = User(state, username=username, theme=theme)
+            player.game_category_set = True
+            state.users[username] = player
+            players.append(player)
+        game = Game(state, "IsolTest", name, "", *players, base=5)
+        state.games[game.id] = game
+        await insert_game_to_db(game, state)
+        moves = (
+            ["c1b1,b1f8", "d8c8,c8f7", "b1b2,b2e8"]
+            if name == "isolation"
+            else ["d1c1,c1g7", "d7c7,c7g6", "c1c2,c2f7"]
+        )
+        protected = ["c1", "d8"] if name == "isolation" else ["d1", "d7"]
+
+        async with async_playwright() as playwright:
+            browser = await self._launch_browser(playwright)
+            try:
+                pages, errors = [], []
+                for player in players:
+                    _, page = await self._playwright_page_for_user(
+                        browser, base_url, player.username
+                    )
+                    await page.set_viewport_size({"width": width, "height": 900})
+                    page.on("pageerror", lambda error: errors.append(str(error)))
+                    await page.goto(f"{base_url}/{game.id}")
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await expect(page.locator("body")).to_have_attribute("data-theme", theme)
+                    for color in ("white", "black"):
+                        assert await page.locator(f"#mainboard piece.p-piece.{color}").evaluate(
+                            "el => getComputedStyle(el).backgroundImage.startsWith('url(\"data:image/svg+xml;base64,')"
+                        )
+                    pages.append(page)
+
+                async def move_token(page, move):
+                    await page.evaluate(
+                        "move => { window.cg.selectSquare(move.slice(0,2)); window.cg.selectSquare(move.slice(2,4)); }",
+                        move,
+                    )
+                    await page.wait_for_function("() => window.cg.state.movable.dests?.has('a0')")
+
+                for ply, move in enumerate(moves):
+                    page = pages[game.board.color]
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await move_token(page, move)
+                    assert game.board.ply == ply  # The token move alone is not a turn.
+                    targets = await page.evaluate("() => window.cg.state.movable.dests.get('a0')")
+                    assert not set(targets) & set(protected)
+                    assert move[-2:] in targets
+                    assert await page.locator("#extension_choice").count() == 0
+                    if ply == 0:
+                        await page.get_by_title("Cancel piece move", exact=True).click()
+                        await page.wait_for_function(
+                            "() => !window.cg.state.boardState.pieces.has('a0')"
+                        )
+                        assert game.board.ply == 0
+                        await move_token(page, move)
+                    await page.evaluate("square => window.cg.selectSquare(square)", protected[0])
+                    assert game.board.ply == ply
+                    await page.wait_for_function(
+                        "() => window.cg.state.selectable.selected === 'a0'"
+                    )
+                    await page.evaluate("square => window.cg.selectSquare(square)", move[-2:])
+                    await self._eventually(lambda expected=ply + 1: game.board.ply == expected)
+                    assert game.board.move_stack[-1] == move
+                    assert game.board.fen.count("*") == ply + 1
+                    await expect(page.locator("#mainboard piece._-piece")).to_have_count(ply + 1)
+                    assert await page.locator("#mainboard piece._-piece").first.evaluate(
+                        "el => getComputedStyle(el).backgroundImage.includes('/images/pieces/brick.svg')"
+                    )
+
+                final_fen = game.board.fen
+                await game.game_ended(players[0], "resign")
+                state.games.pop(game.id)
+                restored = await load_game(state, game.id)
+                assert restored is not None
+                assert restored.board.fen == final_fen
+                assert restored.board.move_stack == moves
+                page = pages[0]
+                await page.goto(f"{base_url}/{game.id}?ply=3")
+                await expect(page.locator("#fullfen")).to_have_value(final_fen)
+                await page.get_by_title("First move", exact=True).click()
+                await expect(page.locator("#mainboard piece._-piece")).to_have_count(0)
+                await page.get_by_title("Last move", exact=True).click()
+                await expect(page.locator("#mainboard piece._-piece")).to_have_count(3)
+
+                # Free analysis also completes the same two-stage turn locally.
+                await page.goto(f"{base_url}/analysis/{name}")
+                board = page.locator("#mainboard cg-board")
+                await expect(board).to_be_visible()
+                await board.scroll_into_view_if_needed()
+
+                async def click_square(square):
+                    bounds = await board.bounding_box()
+                    assert bounds is not None
+                    await page.mouse.click(
+                        bounds["x"]
+                        + (ord(square[0]) - ord("a") + 0.5) * bounds["width"] / doc["width"],
+                        bounds["y"]
+                        + (doc["height"] - int(square[1]) + 0.5) * bounds["height"] / doc["height"],
+                    )
+
+                await click_square(moves[0][:2])
+                await expect(board.locator("square.move-dest").first).to_be_visible()
+                await click_square(moves[0][2:4])
+                await expect(board.locator("square.move-dest")).to_have_count(
+                    45 if name == "isolation" else 46
+                )
+                await click_square(moves[0][-2:])
+                await expect(page.locator("#mainboard piece._-piece")).to_have_count(1)
+                await expect(page.locator("#fullfen")).to_have_value(
+                    sf.get_fen(name, doc["startFen"], [moves[0]])
+                )
+                await page.screenshot(path=f"/tmp/{name}-{width}-{theme}.png")
+
+                # A sideways token move must preserve every old wall while its
+                # wall-placement leg is pending (especially e5 below e6).
+                position = (
+                    "6/6/3p2/2***1/1**1P1/3**1/6/6 b - - 7 4"
+                    if name == "isolation"
+                    else "7/3p3/2***2/1**1P2/3**2/7/7 b - - 7 4"
+                )
+                await page.goto(f"{base_url}/analysis/{name}?" + urlencode({"fen": position}))
+                await expect(board.locator("piece._-piece")).to_have_count(7)
+                await board.scroll_into_view_if_needed()
+                await click_square("d6")
+                await expect(board.locator("square.move-dest").first).to_be_visible()
+                await click_square("e6")
+                await expect(board.locator("square.move-dest")).to_have_count(
+                    37 if name == "isolation" else 38
+                )
+                assert set(
+                    await board.locator("piece._-piece").evaluate_all(
+                        "els => els.map(el => el.cgKey).filter(key => key !== 'a0')"
+                    )
+                ) == {"b4", "c4", "c5", "d3", "d5", "e3", "e5"}
+                await expect(page.locator("#fullfen")).to_have_value(position)
+                await page.screenshot(path=f"/tmp/{name}-pending-wall-{width}-{theme}.png")
+                await click_square("a1")
+                await expect(board.locator("piece._-piece")).to_have_count(8)
+                await expect(page.locator("#fullfen")).to_have_value(
+                    sf.get_fen(name, position, ["d6e6,e6a1"])
+                )
+
+                # Blocking the opponent's last escape ends the live game as a loss.
+                position, last_move = (
+                    ("2*p*1/3**1/2P3/6/6/6/6/6 w - - 0 1", "c6b6,b6c7")
+                    if name == "isolation"
+                    else ("2*p*2/3**2/2P4/7/7/7/7 w - - 0 1", "c5b5,b5c6")
+                )
+                game = Game(state, "IsolEnds", name, position, *players, base=5)
+                state.games[game.id] = game
+                await insert_game_to_db(game, state)
+                await page.goto(f"{base_url}/{game.id}")
+                await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                await move_token(page, last_move)
+                await page.evaluate("square => window.cg.selectSquare(square)", last_move[-2:])
+                await self._eventually(lambda: game.result != "*")
+                assert game.result == "1-0"
+                assert errors == []
+            finally:
+                await browser.close()
+                unregister_catalogued_server_variant(name)
+
     async def test_chessgi_first_rank_pawn_drops_in_analysis(self, aiohttp_server):
         from urllib.parse import urlencode
 

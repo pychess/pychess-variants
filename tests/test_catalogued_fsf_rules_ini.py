@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -13,10 +14,65 @@ from catalogued.documents import (
     _fsf_builtin_description_for_doc,
     catalogued_variant_rule_context,
 )
+from catalogued.variants import register_catalogued_variant_doc
 from fairy.fairy_board import sf
+from variants import get_server_variant, unregister_catalogued_server_variant
 
 
 class FsfBuiltinRulesIniTestCase(TestCase):
+    def test_isolation_places_permanent_walls_and_protects_starting_squares(self) -> None:
+        for name, first, second, protected, target_count in (
+            ("isolation", "c1b1,b1f8", "d8c8,c8f7", {"c1", "d8"}, 45),
+            ("isolation7x7", "d1c1,c1g7", "d7c7,c7g6", {"d1", "d7"}, 46),
+        ):
+            with self.subTest(name=name):
+                doc = _build_fsf_builtin_doc(name, FSF_CATALOGUED_BUILTIN_VARIANTS[name])
+                client_doc = _client_doc(doc)
+                self.assertEqual(client_doc["ini"], "")
+                self.assertEqual(client_doc["betzaPieces"], {"p": "mK"})
+                context = catalogued_variant_rule_context(doc)
+                self.assertIn("wallingRule = static", context["ini"])
+                summary_text = " ".join(
+                    line["text"]
+                    for section in context["ruleSummary"]["sections"]
+                    for line in section["lines"]
+                )
+                self.assertIn("permanent wall", summary_text)
+
+                start = sf.start_fen(name)
+                moves = sf.legal_moves(name, start, [])
+                self.assertIn(first, moves)  # The wall can be far away from the token.
+                targets = {move[-2:] for move in moves if move.startswith(first[:5])}
+                self.assertEqual(len(targets), target_count)
+                self.assertTrue(targets.isdisjoint(protected))
+                after = sf.get_fen(name, start, [first, second])
+                self.assertEqual(after.count("*"), 2)
+                self.assertFalse(
+                    {move[-2:] for move in sf.legal_moves(name, after, [])}
+                    & {first[-2:], second[-2:]}
+                )
+
+                # Persist and restore the complete compound turn through the actual
+                # catalogue registration path, rather than a plain chess codec.
+                register_catalogued_variant_doc(SimpleNamespace(catalogued_variants={}), doc)
+                try:
+                    variant = get_server_variant(name, False)
+                    self.assertEqual(variant.move_decoding(variant.move_encoding(first)), first)
+                finally:
+                    unregister_catalogued_server_variant(name)
+
+    def test_isolation_tokens_cannot_capture_and_lose_when_blocked(self) -> None:
+        for name, adjacent, blocked in (
+            ("isolation", "6/6/6/3p2/3P2/6/6/6 w - - 0 1", "3p2/6/6/6/6/6/1***2/1*P*2 w - - 0 1"),
+            ("isolation7x7", "7/7/3p3/3P3/7/7/7 w - - 0 1", "3p3/7/7/7/7/2***2/2*P*2 w - - 0 1"),
+        ):
+            with self.subTest(name=name):
+                self.assertFalse(
+                    any(move.startswith("d4d5,") for move in sf.legal_moves(name, adjacent, []))
+                )
+                self.assertEqual(sf.legal_moves(name, blocked, []), [])
+                self.assertLess(sf.game_result(name, blocked, []), 0)
+
     def test_micro_documents_mandatory_capture_flips_and_both_face_drops(self) -> None:
         doc = _build_fsf_builtin_doc("micro", FSF_CATALOGUED_BUILTIN_VARIANTS["micro"])
         context = catalogued_variant_rule_context(doc)
