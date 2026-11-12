@@ -308,7 +308,12 @@ export class PromotionInput extends ExtraInput {
                 return h(
                     'square',
                     {
-                        style: { top: top + '%', left: left + '%' },
+                        style: {
+                            top: top + '%',
+                            left: left + '%',
+                            width: 100 / width + '%',
+                            height: 100 / height + '%',
+                        },
                         hook: bind(
                             'click',
                             e => {
