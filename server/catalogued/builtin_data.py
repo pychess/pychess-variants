@@ -453,6 +453,48 @@ dropLoop = true
         "promotionRoles": ("p",),
         "promotionOrder": models.CATALOGUED_CHESS_PROMOTION_ORDER,
     },
+    "micro": {
+        "displayName": "Micro Shogi",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Micro_shogi"),
+        "baseVariant": "kyotoshogi",
+        "clientVariant": "kyotoshogi",
+        "boardFamilyOverride": "shogi4x5",
+        "pieceFamilyOverride": "microshogi",
+        "captureToHand": True,
+        "pocketRoles": ("p", "l", "b", "r"),
+        "promotionType": "shogi",
+        "promotionRoles": ("p", "l", "b", "r"),
+        "promotionOrder": ("+", ""),
+        "showPromoted": True,
+        "legalMovesNeedHistory": True,
+        "nFoldIsDraw": True,
+        # Documentation only, transcribed from microshogi_variant() and its
+        # Kyoto/minishogi helpers in Fairy-Stockfish's src/variant.cpp.
+        "rulesIni": """
+[micro:kyotoshogi]
+maxRank = 5
+maxFile = 4
+promotionRegionWhite = *
+promotionRegionBlack = *
+promotedPieceType = p:n l:s b:g r:g
+mandatoryPiecePromotion = true
+pieceDemotion = true
+piecePromotionOnCapture = true
+pieceDrops = true
+capturesToHand = true
+dropPromoted = true
+doubleStep = false
+castling = false
+dropNoDoubled = -
+immobilityIllegal = false
+shogiPawnDropMateIllegal = false
+stalemateValue = loss
+nFoldRule = 4
+nMoveRule = 0
+perpetualCheckIllegal = true
+""",
+    },
     "misere": {
         "displayName": "Misère Chess",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -982,13 +1024,6 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
         ),
         "baseVariant": "bughouse",
         "reviewNotes": "Bughouse-family/two-board variant; not suitable for catalogued flow yet.",
-    },
-    "micro": {
-        "displayName": "Micro Shogi",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Micro_shogi"),
-        "baseVariant": "kyotoshogi",
-        "reviewNotes": "Kyoto-style flipping/demotion mechanics; review move encoding/UI.",
     },
     "mini": {
         "displayName": "Mini Shogi",

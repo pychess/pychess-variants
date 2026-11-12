@@ -17,6 +17,18 @@ from fairy.fairy_board import sf
 
 
 class FsfBuiltinRulesIniTestCase(TestCase):
+    def test_micro_documents_mandatory_capture_flips_and_both_face_drops(self) -> None:
+        doc = _build_fsf_builtin_doc("micro", FSF_CATALOGUED_BUILTIN_VARIANTS["micro"])
+        context = catalogued_variant_rule_context(doc)
+        self.assertIn("piecePromotionOnCapture = true", context["ini"])
+        self.assertIn("pieceDemotion = true", context["ini"])
+        self.assertIn("dropPromoted = true", context["ini"])
+        self.assertIn("promotedPieceType = p:n l:s b:g r:g", context["ini"])
+        self.assertEqual(_client_doc(doc)["ini"], "")
+        start = sf.start_fen("micro")
+        self.assertIn("d2d3", sf.legal_moves("micro", start, []))
+        self.assertNotIn("d2d3+", sf.legal_moves("micro", start, []))
+
     def test_snailtrail_exposes_non_capturing_king_moves_and_loses_when_blocked(self) -> None:
         doc = _build_fsf_builtin_doc("snailtrail", FSF_CATALOGUED_BUILTIN_VARIANTS["snailtrail"])
         client_doc = _client_doc(doc)

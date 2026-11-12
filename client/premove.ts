@@ -76,7 +76,7 @@ function iniOptions(ini: string): ParsedIniOption[] {
 }
 
 function normalRoleLetter(value: string): string | undefined {
-    const match = /^\+?([a-z])$/i.exec(value.trim());
+    const match = /^(\+?[a-z])$/i.exec(value.trim());
     return match?.[1].toLowerCase();
 }
 

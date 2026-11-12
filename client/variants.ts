@@ -155,6 +155,11 @@ export const BOARD_FAMILIES: Record<string, BoardFamily> = {
             'MinishogiDobutsu2.svg',
         ],
     },
+    shogi4x5: {
+        dimensions: { width: 4, height: 5 },
+        cg: 'cg-shogi4x5',
+        boardCSS: ['microshogi.svg'],
+    },
     shogi5x6: {
         dimensions: { width: 5, height: 6 },
         cg: 'cg-260-360',
@@ -364,6 +369,17 @@ export const PIECE_FAMILIES: Record<string, PieceFamily> = {
     kyoto: {
         pieceCSS: ['kyoto', 'kyotok', 'kyotoks', 'kyotoi', 'kyotod', 'disguised'],
         imageLayerCSS: ['kyoto', 'kyotok', 'kyotoks'],
+    },
+    microshogi: {
+        pieceCSS: ['kanji', 'firi', 'disguised'],
+        imageLayerCSS: ['kanji'],
+        pieceNames: {
+            ...SHOGI_NAMES,
+            '+p': SHOGI_NAMES.n,
+            '+l': SHOGI_NAMES.s,
+            '+b': SHOGI_NAMES['+p'],
+            '+r': SHOGI_NAMES.g,
+        },
     },
     dobutsu: { pieceCSS: ['dobutsu', 'disguised'] },
     tori: {

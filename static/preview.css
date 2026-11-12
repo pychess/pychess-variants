@@ -278,6 +278,16 @@ label.piece.piece0.okisakishogi {
     background-image: url('images/pieces/shogi/ctk/0KA.svg');
     filter: drop-shadow(2px 2px 2px #000);
 }
+label.piece.piece0.microshogi {
+    background-image: url('images/pieces/shogi/ctk/0KA.svg');
+    filter: drop-shadow(2px 2px 2px #000);
+}
+label.piece.piece1.microshogi {
+    background-image: url('images/pieces/firi/bb.svg');
+}
+label.piece.piece2.microshogi {
+    background-image: url('images/pieces/disguised/shogi-ally.svg');
+}
 label.piece.piece1.shogi {
     background-image: url('images/pieces/shogi/2kanji/0KA.svg');
     filter: drop-shadow(0.68px 0.68px 0.68px #000);

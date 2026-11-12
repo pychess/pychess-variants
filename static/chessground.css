@@ -95,6 +95,15 @@
 .cg-wrap.cg-260.mini {
   --mini-board-width: 192px;
 }
+/* 4x5 shogi */
+.cg-wrap.cg-shogi4x5 {
+    padding-bottom: calc(300 * 100% / 208);
+    --cg-board-files: 4;
+    --cg-board-ranks: 5;
+}
+.cg-wrap.cg-shogi4x5.mini {
+  --mini-board-width: 156px;
+}
 /* 3x4 */
 .cg-wrap.cg-156 {
     padding-bottom: calc(4 * 100% / 3);
@@ -213,6 +222,10 @@ cg-board square {
   width: 20%;
   height: 20%;
 }
+.cg-shogi4x5 cg-board square {
+  width: 25%;
+  height: 20%;
+}
 .cg-312 cg-board square {
   width: calc(100% / 6);
   height: calc(100% / 6);
@@ -313,6 +326,10 @@ cg-board square.current-premove {
 }
 .cg-wrap.cg-260 piece {
   width: 20%;
+  height: 20%;
+}
+.cg-wrap.cg-shogi4x5 piece {
+  width: 25%;
   height: 20%;
 }
 .cg-wrap.cg-312 piece {

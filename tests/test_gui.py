@@ -28,6 +28,196 @@ class TestGUI:
     @pytest.mark.parametrize(
         "width,theme", [(1280, "light"), (1280, "dark"), (390, "light"), (390, "dark")]
     )
+    async def test_micro_shogi_capture_flips_drops_styles_and_replay(
+        self, aiohttp_server, width, theme
+    ):
+        import base64
+        from pathlib import Path
+
+        from aiohttp_jinja2 import get_env
+        from catalogued.builtin_data import FSF_CATALOGUED_BUILTIN_VARIANTS
+        from catalogued.documents import _build_fsf_builtin_doc
+        from catalogued.variants import register_catalogued_variant_doc
+        from utils import load_game
+        from variants import unregister_catalogued_server_variant
+
+        app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+        server = await aiohttp_server(app, host="127.0.0.1")
+        app_state = get_app_state(app)
+        base_url = f"http://{server.host}:{server.port}"
+        get_env(app).globals["home"] = base_url
+        doc = _build_fsf_builtin_doc("micro", FSF_CATALOGUED_BUILTIN_VARIANTS["micro"])
+        register_catalogued_variant_doc(app_state, doc)
+        await app_state.db.catalogued_variant.insert_one(doc)
+        players = []
+        for name in ("micro-white", "micro-black"):
+            await app_state.db.user.insert_one(
+                {"_id": name, "enabled": True, "ct": "all", "theme": theme}
+            )
+            player = User(app_state, username=name, theme=theme)
+            player.game_category_set = True
+            app_state.users[name] = player
+            players.append(player)
+        initial_fen = "kp2/4/2p1/4/2PK[] w - - 0 1"
+        game = Game(app_state, "MicroTst", "micro", initial_fen, *players, base=5)
+        app_state.games[game.id] = game
+        await insert_game_to_db(game, app_state)
+        moves = [
+            "c1c2",
+            "a5a4",
+            "c2c3+",
+            "a4a5",
+            "c3b5-",
+            "a5a4",
+            "+P@b2",
+            "a4a5",
+            "P@c2",
+            "a5b4",
+            "b2c4",
+        ]
+
+        async def check_artwork(page, style):
+            expected = {}
+            kanji = {
+                "p": "0FU",
+                "pp": "0KE",
+                "l": "0KY",
+                "pl": "0GI",
+                "b": "0KA",
+                "pb": "0TO",
+                "r": "0HI",
+                "pr": "0KI",
+            }
+            firi = {
+                "p": "p",
+                "pp": "n",
+                "l": "l",
+                "pl": "s",
+                "b": "b",
+                "pb": "pp",
+                "r": "r",
+                "pr": "g",
+                "k": "k",
+            }
+            orientation = await page.evaluate("() => window.cg.state.orientation")
+            for color in ("white", "black"):
+                for role in (*kanji, "k"):
+                    if style == "kanji":
+                        image = kanji.get(role, "0GY" if color == "white" else "0OU")
+                        image_path = f"static/images/pieces/shogi/ctk/{image}.svg"
+                    elif style == "firi":
+                        prefix = "b" if color == "white" else "w"
+                        image_path = f"static/images/pieces/firi/{prefix}{firi[role]}.svg"
+                    else:
+                        side = "ally" if color == orientation else "enemy"
+                        image_path = f"static/images/pieces/disguised/shogi-{side}.svg"
+                    expected[f"{role}-piece.{color}"] = base64.b64encode(
+                        Path(image_path).read_bytes()
+                    ).decode()
+            missing = await page.evaluate(
+                """({expected, orientation}) => {
+                    const board = document.querySelector('#mainboard cg-board');
+                    return Object.entries(expected).flatMap(([key, artwork]) => {
+                        const probe = document.createElement('piece');
+                        const [role, color] = key.split('.');
+                        probe.className = role + ' ' + color + ' ' + (color === orientation ? 'ally' : 'enemy');
+                        board.appendChild(probe);
+                        const images = getComputedStyle(probe).backgroundImage + getComputedStyle(probe, '::before').backgroundImage;
+                        probe.remove();
+                        return images.includes(artwork) ? [] : [key];
+                    });
+                }""",
+                {"expected": expected, "orientation": orientation},
+            )
+            assert missing == []
+
+        async with async_playwright() as playwright:
+            browser = await self._launch_browser(playwright)
+            try:
+                pages = []
+                errors = []
+                for player in players:
+                    _, page = await self._playwright_page_for_user(
+                        browser, base_url, player.username
+                    )
+                    await page.set_viewport_size({"width": width, "height": 900})
+                    page.on("pageerror", lambda error: errors.append(str(error)))
+                    await page.goto(f"{base_url}/{game.id}")
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await expect(page.locator("#mainboard.shogi4x5.microshogi")).to_be_visible()
+                    board = await page.locator("#mainboard cg-board").bounding_box()
+                    assert board is not None
+                    assert abs(board["height"] / board["width"] - 300 / 208) < 0.01
+                    piece = await page.locator("#mainboard piece.k-piece").first.bounding_box()
+                    assert piece is not None
+                    assert abs(piece["width"] / board["width"] - 0.25) < 0.01
+                    assert abs(piece["height"] / board["height"] - 0.2) < 0.01
+                    await page.locator("#btn-settings").click()
+                    await page.locator("#btn-board").click()
+                    await page.select_option("#settings-variant", "micro")
+                    for index, style in enumerate(("kanji", "firi", "disguised")):
+                        await page.locator(f"label.piece.piece{index}.microshogi").click()
+                        await page.wait_for_function(
+                            "style => [...document.styleSheets].some(sheet => sheet.href?.includes('/piece-css/microshogi/' + style + '.css'))",
+                            arg=style,
+                        )
+                        await check_artwork(page, style)
+                    await page.locator("label.piece.piece0.microshogi").click()
+                    await page.locator("#btn-settings").click()
+                    pages.append(page)
+                await (
+                    pages[0]
+                    .locator("#mainboard")
+                    .screenshot(path=f"/tmp/micro-{width}-{theme}.png")
+                )
+
+                for ply, move in enumerate(moves):
+                    page = pages[game.board.color]
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await page.evaluate(
+                        """move => {
+                            if (move.includes('@')) window.cg.selectPocket({role: 'p-piece', color: 'white'});
+                            else window.cg.selectSquare(move.slice(0, 2));
+                            const dest = move.includes('@') ? move.slice(-2) : move.slice(2, 4);
+                            window.cg.selectSquare(dest);
+                        }""",
+                        move,
+                    )
+                    if "@" in move:
+                        role = "pp-piece" if move.startswith("+") else "p-piece"
+                        await page.locator(f"#extension_choice piece.{role}").click()
+                    await self._eventually(lambda expected=ply + 1: game.board.ply == expected)
+                    assert game.board.move_stack[-1] == move
+                final_fen = game.board.fen
+                await game.game_ended(players[0], "resign")
+                app_state.games.pop(game.id)
+                restored = await load_game(app_state, game.id)
+                assert restored is not None
+                assert restored.board.move_stack == moves
+                assert restored.board.fen == final_fen
+
+                page = pages[0]
+                await page.goto(f"{base_url}/{game.id}?ply={len(moves)}")
+                await expect(page.locator("#fullfen")).to_have_value(final_fen)
+                await page.get_by_title("First move", exact=True).click()
+                for ply in range(1, len(moves) + 1):
+                    await page.get_by_title("Next move", exact=True).click()
+                    await expect(page.locator("#fullfen")).to_have_value(game.steps[ply]["fen"])
+                await page.goto(base_url + "/variants/community")
+                preview = page.locator('.catalogued-start-board-preview[data-variant="micro"]')
+                await preview.scroll_into_view_if_needed()
+                await expect(preview).to_have_attribute("data-chessground-mounted", "true")
+                mini = await preview.locator("cg-board").bounding_box()
+                assert mini is not None
+                assert abs(mini["height"] / mini["width"] - 300 / 208) < 0.01
+                assert errors == []
+            finally:
+                await browser.close()
+                unregister_catalogued_server_variant("micro")
+
+    @pytest.mark.parametrize(
+        "width,theme", [(1280, "light"), (1280, "dark"), (390, "light"), (390, "dark")]
+    )
     async def test_snailtrail_walls_and_saved_analysis(self, aiohttp_server, width, theme):
         import base64
         from pathlib import Path

@@ -38,6 +38,7 @@ class FsfBuiltinMetadataTestCase(TestCase):
             "judkins": ("", "shogi"),
             "kinglet": ("extinction", "chess"),
             "losers": ("", "antichess"),
+            "micro": ("kyotoshogi", "kyotoshogi"),
             "modern": ("", "capablanca"),
             "nocheckatomic": ("", "atomic"),
             "okisakishogi": ("", "shogi"),
@@ -71,16 +72,29 @@ class FsfBuiltinMetadataTestCase(TestCase):
                 self.assertEqual(metadata["baseVariant"], base_variant)
                 self.assertEqual(metadata["clientVariant"], client_variant)
 
-        self.assertEqual(
-            FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES["micro"]["baseVariant"],
-            "kyotoshogi",
-        )
-        self.assertNotIn("clientVariant", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES["micro"])
         self.assertEqual(FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES["normal"]["baseVariant"], "")
         self.assertEqual(
             FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES["normal"]["clientVariant"],
             "chess",
         )
+
+    def test_micro_has_its_4x5_board_and_capture_flip_piece_set(self) -> None:
+        doc = _build_fsf_builtin_doc("micro", FSF_CATALOGUED_BUILTIN_VARIANTS["micro"])
+        self.assertEqual((doc["width"], doc["height"]), (4, 5))
+        self.assertEqual(doc["boardFamilyOverride"], "shogi4x5")
+        self.assertEqual(doc["pieceFamilyOverride"], "microshogi")
+        self.assertEqual(doc["promotionType"], "shogi")
+        self.assertEqual(doc["promotionRoles"], ["p", "l", "b", "r"])
+        self.assertEqual(doc["pocketRoles"], ["p", "l", "b", "r"])
+        self.assertTrue(doc["captureToHand"])
+        self.assertTrue(doc["showPromoted"])
+        self.assertTrue(doc["legalMovesNeedHistory"])
+        self.assertFalse(_client_doc(doc)["replayOnly"])
+        self.assertEqual(
+            _client_doc(doc)["betzaPieces"],
+            {"+p": "fN", "+l": "FfW", "+b": "WfF", "+r": "WfF"},
+        )
+        self.assertNotIn("micro", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
 
     def test_amazons_is_seeded_with_arrowing_input(self) -> None:
         metadata = FSF_CATALOGUED_BUILTIN_VARIANTS["amazons"]
