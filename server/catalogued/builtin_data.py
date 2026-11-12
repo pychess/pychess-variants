@@ -557,6 +557,27 @@ nMoveRule = 50
         "legalMovesNeedHistory": True,
         "nFoldIsDraw": True,
     },
+    "karouk": {
+        "displayName": "Kar Ouk",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Makruk#Ka_Ouk"),
+        "baseVariant": "cambodian",
+        "clientVariant": "cambodian",
+        "boardFamilyOverride": "makruk8x8",
+        "pieceFamilyOverride": "makruk",
+        "promotionRoles": ("p",),
+        "promotionOrder": ("m",),
+        "showPromoted": True,
+        "legalMovesNeedHistory": True,
+        "nFoldIsDraw": True,
+        "showCheckCounters": True,
+        # Documentation only, from karouk_variant() in src/variant.cpp.
+        # The inherited Cambodian FEN omits the check counter, implying 1+1.
+        "rulesIni": """
+[karouk:cambodian]
+checkCounting = true
+""",
+    },
     "kinglet": {
         "displayName": "Kinglet",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -1123,15 +1144,6 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
         "baseVariant": "janggi",
         "reviewNotes": "Janggi rule-set alias/variant; compare with existing pychess Janggi support.",
-    },
-    "karouk": {
-        "displayName": "Kar Ouk",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references(
-            "https://en.wikipedia.org/wiki/Makruk#Ka_Ouk",
-        ),
-        "baseVariant": "cambodian",
-        "reviewNotes": "Cambodian/Makruk-family first-check-wins variant; review adjudication/UI.",
     },
     "koedem": {
         "displayName": "Koedem",

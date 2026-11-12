@@ -522,7 +522,9 @@ def _build_fsf_builtin_doc(
     *,
     existing: Mapping[str, Any] | None = None,
 ) -> models.CataloguedVariantDocument:
-    start_fen = FairyBoard.start_fen(name) if name == "checkshogi" else sf.start_fen(name)
+    start_fen = (
+        FairyBoard.start_fen(name) if name in ("checkshogi", "karouk") else sf.start_fen(name)
+    )
     if not start_fen:
         raise ValueError(f"Fairy-Stockfish did not provide a start FEN for {name!r}.")
 

@@ -28,6 +28,138 @@ class TestGUI:
     @pytest.mark.parametrize(
         "width,theme", [(1280, "light"), (1280, "dark"), (390, "light"), (390, "dark")]
     )
+    async def test_karouk_cambodian_leaps_promotion_first_check_and_counting(
+        self, aiohttp_server, width, theme
+    ):
+        from aiohttp_jinja2 import get_env
+        from catalogued.builtin_data import FSF_CATALOGUED_BUILTIN_VARIANTS
+        from catalogued.documents import _build_fsf_builtin_doc
+        from catalogued.variants import register_catalogued_variant_doc
+        from const import DRAW, VARIANTEND
+        from utils import load_game, sanitize_fen
+        from variants import unregister_catalogued_server_variant
+
+        app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+        server = await aiohttp_server(app, host="127.0.0.1")
+        state = get_app_state(app)
+        base_url = f"http://{server.host}:{server.port}"
+        get_env(app).globals["home"] = base_url
+        doc = _build_fsf_builtin_doc("karouk", FSF_CATALOGUED_BUILTIN_VARIANTS["karouk"])
+        register_catalogued_variant_doc(state, doc)
+        await state.db.catalogued_variant.insert_one(doc)
+        assert sanitize_fen("karouk", doc["startFen"], False)[0]
+        players = []
+        for side in ("white", "black"):
+            username = "karouk-" + side
+            await state.db.user.insert_one(
+                {"_id": username, "enabled": True, "ct": "all", "theme": theme}
+            )
+            user = User(state, username=username, theme=theme)
+            user.game_category_set = True
+            state.users[username] = user
+            players.append(user)
+        game = Game(state, "KarStart", "karouk", "", *players, base=5)
+        state.games[game.id] = game
+        await insert_game_to_db(game, state)
+
+        async def badges(page, values):
+            await expect(page.locator("#mainboard .cg-custom-svgs text")).to_have_text(values)
+
+        async with async_playwright() as playwright:
+            browser = await self._launch_browser(playwright)
+            try:
+                pages, errors = [], []
+                for player in players:
+                    _, page = await self._playwright_page_for_user(
+                        browser, base_url, player.username
+                    )
+                    await page.set_viewport_size({"width": width, "height": 900})
+                    page.on("pageerror", lambda error: errors.append(str(error)))
+                    await page.goto(f"{base_url}/{game.id}")
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await badges(page, ["1", "1"])
+                    await expect(page.locator("#mainboard.makruk8x8.makruk")).to_be_visible()
+                    assert await page.locator("#count").count() == 0
+                    piece = page.locator("#mainboard piece.k-piece").first
+                    assert await piece.evaluate(
+                        "el => [getComputedStyle(el).backgroundImage, getComputedStyle(el, '::before').backgroundImage].some(image => image !== 'none')"
+                    )
+                    pages.append(page)
+
+                async def play(move):
+                    ply = game.board.ply
+                    page = pages[game.board.color]
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await page.evaluate(
+                        "move => {window.cg.selectSquare(move.slice(0,2));window.cg.selectSquare(move.slice(2,4));}",
+                        move,
+                    )
+                    await self._eventually(lambda expected=ply + 1: game.board.ply == expected)
+                    assert game.board.move_stack[-1] == move
+                    assert await page.locator("#extension_choice piece").count() == 0
+
+                for move in ("e3e4", "d6d5", "e1e3", "e8g7", "d1b2"):
+                    await play(move)
+                    assert game.result == "*"
+                assert game.board.fen.split()[2] == "d"
+                await game.game_ended(players[0], "resign")
+
+                initial = "4k3/8/8/P7/8/8/3R4/4K3 w - - 1+1 0 1"
+                moves = ["a5a6m", "e8f8", "d2d3", "f8g8", "d3g3"]
+                game = Game(state, "KarCheck", "karouk", initial, *players, base=5)
+                state.games[game.id] = game
+                await insert_game_to_db(game, state)
+                for page in pages:
+                    await page.goto(f"{base_url}/{game.id}")
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                for ply, move in enumerate(moves):
+                    await play(move)
+                    for page in pages:
+                        await badges(page, ["1", "0"] if ply == len(moves) - 1 else ["1", "1"])
+                        assert await page.locator("#count").count() == 0
+                        if ply == 0:
+                            await expect(page.locator("#misc-infob")).to_have_text("4/16")
+                    if ply < len(moves) - 1:
+                        assert game.result == "*"
+                await self._eventually(lambda: game.result == "1-0")
+                assert game.status == VARIANTEND
+                assert "M~" in game.board.fen
+                final_fen = game.board.fen
+                state.games.pop(game.id)
+                restored = await load_game(state, game.id)
+                assert restored is not None
+                assert restored.board.move_stack == moves
+                assert restored.board.fen == final_fen
+                assert restored.result == "1-0"
+                page = pages[0]
+                await page.goto(f"{base_url}/{game.id}?ply=5")
+                await expect(page.locator("#fullfen")).to_have_value(final_fen)
+                await page.get_by_title("First move", exact=True).click()
+                await badges(page, ["1", "1"])
+                for ply in range(1, 6):
+                    await page.get_by_title("Next move", exact=True).click()
+                    await expect(page.locator("#fullfen")).to_have_value(game.steps[ply]["fen"])
+                    if ply == 1:
+                        await expect(page.locator("#misc-infob")).to_have_text("4/16")
+                await page.screenshot(path=f"/tmp/karouk-{width}-{theme}.png")
+
+                # The engine still adjudicates the inherited Cambodian counting draw.
+                count_fen = "4k3/8/8/8/8/8/3R4/4K3 w - 30 1+1 30 16"
+                game = Game(state, "KarCount", "karouk", count_fen, *players, base=5)
+                state.games[game.id] = game
+                await insert_game_to_db(game, state)
+                await pages[0].goto(f"{base_url}/{game.id}")
+                await play("d2d3")
+                await self._eventually(lambda: game.result == "1/2-1/2")
+                assert game.status == DRAW
+                assert errors == []
+            finally:
+                await browser.close()
+                unregister_catalogued_server_variant("karouk")
+
+    @pytest.mark.parametrize(
+        "width,theme", [(1280, "light"), (1280, "dark"), (390, "light"), (390, "dark")]
+    )
     async def test_breakthrough_quiet_diagonals_goal_ranks_and_saved_analysis(
         self, aiohttp_server, width, theme
     ):

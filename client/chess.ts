@@ -19,7 +19,7 @@ export type CGMove = `${cg.Orig}${cg.Key}`; // TODO: this is missing suffix for 
 export type ColorName = 'White' | 'Black' | 'Red' | 'Blue' | 'Gold' | 'Pink' | 'Green';
 export type PromotionType = 'regular' | 'shogi';
 export type TimeControlType = 'incremental' | 'byoyomi';
-export type CountingType = 'makruk' | 'asean';
+export type CountingType = 'makruk' | 'asean' | 'automatic';
 export type MaterialPointType = 'janggi' | 'ataxx';
 export type BoardMarkType = 'alice' | 'campmate' | 'racingkings' | 'kingofthehill';
 export type PieceSoundType = 'regular' | 'atomic' | 'shogi';
@@ -308,7 +308,9 @@ export function getPockets(fen: string): string {
 export function getCounting(fen: string): [number, number, string, string] {
     const parts = fen.split(' ');
 
-    let countingPly = Number(parts[4]);
+    // Check-count variants insert their remaining-check field before the ply.
+    const plyIndex = /^\d+\+\d+$/.test(parts[4] ?? '') ? 5 : 4;
+    let countingPly = Number(parts[plyIndex]);
     if (isNaN(countingPly)) countingPly = 0;
 
     let countingLimit = Number(parts[3]);

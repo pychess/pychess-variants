@@ -2994,7 +2994,10 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
         ui: {
             showPromoted: !!meta.showPromoted || !!clientVariant?.ui.showPromoted,
             showCheckCounters: !!meta.showCheckCounters || !!clientVariant?.ui.showCheckCounters,
-            counting: clientVariant?.ui.counting,
+            counting:
+                meta.source === 'fairy-stockfish-builtin' && meta.name === 'karouk'
+                    ? 'automatic'
+                    : clientVariant?.ui.counting,
             materialPoint: countsDiscs ? 'ataxx' : clientVariant?.ui.materialPoint,
             pieceSound: clientVariant?.ui.pieceSound,
             boardMark: isBreakthrough ? 'campmate' : clientVariant?.ui.boardMark || undefined,
