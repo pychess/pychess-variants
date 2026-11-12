@@ -1334,7 +1334,12 @@ class TestGUI:
                     unregister_catalogued_server_variant(variant_name)
 
     @pytest.mark.parametrize("capture_centre", [False, True])
-    async def test_jesonmor_centre_win_and_saved_analysis(self, aiohttp_server, capture_centre):
+    @pytest.mark.parametrize(
+        "width,theme", [(1280, "light"), (1280, "dark"), (390, "light"), (390, "dark")]
+    )
+    async def test_jesonmor_centre_win_and_saved_analysis(
+        self, aiohttp_server, capture_centre, width, theme
+    ):
         from aiohttp_jinja2 import get_env
         from catalogued.builtin_data import FSF_CATALOGUED_BUILTIN_VARIANTS
         from catalogued.documents import _build_fsf_builtin_doc
@@ -1348,14 +1353,15 @@ class TestGUI:
         app_state = get_app_state(app)
         base_url = f"http://{server.host}:{server.port}"
         get_env(app).globals["home"] = base_url
-        register_catalogued_variant_doc(
-            app_state,
-            _build_fsf_builtin_doc("jesonmor", FSF_CATALOGUED_BUILTIN_VARIANTS["jesonmor"]),
-        )
+        doc = _build_fsf_builtin_doc("jesonmor", FSF_CATALOGUED_BUILTIN_VARIANTS["jesonmor"])
+        register_catalogued_variant_doc(app_state, doc)
+        await app_state.db.catalogued_variant.insert_one(doc)
         players = []
         for name in ("jeson-white", "jeson-black"):
-            await app_state.db.user.insert_one({"_id": name, "enabled": True, "ct": "all"})
-            player = User(app_state, username=name)
+            await app_state.db.user.insert_one(
+                {"_id": name, "enabled": True, "ct": "all", "theme": theme}
+            )
+            player = User(app_state, username=name, theme=theme)
             player.game_category_set = True
             app_state.users[name] = player
             players.append(player)
@@ -1364,6 +1370,23 @@ class TestGUI:
         await insert_game_to_db(game, app_state)
         moves = ["e1d3", "e9d7", "d3e5"]
         moves += ["d7e5", "h1f2"] if capture_centre else ["d7e9"]
+
+        async def centre_mark(board):
+            mark = await board.evaluate("""el => {
+                const bounds = el.getBoundingClientRect();
+                const style = getComputedStyle(el, '::before');
+                return {content: style.content, width: parseFloat(style.width),
+                    height: parseFloat(style.height), left: parseFloat(style.left),
+                    top: parseFloat(style.top), pointer: style.pointerEvents,
+                    shadow: style.boxShadow, boardWidth: bounds.width, boardHeight: bounds.height};
+            }""")
+            assert mark["content"] == '""'
+            assert abs(mark["width"] - mark["boardWidth"] / 9) < 1
+            assert abs(mark["height"] - mark["boardHeight"] / 9) < 1
+            assert abs(mark["left"] - mark["boardWidth"] * 4 / 9) < 1
+            assert abs(mark["top"] - mark["boardHeight"] * 4 / 9) < 1
+            assert mark["pointer"] == "none"
+            assert mark["shadow"] != "none"
 
         async with async_playwright() as playwright:
             browser = await self._launch_browser(playwright)
@@ -1374,26 +1397,43 @@ class TestGUI:
                     _, page = await self._playwright_page_for_user(
                         browser, base_url, player.username
                     )
+                    await page.set_viewport_size({"width": width, "height": 900})
                     page.on("pageerror", lambda error: errors.append(str(error)))
                     await page.goto(f"{base_url}/{game.id}")
                     await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
-                    await expect(page.locator("#mainboard.standard9x9.standard")).to_be_visible()
+                    await expect(
+                        page.locator("#mainboard.standard9x9.standard.jesonmor")
+                    ).to_be_visible()
                     await expect(page.locator("#mainboard cg-board piece.n-piece")).to_have_count(
                         18
                     )
                     assert await page.locator("#mainboard piece.n-piece").first.evaluate(
                         "piece => getComputedStyle(piece).backgroundImage !== 'none'"
                     )
+                    await centre_mark(page.locator("#mainboard cg-board"))
                     pages.append(page)
+
+                await pages[0].keyboard.press("f")
+                await centre_mark(pages[0].locator("#mainboard cg-board"))
+                await pages[0].keyboard.press("f")
 
                 for ply, move in enumerate(moves):
                     page = pages[game.board.color]
                     await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
-                    await page.evaluate(
-                        "move => { window.cg.selectSquare(move.slice(0, 2)); "
-                        "window.cg.selectSquare(move.slice(2, 4)); }",
-                        move,
-                    )
+                    if move.endswith("e5"):
+                        await page.evaluate("key => window.cg.selectSquare(key)", move[:2])
+                        board = page.locator("#mainboard cg-board")
+                        await board.scroll_into_view_if_needed()
+                        bounds = await board.bounding_box()
+                        assert bounds is not None
+                        await page.mouse.click(
+                            bounds["x"] + bounds["width"] / 2, bounds["y"] + bounds["height"] / 2
+                        )
+                    else:
+                        await page.evaluate(
+                            "move => { window.cg.selectSquare(move.slice(0, 2)); window.cg.selectSquare(move.slice(2, 4)); }",
+                            move,
+                        )
                     await self._eventually(lambda expected=ply + 1: game.board.ply == expected)
                     if ply < len(moves) - 1:
                         assert game.status == STARTED
@@ -1415,13 +1455,25 @@ class TestGUI:
                 await page.goto(f"{base_url}/{game.id}?ply={len(moves)}")
                 await expect(page.locator("main.analysis-app")).to_be_visible()
                 await expect(page.locator("#fullfen")).to_have_value(final_fen)
+                await centre_mark(page.locator("#mainboard cg-board"))
                 await page.get_by_title("First move", exact=True).click()
                 await expect(page.locator("#fullfen")).to_have_value(game.initial_fen)
                 await page.get_by_title("Last move", exact=True).click()
                 await expect(page.locator("#fullfen")).to_have_value(final_fen)
                 await page.goto(f"{base_url}/analysis/jesonmor")
-                await expect(page.locator("#mainboard.standard9x9.standard")).to_be_visible()
+                await expect(
+                    page.locator("#mainboard.standard9x9.standard.jesonmor")
+                ).to_be_visible()
                 await expect(page.locator("#mainboard cg-board piece.n-piece")).to_have_count(18)
+                await centre_mark(page.locator("#mainboard cg-board"))
+                await page.locator("#mainboard").screenshot(
+                    path=f"/tmp/jesonmor-mark-{width}-{theme}-{capture_centre}.png"
+                )
+                await page.goto(base_url + "/variants/community")
+                preview = page.locator('.catalogued-start-board-preview[data-variant="jesonmor"]')
+                await preview.scroll_into_view_if_needed()
+                await expect(preview).to_have_attribute("data-chessground-mounted", "true")
+                await centre_mark(preview.locator("cg-board"))
                 assert errors == []
             finally:
                 await browser.close()

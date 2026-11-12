@@ -21,7 +21,7 @@ export type PromotionType = 'regular' | 'shogi';
 export type TimeControlType = 'incremental' | 'byoyomi';
 export type CountingType = 'makruk' | 'asean' | 'automatic';
 export type MaterialPointType = 'janggi' | 'ataxx';
-export type BoardMarkType = 'alice' | 'campmate' | 'racingkings' | 'kingofthehill';
+export type BoardMarkType = 'alice' | 'campmate' | 'racingkings' | 'kingofthehill' | 'jesonmor';
 export type PieceSoundType = 'regular' | 'atomic' | 'shogi';
 
 const MAX_CUSTOM_FEN_LENGTH = 4096;

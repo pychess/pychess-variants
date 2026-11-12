@@ -285,6 +285,20 @@
   pointer-events: none;
 }
 
+/* Jeson Mor's central flag square, e5, on its 9x9 board. */
+.jesonmor .cg-540 cg-board::before {
+  width: calc(100% / 9);
+  height: calc(100% / 9);
+  top: calc(400% / 9);
+  left: calc(400% / 9);
+  background: rgba(230, 230, 230, 0.2);
+  box-shadow: 0 0 10px rgb(0 0 0 / 70%);
+  content: '';
+  z-index: 1;
+  position: absolute;
+  pointer-events: none;
+}
+
 /* Alice chess pieces on the other board */
 .alice piece.mirror {
   opacity: 0.2;

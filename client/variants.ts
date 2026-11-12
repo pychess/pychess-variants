@@ -3000,7 +3000,11 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
                     : clientVariant?.ui.counting,
             materialPoint: countsDiscs ? 'ataxx' : clientVariant?.ui.materialPoint,
             pieceSound: clientVariant?.ui.pieceSound,
-            boardMark: isBreakthrough ? 'campmate' : clientVariant?.ui.boardMark || undefined,
+            boardMark: isBreakthrough
+                ? 'campmate'
+                : meta.source === 'fairy-stockfish-builtin' && meta.name === 'jesonmor'
+                  ? 'jesonmor'
+                  : clientVariant?.ui.boardMark || undefined,
         },
     });
     cataloguedVariantNames.add(meta.name);
