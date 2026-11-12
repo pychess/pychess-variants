@@ -25,6 +25,100 @@ test_logger.init_test_logger()
 
 @pytest.mark.asyncio
 class TestGUI:
+    @pytest.mark.parametrize("capture_centre", [False, True])
+    async def test_jesonmor_centre_win_and_saved_analysis(self, aiohttp_server, capture_centre):
+        from aiohttp_jinja2 import get_env
+        from catalogued.builtin_data import FSF_CATALOGUED_BUILTIN_VARIANTS
+        from catalogued.documents import _build_fsf_builtin_doc
+        from catalogued.variants import register_catalogued_variant_doc
+        from const import STARTED, VARIANTEND
+        from utils import load_game
+        from variants import unregister_catalogued_server_variant
+
+        app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+        server = await aiohttp_server(app, host="127.0.0.1")
+        app_state = get_app_state(app)
+        base_url = f"http://{server.host}:{server.port}"
+        get_env(app).globals["home"] = base_url
+        register_catalogued_variant_doc(
+            app_state,
+            _build_fsf_builtin_doc("jesonmor", FSF_CATALOGUED_BUILTIN_VARIANTS["jesonmor"]),
+        )
+        players = []
+        for name in ("jeson-white", "jeson-black"):
+            await app_state.db.user.insert_one({"_id": name, "enabled": True, "ct": "all"})
+            player = User(app_state, username=name)
+            player.game_category_set = True
+            app_state.users[name] = player
+            players.append(player)
+        game = Game(app_state, "JesonMor", "jesonmor", "", *players, base=5)
+        app_state.games[game.id] = game
+        await insert_game_to_db(game, app_state)
+        moves = ["e1d3", "e9d7", "d3e5"]
+        moves += ["d7e5", "h1f2"] if capture_centre else ["d7e9"]
+
+        async with async_playwright() as playwright:
+            browser = await self._launch_browser(playwright)
+            try:
+                pages = []
+                errors = []
+                for player in players:
+                    _, page = await self._playwright_page_for_user(
+                        browser, base_url, player.username
+                    )
+                    page.on("pageerror", lambda error: errors.append(str(error)))
+                    await page.goto(f"{base_url}/{game.id}")
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await expect(page.locator("#mainboard.standard9x9.standard")).to_be_visible()
+                    await expect(page.locator("#mainboard cg-board piece.n-piece")).to_have_count(
+                        18
+                    )
+                    assert await page.locator("#mainboard piece.n-piece").first.evaluate(
+                        "piece => getComputedStyle(piece).backgroundImage !== 'none'"
+                    )
+                    pages.append(page)
+
+                for ply, move in enumerate(moves):
+                    page = pages[game.board.color]
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await page.evaluate(
+                        "move => { window.cg.selectSquare(move.slice(0, 2)); "
+                        "window.cg.selectSquare(move.slice(2, 4)); }",
+                        move,
+                    )
+                    await self._eventually(lambda expected=ply + 1: game.board.ply == expected)
+                    if ply < len(moves) - 1:
+                        assert game.status == STARTED
+                await self._eventually_async(
+                    lambda: app_state.db.game.find_one({"_id": game.id, "s": VARIANTEND})
+                )
+                assert game.status == VARIANTEND
+                assert game.result == ("0-1" if capture_centre else "1-0")
+                final_fen = game.board.fen
+                app_state.games.pop(game.id)
+                restored = await load_game(app_state, game.id)
+                assert restored is not None
+                assert restored.board.move_stack == moves
+                assert restored.board.fen == final_fen
+                assert restored.result == game.result
+                assert restored.status == VARIANTEND
+
+                page = pages[0]
+                await page.goto(f"{base_url}/{game.id}?ply={len(moves)}")
+                await expect(page.locator("main.analysis-app")).to_be_visible()
+                await expect(page.locator("#fullfen")).to_have_value(final_fen)
+                await page.get_by_title("First move", exact=True).click()
+                await expect(page.locator("#fullfen")).to_have_value(game.initial_fen)
+                await page.get_by_title("Last move", exact=True).click()
+                await expect(page.locator("#fullfen")).to_have_value(final_fen)
+                await page.goto(f"{base_url}/analysis/jesonmor")
+                await expect(page.locator("#mainboard.standard9x9.standard")).to_be_visible()
+                await expect(page.locator("#mainboard cg-board piece.n-piece")).to_have_count(18)
+                assert errors == []
+            finally:
+                await browser.close()
+                unregister_catalogued_server_variant("jesonmor")
+
     async def test_euroshogi_play_promote_drop_and_saved_analysis(self, aiohttp_server):
         from aiohttp_jinja2 import get_env
         from catalogued.builtin_data import FSF_CATALOGUED_BUILTIN_VARIANTS

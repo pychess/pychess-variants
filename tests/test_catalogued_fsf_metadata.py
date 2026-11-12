@@ -32,6 +32,7 @@ class FsfBuiltinMetadataTestCase(TestCase):
             "georgian": ("amazon", "chess"),
             "giveaway": ("", "antichess"),
             "janus": ("", "capablanca"),
+            "jesonmor": ("", "chess"),
             "joust": ("", "chess"),
             "judkins": ("", "shogi"),
             "kinglet": ("extinction", "chess"),
@@ -94,6 +95,19 @@ class FsfBuiltinMetadataTestCase(TestCase):
         self.assertEqual(doc["pieceFamilyOverride"], "opulent")
         self.assertEqual(_fsf_builtin_synced_fields(doc)["pieceFamilyOverride"], "opulent")
         self.assertEqual(set(doc["pieces"]), {"p", "r", "n", "b", "q", "k", "a", "c", "w", "l"})
+
+    def test_jesonmor_uses_standard_knights_on_a_kingless_9x9_board(self) -> None:
+        doc = _build_fsf_builtin_doc("jesonmor", FSF_CATALOGUED_BUILTIN_VARIANTS["jesonmor"])
+        self.assertEqual((doc["width"], doc["height"]), (9, 9))
+        self.assertEqual(doc["boardFamilyOverride"], "standard9x9")
+        self.assertEqual(doc["pieceFamilyOverride"], "standard")
+        self.assertEqual(doc["pieces"], ["n"])
+        self.assertEqual(doc["kingRoles"], [])
+        self.assertEqual(doc["pocketRoles"], [])
+        self.assertEqual(doc["promotionRoles"], [])
+        self.assertFalse(doc["captureToHand"])
+        self.assertTrue(doc["nFoldIsDraw"])
+        self.assertNotIn("jesonmor", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
 
     def test_joust_is_seeded_with_past_walling_input(self) -> None:
         metadata = FSF_CATALOGUED_BUILTIN_VARIANTS["joust"]

@@ -306,6 +306,39 @@ perpetualCheckIllegal = true
         "promotionRoles": ("p",),
         "promotionOrder": ("j", "q", "r", "b", "n"),
     },
+    "jesonmor": {
+        "displayName": "Jeson Mor",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Jeson_Mor"),
+        "baseVariant": "",
+        "clientVariant": "chess",
+        "boardFamilyOverride": "standard9x9",
+        "pieceFamilyOverride": "standard",
+        "nFoldIsDraw": True,
+        # Documentation only, transcribed from jesonmor_variant() and the
+        # inherited defaults in Fairy-Stockfish's src/variant.cpp / variant.h.
+        "rulesIni": """
+[jesonmor]
+maxRank = 9
+maxFile = 9
+pawn = -
+knight = n
+bishop = -
+rook = -
+queen = -
+king = -
+doubleStep = false
+castling = false
+stalemateValue = loss
+flagPiece = n
+flagRegionWhite = e5
+flagRegionBlack = e5
+# A knight on e5 wins after surviving the opponent's reply.
+flagMove = true
+nFoldRule = 3
+nMoveRule = 50
+""",
+    },
     "joust": {
         "displayName": "Joust",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -872,14 +905,6 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
         "baseVariant": "janggi",
         "reviewNotes": "Janggi rule-set alias/variant; compare with existing pychess Janggi support.",
-    },
-    "jesonmor": {
-        "displayName": "Jeson Mor",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Jeson_Mor"),
-        "baseVariant": "",
-        "clientVariant": "chess",
-        "reviewNotes": "Asymmetric goal variant; review result handling and piece identities.",
     },
     "karouk": {
         "displayName": "Kar Ouk",
