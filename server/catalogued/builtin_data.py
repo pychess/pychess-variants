@@ -974,6 +974,49 @@ wallingRule = past
         "baseVariant": "",
         "clientVariant": "chess",
     },
+    "wolf": {
+        "displayName": "Wolf Chess",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Wolf_chess"),
+        "baseVariant": "",
+        "clientVariant": "chess",
+        "pieceFamilyOverride": "wolf",
+        "pieces": ("+p",),
+        "pieceNames": {
+            "w": "Wolf",
+            "f": "Fox",
+            "s": "Sergeant",
+            "n": "Nightrider",
+            "e": "Elephant",
+        },
+        "promotionRoles": ("p", "s"),
+        "promotionOrder": ("q", "w", "f", "r", "b", "+"),
+        "legalMovesNeedHistory": True,
+        "nFoldIsDraw": True,
+        # Documentation only, from wolf_variant() in src/variant.cpp.
+        # '+' promotes a pawn to the elephant; sergeants only use letter choices.
+        "rulesIni": """
+[wolf]
+maxRank = 10
+knight = -
+chancellor = w
+archbishop = f
+customPiece1 = s:fKifmnD
+customPiece2 = n:NN
+customPiece3 = e:NNQ
+mainPromotionPawnType = p
+promotionPawnTypes = p s
+promotionPieceTypes = q w f r b
+promotedPieceType = p:e
+promotionRegionWhite = *10
+promotionRegionBlack = *1
+doubleStepRegionWhite = *2 b3 c3 f3 g3
+doubleStepRegionBlack = *9 b8 c8 f8 g8
+enPassantTypes = p
+nMoveRuleTypes = p s
+castling = false
+""",
+    },
     "yarishogi": {
         "displayName": "Yari Shogi",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -1177,14 +1220,6 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
         ),
         "baseVariant": "chess",
         "reviewNotes": "Asymmetric Almost Chess variant; verify pieces and castling assumptions.",
-    },
-    "wolf": {
-        "displayName": "Wolf Chess",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Wolf_chess"),
-        "baseVariant": "",
-        "clientVariant": "chess",
-        "reviewNotes": "10x8 fairy-piece variant; review piece identities and promotion UI.",
     },
 }
 

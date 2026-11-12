@@ -25,6 +25,213 @@ test_logger.init_test_logger()
 
 @pytest.mark.asyncio
 class TestGUI:
+    @pytest.mark.parametrize("color", ["white", "black"])
+    @pytest.mark.parametrize(
+        "piece,choice,suffix", [("p", "pp", "+"), ("p", "q", "q"), ("s", "q", "q")]
+    )
+    async def test_wolf_mixed_promotion_picker(self, aiohttp_server, color, piece, choice, suffix):
+        from aiohttp_jinja2 import get_env
+        from catalogued.builtin_data import FSF_CATALOGUED_BUILTIN_VARIANTS
+        from catalogued.documents import _build_fsf_builtin_doc
+        from catalogued.variants import register_catalogued_variant_doc
+        from variants import unregister_catalogued_server_variant
+
+        app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+        server = await aiohttp_server(app, host="127.0.0.1")
+        state = get_app_state(app)
+        base_url = f"http://{server.host}:{server.port}"
+        get_env(app).globals["home"] = base_url
+        doc = _build_fsf_builtin_doc("wolf", FSF_CATALOGUED_BUILTIN_VARIANTS["wolf"])
+        register_catalogued_variant_doc(state, doc)
+        players = []
+        for side in ("white", "black"):
+            username = "wolf-" + side
+            await state.db.user.insert_one({"_id": username, "enabled": True, "ct": "all"})
+            user = User(state, username=username)
+            user.game_category_set = True
+            state.users[username] = user
+            players.append(user)
+        initial = (
+            f"7k/{piece.upper()}7/8/8/8/8/8/8/8/7K w - - 0 1"
+            if color == "white"
+            else f"7k/8/8/8/8/8/8/8/{piece}7/7K b - - 0 1"
+        )
+        game = Game(state, "WolfPrmt", "wolf", initial, *players, base=5)
+        state.games[game.id] = game
+        await insert_game_to_db(game, state)
+        async with async_playwright() as playwright:
+            browser = await self._launch_browser(playwright)
+            try:
+                context, page = await self._playwright_page_for_user(
+                    browser, base_url, "wolf-" + color
+                )
+                await context.add_init_script("localStorage.setItem('autoPromote','false');")
+                errors = []
+                page.on("pageerror", lambda error: errors.append(str(error)))
+                await page.goto(f"{base_url}/{game.id}")
+                await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                await page.evaluate(
+                    "color => { window.cg.selectSquare(color === 'white' ? 'a9' : 'a2'); window.cg.selectSquare(color === 'white' ? 'a:' : 'a1'); }",
+                    color,
+                )
+                roles = ["q", "w", "f", "r", "b"] + (["pp"] if piece == "p" else [])
+                await expect(page.locator("#extension_choice piece")).to_have_count(len(roles))
+                for role in roles:
+                    await expect(
+                        page.locator(f"#extension_choice piece.{role}-piece")
+                    ).to_be_visible()
+                if piece == "s":
+                    assert await page.locator("#extension_choice piece.pp-piece").count() == 0
+                await page.locator(f"#extension_choice piece.{choice}-piece").click()
+                await self._eventually(lambda: game.board.ply == 1)
+                assert game.board.move_stack == [("a9a10" if color == "white" else "a2a1") + suffix]
+                await page.wait_for_function(
+                    "({dest, role}) => window.cg.state.boardState.pieces.get(dest)?.role === role",
+                    arg={"dest": "a:" if color == "white" else "a1", "role": choice + "-piece"},
+                )
+                if choice == "pp":
+                    assert ("+P" if color == "white" else "+p") in game.board.fen
+                # Persist at least three plies, then replay the intrinsic +P role.
+                from utils import load_game
+
+                for _ in range(2):
+                    await game.play_move(game.board.legal_moves()[0])
+                final_fen = game.board.fen
+                await game.game_ended(players[0], "resign")
+                state.games.pop(game.id)
+                restored = await load_game(state, game.id)
+                assert restored is not None
+                assert restored.board.fen == final_fen
+                assert restored.board.move_stack == game.board.move_stack
+                await page.goto(f"{base_url}/{game.id}?ply=1")
+                await expect(page.locator("#fullfen")).to_have_value(game.steps[1]["fen"])
+                await expect(
+                    page.locator(f"#mainboard piece.{choice}-piece.{color}")
+                ).to_be_visible()
+                await page.get_by_title("First move", exact=True).click()
+                await expect(page.locator("#fullfen")).to_have_value(initial)
+                await page.get_by_title("Last move", exact=True).click()
+                await expect(page.locator("#fullfen")).to_have_value(final_fen)
+                assert errors == []
+            finally:
+                await browser.close()
+                unregister_catalogued_server_variant("wolf")
+
+    @pytest.mark.parametrize(
+        "width,theme", [(1280, "light"), (1280, "dark"), (390, "light"), (390, "dark")]
+    )
+    async def test_wolf_alfaerie_board_and_previews(self, aiohttp_server, width, theme):
+        import base64
+        from pathlib import Path
+
+        from aiohttp_jinja2 import get_env
+        from catalogued.builtin_data import FSF_CATALOGUED_BUILTIN_VARIANTS
+        from catalogued.documents import _build_fsf_builtin_doc
+        from catalogued.variants import register_catalogued_variant_doc
+        from variants import unregister_catalogued_server_variant
+
+        app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+        server = await aiohttp_server(app, host="127.0.0.1")
+        state = get_app_state(app)
+        base_url = f"http://{server.host}:{server.port}"
+        get_env(app).globals["home"] = base_url
+        doc = _build_fsf_builtin_doc("wolf", FSF_CATALOGUED_BUILTIN_VARIANTS["wolf"])
+        register_catalogued_variant_doc(state, doc)
+        await state.db.catalogued_variant.insert_one(doc)
+        players = []
+        for side in ("white", "black"):
+            username = "wolf-" + side
+            await state.db.user.insert_one(
+                {"_id": username, "enabled": True, "ct": "all", "theme": theme}
+            )
+            user = User(state, username=username, theme=theme)
+            user.game_category_set = True
+            state.users[username] = user
+            players.append(user)
+        game = Game(state, "WolfArts", "wolf", "", *players, base=5)
+        state.games[game.id] = game
+        await insert_game_to_db(game, state)
+        assets = {
+            "k": "king",
+            "q": "queen",
+            "r": "rook",
+            "b": "bishop",
+            "p": "pawn",
+            "w": "chancellor",
+            "f": "cardinal",
+            "s": "sergeant",
+            "n": "nightrider",
+            "pp": "amazonrider",
+            "e": "amazonrider",
+        }
+        async with async_playwright() as playwright:
+            browser = await self._launch_browser(playwright)
+            try:
+                _, page = await self._playwright_page_for_user(
+                    browser, base_url, players[0].username
+                )
+                await page.set_viewport_size({"width": width, "height": 900})
+                errors = []
+                page.on("pageerror", lambda error: errors.append(str(error)))
+                await page.goto(f"{base_url}/{game.id}")
+                await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                await expect(page.locator("#mainboard.catalogued8x10.wolf")).to_be_visible()
+                bounds = await page.locator("#mainboard cg-board").bounding_box()
+                assert bounds is not None
+                assert abs(bounds["height"] / bounds["width"] - 1.25) < 0.01
+                sheets = await page.evaluate(
+                    "() => [...document.styleSheets].map(s => s.href || '')"
+                )
+                assert any("/piece-css/wolf/alfaerie.css" in href for href in sheets)
+                for color in ("white", "black"):
+                    for role, asset in assets.items():
+                        expected = base64.b64encode(
+                            Path(
+                                f"static/images/pieces/alfaerie/{color[0]}{asset}.svg"
+                            ).read_bytes()
+                        ).decode()
+                        actual = await page.locator("#mainboard cg-board").evaluate(
+                            """(board, {role, color}) => {
+                                const piece = document.createElement('piece');
+                                piece.className = `${role}-piece ${color} ally`;
+                                board.append(piece);
+                                const style = getComputedStyle(piece);
+                                const result = {image: style.backgroundImage,
+                                    width: parseFloat(style.width), height: parseFloat(style.height)};
+                                piece.remove();
+                                return result;
+                            }""",
+                            {"role": role, "color": color},
+                        )
+                        assert expected in actual["image"], (role, color)
+                        assert abs(actual["width"] - bounds["width"] / 8) < 1
+                        assert abs(actual["height"] - bounds["height"] / 10) < 1
+                await page.screenshot(path=f"/tmp/wolf-{width}-{theme}.png")
+                await page.locator("#btn-settings").click()
+                await page.locator("#btn-board").click()
+                await page.select_option("#settings-variant", "wolf")
+                thumbnail = page.locator("label.piece.piece0.wolf")
+                await expect(thumbnail).to_be_visible()
+                assert "wchancellor.svg" in await thumbnail.evaluate(
+                    "el => getComputedStyle(el).backgroundImage"
+                )
+                await page.goto(base_url + "/variants/community")
+                preview = page.locator('.catalogued-start-board-preview[data-variant="wolf"]')
+                await preview.scroll_into_view_if_needed()
+                await expect(preview).to_have_attribute("data-chessground-mounted", "true")
+                image = await preview.locator("piece.w-piece.white").evaluate(
+                    "el => getComputedStyle(el).backgroundImage"
+                )
+                expected = base64.b64encode(
+                    Path("static/images/pieces/alfaerie/wchancellor.svg").read_bytes()
+                ).decode()
+                assert expected in image
+                assert errors == []
+                await game.game_ended(players[0], "resign")
+            finally:
+                await browser.close()
+                unregister_catalogued_server_variant("wolf")
+
     @pytest.mark.parametrize(
         "width,theme", [(1280, "light"), (1280, "dark"), (390, "light"), (390, "dark")]
     )

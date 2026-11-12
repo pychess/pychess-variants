@@ -11,7 +11,7 @@ import { GatingInput } from '../client/input/gating';
 import { PromotionInput } from '../client/input/promotion';
 import { DuckInput } from '../client/input/duck';
 import { ArrowingInput } from '../client/input/arrowing';
-import { VARIANTS } from '../client/variants';
+import { registerCataloguedVariant, unregisterCataloguedVariant, VARIANTS } from '../client/variants';
 import { moveDests, UCIMove } from '../client/chess';
 import { premoveForVariant } from '../client/premove';
 import { variantsIni } from '../client/variantsIni';
@@ -44,6 +44,7 @@ afterEach(async () => {
         ctrl.chessground.destroy();
         ctrl.ffishBoard.delete();
     }
+    unregisterCataloguedVariant('wolf-promotion-test');
 });
 
 function controller(fen = promotionFen, variant = 'chess', engineVariant = variant, color: cg.Color = 'white') {
@@ -386,5 +387,102 @@ describe('promotion premoves', () => {
         expect(ctrl.chessground.state.drawable.autoShapes).toHaveLength(2);
         ctrl.promotion.dismiss();
         expect(ctrl.chessground.state.drawable.autoShapes).toEqual([drawing]);
+    });
+});
+
+describe('Wolf mixed promotion', () => {
+    beforeEach(() => {
+        const board = new ffish.Board('wolf');
+        const startFen = board.fen();
+        board.delete();
+        registerCataloguedVariant({
+            name: 'wolf-promotion-test',
+            displayName: 'Wolf promotion test',
+            ini: '',
+            clientVariant: 'chess',
+            startFen,
+            width: 8,
+            height: 10,
+            pieces: ['k', 'q', 'w', 'f', 'r', 'b', 'n', 'p', 's', '+p'],
+            kingRoles: ['k'],
+            promotionType: 'regular',
+            promotionRoles: ['p', 's'],
+            promotionOrder: ['q', 'w', 'f', 'r', 'b', '+'],
+        });
+    });
+
+    function position(color: cg.Color, sergeant: boolean, opponentTurn = false) {
+        const letter = sergeant ? 's' : 'p';
+        const turn = opponentTurn ? opposite(color) : color;
+        const placement =
+            color === 'white' ? `7k/${letter.toUpperCase()}7/8/8/8/8/8/8/8/7K` : `7k/8/8/8/8/8/8/8/${letter}7/7K`;
+        return placement + ` ${turn === 'white' ? 'w' : 'b'} - - 0 1`;
+    }
+
+    async function startPromotion(ctrl: GameController, color: cg.Color) {
+        ctrl.turnColor = color;
+        ctrl.chessground.set({ turnColor: color });
+        ctrl.setDests();
+        ctrl.chessground.selectSquare(color === 'white' ? 'a9' : 'a2');
+        ctrl.chessground.selectSquare(color === 'white' ? 'a:' : 'a1');
+        await flushCallbacks();
+    }
+
+    test.each(['white', 'black'] as const)(
+        '%s sees six distinct pawn choices, including queen and elephant',
+        async color => {
+            const { ctrl, el } = controller(position(color, false), 'wolf-promotion-test', 'wolf', color);
+            await startPromotion(ctrl, color);
+            const roles = [...el.querySelectorAll('#extension_choice piece')].map(piece =>
+                [...piece.classList].find(c => c.endsWith('-piece')),
+            );
+            expect(new Set(roles)).toEqual(
+                new Set(['q-piece', 'w-piece', 'f-piece', 'r-piece', 'b-piece', 'pp-piece']),
+            );
+        },
+    );
+
+    test.each(['white', 'black'] as const)('%s sergeants have five ordinary choices and no elephant', async color => {
+        const { ctrl, el } = controller(position(color, true), 'wolf-promotion-test', 'wolf', color);
+        await startPromotion(ctrl, color);
+        expect(el.querySelectorAll('#extension_choice piece')).toHaveLength(5);
+        expect(el.querySelector('#extension_choice piece.pp-piece')).toBeNull();
+        expect(el.querySelector('#extension_choice piece.q-piece')).not.toBeNull();
+    });
+
+    test.each([
+        ['white', 'pp-piece', '+'],
+        ['white', 'q-piece', 'q'],
+        ['black', 'pp-piece', '+'],
+        ['black', 'q-piece', 'q'],
+    ] as const)('%s choosing %s sends %s and restores exactly after undo', async (color, role, suffix) => {
+        const { ctrl, el, sent } = controller(position(color, false), 'wolf-promotion-test', 'wolf', color);
+        const original = ctrl.ffishBoard.fen();
+        await startPromotion(ctrl, color);
+        choose(el, role);
+        const move = (color === 'white' ? 'a9a10' : 'a2a1') + suffix;
+        expect(sent).toEqual([{ move, premove: false }]);
+        expect(ctrl.ffishBoard.push(move)).toBe(true);
+        ctrl.chessground.set({ fen: ctrl.ffishBoard.fen() });
+        expect(ctrl.chessground.state.boardState.pieces.get(color === 'white' ? 'a:' : 'a1')?.role).toBe(role);
+        ctrl.ffishBoard.pop();
+        expect(ctrl.ffishBoard.fen()).toBe(original);
+    });
+
+    test.each(['white', 'black'] as const)('%s keeps auto-queen separate from the elephant upgrade', async color => {
+        const { ctrl, el, sent } = controller(position(color, false), 'wolf-promotion-test', 'wolf', color);
+        ctrl.autoPromote = true;
+        await startPromotion(ctrl, color);
+        expect(sent).toEqual([{ move: color === 'white' ? 'a9a10q' : 'a2a1q', premove: false }]);
+        expect(el.querySelector('#extension_choice')).toBeNull();
+    });
+
+    test.each(['white', 'black'] as const)('%s can premove the elephant upgrade', async color => {
+        const { ctrl, el, sent } = controller(position(color, false, true), 'wolf-promotion-test', 'wolf', color);
+        await queue(ctrl, color === 'white' ? 'a9' : 'a2', color === 'white' ? 'a:' : 'a1');
+        choose(el, 'pp-piece');
+        expect(sent).toEqual([]);
+        await reply(ctrl, color === 'white' ? 'h10g10' : 'h1g1');
+        expect(sent).toEqual([{ move: color === 'white' ? 'a9a10+' : 'a2a1+', premove: true }]);
     });
 });

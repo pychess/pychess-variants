@@ -736,3 +736,7 @@ label.piece.piece0.battleofideologies {
 label.piece.piece1.battleofideologies {
     background-image: url('images/pieces/disguised/b.svg');
 }
+
+label.piece.piece0.wolf {
+    background-image: url('images/pieces/alfaerie/wchancellor.svg');
+}

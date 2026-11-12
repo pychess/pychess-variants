@@ -103,6 +103,7 @@ CATALOGUED_PIECE_FAMILY_OVERRIDES = frozenset(
         "xiangfu",
         "xiangqi",
         "yokai",
+        "wolf",
         "perfect",
         "decimalshogi",
         "okisakishogi",

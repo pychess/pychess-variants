@@ -3,7 +3,7 @@ import { h, toVNode, VNode } from 'snabbdom';
 import * as util from 'chessgroundx/util';
 import * as cg from 'chessgroundx/types';
 
-import { CGMove, PromotionSuffix, UCIMove, promotedRole, unpromotedRole, promotionSuffix, uci2cg } from '@/chess';
+import { CGMove, PromotionSuffix, UCIMove, unpromotedRole, promotionSuffix, uci2cg } from '@/chess';
 import type { DrawShape } from 'chessgroundx/draw';
 import { patch, bind } from '@/document';
 import { GameController } from '@/gameCtrl';
@@ -172,7 +172,8 @@ export class PromotionInput extends ExtraInput {
 
         suffixes.forEach(suffix => {
             let role: cg.Role;
-            if (suffix === '+') role = promotedRole(variant, piece);
+            // '+' always denotes the promoted FEN role, including mixed promotion games.
+            if (suffix === '+') role = ('p' + piece.role) as cg.Role;
             else if (suffix === '-') role = unpromotedRole(variant, piece);
             else if (suffix === '') role = piece.role;
             else role = util.roleOf(suffix);

@@ -1,0 +1,66 @@
+.wolf piece.k-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wking.svg');
+}
+.wolf piece.q-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wqueen.svg');
+}
+.wolf piece.r-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wrook.svg');
+}
+.wolf piece.b-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wbishop.svg');
+}
+.wolf piece.p-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wpawn.svg');
+}
+.wolf piece.w-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wchancellor.svg');
+}
+.wolf piece.f-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wcardinal.svg');
+}
+.wolf piece.s-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wsergeant.svg');
+}
+.wolf piece.n-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wnightrider.svg');
+}
+.wolf piece.pp-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wamazonrider.svg');
+}
+.wolf piece.e-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wamazonrider.svg');
+}
+.wolf piece.k-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bking.svg');
+}
+.wolf piece.q-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bqueen.svg');
+}
+.wolf piece.r-piece.black {
+    background-image: url('../../images/pieces/alfaerie/brook.svg');
+}
+.wolf piece.b-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bbishop.svg');
+}
+.wolf piece.p-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bpawn.svg');
+}
+.wolf piece.w-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bchancellor.svg');
+}
+.wolf piece.f-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bcardinal.svg');
+}
+.wolf piece.s-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bsergeant.svg');
+}
+.wolf piece.n-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bnightrider.svg');
+}
+.wolf piece.pp-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bamazonrider.svg');
+}
+.wolf piece.e-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bamazonrider.svg');
+}

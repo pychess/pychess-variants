@@ -116,6 +116,12 @@ FSF_BUILTIN_PIECE_DIAGRAMS_BY_VARIANT: Mapping[str, tuple[_FsfBuiltinPieceDefini
         _FsfBuiltinPieceDefinition("w", "Wizard", "CF"),
     ),
     "threekings": (_FsfBuiltinPieceDefinition("k", "Commoner", "K"),),
+    "wolf": (
+        _FsfBuiltinPieceDefinition("w", "Wolf", "RN"),
+        _FsfBuiltinPieceDefinition("f", "Fox", "BN"),
+        _FsfBuiltinPieceDefinition("s", "Sergeant", "fKifmnD"),
+        _FsfBuiltinPieceDefinition("n", "Nightrider", "NN"),
+    ),
     "chigorin": (_FsfBuiltinPieceDefinition("c", "Chancellor", "RN"),),
 }
 
@@ -127,6 +133,7 @@ FSF_BUILTIN_PIECE_DIAGRAMS_BY_VARIANT: Mapping[str, tuple[_FsfBuiltinPieceDefini
 # required.
 FSF_BUILTIN_PREMOVE_BETZA_OVERRIDES_BY_VARIANT: Mapping[str, Mapping[str, str]] = {
     "breakthrough": {"p": "fmWfF"},
+    "wolf": {"p": "fmWfceFifmnD", "+p": "NNQ"},
     "clobber": {"p": "cW"},
     "clobber10": {"p": "cW"},
     "courier": {"b": "B"},
