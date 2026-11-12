@@ -48,7 +48,7 @@
     background-image: url('../../images/pieces/shogi/ctk/0RY.svg');
 }
 .okisakishogi piece.l-piece::before {
-    background-image: url('../../images/pieces/shogi/ctk/0KY.svg');
+    background-image: url('../../images/pieces/shogi/ctk/0_REVERSE_CHARIOT.svg');
 }
 .okisakishogi piece.pl-piece::before {
     background-image: url('../../images/pieces/shogi/ctk/0NY.svg');

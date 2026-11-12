@@ -34,8 +34,16 @@ Its additional pieces use the empty base from `ctk/0_QUEEN.svg`:
 - `ctk/0_OKISAKI_QUEEN.svg` uses the 妃 queen glyph from the
   [Okisaki Shogi piece table](https://en.wikipedia.org/wiki/Okisaki_shogi#Table_of_pieces),
   outlined from Noto Serif CJK JP Bold.
+- `ctk/0_REVERSE_CHARIOT.svg` uses the 反 glyph from
+  [Lishogi's Chu Shogi Ryoko one-kanji reverse chariot](https://github.com/WandererXII/lishogi/blob/bb2a645ef3/ui/%40build/pieces/assets/chushogi/ryoko_1kanji/0_CHARIOT.svg),
+  by [nexxogen](https://github.com/nexxogen), licensed under
+  [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) as listed in
+  [Lishogi's COPYING.md](https://github.com/WandererXII/lishogi/blob/bb2a645ef3/COPYING.md).
+  The glyph is scaled and repositioned onto the existing CC BY-SA 3.0 piece
+  body, replacing Lishogi's wood-grain body. This artwork represents Okisaki's
+  unpromoted two-way lance; its promoted form keeps the standard promoted lance.
 
 [Noto CJK](https://github.com/notofonts/noto-cjk) is distributed under the SIL
 Open Font License 1.1. The queen is stored as an SVG path and needs no font at
-runtime. Both pieces face the player in their canonical orientation; the piece
+runtime. All three pieces face the player in their canonical orientation; the piece
 stylesheet rotates the image layer for enemy pieces.
