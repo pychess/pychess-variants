@@ -85,12 +85,39 @@ class TestGUI:
                             "(piece, artwork) => getComputedStyle(piece).backgroundImage.includes(artwork)",
                             artwork,
                         )
+                    await page.locator("#btn-settings").click()
+                    await page.locator("#btn-board").click()
+                    await page.select_option("#settings-variant", "snailtrail")
+                    for style, index in (("disguised", 1), ("classic", 0), ("disguised", 1)):
+                        await page.locator(f"label.piece.piece{index}.snailtrail").click()
+                        await expect(page.locator(f"#piece{index}")).to_be_checked()
+                        for color, prefix in (("white", "w"), ("black", "b")):
+                            image_path = (
+                                f"static/images/pieces/disguised/{prefix}.svg"
+                                if style == "disguised"
+                                else f"static/images/pieces/merida/{prefix}K.svg"
+                            )
+                            artwork = base64.b64encode(Path(image_path).read_bytes()).decode()
+                            await expect(page.locator("#mainboard")).to_have_class(
+                                re.compile(rf"\bpiece-style-snailtrail-{style}\b")
+                            )
+                            await page.wait_for_function(
+                                "data => { const piece = document.querySelector(data.selector); "
+                                "return piece && getComputedStyle(piece).backgroundImage.includes(data.artwork); }",
+                                arg={
+                                    "selector": f"#mainboard piece.p-piece.{color}",
+                                    "artwork": artwork,
+                                },
+                                timeout=5000,
+                            )
+                    await page.locator("#btn-settings").click()
                     pages.append(page)
 
                 served_css = await pages[0].evaluate(
                     "() => [...document.styleSheets].map(sheet => sheet.href).filter(Boolean)"
                 )
                 assert any("piece-css/snailtrail/classic.css" in href for href in served_css)
+                assert any("piece-css/snailtrail/disguised.css" in href for href in served_css)
                 assert any("extensions.css" in href for href in served_css)
 
                 assert set(
