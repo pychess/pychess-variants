@@ -18,6 +18,7 @@ from settings import PROD
 MoveCodec = Callable[[str], str]
 HiddenInfoMode = Literal["none", "fog", "covered_pieces"]
 CATALOGUED_VARIANT_ICON = "☐"
+REVERSI_VARIANTS = frozenset({"flipello", "flipello10", "flipersi"})
 
 
 @dataclass

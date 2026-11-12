@@ -120,13 +120,17 @@ FSF_BUILTIN_PIECE_DIAGRAMS_BY_VARIANT: Mapping[str, tuple[_FsfBuiltinPieceDefini
 }
 
 # Betza definitions sent to the client for premove calculation but intentionally
-# not rendered as rule-page diagrams. These are standard-looking pieces whose
-# role letter differs from the chosen ``clientVariant`` compatibility profile.
+# not rendered as rule-page diagrams. These correct role movements inherited
+# from the chosen ``clientVariant`` compatibility profile.
 # Keeping them separate avoids misleading diagrams (the Shatar/Courier bishop
 # regression) while still overriding chessground's approximate fallback where
 # required.
 FSF_BUILTIN_PREMOVE_BETZA_OVERRIDES_BY_VARIANT: Mapping[str, Mapping[str, str]] = {
     "courier": {"b": "B"},
+    # Reversi discs are placed from reserve and never move on the board.
+    "flipello": {"p": ""},
+    "flipello10": {"p": ""},
+    "flipersi": {"p": ""},
     # Micro's reverse faces differ from both Shogi and Kyoto Shogi.
     "micro": {"+p": "fN", "+l": "FfW", "+b": "WfF", "+r": "WfF"},
     # Okisaki's jumping horse is a chess knight, unlike the Shogi fallback.

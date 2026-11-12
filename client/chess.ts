@@ -185,8 +185,8 @@ export function validFen(variant: Variant, fen: string): boolean {
         //}
     }
 
-    // Amazons has no royal pieces, so there is no king-count invariant to apply.
-    if (variant.rules.arrowing) return true;
+    // Non-royal games have no king-count invariant.
+    if (variant.rules.arrowing || variant.kingRoles.length === 0) return true;
 
     // Number of kings
     const king = util.letterOf(variant.kingRoles[0]);
@@ -241,10 +241,23 @@ function pocketVariantMaterialFitsEngine(variant: Variant, placement: string): b
     }
 
     const pocketSlotsPerRole = FAIRY_STOCKFISH_POCKET_SLOTS_PER_FILE * variant.board.dimensions.width;
-    if ([...pocketCounts.values()].some(count => count > pocketSlotsPerRole)) return false;
+    // Native Reversi games supply a large stock of placement discs. User-defined
+    // variants retain the normal capture-to-hand limits.
+    const nativeReserves =
+        variant.cataloguedSource === 'fairy-stockfish-builtin' &&
+        ['flipello', 'flipello10', 'flipersi'].includes(variant.name);
+    const startPlacement = variant.startFen.split(' ')[0];
+    const startPocket = nativeReserves ? (startPlacement.split('[')[1]?.split(']')[0] ?? '') : '';
+    if (
+        [...pocketCounts].some(
+            ([piece, count]) => count > Math.max(pocketSlotsPerRole, countOcurrences(startPocket, piece)),
+        )
+    )
+        return false;
 
     const [counts, total] = countMaterial(placement);
-    if (total > FAIRY_STOCKFISH_MAX_ACTIVE_PIECES) return false;
+    const [, reserveTotal] = countMaterial(nativeReserves ? startPlacement : '');
+    if (total > Math.max(FAIRY_STOCKFISH_MAX_ACTIVE_PIECES, reserveTotal)) return false;
 
     const [startCounts] = countMaterial(variant.startFen.split(' ')[0]);
     return [...counts].every(([role, count]) => count <= Math.max(pocketSlotsPerRole, startCounts.get(role) ?? 0));
@@ -364,7 +377,8 @@ export function getJanggiPoints(board: string): number[] {
 export function getAtaxxPoints(board: string): number[] {
     let redPoint = 0;
     let bluePoint = 0;
-    for (const c of board) {
+    // Reserves are supplies for placement games, not discs on the board.
+    for (const c of board.split('[')[0]) {
         switch (c) {
             case 'P':
                 redPoint += 1;

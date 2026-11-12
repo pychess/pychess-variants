@@ -2933,11 +2933,14 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
     const info = cataloguedPieceInfo(meta);
     const { pieces, kingRoles, pocketRoles, promotionType, promotionRoles, promotionOrder, clientVariant } = info;
     const captureToHand = cataloguedCaptureToHand(meta, clientVariant);
+    const countsDiscs =
+        meta.source === 'fairy-stockfish-builtin' && ['flipello', 'flipello10', 'flipersi'].includes(meta.name);
     const boardFamily = cataloguedCompatibleBoardFamily(meta) ?? ensureCataloguedBoardFamily(meta.width, meta.height);
     const dropLoopOption = cataloguedIniOption(meta.ini, 'dropLoop');
-    const dropLoop = dropLoopOption === undefined
-        ? (meta.dropLoop ?? clientVariant?.pocket?.dropLoop ?? false)
-        : /^(true|yes|1|on)$/i.test(dropLoopOption);
+    const dropLoop =
+        dropLoopOption === undefined
+            ? (meta.dropLoop ?? clientVariant?.pocket?.dropLoop ?? false)
+            : /^(true|yes|1|on)$/i.test(dropLoopOption);
     const cataloguedPieceFamily = `catalogued-${meta.name}`;
     delete PIECE_FAMILIES[cataloguedPieceFamily];
     const compatiblePieceSource = meta.hasPieceSet
@@ -2959,6 +2962,7 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
         aiDisabled: !!meta.aiDisabled,
         replayOnly: !!meta.replayOnly,
         cataloguedSource: meta.source,
+        colors: countsDiscs ? VARIANTS.ataxx.colors : undefined,
         nnueFingerprint: meta.nnueFingerprint,
         ratingEnabled: false,
         startFen: meta.startFen,
@@ -2987,7 +2991,7 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
             showPromoted: !!meta.showPromoted || !!clientVariant?.ui.showPromoted,
             showCheckCounters: !!meta.showCheckCounters || !!clientVariant?.ui.showCheckCounters,
             counting: clientVariant?.ui.counting,
-            materialPoint: clientVariant?.ui.materialPoint,
+            materialPoint: countsDiscs ? 'ataxx' : clientVariant?.ui.materialPoint,
             pieceSound: clientVariant?.ui.pieceSound,
             boardMark: clientVariant?.ui.boardMark || undefined,
         },

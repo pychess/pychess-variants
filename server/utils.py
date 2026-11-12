@@ -82,6 +82,7 @@ from sse_utils import consume_sse_queue, log_sse_failure, sse_response
 from variants import (
     C2V,
     GRANDS,
+    REVERSI_VARIANTS,
     TWO_BOARD_VARIANT_CODES,
     catalogued_variant_random_start,
     get_server_variant,
@@ -1537,7 +1538,9 @@ def _fen_material_counts(placement: str) -> tuple[dict[str, int], int]:
     return counts, total
 
 
-def pocket_variant_material_fits_engine(initial_fen: str, start_fen: str) -> bool:
+def pocket_variant_material_fits_engine(
+    initial_fen: str, start_fen: str, variant: str = ""
+) -> bool:
     """Bound pocket and active material before initializing a native position."""
     placement = initial_fen.split(maxsplit=1)[0]
     start_placement = start_fen.split(maxsplit=1)[0]
@@ -1554,11 +1557,20 @@ def pocket_variant_material_fits_engine(initial_fen: str, start_fen: str) -> boo
             pocket_counts[char] = pocket_counts.get(char, 0) + 1
 
     pocket_slots_per_role = FAIRY_STOCKFISH_POCKET_SLOTS_PER_FILE * fen_board_width(start_placement)
-    if any(count > pocket_slots_per_role for count in pocket_counts.values()):
+    # These native placement games intentionally start with more reserves than
+    # capture-to-hand variants. Only trust the canonical built-in definition,
+    # never a user-supplied starting position, to raise the reserve budget.
+    reserve_start = FairyBoard.start_fen(variant).split()[0] if variant in REVERSI_VARIANTS else ""
+    reserve_pocket = reserve_start.partition("[")[2].partition("]")[0]
+    if any(
+        count > max(pocket_slots_per_role, reserve_pocket.count(piece))
+        for piece, count in pocket_counts.items()
+    ):
         return False
 
     counts, total = _fen_material_counts(placement)
-    if total > FAIRY_STOCKFISH_MAX_ACTIVE_PIECES:
+    _, reserve_total = _fen_material_counts(reserve_start)
+    if total > max(FAIRY_STOCKFISH_MAX_ACTIVE_PIECES, reserve_total):
         return False
 
     start_counts, _ = _fen_material_counts(start_placement)
@@ -1591,7 +1603,9 @@ def sanitize_fen(variant, initial_fen, chess960, base=False):
 
     start_fen = FairyBoard.start_fen(variant)
     start_placement = start_fen.split(maxsplit=1)[0]
-    if "[" in start_placement and not pocket_variant_material_fits_engine(initial_fen, start_fen):
+    if "[" in start_placement and not pocket_variant_material_fits_engine(
+        initial_fen, start_fen, variant
+    ):
         return False, ""
 
     sf_validate = validate_fen(initial_fen, variant, chess960)

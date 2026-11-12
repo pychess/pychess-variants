@@ -25,6 +25,220 @@ test_logger.init_test_logger()
 
 @pytest.mark.asyncio
 class TestGUI:
+    @pytest.mark.parametrize("name", ["flipello", "flipello10", "flipersi"])
+    @pytest.mark.parametrize(
+        "width,theme", [(1280, "light"), (1280, "dark"), (390, "light"), (390, "dark")]
+    )
+    async def test_reversi_placement_flipping_pass_scoring_and_replay(
+        self, aiohttp_server, name, width, theme
+    ):
+        from aiohttp_jinja2 import get_env
+        from catalogued.builtin_data import FSF_CATALOGUED_BUILTIN_VARIANTS
+        from catalogued.documents import _build_fsf_builtin_doc
+        from catalogued.variants import register_catalogued_variant_doc
+        from utils import load_game, sanitize_fen
+        from variants import unregister_catalogued_server_variant
+
+        app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+        server = await aiohttp_server(app, host="127.0.0.1")
+        state = get_app_state(app)
+        base_url = f"http://{server.host}:{server.port}"
+        get_env(app).globals["home"] = base_url
+        doc = _build_fsf_builtin_doc(name, FSF_CATALOGUED_BUILTIN_VARIANTS[name])
+        register_catalogued_variant_doc(state, doc)
+        await state.db.catalogued_variant.insert_one(doc)
+        assert sanitize_fen(name, doc["startFen"], False)[0]
+        assert not sanitize_fen(name, doc["startFen"].replace("[", "[P"), False)[0]
+        players = []
+        for suffix in ("white", "black"):
+            username = "reversi-" + suffix
+            await state.db.user.insert_one(
+                {"_id": username, "enabled": True, "ct": "all", "theme": theme}
+            )
+            player = User(state, username=username, theme=theme)
+            player.game_category_set = True
+            state.users[username] = player
+            players.append(player)
+        game = Game(state, "ReversiT", name, "", *players, base=5)
+        state.games[game.id] = game
+        await insert_game_to_db(game, state)
+        async with async_playwright() as playwright:
+            browser = await self._launch_browser(playwright)
+            try:
+
+                async def check_counts(page, fen):
+                    placement = fen.split()[0].split("[")[0]
+                    await expect(page.locator("#misc-infow")).to_have_text(
+                        str(placement.count("P"))
+                    )
+                    await expect(page.locator("#misc-infob")).to_have_text(
+                        str(placement.count("p"))
+                    )
+                    await expect(page.locator("#misc-infow")).to_have_class(
+                        re.compile(r"\btext-color-red\b")
+                    )
+                    await expect(page.locator("#misc-infob")).to_have_class(
+                        re.compile(r"\btext-color-blue\b")
+                    )
+
+                async def check_count_colors(page):
+                    for side, channel in (("w", 0), ("b", 2)):
+                        indicator = page.locator("#misc-info" + side)
+                        await expect(indicator).to_be_visible()
+                        color = await indicator.evaluate("el => getComputedStyle(el).color")
+                        rgb = [int(value) for value in re.findall(r"\d+", color)[:3]]
+                        assert rgb[channel] > rgb[2 - channel]
+
+                pages = []
+                errors = []
+                for player in players:
+                    _, page = await self._playwright_page_for_user(
+                        browser, base_url, player.username
+                    )
+                    await page.set_viewport_size({"width": width, "height": 900})
+                    page.on("pageerror", lambda error: errors.append(str(error)))
+                    await page.goto(f"{base_url}/{game.id}")
+                    await expect(page.locator("#mainboard.ataxx")).to_be_visible()
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await check_counts(page, game.board.fen)
+                    await check_count_colors(page)
+                    pages.append(page)
+
+                async def play(move):
+                    page = pages[game.board.color]
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    ply = game.board.ply
+                    if "@" in move:
+                        await page.evaluate(
+                            """dest => {
+                            window.cg.selectPocket({role: 'p-piece', color: window.cg.state.turnColor});
+                            window.cg.selectSquare(dest);
+                        }""",
+                            move[2:],
+                        )
+                    else:
+                        await page.get_by_title("Pass", exact=True).click()
+                    await self._eventually(lambda: game.board.ply == ply + 1)
+                    assert game.board.move_stack[-1] == move
+                    expected = game.board.fen.split()[0].split("[")[0]
+                    await page.wait_for_function(
+                        "fen => window.cg.getFen().split('[')[0] === fen", arg=expected
+                    )
+                    for player_page in pages:
+                        await check_counts(player_page, game.board.fen)
+
+                # Reach the first flipping move even in Flipersi's empty opening.
+                for _ in range(5):
+                    await play(game.board.legal_moves()[0])
+                assert game.board.fen != doc["startFen"]
+                await pages[0].keyboard.press("f")
+                await check_counts(pages[0], game.board.fen)
+                await pages[0].keyboard.press("f")
+                await check_counts(pages[0], game.board.fen)
+                for page in pages:
+                    images = await page.locator("#mainboard piece.p-piece").evaluate_all(
+                        "pieces => pieces.map(piece => getComputedStyle(piece).backgroundImage)"
+                    )
+                    assert images and all(image != "none" for image in images)
+                    assert await page.locator('button[title="Pass"]').count() == (
+                        0 if name == "flipersi" else 1
+                    )
+                await (
+                    pages[0]
+                    .locator("#mainboard")
+                    .screenshot(path=f"/tmp/{name}-{width}-{theme}.png")
+                )
+                final_fen = game.board.fen
+                moves = list(game.board.move_stack)
+                await game.game_ended(players[0], "resign")
+                state.games.pop(game.id)
+                restored = await load_game(state, game.id)
+                assert restored is not None
+                assert restored.board.move_stack == moves
+                assert restored.board.fen == final_fen
+                page = pages[0]
+                await page.goto(f"{base_url}/{game.id}?ply=5")
+                await expect(page.locator("#fullfen")).to_have_value(final_fen)
+                await page.get_by_title("First move", exact=True).click()
+                await check_counts(page, doc["startFen"])
+                for ply in range(1, 6):
+                    await page.get_by_title("Next move", exact=True).click()
+                    await expect(page.locator("#fullfen")).to_have_value(game.steps[ply]["fen"])
+                    await check_counts(page, game.steps[ply]["fen"])
+
+                # Analysis accepts the same pocket placement and updates flipped discs.
+                await page.goto(f"{base_url}/analysis/{name}")
+                await check_counts(page, doc["startFen"])
+                await check_count_colors(page)
+                await page.locator(".pocketrow piece.p-piece.white").click()
+                await page.locator("#mainboard cg-board").scroll_into_view_if_needed()
+                bounds = await page.locator("#mainboard cg-board").bounding_box()
+                assert bounds is not None
+                if width < 800:
+                    assert bounds["width"] <= width
+                    assert await page.evaluate(
+                        "() => parseFloat(getComputedStyle(document.querySelector('.analysis-app')).gridTemplateColumns) <= innerWidth"
+                    )
+                    assert await page.evaluate(
+                        "() => document.documentElement.scrollWidth <= innerWidth"
+                    )
+                size = 10 if name == "flipello10" else 8
+                file = ord(moves[0][2]) - ord("a")
+                rank = int(moves[0][3:])
+                await page.mouse.click(
+                    bounds["x"] + bounds["width"] * (file + 0.5) / size,
+                    bounds["y"] + bounds["height"] * (size - rank + 0.5) / size,
+                )
+                await expect(page.locator("#fullfen")).to_have_value(game.steps[1]["fen"])
+                await check_counts(page, game.steps[1]["fen"])
+                await page.screenshot(path=f"/tmp/{name}-analysis-{width}-{theme}.png")
+
+                if name != "flipersi":
+                    size = 10 if name == "flipello10" else 8
+                    rows = ["p" * size] * (size - 2) + [
+                        "pp1" + "p" * (size - 3),
+                        "Pp1" + "p" * (size - 3),
+                    ]
+                    game = Game(
+                        state, "RevPassT", name, "/".join(rows) + "[Pp] b - - 0 1", *players, base=5
+                    )
+                    state.games[game.id] = game
+                    await insert_game_to_db(game, state)
+                    for page in pages:
+                        await page.goto(f"{base_url}/{game.id}")
+                        await page.wait_for_function(
+                            "() => window.cg?.state.movable.dests?.size > 0"
+                        )
+                    for move in ("b1b1", "P@c1", "d1d1", "a1a1"):
+                        await play(move)
+                    await self._eventually(lambda: game.result == "0-1")
+                    final_fen = game.board.fen
+                    state.games.pop(game.id)
+                    restored = await load_game(state, game.id)
+                    assert restored is not None
+                    assert restored.result == "0-1"
+                    assert restored.board.fen == final_fen
+                    await pages[0].goto(f"{base_url}/{game.id}?ply=4")
+                    await expect(pages[0].locator("#fullfen")).to_have_value(final_fen)
+                else:
+                    rows = ["pppppppp"] * 6 + ["pp1ppppp", "Pp1ppppp"]
+                    game = Game(
+                        state, "RevStopT", name, "/".join(rows) + "[Pp] w - - 0 1", *players, base=5
+                    )
+                    state.games[game.id] = game
+                    await insert_game_to_db(game, state)
+                    for page in pages:
+                        await page.goto(f"{base_url}/{game.id}")
+                        await page.wait_for_function(
+                            "() => window.cg?.state.movable.dests?.size > 0"
+                        )
+                    await play("P@c1")
+                    await self._eventually(lambda: game.result == "0-1")
+                assert errors == []
+            finally:
+                await browser.close()
+                unregister_catalogued_server_variant(name)
+
     @pytest.mark.parametrize(
         "width,theme", [(1280, "light"), (1280, "dark"), (390, "light"), (390, "dark")]
     )

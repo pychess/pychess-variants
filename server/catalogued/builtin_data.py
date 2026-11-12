@@ -290,6 +290,83 @@ perpetualCheckIllegal = true
         "promotionRoles": ("p",),
         "promotionOrder": models.CATALOGUED_CHESS_PROMOTION_ORDER,
     },
+    "flipello": {
+        "displayName": "Flipello",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Reversi#Othello"),
+        "baseVariant": "flipersi",
+        "clientVariant": "chess",
+        "boardFamilyOverride": "standard8x8",
+        "pieceFamilyOverride": "ataxx",
+        "pieceNames": {"p": "Disc"},
+        "pocketRoles": ("p",),
+        "captureToHand": False,
+        "rulesPass": True,
+        "legalMovesNeedHistory": True,
+        # Documentation only; the native built-in supplies the initial reserves.
+        "rulesIni": """
+[flipello:flipersi]
+passOnStalemate = true
+""",
+    },
+    "flipello10": {
+        "displayName": "Flipello 10x10",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Reversi"),
+        "baseVariant": "flipello",
+        "clientVariant": "chess",
+        "boardFamilyOverride": "standard10x10",
+        "pieceFamilyOverride": "ataxx",
+        "pieceNames": {"p": "Disc"},
+        "pocketRoles": ("p",),
+        "captureToHand": False,
+        "rulesPass": True,
+        "legalMovesNeedHistory": True,
+        # Documentation only; the native built-in supplies the initial reserves.
+        "rulesIni": """
+[flipello10:flipello]
+maxRank = 10
+maxFile = 10
+enclosingDropStart = e5 f5 e6 f6
+""",
+    },
+    "flipersi": {
+        "displayName": "Flipersi",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Reversi"),
+        "baseVariant": "",
+        "clientVariant": "chess",
+        "boardFamilyOverride": "standard8x8",
+        "pieceFamilyOverride": "ataxx",
+        "pieceNames": {"p": "Disc"},
+        "pocketRoles": ("p",),
+        "captureToHand": False,
+        "rulesPass": False,
+        "legalMovesNeedHistory": True,
+        # Documentation only; the native built-in supplies the initial reserves.
+        "rulesIni": """
+[flipersi]
+pawn = -
+knight = -
+bishop = -
+rook = -
+queen = -
+king = -
+immobile = p
+pieceDrops = true
+doubleStep = false
+castling = false
+immobilityIllegal = false
+stalemateValue = loss
+stalematePieceCount = true
+enclosingDrop = reversi
+enclosingDropStart = d4 e4 d5 e5
+flipEnclosedPieces = reversi
+materialCounting = unweighted
+adjudicateFullBoard = true
+passOnStalemate = false
+""",
+    },
     "georgian": {
         "displayName": "Georgian Chess",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -925,30 +1002,6 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
         ),
         "baseVariant": "chess",
         "reviewNotes": "Alias of Chess960; pychess already exposes this as Chess960.",
-    },
-    "flipello": {
-        "displayName": "Flipello",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references(
-            "https://en.wikipedia.org/wiki/Reversi#Othello",
-        ),
-        "baseVariant": "flipersi",
-        "reviewNotes": "Reversi-like placement game; verify pass/drop-like move flow.",
-    },
-    "flipello10": {
-        "displayName": "Flipello 10x10",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Reversi"),
-        "baseVariant": "flipello",
-        "reviewNotes": "Large-board Reversi-like placement game; verify pass/drop-like move flow.",
-    },
-    "flipersi": {
-        "displayName": "Flipersi",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Reversi"),
-        "baseVariant": "",
-        "clientVariant": "chess",
-        "reviewNotes": "Reversi-like placement game; verify pass/drop-like move flow.",
     },
     "fox-and-hounds": {
         "displayName": "Fox and Hounds",
