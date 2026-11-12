@@ -142,6 +142,35 @@ FSF_CATALOGUED_BUILTIN_VARIANTS: Mapping[str, Mapping[str, Any]] = {
         "promotionRoles": ("p",),
         "promotionOrder": models.CATALOGUED_CHESS_PROMOTION_ORDER,
     },
+    "breakthrough": {
+        "displayName": "Breakthrough",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references(
+            "https://en.wikipedia.org/wiki/Breakthrough_(board_game)"
+        ),
+        "baseVariant": "",
+        "clientVariant": "chess",
+        "boardFamilyOverride": "standard8x8",
+        "pieceFamilyOverride": "standard",
+        # Documentation only, transcribed from breakthrough_variant() in
+        # Fairy-Stockfish's src/variant.cpp. The goal rank ends play, without promotion.
+        "rulesIni": """
+[breakthrough]
+pawn = -
+knight = -
+bishop = -
+rook = -
+queen = -
+king = -
+breakthrough = p
+doubleStep = false
+castling = false
+stalemateValue = loss
+flagPiece = p
+flagRegionWhite = *8
+flagRegionBlack = *1
+""",
+    },
     "centaur": {
         "displayName": "Centaur Chess",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -998,16 +1027,6 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
         ),
         "baseVariant": "chess",
         "reviewNotes": "Likely needs time-odds/draw-odds UI before exposing.",
-    },
-    "breakthrough": {
-        "displayName": "Breakthrough",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references(
-            "https://en.wikipedia.org/wiki/Breakthrough_(board_game)",
-        ),
-        "baseVariant": "",
-        "clientVariant": "chess",
-        "reviewNotes": "Non-checkmate objective; verify result handling and notation.",
     },
     "caparandom": {
         "displayName": "Capablanca Random Chess",

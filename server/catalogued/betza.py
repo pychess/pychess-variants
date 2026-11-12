@@ -126,6 +126,7 @@ FSF_BUILTIN_PIECE_DIAGRAMS_BY_VARIANT: Mapping[str, tuple[_FsfBuiltinPieceDefini
 # regression) while still overriding chessground's approximate fallback where
 # required.
 FSF_BUILTIN_PREMOVE_BETZA_OVERRIDES_BY_VARIANT: Mapping[str, Mapping[str, str]] = {
+    "breakthrough": {"p": "fmWfF"},
     "clobber": {"p": "cW"},
     "clobber10": {"p": "cW"},
     "courier": {"b": "B"},

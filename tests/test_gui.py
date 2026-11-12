@@ -28,6 +28,182 @@ class TestGUI:
     @pytest.mark.parametrize(
         "width,theme", [(1280, "light"), (1280, "dark"), (390, "light"), (390, "dark")]
     )
+    async def test_breakthrough_quiet_diagonals_goal_ranks_and_saved_analysis(
+        self, aiohttp_server, width, theme
+    ):
+        from aiohttp_jinja2 import get_env
+        from catalogued.builtin_data import FSF_CATALOGUED_BUILTIN_VARIANTS
+        from catalogued.documents import _build_fsf_builtin_doc
+        from catalogued.variants import register_catalogued_variant_doc
+        from const import STALEMATE, VARIANTEND
+        from utils import load_game, sanitize_fen
+        from variants import unregister_catalogued_server_variant
+
+        app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+        server = await aiohttp_server(app, host="127.0.0.1")
+        state = get_app_state(app)
+        base_url = f"http://{server.host}:{server.port}"
+        get_env(app).globals["home"] = base_url
+        doc = _build_fsf_builtin_doc(
+            "breakthrough", FSF_CATALOGUED_BUILTIN_VARIANTS["breakthrough"]
+        )
+        register_catalogued_variant_doc(state, doc)
+        await state.db.catalogued_variant.insert_one(doc)
+        assert sanitize_fen("breakthrough", doc["startFen"], False)[0]
+        players = []
+        for side in ("white", "black"):
+            username = "breakthrough-" + side
+            await state.db.user.insert_one(
+                {"_id": username, "enabled": True, "ct": "all", "theme": theme}
+            )
+            user = User(state, username=username, theme=theme)
+            user.game_category_set = True
+            state.users[username] = user
+            players.append(user)
+        initial = "7p/7p/8/8/8/2Pp4/8/8 w - - 0 1"
+        moves = ["c3d4", "h7h6", "d4e5", "h6h5", "e5f6", "h5g4", "f6g7", "g4f3", "g7h8"]
+        game = Game(state, "BreakTst", "breakthrough", initial, *players, base=5)
+        state.games[game.id] = game
+        await insert_game_to_db(game, state)
+
+        async def goal_marks(board):
+            marks = await board.evaluate("""el => {
+                const bounds = el.getBoundingClientRect();
+                return ['::before', '::after'].map(pseudo => {
+                    const style = getComputedStyle(el, pseudo);
+                    return {content: style.content, width: parseFloat(style.width),
+                        height: parseFloat(style.height), top: parseFloat(style.top),
+                        shadow: style.boxShadow, pointer: style.pointerEvents,
+                        boardWidth: bounds.width, boardHeight: bounds.height};
+                });
+            }""")
+            for index, mark in enumerate(marks):
+                assert mark["content"] == '""'
+                assert abs(mark["width"] - mark["boardWidth"]) < 1
+                assert abs(mark["height"] - mark["boardHeight"] / 8) < 1
+                assert abs(mark["top"] - index * mark["boardHeight"] * 7 / 8) < 1
+                assert mark["shadow"] != "none"
+                assert mark["pointer"] == "none"
+
+        async with async_playwright() as playwright:
+            browser = await self._launch_browser(playwright)
+            try:
+                pages, errors = [], []
+                for player in players:
+                    _, page = await self._playwright_page_for_user(
+                        browser, base_url, player.username
+                    )
+                    await page.set_viewport_size({"width": width, "height": 900})
+                    page.on("pageerror", lambda error: errors.append(str(error)))
+                    await page.goto(f"{base_url}/{game.id}")
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await expect(
+                        page.locator("#mainboard.standard8x8.standard.campmate")
+                    ).to_be_visible()
+                    await goal_marks(page.locator("#mainboard cg-board"))
+                    board = await page.locator("#mainboard cg-board").bounding_box()
+                    assert board is not None
+                    assert abs(board["width"] - board["height"]) < 1
+                    for color in ("white", "black"):
+                        piece = page.locator(f"#mainboard piece.p-piece.{color}").first
+                        assert (
+                            await piece.evaluate("el => getComputedStyle(el).backgroundImage")
+                            != "none"
+                        )
+                    assert await page.locator('button[title="Pass"]').count() == 0
+                    pages.append(page)
+                for ply, move in enumerate(moves):
+                    page = pages[game.board.color]
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await page.evaluate(
+                        "move => {window.cg.selectSquare(move.slice(0,2));window.cg.selectSquare(move.slice(2,4));}",
+                        move,
+                    )
+                    await self._eventually(lambda expected=ply + 1: game.board.ply == expected)
+                    assert game.board.move_stack[-1] == move
+                    assert await page.locator("#extension_choice piece").count() == 0
+                    for player_page in pages:
+                        await player_page.wait_for_function(
+                            "fen => window.cg.getFen() === fen", arg=game.board.fen.split()[0]
+                        )
+                        await player_page.wait_for_function(
+                            "() => window.cg.state.boardState.pieces.get('d3')?.color === 'black'"
+                        )
+                    if ply < len(moves) - 1:
+                        assert game.result == "*"
+                await self._eventually(lambda: game.result == "1-0")
+                assert game.status == VARIANTEND
+                assert not game.check
+                final_fen = game.board.fen
+                state.games.pop(game.id)
+                restored = await load_game(state, game.id)
+                assert restored is not None
+                assert restored.board.move_stack == moves
+                assert restored.board.fen == final_fen
+                assert restored.result == "1-0"
+                page = pages[0]
+                await page.goto(f"{base_url}/{game.id}?ply=9")
+                await expect(page.locator("#fullfen")).to_have_value(final_fen)
+                await goal_marks(page.locator("#mainboard cg-board"))
+                await page.get_by_title("First move", exact=True).click()
+                for ply in range(1, 10):
+                    await page.get_by_title("Next move", exact=True).click()
+                    await expect(page.locator("#fullfen")).to_have_value(game.steps[ply]["fen"])
+                await page.screenshot(path=f"/tmp/breakthrough-{width}-{theme}.png")
+
+                from urllib.parse import urlencode
+
+                await page.goto(base_url + "/analysis/breakthrough?" + urlencode({"fen": initial}))
+                board = page.locator("#mainboard cg-board")
+                await expect(board).to_be_visible()
+                await goal_marks(board)
+                await board.scroll_into_view_if_needed()
+                for key in ("c3", "d4"):
+                    bounds = await board.bounding_box()
+                    assert bounds is not None
+                    await page.mouse.click(
+                        bounds["x"] + bounds["width"] * (ord(key[0]) - ord("a") + 0.5) / 8,
+                        bounds["y"] + bounds["height"] * (8 - int(key[1]) + 0.5) / 8,
+                    )
+                await expect(page.locator("#fullfen")).to_have_value(game.steps[1]["fen"])
+                assert await page.locator("#extension_choice piece").count() == 0
+                await page.goto(base_url + "/variants/community")
+                preview = page.locator(
+                    '.catalogued-start-board-preview[data-variant="breakthrough"]'
+                )
+                await preview.scroll_into_view_if_needed()
+                await expect(preview).to_have_attribute("data-chessground-mounted", "true")
+                assert await preview.locator("piece.p-piece").count() == 32
+                await goal_marks(preview.locator("cg-board"))
+
+                # Black can reach rank 1; capturing the last enemy pawn wins too.
+                for game_id, fen, move, result, status in (
+                    ("BreakBlk", "8/P7/8/8/8/8/7p/8 b - - 0 1", "h2h1", "0-1", VARIANTEND),
+                    ("BreakCap", "8/8/8/8/8/8/2p5/1P6 w - - 0 1", "b1c2", "1-0", STALEMATE),
+                ):
+                    game = Game(state, game_id, "breakthrough", fen, *players, base=5)
+                    state.games[game.id] = game
+                    await insert_game_to_db(game, state)
+                    page = pages[game.board.color]
+                    await page.goto(f"{base_url}/{game.id}")
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await page.evaluate(
+                        "move => {window.cg.selectSquare(move.slice(0,2));window.cg.selectSquare(move.slice(2,4));}",
+                        move,
+                    )
+                    await self._eventually(
+                        lambda active_game=game, expected=result: active_game.result == expected
+                    )
+                    assert game.status == status
+                    assert await page.locator("#extension_choice piece").count() == 0
+                assert errors == []
+            finally:
+                await browser.close()
+                unregister_catalogued_server_variant("breakthrough")
+
+    @pytest.mark.parametrize(
+        "width,theme", [(1280, "light"), (1280, "dark"), (390, "light"), (390, "dark")]
+    )
     async def test_check_shogi_first_check_wins_with_drops_promotion_and_replay(
         self, aiohttp_server, width, theme
     ):

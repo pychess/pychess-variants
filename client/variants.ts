@@ -2933,6 +2933,7 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
     const info = cataloguedPieceInfo(meta);
     const { pieces, kingRoles, pocketRoles, promotionType, promotionRoles, promotionOrder, clientVariant } = info;
     const captureToHand = cataloguedCaptureToHand(meta, clientVariant);
+    const isBreakthrough = meta.source === 'fairy-stockfish-builtin' && meta.name === 'breakthrough';
     const countsDiscs =
         meta.source === 'fairy-stockfish-builtin' && ['flipello', 'flipello10', 'flipersi'].includes(meta.name);
     const usesAtaxxColors =
@@ -2981,7 +2982,8 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
         promotion: { type: promotionType, roles: promotionRoles, order: promotionOrder },
         rules: {
             defaultTimeControl: clientVariant?.rules.defaultTimeControl ?? 'incremental',
-            enPassant: !!clientVariant?.rules.enPassant,
+            // Breakthrough permits quiet diagonal pawn moves, without en passant.
+            enPassant: !!clientVariant?.rules.enPassant && !isBreakthrough,
             gate: !!meta.rulesGate || !!clientVariant?.rules.gate,
             duck: !!clientVariant?.rules.duck,
             arrowing: !!meta.rulesArrowing || !!clientVariant?.rules.arrowing,
@@ -2995,7 +2997,7 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
             counting: clientVariant?.ui.counting,
             materialPoint: countsDiscs ? 'ataxx' : clientVariant?.ui.materialPoint,
             pieceSound: clientVariant?.ui.pieceSound,
-            boardMark: clientVariant?.ui.boardMark || undefined,
+            boardMark: isBreakthrough ? 'campmate' : clientVariant?.ui.boardMark || undefined,
         },
     });
     cataloguedVariantNames.add(meta.name);
