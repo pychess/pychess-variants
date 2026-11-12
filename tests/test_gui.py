@@ -25,6 +25,165 @@ test_logger.init_test_logger()
 
 @pytest.mark.asyncio
 class TestGUI:
+    @pytest.mark.parametrize("name,files,ranks", [("clobber", 5, 6), ("clobber10", 10, 10)])
+    @pytest.mark.parametrize(
+        "width,theme", [(1280, "light"), (1280, "dark"), (390, "light"), (390, "dark")]
+    )
+    async def test_clobber_captures_last_move_wins_and_analysis(
+        self, aiohttp_server, name, files, ranks, width, theme
+    ):
+        from aiohttp_jinja2 import get_env
+        from catalogued.builtin_data import FSF_CATALOGUED_BUILTIN_VARIANTS
+        from catalogued.documents import _build_fsf_builtin_doc
+        from catalogued.variants import register_catalogued_variant_doc
+        from utils import load_game, sanitize_fen
+        from variants import unregister_catalogued_server_variant
+
+        app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+        server = await aiohttp_server(app, host="127.0.0.1")
+        state = get_app_state(app)
+        base_url = f"http://{server.host}:{server.port}"
+        get_env(app).globals["home"] = base_url
+        doc = _build_fsf_builtin_doc(name, FSF_CATALOGUED_BUILTIN_VARIANTS[name])
+        register_catalogued_variant_doc(state, doc)
+        await state.db.catalogued_variant.insert_one(doc)
+        assert sanitize_fen(name, doc["startFen"], False)[0]
+        players = []
+        for side in ("white", "black"):
+            username = "clobber-" + side
+            await state.db.user.insert_one(
+                {"_id": username, "enabled": True, "ct": "all", "theme": theme}
+            )
+            user = User(state, username=username, theme=theme)
+            user.game_category_set = True
+            state.users[username] = user
+            players.append(user)
+        game = Game(state, "ClobberT", name, "", *players, base=5)
+        state.games[game.id] = game
+        await insert_game_to_db(game, state)
+
+        async def no_material_scores(page):
+            assert all(
+                not text.strip()
+                for text in await page.locator("#misc-infow, #misc-infob").all_text_contents()
+            )
+
+        def squares(move):
+            match = re.fullmatch(r"([a-j](?:10|[1-9]))([a-j](?:10|[1-9]))", move)
+            assert match is not None
+            return [key.replace("10", ":") for key in match.groups()]
+
+        async with async_playwright() as playwright:
+            browser = await self._launch_browser(playwright)
+            try:
+                pages, errors = [], []
+                for player in players:
+                    _, page = await self._playwright_page_for_user(
+                        browser, base_url, player.username
+                    )
+                    await page.set_viewport_size({"width": width, "height": 900})
+                    page.on("pageerror", lambda error: errors.append(str(error)))
+                    await page.goto(f"{base_url}/{game.id}")
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await no_material_scores(page)
+                    bounds = await page.locator("#mainboard cg-board").bounding_box()
+                    assert bounds is not None
+                    assert abs(bounds["height"] / bounds["width"] - ranks / files) < 0.01
+                    piece = page.locator("#mainboard piece.p-piece").first
+                    image = await piece.evaluate("el => getComputedStyle(el).backgroundImage")
+                    assert image != "none"
+                    assert await page.locator('button[title="Pass"]').count() == 0
+                    pages.append(page)
+
+                for ply in range(5):
+                    legal = game.board.legal_moves()
+                    if ply < 2:
+                        edge = str(ranks) if ply == 0 else "1"
+                        move = next(
+                            move
+                            for move in legal
+                            if squares(move)[1][1:] == edge.replace("10", ":")
+                        )
+                    else:
+                        move = legal[0]
+                    page = pages[game.board.color]
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await page.evaluate(
+                        "keys => keys.forEach(key => window.cg.selectSquare(key))", squares(move)
+                    )
+                    await self._eventually(lambda expected=ply + 1: game.board.ply == expected)
+                    assert game.board.move_stack[-1] == move
+                    for page in pages:
+                        await page.wait_for_function(
+                            "fen => window.cg.getFen() === fen", arg=game.board.fen.split()[0]
+                        )
+                        await no_material_scores(page)
+                moves, final_fen = list(game.board.move_stack), game.board.fen
+                await game.game_ended(players[0], "resign")
+                state.games.pop(game.id)
+                restored = await load_game(state, game.id)
+                assert restored is not None
+                assert restored.board.move_stack == moves
+                assert restored.board.fen == final_fen
+                page = pages[0]
+                await page.goto(f"{base_url}/{game.id}?ply=5")
+                await expect(page.locator("#fullfen")).to_have_value(final_fen)
+                await page.get_by_title("First move", exact=True).click()
+                for ply in range(6):
+                    await no_material_scores(page)
+                    if ply < 5:
+                        await page.get_by_title("Next move", exact=True).click()
+                        await expect(page.locator("#fullfen")).to_have_value(
+                            game.steps[ply + 1]["fen"]
+                        )
+
+                await page.goto(f"{base_url}/analysis/{name}")
+                await no_material_scores(page)
+                board = page.locator("#mainboard cg-board")
+                await board.scroll_into_view_if_needed()
+                bounds = await board.bounding_box()
+                assert bounds is not None
+                for key in squares(moves[0]):
+                    x, y = ord(key[0]) - ord("a"), ord(key[1]) - ord("1")
+                    await page.mouse.click(
+                        bounds["x"] + bounds["width"] * (x + 0.5) / files,
+                        bounds["y"] + bounds["height"] * (ranks - y - 0.5) / ranks,
+                    )
+                await expect(page.locator("#fullfen")).to_have_value(game.steps[1]["fen"])
+                await no_material_scores(page)
+                await page.screenshot(path=f"/tmp/{name}-analysis-{width}-{theme}.png")
+                await page.goto(base_url + "/variants/community")
+                preview = page.locator(f'.catalogued-start-board-preview[data-variant="{name}"]')
+                await preview.scroll_into_view_if_needed()
+                await expect(preview).to_have_attribute("data-chessground-mounted", "true")
+                mini = await preview.locator("cg-board").bounding_box()
+                assert mini is not None
+                assert abs(mini["height"] / mini["width"] - ranks / files) < 0.01
+                assert await preview.locator("piece.p-piece").count() == files * ranks
+
+                # White wins by blocking Black, despite having fewer discs.
+                rows = (
+                    ["p" + str(files - 1)]
+                    + [str(files)] * (ranks - 3)
+                    + ["2p" + str(files - 3), "Pp" + str(files - 2)]
+                )
+                game = Game(
+                    state, "ClobEndT", name, "/".join(rows) + " w - - 0 1", *players, base=5
+                )
+                state.games[game.id] = game
+                await insert_game_to_db(game, state)
+                await pages[0].goto(f"{base_url}/{game.id}")
+                await pages[0].wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                await pages[0].evaluate(
+                    "() => {window.cg.selectSquare('a1'); window.cg.selectSquare('b1');}"
+                )
+                await self._eventually(lambda: game.result == "1-0")
+                await no_material_scores(pages[0])
+                assert errors == []
+            finally:
+                await browser.close()
+                unregister_catalogued_server_variant(name)
+
     @pytest.mark.parametrize("name", ["flipello", "flipello10", "flipersi"])
     @pytest.mark.parametrize(
         "width,theme", [(1280, "light"), (1280, "dark"), (390, "light"), (390, "dark")]

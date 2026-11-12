@@ -2935,6 +2935,8 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
     const captureToHand = cataloguedCaptureToHand(meta, clientVariant);
     const countsDiscs =
         meta.source === 'fairy-stockfish-builtin' && ['flipello', 'flipello10', 'flipersi'].includes(meta.name);
+    const usesAtaxxColors =
+        countsDiscs || (meta.source === 'fairy-stockfish-builtin' && ['clobber', 'clobber10'].includes(meta.name));
     const boardFamily = cataloguedCompatibleBoardFamily(meta) ?? ensureCataloguedBoardFamily(meta.width, meta.height);
     const dropLoopOption = cataloguedIniOption(meta.ini, 'dropLoop');
     const dropLoop =
@@ -2962,7 +2964,7 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
         aiDisabled: !!meta.aiDisabled,
         replayOnly: !!meta.replayOnly,
         cataloguedSource: meta.source,
-        colors: countsDiscs ? VARIANTS.ataxx.colors : undefined,
+        colors: usesAtaxxColors ? VARIANTS.ataxx.colors : undefined,
         nnueFingerprint: meta.nnueFingerprint,
         ratingEnabled: false,
         startFen: meta.startFen,

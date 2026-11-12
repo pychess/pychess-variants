@@ -189,6 +189,49 @@ dropLoop = true
 firstRankPawnDrops = true
 """,
     },
+    "clobber": {
+        "displayName": "Clobber",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Clobber"),
+        "baseVariant": "",
+        "clientVariant": "chess",
+        "pieceFamilyOverride": "ataxx",
+        "pieceNames": {"p": "Disc"},
+        # Documentation only, transcribed from clobber_variant() in
+        # Fairy-Stockfish's src/variant.cpp. A player with no legal capture loses.
+        "rulesIni": """
+[clobber]
+maxRank = 6
+maxFile = 5
+pawn = -
+knight = -
+bishop = -
+rook = -
+queen = -
+king = -
+clobber = p
+doubleStep = false
+castling = false
+stalemateValue = loss
+immobilityIllegal = false
+""",
+    },
+    "clobber10": {
+        "displayName": "Clobber 10x10",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Clobber"),
+        "baseVariant": "clobber",
+        "clientVariant": "chess",
+        "boardFamilyOverride": "standard10x10",
+        "pieceFamilyOverride": "ataxx",
+        "pieceNames": {"p": "Disc"},
+        # Documentation only; use the native 10x10 starting position at runtime.
+        "rulesIni": """
+[clobber10:clobber]
+maxRank = 10
+maxFile = 10
+""",
+    },
     "codrus": {
         "displayName": "Codrus",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -971,21 +1014,6 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
             "Black: q/r/b). Keep out of the allowlist until catalogued promotion "
             "UI can model that explicitly."
         ),
-    },
-    "clobber": {
-        "displayName": "Clobber",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Clobber"),
-        "baseVariant": "",
-        "clientVariant": "chess",
-        "reviewNotes": "Non-chess game; verify pass/stalemate/objective handling.",
-    },
-    "clobber10": {
-        "displayName": "Clobber 10x10",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Clobber"),
-        "baseVariant": "clobber",
-        "reviewNotes": "Large-board non-chess game; verify board sizing and objective handling.",
     },
     "fairy": {
         "displayName": "Fairy",

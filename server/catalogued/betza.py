@@ -126,6 +126,8 @@ FSF_BUILTIN_PIECE_DIAGRAMS_BY_VARIANT: Mapping[str, tuple[_FsfBuiltinPieceDefini
 # regression) while still overriding chessground's approximate fallback where
 # required.
 FSF_BUILTIN_PREMOVE_BETZA_OVERRIDES_BY_VARIANT: Mapping[str, Mapping[str, str]] = {
+    "clobber": {"p": "cW"},
+    "clobber10": {"p": "cW"},
     "courier": {"b": "B"},
     # Reversi discs are placed from reserve and never move on the board.
     "flipello": {"p": ""},
