@@ -25,6 +25,143 @@ test_logger.init_test_logger()
 
 @pytest.mark.asyncio
 class TestGUI:
+    @pytest.mark.parametrize(
+        "width,theme", [(1280, "light"), (1280, "dark"), (390, "light"), (390, "dark")]
+    )
+    async def test_check_shogi_first_check_wins_with_drops_promotion_and_replay(
+        self, aiohttp_server, width, theme
+    ):
+        from aiohttp_jinja2 import get_env
+        from catalogued.builtin_data import FSF_CATALOGUED_BUILTIN_VARIANTS
+        from catalogued.documents import _build_fsf_builtin_doc
+        from catalogued.variants import register_catalogued_variant_doc
+        from const import VARIANTEND
+        from utils import load_game, sanitize_fen
+        from variants import unregister_catalogued_server_variant
+
+        app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+        server = await aiohttp_server(app, host="127.0.0.1")
+        state = get_app_state(app)
+        base_url = f"http://{server.host}:{server.port}"
+        get_env(app).globals["home"] = base_url
+        doc = _build_fsf_builtin_doc("checkshogi", FSF_CATALOGUED_BUILTIN_VARIANTS["checkshogi"])
+        register_catalogued_variant_doc(state, doc)
+        await state.db.catalogued_variant.insert_one(doc)
+        assert sanitize_fen("checkshogi", doc["startFen"], False)[0]
+        players = []
+        for side in ("white", "black"):
+            username = "checkshogi-" + side
+            await state.db.user.insert_one(
+                {"_id": username, "enabled": True, "ct": "all", "theme": theme}
+            )
+            user = User(state, username=username, theme=theme)
+            user.game_category_set = True
+            state.users[username] = user
+            players.append(user)
+        game = Game(state, "CheckIni", "checkshogi", "", *players, base=5)
+        state.games[game.id] = game
+        await insert_game_to_db(game, state)
+        initial = "4k4/9/9/9/9/9/2p6/2R6/4K4[] w - - 1+1 0 1"
+        moves = ["c2c3", "e9f9", "P@a4", "f9g9", "c3c7+", "g9h9", "c7h7"]
+
+        async def badges(page, values):
+            await expect(page.locator("#mainboard .cg-custom-svgs text")).to_have_text(values)
+
+        async with async_playwright() as playwright:
+            browser = await self._launch_browser(playwright)
+            try:
+                pages, errors = [], []
+                for player in players:
+                    context, page = await self._playwright_page_for_user(
+                        browser, base_url, player.username
+                    )
+                    await context.add_init_script("localStorage.setItem('autoPromote', 'false');")
+                    await page.set_viewport_size({"width": width, "height": 900})
+                    page.on("pageerror", lambda error: errors.append(str(error)))
+                    await page.goto(f"{base_url}/{game.id}")
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await badges(page, ["1", "1"])
+                    await expect(page.locator("#mainboard.shogi9x9.shogi")).to_be_visible()
+                    piece = page.locator("#mainboard piece.k-piece").first
+                    assert await piece.evaluate(
+                        "el => [getComputedStyle(el).backgroundImage, getComputedStyle(el, '::before').backgroundImage].some(image => image !== 'none')"
+                    )
+                    pages.append(page)
+                await game.game_ended(players[0], "resign")
+                game = Game(state, "CheckTst", "checkshogi", initial, *players, base=5)
+                state.games[game.id] = game
+                await insert_game_to_db(game, state)
+                for page in pages:
+                    await page.goto(f"{base_url}/{game.id}")
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await badges(page, ["1", "1"])
+                for ply, move in enumerate(moves):
+                    page = pages[game.board.color]
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    await page.evaluate(
+                        """move => {
+                        if (move.includes('@')) window.cg.selectPocket({role:'p-piece', color:window.cg.state.turnColor});
+                        else window.cg.selectSquare(move.slice(0,2));
+                        window.cg.selectSquare(move.includes('@') ? move.slice(-2) : move.slice(2,4));
+                    }""",
+                        move,
+                    )
+                    if move.endswith("+"):
+                        await page.locator("#extension_choice piece.pr-piece").click()
+                    await self._eventually(lambda expected=ply + 1: game.board.ply == expected)
+                    assert game.board.move_stack[-1] == move
+                    for player_page in pages:
+                        await badges(
+                            player_page, ["1", "0"] if ply == len(moves) - 1 else ["1", "1"]
+                        )
+                    if ply < len(moves) - 1:
+                        assert game.result == "*"
+                await self._eventually(lambda: game.result == "1-0")
+                assert game.status == VARIANTEND
+                assert game.check
+                final_fen = game.board.fen
+                state.games.pop(game.id)
+                restored = await load_game(state, game.id)
+                assert restored is not None
+                assert restored.board.move_stack == moves
+                assert restored.board.fen == final_fen
+                assert restored.result == "1-0"
+                assert restored.status == VARIANTEND
+                page = pages[0]
+                await page.goto(f"{base_url}/{game.id}?ply=7")
+                await expect(page.locator("#fullfen")).to_have_value(final_fen)
+                await badges(page, ["1", "0"])
+                await page.get_by_title("First move", exact=True).click()
+                await badges(page, ["1", "1"])
+                for ply in range(1, 8):
+                    await page.get_by_title("Next move", exact=True).click()
+                    await expect(page.locator("#fullfen")).to_have_value(game.steps[ply]["fen"])
+                await page.screenshot(path=f"/tmp/checkshogi-{width}-{theme}.png")
+
+                # Analysis can finish on a checking drop; no checkmate is needed.
+                from urllib.parse import urlencode
+
+                pawn_fen = "4k4/9/9/9/9/9/9/9/4K4[P] w - - 1+1 0 1"
+                await page.goto(f"{base_url}/analysis/checkshogi?" + urlencode({"fen": pawn_fen}))
+                await badges(page, ["1", "1"])
+                await page.locator(".pocketrow piece.p-piece.white").click()
+                board = page.locator("#mainboard cg-board")
+                await board.scroll_into_view_if_needed()
+                bounds = await board.bounding_box()
+                assert bounds is not None
+                await page.mouse.click(
+                    bounds["x"] + bounds["width"] * 4.5 / 9,
+                    bounds["y"] + bounds["height"] * 1.5 / 9,
+                )
+                await expect(page.locator("#fullfen")).to_have_value(
+                    re.compile(r" b - - 0\+1 0 1$")
+                )
+                await badges(page, ["1", "0"])
+                assert errors == []
+            finally:
+                await browser.close()
+                unregister_catalogued_server_variant("checkshogi")
+
     @pytest.mark.parametrize("name,files,ranks", [("clobber", 5, 6), ("clobber10", 10, 10)])
     @pytest.mark.parametrize(
         "width,theme", [(1280, "light"), (1280, "dark"), (390, "light"), (390, "dark")]

@@ -193,6 +193,11 @@ class FairyBoard:
     def start_fen(variant: str | None, chess960=False, disabled_fen=""):
         normalized_variant, normalized_chess960 = _normalize_variant_and_chess960(variant, chess960)
 
+        if normalized_variant == "checkshogi":
+            # Its inherited Shogi FEN has an implicit one-check limit.
+            # Expose the engine's 1+1 counter at ply 0, including catalogue games.
+            return sf.get_fen(normalized_variant, sf.start_fen(normalized_variant), [])
+
         if is_catalogued_variant(normalized_variant):
             default_fen = sf.start_fen(normalized_variant)
             if not normalized_chess960 or not catalogued_variant_random_start(normalized_variant):

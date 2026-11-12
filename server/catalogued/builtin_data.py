@@ -168,6 +168,29 @@ FSF_CATALOGUED_BUILTIN_VARIANTS: Mapping[str, Mapping[str, Any]] = {
         "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Chaturanga"),
         "baseVariant": "shatranj",
     },
+    "checkshogi": {
+        "displayName": "Check-Shogi",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "baseVariant": "shogi",
+        "clientVariant": "shogi",
+        "boardFamilyOverride": "shogi9x9",
+        "pieceFamilyOverride": "shogi",
+        "captureToHand": True,
+        "promotionType": "shogi",
+        "promotionRoles": ("p", "l", "n", "s", "b", "r"),
+        "promotionOrder": ("+",),
+        "showPromoted": True,
+        "legalMovesNeedHistory": True,
+        "nFoldIsDraw": True,
+        "showCheckCounters": True,
+        # Documentation only, from checkshogi_variant() in src/variant.cpp.
+        # The inherited Shogi FEN omits the counter: Position::set defaults
+        # checkCounting positions without one to 1+1 (the next check wins).
+        "rulesIni": """
+[checkshogi:shogi]
+checkCounting = true
+""",
+    },
     "chessgi": {
         "displayName": "Chessgi",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -994,12 +1017,6 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
         ),
         "baseVariant": "capablanca",
         "reviewNotes": "Shuffle variant; pychess already has first-class Caparandom support.",
-    },
-    "checkshogi": {
-        "displayName": "Check-Shogi",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "baseVariant": "shogi",
-        "reviewNotes": "Shogi-family check-counting variant; review byo/check-counter UI.",
     },
     "chigorin": {
         "displayName": "Chigorin Chess",

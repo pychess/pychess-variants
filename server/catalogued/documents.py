@@ -8,7 +8,7 @@ from typing import Any, cast
 from urllib.parse import urlparse
 
 from const import STARTED
-from fairy.fairy_board import sf
+from fairy.fairy_board import FairyBoard, sf
 from nnue_identity import fsf_ini_v1_fingerprint
 from settings import ADMINS
 
@@ -522,7 +522,7 @@ def _build_fsf_builtin_doc(
     *,
     existing: Mapping[str, Any] | None = None,
 ) -> models.CataloguedVariantDocument:
-    start_fen = sf.start_fen(name)
+    start_fen = FairyBoard.start_fen(name) if name == "checkshogi" else sf.start_fen(name)
     if not start_fen:
         raise ValueError(f"Fairy-Stockfish did not provide a start FEN for {name!r}.")
 
