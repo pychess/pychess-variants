@@ -40,6 +40,7 @@ from fishnet import (
 )
 from link_filter import sanitize_user_message
 from newid import new_id
+from variants import JANGGI_VARIANTS
 
 if TYPE_CHECKING:
     from bug.game_bug import GameBug
@@ -523,7 +524,7 @@ async def handle_board(ws: WebSocketResponse, user: User, game: game.Game) -> No
         user_color = WHITE if user == game.wplayer else BLACK if user == game.bplayer else None
         board_response = game.get_board(full=True, persp_color=user_color, client_history=True)
         await ws_send_json(ws, board_response)
-    elif game.variant == "janggi":
+    elif game.variant in JANGGI_VARIANTS:
         # print("JANGGI", ws, game.bsetup, game.wsetup, game.status)
         if (game.bsetup or game.wsetup) and game.status <= STARTED:
             setup_response: SetupResponse
@@ -565,7 +566,7 @@ async def handle_board(ws: WebSocketResponse, user: User, game: game.Game) -> No
             {
                 "type": "draw_offer",
                 "username": offerer.username,
-                "message": "Pass" if game.variant == "janggi" else "Draw offer sent",
+                "message": "Pass" if game.variant in JANGGI_VARIANTS else "Draw offer sent",
                 "room": "player",
                 "user": "",
             },
@@ -597,7 +598,7 @@ async def handle_setup(
             log.info("Ignoring setup from non-player %s in %s", user.username, game.id)
             return
 
-        if game.variant != "janggi":
+        if game.variant not in JANGGI_VARIANTS:
             log.info("Ignoring setup for non-janggi game %s by %s", game.id, user.username)
             await handle_board(ws, user, game)
             return
@@ -864,7 +865,7 @@ async def handle_rematch(
         )
         opp_player = app_state.users[opp_name]
         handicap = data["handicap"]
-        fen = "" if game.variant == "janggi" else game.initial_fen
+        fen = "" if game.variant in JANGGI_VARIANTS else game.initial_fen
 
         chess960 = game.chess960
         if TYPE_CHECKING:

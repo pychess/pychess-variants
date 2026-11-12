@@ -70,6 +70,7 @@ from typing_defs import (
 )
 from variants import (
     GRANDS,
+    JANGGI_VARIANTS,
     CataloguedServerVariant,
     ServerVariants,
     catalogued_variant_random_start,
@@ -412,7 +413,7 @@ class Game:
         )
 
         # Janggi setup needed when player is not BOT
-        if self.variant == "janggi":
+        if self.variant in JANGGI_VARIANTS:
             # Janggi custom start position -> no setup phase
             if self.initial_fen:
                 self.bsetup = False
@@ -1061,7 +1062,7 @@ class Game:
 
             # Janggi game starts with a prelude phase to set up horses and elephants, so
             # initial FEN may be different compared to one we used when db game document was created
-            if self.variant == "janggi":
+            if self.variant in JANGGI_VARIANTS:
                 new_data["if"] = self.board.initial_fen
 
             if self.persist_clock_history:
@@ -1818,7 +1819,11 @@ class Game:
         if self.result == "*":
             if reason == "abort":
                 result = "*"
-            elif self.variant == "janggi" and reason == "flag" and (self.bsetup or self.wsetup):
+            elif (
+                self.variant in JANGGI_VARIANTS
+                and reason == "flag"
+                and (self.bsetup or self.wsetup)
+            ):
                 if self.bsetup:
                     # In Janggi game the second player (red, who have to do the setup first!) failed to do the setup phase in time
                     result = "1-0"
@@ -2313,7 +2318,7 @@ class Game:
             await self.app_state.lobby.lobby_broadcast(
                 {"type": "g_cnt", "cnt": self.app_state.g_cnt[0]}
             )
-            if self.variant != "janggi" or self.bsetup or self.wsetup:
+            if self.variant not in JANGGI_VARIANTS or self.bsetup or self.wsetup:
                 self.status = CREATED
 
         self.has_legal_move = self.board.has_legal_move()

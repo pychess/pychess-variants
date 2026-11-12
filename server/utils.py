@@ -82,6 +82,7 @@ from sse_utils import consume_sse_queue, log_sse_failure, sse_response
 from variants import (
     C2V,
     GRANDS,
+    JANGGI_VARIANTS,
     REVERSI_VARIANTS,
     TWO_BOARD_VARIANT_CODES,
     catalogued_variant_random_start,
@@ -162,7 +163,7 @@ async def put_bot_game_queue(player: User, game_id: str, payload: str) -> bool:
 
 def should_send_game_start_to_bot(game: Game | GameBug) -> bool:
     """Janggi bots must wait for setup phase completion before first move."""
-    return game.variant != "janggi" or not (game.bsetup or game.wsetup)
+    return game.variant not in JANGGI_VARIANTS or not (game.bsetup or game.wsetup)
 
 
 async def send_bot_game_start_unless_streaming(player: User, game: Game | GameBug) -> bool:
@@ -424,9 +425,10 @@ async def _load_game_from_doc(
 
     elif variant in GRANDS:
         mlist = [*map(zero2grand, mlist)]
-        if variant == "janggi":
-            game.wsetup = doc.get("ws", False)
-            game.bsetup = doc.get("bs", False)
+
+    if variant in JANGGI_VARIANTS:
+        game.wsetup = doc.get("ws", False)
+        game.bsetup = doc.get("bs", False)
 
     if "a" in doc:
         game.analysis = doc["a"]
@@ -1013,7 +1015,7 @@ async def insert_game_to_db(game, app_state: PychessGlobalAppState):
     ):
         document["uci"] = 1
 
-    if game.variant == "janggi":
+    if game.variant in JANGGI_VARIANTS:
         document["ws"] = game.wsetup
         document["bs"] = game.bsetup
         document["if"] = game.board.initial_fen

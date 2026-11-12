@@ -2935,6 +2935,9 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
     const { pieces, kingRoles, pocketRoles, promotionType, promotionRoles, promotionOrder, clientVariant } = info;
     const captureToHand = cataloguedCaptureToHand(meta, clientVariant);
     const isBreakthrough = meta.source === 'fairy-stockfish-builtin' && meta.name === 'breakthrough';
+    const isJanggi =
+        meta.source === 'fairy-stockfish-builtin' &&
+        ['janggicasual', 'janggimodern', 'janggitraditional'].includes(meta.name);
     const countsDiscs =
         meta.source === 'fairy-stockfish-builtin' && ['flipello', 'flipello10', 'flipersi'].includes(meta.name);
     const usesAtaxxColors =
@@ -2966,7 +2969,8 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
         aiDisabled: !!meta.aiDisabled,
         replayOnly: !!meta.replayOnly,
         cataloguedSource: meta.source,
-        colors: usesAtaxxColors ? VARIANTS.ataxx.colors : undefined,
+        colors: usesAtaxxColors ? VARIANTS.ataxx.colors : isJanggi ? VARIANTS.janggi.colors : undefined,
+        notation: isJanggi ? VARIANTS.janggi.notation : undefined,
         nnueFingerprint: meta.nnueFingerprint,
         ratingEnabled: false,
         startFen: meta.startFen,
@@ -2999,7 +3003,12 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
                 meta.source === 'fairy-stockfish-builtin' && meta.name === 'karouk'
                     ? 'automatic'
                     : clientVariant?.ui.counting,
-            materialPoint: countsDiscs ? 'ataxx' : clientVariant?.ui.materialPoint,
+            materialPoint:
+                isJanggi && meta.name !== 'janggimodern'
+                    ? undefined
+                    : countsDiscs
+                      ? 'ataxx'
+                      : clientVariant?.ui.materialPoint,
             pieceSound: clientVariant?.ui.pieceSound,
             boardMark: isBreakthrough
                 ? 'campmate'

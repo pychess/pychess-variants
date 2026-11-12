@@ -25,6 +25,193 @@ test_logger.init_test_logger()
 
 @pytest.mark.asyncio
 class TestGUI:
+    @pytest.mark.parametrize(
+        "name", ["janggi", "janggitraditional", "janggimodern", "janggicasual"]
+    )
+    @pytest.mark.parametrize("width,theme", [(1280, "light"), (390, "dark")])
+    async def test_janggi_family_setup_pass_bikjang_points_and_replay(
+        self, aiohttp_server, name, width, theme
+    ):
+        from aiohttp_jinja2 import get_env
+        from catalogued.builtin_data import FSF_CATALOGUED_BUILTIN_VARIANTS
+        from catalogued.documents import _build_fsf_builtin_doc
+        from catalogued.variants import register_catalogued_variant_doc
+        from const import STARTED, VARIANTEND
+        from utils import load_game
+        from variants import unregister_catalogued_server_variant
+
+        app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+        server = await aiohttp_server(app, host="127.0.0.1")
+        state = get_app_state(app)
+        base_url = f"http://{server.host}:{server.port}"
+        get_env(app).globals["home"] = base_url
+        if name != "janggi":
+            doc = _build_fsf_builtin_doc(name, FSF_CATALOGUED_BUILTIN_VARIANTS[name])
+            register_catalogued_variant_doc(state, doc)
+        counted = name in ("janggi", "janggimodern")
+        bikjang = name in ("janggi", "janggitraditional")
+        players = []
+        for side in ("blue", "red"):
+            username = "janggi-" + side
+            await state.db.user.insert_one(
+                {"_id": username, "enabled": True, "ct": "all", "theme": theme}
+            )
+            user = User(state, username=username, theme=theme)
+            user.game_category_set = True
+            state.users[username] = user
+            players.append(user)
+        game = Game(state, "JangSetp", name, "", *players, base=5, inc=5, byoyomi_period=1)
+        state.games[game.id] = game
+        await insert_game_to_db(game, state)
+
+        async def points(page, white="72", black="73.5"):
+            if counted:
+                await expect(page.locator("#misc-infow")).to_have_text(white)
+                await expect(page.locator("#misc-infob")).to_have_text(black)
+            else:
+                for info in await page.locator("#misc-infow, #misc-infob").all():
+                    await expect(info).to_have_text("")
+
+        async with async_playwright() as playwright:
+            browser = await self._launch_browser(playwright)
+            try:
+                pages, errors = [], []
+                for player in players:
+                    _, page = await self._playwright_page_for_user(
+                        browser, base_url, player.username
+                    )
+                    await page.set_viewport_size({"width": width, "height": 900})
+                    page.on("pageerror", lambda error: errors.append(str(error)))
+                    await page.goto(f"{base_url}/{game.id}")
+                    await expect(page.locator("#mainboard.janggi9x10.janggi")).to_be_visible()
+                    await points(page)
+                    await expect(
+                        page.get_by_role("button", name="Pass", exact=True)
+                    ).to_be_visible()
+                    pages.append(page)
+                await expect(pages[1].locator("#flipLeft")).to_be_visible()
+                assert await pages[0].locator("#flipLeft").count() == 0
+                await pages[1].locator("#flipLeft").click()
+                await pages[1].locator("#janggi-setup-buttons button").nth(1).click()
+                await self._eventually(lambda: not game.bsetup and game.wsetup)
+                await pages[1].reload()
+                await expect(pages[0].locator("#flipRight")).to_be_visible()
+                await pages[0].locator("#flipRight").click()
+                await pages[0].locator("#janggi-setup-buttons button").nth(1).click()
+                await self._eventually(lambda: not game.bsetup and not game.wsetup)
+                assert game.status == STARTED
+                initial = game.board.initial_fen
+                assert (
+                    initial
+                    != "rnba1abnr/4k4/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/4K4/RNBA1ABNR w - - 0 1"
+                )
+
+                async def play(move=None, ctrl_pass=False):
+                    ply = game.board.ply
+                    page = pages[game.board.color]
+                    await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                    if move:
+                        await page.evaluate(
+                            "move => {window.cg.selectSquare(move.slice(0,2));window.cg.selectSquare(move.slice(2,4));}",
+                            move.replace("10", ":"),
+                        )
+                    elif ctrl_pass:
+                        await page.evaluate("""() => {
+                            const cg = window.cg;
+                            const entry = [...cg.state.movable.dests].find(([key, dests]) => dests.includes(key));
+                            cg.state.stats.ctrlKey = true;
+                            cg.selectSquare(entry[0]);
+                        }""")
+                    else:
+                        await page.get_by_role("button", name="Pass", exact=True).click()
+                    await self._eventually(lambda expected=ply + 1: game.board.ply == expected)
+                    if ctrl_pass:
+                        await page.evaluate("() => {window.cg.state.stats.ctrlKey = false;}")
+
+                await play("a4a5")
+                await play("a7a6")
+                await play(ctrl_pass=True)
+                assert game.board.move_stack[-1] == "e2e2"
+                for page in pages:
+                    await page.wait_for_function("() => window.cg.state.turnColor === 'black'")
+                await play()
+                await self._eventually(lambda: game.result != "*")
+                assert game.status == VARIANTEND
+                assert game.result == ("0-1" if counted else "1/2-1/2")
+                final_fen = game.board.fen
+                state.games.pop(game.id)
+                restored = await load_game(state, game.id)
+                assert restored is not None
+                assert restored.board.initial_fen == initial
+                assert restored.board.fen == final_fen
+                page = pages[0]
+                await page.goto(f"{base_url}/{game.id}?ply=4")
+                await expect(page.locator("#fullfen")).to_have_value(final_fen)
+                await points(page)
+                await page.get_by_title("First move", exact=True).click()
+                await expect(page.locator("#fullfen")).to_have_value(initial)
+                for ply in range(1, 5):
+                    await page.get_by_title("Next move", exact=True).click()
+                    await expect(page.locator("#fullfen")).to_have_value(game.steps[ply]["fen"])
+
+                # A challenge can be accepted, or its facing kings can be separated.
+                position = "9/4k4/9/p8/9/4P4/9/9/4K4/R8 w - - 0 1"
+                for game_id, reply in (("JangBikj", None), ("JangExit", "e9d9")):
+                    game = Game(state, game_id, name, position, *players, base=5)
+                    state.games[game.id] = game
+                    await insert_game_to_db(game, state)
+                    for page in pages:
+                        await page.goto(f"{base_url}/{game.id}")
+                    await play("e5d5")
+                    await pages[1].wait_for_function("() => window.cg.state.turnColor === 'black'")
+                    assert await pages[1].evaluate(
+                        "() => window.cg.state.movable.dests.get('a7')?.includes('a6') || false"
+                    ) == (not bikjang)
+                    await play(reply)
+                    if bikjang and reply is None:
+                        await self._eventually(lambda active_game=game: active_game.result != "*")
+                        assert game.result == ("1-0" if counted else "1/2-1/2")
+                    else:
+                        assert game.result == "*"
+                        if reply:
+                            await play("a1a7")
+                            for page in pages:
+                                await points(page, "15", "1.5")
+                        await game.game_ended(players[0], "resign")
+
+                # An ordinary check cannot be answered by passing or Ctrl-clicking the king.
+                check_fen = position.replace("4P4/9/9", "4P4/9/4r4")
+                game = Game(state, "JangChek", name, check_fen, *players, base=5)
+                state.games[game.id] = game
+                await insert_game_to_db(game, state)
+                page = pages[0]
+                sent_moves = []
+
+                def record_frame(payload):
+                    if isinstance(payload, str) and payload.startswith("{"):
+                        message = json.loads(payload)
+                        if message.get("type") == "move":
+                            sent_moves.append(message)
+
+                page.on("websocket", lambda socket: socket.on("framesent", record_frame))
+                await page.goto(f"{base_url}/{game.id}")
+                await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
+                await page.get_by_role("button", name="Pass", exact=True).click()
+                await page.evaluate("""() => {
+                    window.cg.state.stats.ctrlKey = true;
+                    window.cg.selectSquare('e2');
+                    window.cg.state.stats.ctrlKey = false;
+                }""")
+                await page.screenshot(path=f"/tmp/{name}-{width}-{theme}.png")
+                assert sent_moves == []
+                assert game.board.ply == 0
+                await game.game_ended(players[0], "resign")
+                assert errors == []
+            finally:
+                await browser.close()
+                if name != "janggi":
+                    unregister_catalogued_server_variant(name)
+
     @pytest.mark.parametrize("color", ["white", "black"])
     @pytest.mark.parametrize(
         "piece,choice,suffix", [("p", "pp", "+"), ("p", "q", "q"), ("s", "q", "q")]

@@ -10,6 +10,7 @@ from const import ABORTED
 from fairy import BLACK, WHITE
 from notify import notify
 from typing_defs import NotificationContent
+from variants import JANGGI_VARIANTS
 
 log = logging.getLogger(__name__)
 
@@ -166,7 +167,7 @@ class Clock:
     @property
     def time_for_first_move(self) -> int:
         # Fix 45s for janggi because it has setup phase
-        if self.game.variant == "janggi" or self.game.chess960:
+        if self.game.variant in JANGGI_VARIANTS or self.game.chess960:
             return 45 * 1000
 
         egt = self.estimate_game_time

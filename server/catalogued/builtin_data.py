@@ -499,6 +499,66 @@ passOnStalemate = false
         "promotionRoles": ("p",),
         "promotionOrder": ("j", "q", "r", "b", "n"),
     },
+    "janggicasual": {
+        "displayName": "Janggi Casual",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "baseVariant": "janggi",
+        "clientVariant": "janggi",
+        "boardFamilyOverride": "janggi9x10",
+        "pieceFamilyOverride": "janggi",
+        "rulesPass": True,
+        "legalMovesNeedHistory": True,
+        "nFoldIsDraw": True,
+        # Documentation only: retain the native engine key and its history rules.
+        "rulesIni": """
+[janggicasual:janggi]
+bikjangRule = false
+materialCounting = none
+pass = true
+perpetualCheckIllegal = true
+""",
+    },
+    "janggimodern": {
+        "displayName": "Janggi Modern",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "baseVariant": "janggi",
+        "clientVariant": "janggi",
+        "boardFamilyOverride": "janggi9x10",
+        "pieceFamilyOverride": "janggi",
+        "rulesPass": True,
+        "legalMovesNeedHistory": True,
+        "nFoldIsDraw": True,
+        # Documentation only: retain the native engine key and its history rules.
+        "rulesIni": """
+[janggimodern:janggi]
+bikjangRule = false
+materialCounting = janggi
+pass = true
+perpetualCheckIllegal = true
+moveRepetitionIllegal = true
+nFoldRule = 4
+nMoveRule = 100
+""",
+    },
+    "janggitraditional": {
+        "displayName": "Janggi Traditional",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "baseVariant": "janggi",
+        "clientVariant": "janggi",
+        "boardFamilyOverride": "janggi9x10",
+        "pieceFamilyOverride": "janggi",
+        "rulesPass": True,
+        "legalMovesNeedHistory": True,
+        "nFoldIsDraw": True,
+        # Documentation only: retain the native engine key and its history rules.
+        "rulesIni": """
+[janggitraditional:janggi]
+bikjangRule = true
+materialCounting = none
+pass = true
+perpetualCheckIllegal = true
+""",
+    },
     "jesonmor": {
         "displayName": "Jeson Mor",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -1169,24 +1229,6 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
         ),
         "baseVariant": "isolation",
         "reviewNotes": "Non-chess blocking game; verify move encoding and result handling.",
-    },
-    "janggicasual": {
-        "displayName": "Janggi Casual",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "baseVariant": "janggi",
-        "reviewNotes": "Janggi rule-set alias/variant; compare with existing pychess Janggi support.",
-    },
-    "janggimodern": {
-        "displayName": "Janggi Modern",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "baseVariant": "janggi",
-        "reviewNotes": "Janggi rule-set alias/variant; compare with existing pychess Janggi support.",
-    },
-    "janggitraditional": {
-        "displayName": "Janggi Traditional",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "baseVariant": "janggi",
-        "reviewNotes": "Janggi rule-set alias/variant; compare with existing pychess Janggi support.",
     },
     "koedem": {
         "displayName": "Koedem",
