@@ -27,6 +27,9 @@ class Sounds {
         Tick: 'Tick',
         Explosion: 'Explosion',
         Berserk: 'Berserk',
+        OutOfBound: 'OutOfBound',
+        Error: 'Error',
+        Confirmation: 'Confirmation',
     };
 
     private static readonly bugTrackNames = {
@@ -196,6 +199,15 @@ class Sounds {
     }
     berserk() {
         if (this.audio()) this.tracks.Berserk.play();
+    }
+    outOfBound() {
+        if (this.audio()) this.tracks.OutOfBound.play();
+    }
+    error() {
+        if (this.audio()) this.tracks.Error.play();
+    }
+    confirmation() {
+        if (this.audio()) this.tracks.Confirmation.play();
     }
 
     // Lila Practice success cue: public/sound/other/energy3.* (AGPL-3.0).

@@ -17,7 +17,8 @@ import { _, ngettext } from '../i18n';
 import { updateMovelist } from '../movelist';
 import { renderLinkifiedText } from '../richTextEnhance';
 import type { PyChessModel, StudyFeatureSelection, StudyPageModel } from '../types';
-import { activateStudyEngineRules, loadCataloguedVariantsFromJson, variantConfigIni } from '../variants';
+import { activateStudyEngineRules, loadCataloguedVariantsFromJson, variantConfigIni, VARIANTS } from '../variants';
+import { ChessgroundKeyboard } from '../accessibility/chessgroundKeyboard';
 import { buildStudyEngineRules } from './variantRules';
 import { variantsIni } from '../variantsIni';
 import { createWebsocket } from '../socket/webSocketUtils';
@@ -2510,6 +2511,7 @@ function runStudyGround(
     study: StudyPageModel,
     sideVNode: VNode,
     modeActions: StudyModeActions,
+    keyboard: ChessgroundKeyboard,
     practiceProgress?: StudyPracticeProgress,
 ): void {
     let extension!: StudyAnalysisExtension;
@@ -2595,7 +2597,7 @@ function runStudyGround(
                   extension.onSocketMessage(message.type, message);
               },
           );
-    const mount = (el: HTMLElement, snapshotVerified = false) => {
+    const mount = (el: HTMLElement, keyboard: ChessgroundKeyboard, snapshotVerified = false) => {
         policy = effectiveStudySessionPolicy(study);
         syncPracticeLearnerBoardHeight(el, study);
         let gamebookPlayback: StudyGamebookPlayback | undefined;
@@ -2639,7 +2641,7 @@ function runStudyGround(
             });
             extension.setGamebookPlayback(gamebookPlayback);
         };
-        ctrl = new AnalysisController(el, model, analysisCtrl => {
+        ctrl = new AnalysisController(el, model, keyboard, analysisCtrl => {
             extension = new StudyAnalysisExtension(analysisCtrl, {
                 socket,
                 studyId: study.id,
@@ -2930,7 +2932,7 @@ function runStudyGround(
         syncStudyPlaybackUi(study, modeActions);
         window['onFSFline'] = ctrl.onFSFline;
     };
-    mount(vnode.elm as HTMLElement);
+    mount(vnode.elm as HTMLElement, keyboard);
     if (study.canWrite) bindAnnotationPanel(() => extension);
     bindExportPanel(() => extension, study);
 
@@ -3027,11 +3029,14 @@ function runStudyGround(
             document.title = studyDocumentTitle(study);
             // Patch only chapter-dependent parts. The main grid, sidebar, tool tabs
             // and underboard editors remain mounted throughout the switch.
+            // A chapter can change the variant, so it gets its own keyboard layer.
+            const keyboard = new ChessgroundKeyboard(VARIANTS[model.variant], '');
             const next = renderAnalysisPage(model, {
                 side: [],
                 underboard: [],
                 ongoing: false,
                 mountBoard: () => {},
+                keyboard,
                 toolsAfterMoves: studyAnalysisTools(study),
                 ...studyBoardParts(study),
             })[0];
@@ -3056,7 +3061,7 @@ function runStudyGround(
             }
             sideVNode = patch(sideVNode, studySide(study, model, modeActions, practiceProgress));
             syncStudyPlaybackUi(study, modeActions);
-            mount(app.querySelector<HTMLElement>('#mainboard > .cg-wrap')!, true);
+            mount(app.querySelector<HTMLElement>('#mainboard > .cg-wrap')!, keyboard, true);
             // Re-apply chapter-dependent underboard content after the replacement
             // controller has mounted. This keeps pinned comments in sync across
             // chapter A -> B -> A navigation in both Study and Practice views.
@@ -3154,9 +3159,10 @@ function runStudyEmbedGround(
     model: PyChessModel,
     study: StudyPageModel,
     policy: StudySessionPolicy,
+    keyboard: ChessgroundKeyboard,
 ): void {
     const rootOnlyPreview = (study.chapter.mode ?? 'normal') !== 'normal';
-    const ctrl = new AnalysisController(vnode.elm as HTMLElement, model, analysisCtrl =>
+    const ctrl = new AnalysisController(vnode.elm as HTMLElement, model, keyboard, analysisCtrl =>
         new StudyAnalysisExtension(analysisCtrl, {
             studyId: study.id,
             chapterId: study.chapter.id,
@@ -3194,9 +3200,11 @@ export function studyEmbedView(model: PyChessModel): VNode[] {
     const chapterMode = study.chapter.mode ?? 'normal';
     const preview = chapterMode !== 'normal';
     const studyUrl = `/study/${study.id}/${study.chapter.id}`;
+    const keyboard = new ChessgroundKeyboard(VARIANTS[model.variant], '');
     const page = renderEmbedPage(
         model,
-        vnode => runStudyEmbedGround(vnode, model, study, policy),
+        keyboard,
+        vnode => runStudyEmbedGround(vnode, model, study, policy, keyboard),
         h(
             'a.gamelink',
             {
@@ -3262,10 +3270,12 @@ export function studyView(model: PyChessModel): VNode[] {
         leavePracticeAnalysis: async () => {},
     };
     const side = studySide(study, model, modeActions, practiceProgress);
+    const keyboard = new ChessgroundKeyboard(VARIANTS[model.variant], '');
     const page = renderAnalysisPage(model, {
         side,
         underboard: studyUnderboard(study, model, modeActions, practiceProgress),
-        mountBoard: vnode => runStudyGround(vnode, model, study, side, modeActions, practiceProgress),
+        mountBoard: vnode => runStudyGround(vnode, model, study, side, modeActions, keyboard, practiceProgress),
+        keyboard,
         ongoing: false,
         toolsAfterMoves: studyAnalysisTools(study),
         ...studyBoardParts(study),

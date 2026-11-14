@@ -8,10 +8,11 @@ import { analysisTools, gauge } from './analysis';
 import { analysisSettings } from './analysis/analysisSettings';
 import { BoardSummaryView } from './accessibility/boardSummary';
 import { pageHeading } from './accessibility/headings';
+import { ChessgroundKeyboard } from './accessibility/chessgroundKeyboard';
 
-function runPuzzle(vnode: VNode, model: PyChessModel) {
+function runPuzzle(vnode: VNode, model: PyChessModel, keyboard: ChessgroundKeyboard) {
     const el = vnode.elm as HTMLElement;
-    const ctrl = new PuzzleController(el, model);
+    const ctrl = new PuzzleController(el, model, keyboard);
     window['onFSFline'] = ctrl.onFSFline;
 }
 
@@ -42,22 +43,28 @@ function leftSide(model: PyChessModel) {
 
 export function puzzleView(model: PyChessModel): VNode[] {
     const variant = VARIANTS[model.variant];
+    const keyboard = new ChessgroundKeyboard(variant, '');
     return [
         h('main.analysis-app', [
             pageHeading(),
             h('aside.sidebar-first', leftSide(model)),
             h(`selection#mainboard.${variant.boardFamily}.${variant.pieceFamily}.${variant.ui.boardMark}`, [
-                h('div.cg-wrap.' + variant.board.cg, { hook: { insert: vnode => runPuzzle(vnode, model) } }),
+                h('div.cg-wrap.' + variant.board.cg, { hook: { insert: vnode => runPuzzle(vnode, model, keyboard) } }),
+                keyboard.boardView(),
             ]),
             gauge(variant.colors),
             h('div.pocket-top', [
-                h('div.' + variant.pieceFamily + '.' + model['variant'], [h('div.cg-wrap.pocket', [h('div#pocket0')])]),
+                h('div.' + variant.pieceFamily + '.' + model['variant'], [
+                    h('div.cg-wrap.pocket', [h('div#pocket0'), keyboard.pocketView('top')]),
+                ]),
             ]),
             analysisTools(false, undefined, variant),
             analysisSettings.view(variant),
             h('div#move-controls'),
             h('div.pocket-bot', [
-                h('div.' + variant.pieceFamily + '.' + model['variant'], [h('div.cg-wrap.pocket', [h('div#pocket1')])]),
+                h('div.' + variant.pieceFamily + '.' + model['variant'], [
+                    h('div.cg-wrap.pocket', [h('div#pocket1'), keyboard.pocketView('bottom')]),
+                ]),
             ]),
             h('under-left#spectators'),
             h('under-board'),

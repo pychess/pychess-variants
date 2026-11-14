@@ -10,6 +10,7 @@ import { JSONObject } from './types';
 import { _, ngettext } from './i18n';
 import { patch } from './document';
 import { ariaHiddenAttr } from './accessibility/aria';
+import { ChessgroundKeyboard } from './accessibility/chessgroundKeyboard';
 import { boardSettings } from './boardSettings';
 import { Clock } from './clock';
 import { materializeGameHistory } from './analysis/gameHistory';
@@ -124,7 +125,7 @@ export class RoundController extends GameController {
     lastMaybeSentMsgMove: MsgMove | undefined;
     ongoingRoundGames?: OngoingRoundGamesController;
 
-    constructor(el: HTMLElement, model: PyChessModel, aliceBoardEl?: HTMLElement) {
+    constructor(el: HTMLElement, model: PyChessModel, keyboard: ChessgroundKeyboard, aliceBoardEl?: HTMLElement) {
         super(
             el,
             model,
@@ -133,6 +134,7 @@ export class RoundController extends GameController {
             document.getElementById('pocket1') as HTMLElement,
             '',
             aliceBoardEl,
+            keyboard,
         );
         this.focus = !document.hidden;
         document.addEventListener('visibilitychange', () => {
