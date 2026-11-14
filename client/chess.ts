@@ -406,10 +406,14 @@ export function unpromotedRole(variant: Variant, piece: cg.Piece): cg.Role {
     }
 }
 
+export function promotionOrderForColor(variant: Variant, color: cg.Color): PromotionSuffix[] {
+    return variant.promotion.orderByColor?.[color] ?? variant.promotion.order;
+}
+
 export function promotedRole(variant: Variant, piece: cg.Piece): cg.Role {
     if (!piece.promoted && variant.promotion.roles.includes(piece.role)) {
         if (variant.promotion.type === 'shogi') return ('p' + piece.role) as cg.Role;
-        else return util.roleOf(variant.promotion.order[0] as cg.Letter);
+        else return util.roleOf(promotionOrderForColor(variant, piece.color)[0] as cg.Letter);
     } else {
         return piece.role;
     }

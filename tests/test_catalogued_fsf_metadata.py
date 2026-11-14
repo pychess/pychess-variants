@@ -27,6 +27,7 @@ class FsfBuiltinMetadataTestCase(TestCase):
             "atomar": ("nocheckatomic", "atomic"),
             "centaur": ("", "capablanca"),
             "chancellor": ("", "capablanca"),
+            "chigorin": ("", "chess"),
             "chessgi": ("loop", "crazyhouse"),
             "codrus": ("giveaway", "antichess"),
             "courier": ("", "shatranj"),
@@ -48,6 +49,7 @@ class FsfBuiltinMetadataTestCase(TestCase):
             "petrified": ("pawnsideways", "chess"),
             "shatar": ("", "shatranj"),
             "snailtrail": ("", "chess"),
+            "sortofalmost": ("chess", "chess"),
             "tencubed": ("", "grand"),
             "yarishogi": ("", "shogi"),
             "almost": ("", "chess"),
@@ -249,10 +251,33 @@ class FsfBuiltinMetadataTestCase(TestCase):
         self.assertEqual(synced["pieceFamilyOverride"], "okisakishogi")
         self.assertNotIn("okisakishogi", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
 
-    def test_chigorin_is_not_seeded_until_side_specific_promotions_are_supported(self) -> None:
-        self.assertNotIn("chigorin", FSF_CATALOGUED_BUILTIN_VARIANTS)
-        self.assertIn("chigorin", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
-        self.assertIn("chigorin", FSF_CATALOGUED_RETIRED_BUILTIN_VARIANTS)
+    def test_asymmetric_variants_expose_side_specific_promotion_preferences(self) -> None:
+        for name, white, black in (
+            ("sortofalmost", ["c", "r", "b", "n"], ["q", "r", "b", "n"]),
+            ("chigorin", ["c", "r", "n"], ["q", "r", "b"]),
+        ):
+            with self.subTest(name=name):
+                doc = _build_fsf_builtin_doc(name, FSF_CATALOGUED_BUILTIN_VARIANTS[name])
+                expected = {"white": white, "black": black}
+                self.assertEqual(doc["ini"], "")
+                self.assertEqual(doc["pieceFamilyOverride"], "capa")
+                self.assertEqual(doc["promotionOrderByColor"], expected)
+                self.assertEqual(_client_doc(doc)["promotionOrderByColor"], expected)
+                self.assertEqual(_fsf_builtin_synced_fields(doc)["promotionOrderByColor"], expected)
+                self.assertEqual(_client_doc(doc)["betzaPieces"], {"c": "RN"})
+                self.assertNotIn(name, FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
+                self.assertNotIn(name, FSF_CATALOGUED_RETIRED_BUILTIN_VARIANTS)
+
+    def test_chigorin_enablement_preserves_the_existing_archive_and_counters(self) -> None:
+        doc = _build_fsf_builtin_doc(
+            "chigorin",
+            FSF_CATALOGUED_BUILTIN_VARIANTS["chigorin"],
+            existing={"archived": True, "gameCount": 11, "favoriteCount": 3},
+        )
+        self.assertTrue(doc["archived"])
+        self.assertFalse(doc["enabled"])
+        self.assertEqual(doc["gameCount"], 11)
+        self.assertEqual(doc["favoriteCount"], 3)
 
     def test_premove_profile_can_be_narrower_than_general_client_profile(self) -> None:
         for name in ("omicron", "troitzky"):

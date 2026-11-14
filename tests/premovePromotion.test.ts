@@ -12,7 +12,7 @@ import { PromotionInput } from '../client/input/promotion';
 import { DuckInput } from '../client/input/duck';
 import { ArrowingInput } from '../client/input/arrowing';
 import { registerCataloguedVariant, unregisterCataloguedVariant, VARIANTS } from '../client/variants';
-import { moveDests, UCIMove } from '../client/chess';
+import { moveDests, promotedRole, UCIMove } from '../client/chess';
 import { premoveForVariant } from '../client/premove';
 import { variantsIni } from '../client/variantsIni';
 import { predrop } from 'chessgroundx/predrop';
@@ -45,6 +45,7 @@ afterEach(async () => {
         ctrl.ffishBoard.delete();
     }
     unregisterCataloguedVariant('wolf-promotion-test');
+    unregisterCataloguedVariant('asymmetric-promotion-test');
 });
 
 function controller(fen = promotionFen, variant = 'chess', engineVariant = variant, color: cg.Color = 'white') {
@@ -387,6 +388,116 @@ describe('promotion premoves', () => {
         expect(ctrl.chessground.state.drawable.autoShapes).toHaveLength(2);
         ctrl.promotion.dismiss();
         expect(ctrl.chessground.state.drawable.autoShapes).toEqual([drawing]);
+    });
+});
+
+describe.each(['sortofalmost', 'chigorin'])('%s asymmetric promotion', variant => {
+    function targets(color: cg.Color) {
+        if (color === 'white') return variant === 'sortofalmost' ? ['c', 'r', 'b', 'n'] : ['c', 'r', 'n'];
+        return variant === 'sortofalmost' ? ['q', 'r', 'b', 'n'] : ['q', 'r', 'b'];
+    }
+
+    beforeEach(() => {
+        const board = new ffish.Board(variant);
+        const startFen = board.fen();
+        board.delete();
+        registerCataloguedVariant({
+            name: 'asymmetric-promotion-test',
+            source: 'fairy-stockfish-builtin',
+            fsfBuiltinVariant: variant,
+            baseVariant: variant === 'sortofalmost' ? 'chess' : '',
+            clientVariant: 'chess',
+            ini: '',
+            startFen,
+            width: 8,
+            height: 8,
+            pieces: ['p', 'n', 'b', 'r', 'q', 'c', 'k'],
+            pieceFamilyOverride: 'capa',
+            promotionType: 'regular',
+            promotionRoles: ['p'],
+            promotionOrder: ['q', 'c', 'r', 'b', 'n'],
+            promotionOrderByColor: {
+                white: targets('white') as cg.Letter[],
+                black: targets('black') as cg.Letter[],
+            },
+        });
+    });
+
+    function position(color: cg.Color, premove = false) {
+        const turn = premove ? opposite(color) : color;
+        const placement = color === 'white' ? '7k/P7/8/8/8/8/8/7K' : '7k/8/8/8/8/8/p7/7K';
+        return placement + ` ${turn === 'white' ? 'w' : 'b'} - - 0 1`;
+    }
+
+    async function startPromotion(ctrl: GameController, color: cg.Color) {
+        ctrl.turnColor = color;
+        ctrl.chessground.set({ turnColor: color });
+        ctrl.setDests();
+        ctrl.chessground.selectSquare(color === 'white' ? 'a7' : 'a2');
+        ctrl.chessground.selectSquare(color === 'white' ? 'a8' : 'a1');
+        await flushCallbacks();
+    }
+
+    test.each(['white', 'black'] as const)(
+        '%s picker displays only its legal targets, in preference order',
+        async color => {
+            const { ctrl, el, sent } = controller(position(color), 'asymmetric-promotion-test', variant, color);
+            await startPromotion(ctrl, color);
+            const roles = [...el.querySelectorAll('#extension_choice piece')].map(piece =>
+                [...piece.classList].find(c => c.endsWith('-piece')),
+            );
+            expect(roles).toEqual(targets(color).map(target => target + '-piece'));
+            choose(el, color === 'white' ? 'c-piece' : 'q-piece');
+            expect(sent).toEqual([{ move: color === 'white' ? 'a7a8c' : 'a2a1q', premove: false }]);
+            expect(ctrl.ffishBoard.push(sent[0].move)).toBe(true);
+        },
+    );
+
+    test.each(['white', 'black'] as const)('%s can premove an underpromotion', async color => {
+        const { ctrl, el, sent } = controller(position(color, true), 'asymmetric-promotion-test', variant, color);
+        await queue(ctrl, color === 'white' ? 'a7' : 'a2', color === 'white' ? 'a8' : 'a1');
+        choose(el, 'r-piece');
+        await reply(ctrl, color === 'white' ? 'h8g8' : 'h1g1');
+        expect(sent).toEqual([{ move: color === 'white' ? 'a7a8r' : 'a2a1r', premove: true }]);
+    });
+
+    test.each(['white', 'black'] as const)('%s auto-promotes to its own top choice', async color => {
+        const { ctrl, el, sent } = controller(position(color), 'asymmetric-promotion-test', variant, color);
+        ctrl.autoPromote = true;
+        await startPromotion(ctrl, color);
+        expect(sent).toEqual([{ move: color === 'white' ? 'a7a8c' : 'a2a1q', premove: false }]);
+        expect(el.querySelector('#extension_choice')).toBeNull();
+    });
+
+    test.each(['white', 'black'] as const)('%s prepares auto-promotion before the opponent moves', async color => {
+        const { ctrl, el, sent } = controller(position(color, true), 'asymmetric-promotion-test', variant, color);
+        ctrl.autoPromote = true;
+        await queue(ctrl, color === 'white' ? 'a7' : 'a2', color === 'white' ? 'a8' : 'a1');
+        expect(sent).toEqual([]);
+        expect(el.querySelector('#extension_choice')).toBeNull();
+        await reply(ctrl, color === 'white' ? 'h8g8' : 'h1g1');
+        expect(sent).toEqual([{ move: color === 'white' ? 'a7a8c' : 'a2a1q', premove: true }]);
+    });
+
+    test.each(['white', 'black'] as const)('%s can hold Ctrl to override auto-promotion', async color => {
+        const { ctrl, el, sent } = controller(position(color), 'asymmetric-promotion-test', variant, color);
+        ctrl.autoPromote = true;
+        ctrl.turnColor = color;
+        ctrl.chessground.set({ turnColor: color });
+        ctrl.setDests();
+        ctrl.chessground.state.stats.ctrlKey = true;
+        ctrl.chessground.selectSquare(color === 'white' ? 'a7' : 'a2');
+        ctrl.chessground.selectSquare(color === 'white' ? 'a8' : 'a1');
+        await flushCallbacks();
+        expect(sent).toEqual([]);
+        choose(el, 'r-piece');
+        expect(sent).toEqual([{ move: color === 'white' ? 'a7a8r' : 'a2a1r', premove: false }]);
+    });
+
+    test.each(['white', 'black'] as const)('%s editor default promotes to a piece available to that side', color => {
+        const registered = VARIANTS['asymmetric-promotion-test'];
+        expect(promotedRole(registered, { role: 'p-piece', color })).toBe(color === 'white' ? 'c-piece' : 'q-piece');
+        expect(registered.pieceFamily).toBe('capa');
     });
 });
 

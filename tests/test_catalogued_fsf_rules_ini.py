@@ -20,6 +20,31 @@ from variants import get_server_variant, unregister_catalogued_server_variant
 
 
 class FsfBuiltinRulesIniTestCase(TestCase):
+    def test_asymmetric_promotion_targets_match_the_engine_for_both_sides(self) -> None:
+        for name, white, black in (
+            ("sortofalmost", "crbn", "qrbn"),
+            ("chigorin", "crn", "qrb"),
+        ):
+            doc = _build_fsf_builtin_doc(name, FSF_CATALOGUED_BUILTIN_VARIANTS[name])
+            context = catalogued_variant_rule_context(doc)
+            self.assertIn("promotionPieceTypesWhite", context["ini"])
+            self.assertIn("promotionPieceTypesBlack", context["ini"])
+            for color, fen, prefix, targets in (
+                ("white", "7k/P7/8/8/8/8/8/7K w - - 0 1", "a7a8", white),
+                ("black", "7k/8/8/8/8/8/p7/7K b - - 0 1", "a2a1", black),
+            ):
+                with self.subTest(name=name, color=color):
+                    moves = sf.legal_moves(name, fen, [])
+                    self.assertEqual(
+                        {move for move in moves if move.startswith(prefix)},
+                        {prefix + target for target in targets},
+                    )
+                    for target in targets:
+                        move = prefix + target
+                        self.assertIn("=" + target.upper(), sf.get_san(name, fen, move))
+                        promoted = sf.get_fen(name, fen, [move])
+                        self.assertEqual(promoted.split()[1], "b" if color == "white" else "w")
+
     def test_aiwok_movement_promotion_replay_and_counting(self) -> None:
         doc = _build_fsf_builtin_doc("ai-wok", FSF_CATALOGUED_BUILTIN_VARIANTS["ai-wok"])
         context = catalogued_variant_rule_context(doc)

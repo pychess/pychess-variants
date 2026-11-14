@@ -250,6 +250,7 @@ class CataloguedVariantDocument(TypedDict):
     promotionType: str
     promotionRoles: list[str]
     promotionOrder: list[str]
+    promotionOrderByColor: NotRequired[dict[str, list[str]]]
     showPromoted: bool
     rulesGate: bool
     rulesPass: bool
@@ -304,6 +305,7 @@ class CataloguedVariantClientDocument(TypedDict):
     promotionType: str
     promotionRoles: list[str]
     promotionOrder: list[str]
+    promotionOrderByColor: NotRequired[dict[str, list[str]]]
     showPromoted: bool
     rulesGate: bool
     rulesPass: bool

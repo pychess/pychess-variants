@@ -221,6 +221,27 @@ flagRegionBlack = *1
         "references": _fsf_builtin_references("https://en.wikipedia.org/wiki/Chaturanga"),
         "baseVariant": "shatranj",
     },
+    "chigorin": {
+        "displayName": "Chigorin Chess",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references(
+            "https://www.chessvariants.com/diffsetup.dir/chigorin.html",
+        ),
+        "baseVariant": "",
+        "clientVariant": "chess",
+        "pieceFamilyOverride": "capa",
+        "promotionRoles": ("p",),
+        "promotionOrder": ("q", "c", "r", "b", "n"),
+        "promotionOrderByColor": {"white": ("c", "r", "n"), "black": ("q", "r", "b")},
+        # Documentation only, transcribed from chigorin_variant() in src/variant.cpp.
+        "rulesIni": """
+[chigorin]
+chancellor = c
+startFen = rbbqkbbr/pppppppp/8/8/8/8/PPPPPPPP/RNNCKNNR w KQkq - 0 1
+promotionPieceTypesWhite = c r n
+promotionPieceTypesBlack = q r b
+""",
+    },
     "checkshogi": {
         "displayName": "Check-Shogi",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -1020,6 +1041,30 @@ stalemateValue = loss
 wallingRule = past
 """,
     },
+    "sortofalmost": {
+        "displayName": "Sort-of-Almost Chess",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references(
+            "https://en.wikipedia.org/wiki/Almost_chess#Sort_of_almost_chess",
+        ),
+        "baseVariant": "chess",
+        "clientVariant": "chess",
+        "pieceFamilyOverride": "capa",
+        "promotionRoles": ("p",),
+        "promotionOrder": ("q", "c", "r", "b", "n"),
+        "promotionOrderByColor": {
+            "white": ("c", "r", "b", "n"),
+            "black": ("q", "r", "b", "n"),
+        },
+        # Documentation only, from sortofalmost_variant() in src/variant.cpp.
+        "rulesIni": """
+[sortofalmost:chess]
+chancellor = c
+startFen = rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBCKBNR w KQkq - 0 1
+promotionPieceTypesWhite = c r b n
+promotionPieceTypesBlack = q r b n
+""",
+    },
     "suicide": {
         "displayName": "Suicide Chess",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -1238,20 +1283,6 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
         "baseVariant": "capablanca",
         "reviewNotes": "Shuffle variant; pychess already has first-class Caparandom support.",
     },
-    "chigorin": {
-        "displayName": "Chigorin Chess",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references(
-            "https://www.chessvariants.com/diffsetup.dir/chigorin.html",
-        ),
-        "baseVariant": "",
-        "clientVariant": "chess",
-        "reviewNotes": (
-            "Fairy-Stockfish has side-specific promotion targets (White: c/r/n; "
-            "Black: q/r/b). Keep out of the allowlist until catalogued promotion "
-            "UI can model that explicitly."
-        ),
-    },
     "fairy": {
         "displayName": "Fairy",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -1312,15 +1343,6 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
         "clientVariant": "chess",
         "reviewNotes": "Alias of standard chess; pychess already exposes Chess.",
     },
-    "sortofalmost": {
-        "displayName": "Sort-of-Almost Chess",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references(
-            "https://en.wikipedia.org/wiki/Almost_chess#Sort_of_almost_chess",
-        ),
-        "baseVariant": "chess",
-        "reviewNotes": "Asymmetric Almost Chess variant; verify pieces and castling assumptions.",
-    },
 }
 
 
@@ -1328,7 +1350,7 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
 # generic catalogued client cannot represent their rules safely. Keep this
 # explicit instead of silently leaving an old MongoDB document enabled after
 # moving the metadata back to the candidate list.
-FSF_CATALOGUED_RETIRED_BUILTIN_VARIANTS = frozenset({"chigorin"})
+FSF_CATALOGUED_RETIRED_BUILTIN_VARIANTS: frozenset[str] = frozenset()
 
 
 BUILTIN_VARIANT_NAMES = frozenset(variant.server_name for variant in ServerVariants)

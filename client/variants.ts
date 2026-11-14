@@ -557,6 +557,7 @@ export interface Variant {
     readonly promotion: {
         readonly type: PromotionType;
         readonly order: PromotionSuffix[];
+        readonly orderByColor?: Partial<Record<cg.Color, PromotionSuffix[]>>;
         readonly roles: cg.Role[];
         readonly strict?: {
             readonly isPromoted: (piece: cg.Piece, pos: cg.Pos) => boolean;
@@ -687,6 +688,7 @@ export function variant(config: VariantConfig): Variant {
             : undefined,
         promotion: {
             type: config.promotion?.type ?? 'regular',
+            orderByColor: config.promotion?.orderByColor,
             order:
                 config.promotion?.order ??
                 (config.promotion?.type === 'shogi' ? ['+', ''] : ['q', 'c', 'e', 'a', 'h', 'n', 'r', 'b', 'p']),
@@ -816,6 +818,8 @@ interface VariantConfig {
         // (default: ["q", "c", "e", "a", "h", "n", "r", "b", "p"] for regular)
         // (default: ["+", ""] for shogi)
         order?: PromotionSuffix[];
+        // Side-specific ordering and default target for asymmetric variants.
+        orderByColor?: Partial<Record<cg.Color, PromotionSuffix[]>>;
         // Pieces that can promote (default: ['p'])
         roles?: cg.Letter[];
         // Whether a piece's promotion state strictly depends on its square (default: undefined)
@@ -2222,6 +2226,7 @@ export interface CataloguedVariantClientDocument {
     readonly promotionType?: PromotionType;
     readonly promotionRoles?: cg.Letter[];
     readonly promotionOrder?: PromotionSuffix[];
+    readonly promotionOrderByColor?: Partial<Record<cg.Color, PromotionSuffix[]>>;
     readonly showPromoted?: boolean;
     readonly rulesGate?: boolean;
     readonly rulesPass?: boolean;
@@ -2641,6 +2646,7 @@ const CATALOGUED_PIECE_IDENTITIES_BY_CONTEXT: Record<string, CataloguedPieceIden
     chancellor: { c: 'chancellor' },
     chaturanga: { b: 'alfil', q: 'fers' },
     chigorin: { c: 'chancellor' },
+    sortofalmost: { c: 'chancellor' },
     courier: { e: 'alfil', f: 'fers', m: 'commoner', w: 'wazir' },
     extinction: { k: 'commoner' },
     georgian: { a: 'amazon' },
@@ -2994,7 +3000,12 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
         kingRoles,
         pieceNames: meta.pieceNames,
         pocket: pocketRoles.length ? { roles: pocketRoles, captureToHand, dropLoop } : undefined,
-        promotion: { type: promotionType, roles: promotionRoles, order: promotionOrder },
+        promotion: {
+            type: promotionType,
+            roles: promotionRoles,
+            order: promotionOrder,
+            orderByColor: meta.promotionOrderByColor,
+        },
         rules: {
             defaultTimeControl: clientVariant?.rules.defaultTimeControl ?? 'incremental',
             // Breakthrough has no en passant; Isolation and Snail Trail use p

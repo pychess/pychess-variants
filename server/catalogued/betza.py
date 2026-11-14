@@ -113,6 +113,7 @@ FSF_BUILTIN_PIECE_DIAGRAMS_BY_VARIANT: Mapping[str, tuple[_FsfBuiltinPieceDefini
         _FsfBuiltinPieceDefinition("b", "Alfil", "A"),
         _FsfBuiltinPieceDefinition("q", "Fers", "F"),
     ),
+    "sortofalmost": (_FsfBuiltinPieceDefinition("c", "Chancellor", "RN"),),
     "tencubed": (
         _FsfBuiltinPieceDefinition("a", "Archbishop", "BN"),
         _FsfBuiltinPieceDefinition("m", "Chancellor", "RN"),

@@ -196,6 +196,10 @@ def _client_doc(
         "enabled": bool(doc.get("enabled", True)),
         "replayOnly": promotion_chaining_requires_replay_only(ini),
     }
+    if doc.get("promotionOrderByColor"):
+        client_doc["promotionOrderByColor"] = {
+            color: list(order) for color, order in doc["promotionOrderByColor"].items()
+        }
     if client_doc["source"] == models.CATALOGUED_SOURCE_USER and ini:
         nnue_base_variant = validation.extract_variant_base_name(ini)
         # A section-only fingerprint is sufficient only when the inherited base
@@ -599,6 +603,13 @@ def _build_fsf_builtin_doc(
     )
     doc["references"] = references
     doc["rulesIni"] = str(metadata.get("rulesIni") or "").strip()
+    promotion_orders = metadata.get("promotionOrderByColor")
+    if isinstance(promotion_orders, Mapping):
+        doc["promotionOrderByColor"] = {
+            color: _fsf_metadata_string_list(promotion_orders, color)
+            for color in ("white", "black")
+            if color in promotion_orders
+        }
     if "dropLoop" in metadata:
         doc["dropLoop"] = _fsf_metadata_bool(metadata, "dropLoop", False)
     if not description:
@@ -636,6 +647,7 @@ def _fsf_builtin_synced_fields(doc: Mapping[str, Any]) -> dict[str, Any]:
         "promotionType",
         "promotionRoles",
         "promotionOrder",
+        "promotionOrderByColor",
         "showPromoted",
         "rulesGate",
         "rulesPass",

@@ -3,7 +3,15 @@ import { h, toVNode, VNode } from 'snabbdom';
 import * as util from 'chessgroundx/util';
 import * as cg from 'chessgroundx/types';
 
-import { CGMove, PromotionSuffix, UCIMove, unpromotedRole, promotionSuffix, uci2cg } from '@/chess';
+import {
+    CGMove,
+    PromotionSuffix,
+    UCIMove,
+    unpromotedRole,
+    promotionSuffix,
+    promotionOrderForColor,
+    uci2cg,
+} from '@/chess';
 import type { DrawShape } from 'chessgroundx/draw';
 import { patch, bind } from '@/document';
 import { GameController } from '@/gameCtrl';
@@ -58,7 +66,7 @@ export class PromotionInput extends ExtraInput {
             } else this.cancel(); // The actual reply can invalidate a choice available in the preview.
             return;
         }
-        this.choose(choices, meta.ctrlKey);
+        this.choose(choices, piece.color, meta.ctrlKey);
         // A choice made after our turn starts must charge the time spent choosing it.
         if (Object.keys(this.choices).length > 1) meta.premove = false;
         this.showOrFinish(dest, piece.color);
@@ -112,7 +120,7 @@ export class PromotionInput extends ExtraInput {
             this.choices = {};
             return;
         }
-        this.choose(this.choicesForSuffixes(queued.piece, [...suffixes]), queued.meta?.ctrlKey);
+        this.choose(this.choicesForSuffixes(queued.piece, [...suffixes]), queued.piece.color, queued.meta?.ctrlKey);
         this.showOrFinish(queued.dest, queued.piece.color);
     }
 
@@ -131,8 +139,8 @@ export class PromotionInput extends ExtraInput {
         this.choices = {};
     }
 
-    private choose(choices: PromotionChoices, disableAutoPromote?: boolean): void {
-        const autoSuffix = this.ctrl.variant.promotion.order[0];
+    private choose(choices: PromotionChoices, color: cg.Color, disableAutoPromote?: boolean): void {
+        const autoSuffix = promotionOrderForColor(this.ctrl.variant, color)[0];
         const autoRole =
             this.ctrl.variant.promotion.type === 'shogi' ? undefined : util.roleOf(autoSuffix as cg.Letter);
 
@@ -274,10 +282,8 @@ export class PromotionInput extends ExtraInput {
         const pos = util.key2pos(dest);
 
         const choices = Object.keys(this.choices) as cg.Role[];
-        choices.sort(
-            (a, b) =>
-                variant.promotion.order.indexOf(this.choices[a]!) - variant.promotion.order.indexOf(this.choices[b]!),
-        );
+        const order = promotionOrderForColor(variant, color);
+        choices.sort((a, b) => order.indexOf(this.choices[a]!) - order.indexOf(this.choices[b]!));
 
         const direction = color === orientation ? 'bottom' : 'top';
         const leftFile = orientation === 'white' ? pos[0] : width - 1 - pos[0];
