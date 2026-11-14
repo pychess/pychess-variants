@@ -15,11 +15,48 @@ from catalogued.documents import (
     catalogued_variant_rule_context,
 )
 from catalogued.variants import register_catalogued_variant_doc
-from fairy.fairy_board import sf
+from fairy.fairy_board import FairyBoard, sf
 from variants import get_server_variant, unregister_catalogued_server_variant
 
 
 class FsfBuiltinRulesIniTestCase(TestCase):
+    def test_aiwok_movement_promotion_replay_and_counting(self) -> None:
+        doc = _build_fsf_builtin_doc("ai-wok", FSF_CATALOGUED_BUILTIN_VARIANTS["ai-wok"])
+        context = catalogued_variant_rule_context(doc)
+        self.assertIn("promotionPieceTypes = a", context["ini"])
+        self.assertEqual(
+            {diagram["piece"]: diagram["betza"] for diagram in context["customPieceDiagrams"]},
+            {"a": "RNF", "s": "FfW"},
+        )
+        fen = "7k/8/8/8/3A4/8/8/7K w - - 0 1"
+        moves = set(sf.legal_moves("ai-wok", fen, []))
+        for move in ("d4d8", "d4a4", "d4f5", "d4c3"):
+            self.assertIn(move, moves)
+        self.assertNotIn("d4b2", moves)  # The ferz step is not a bishop slide.
+
+        register_catalogued_variant_doc(SimpleNamespace(catalogued_variants={}), doc)
+        try:
+            variant = get_server_variant("ai-wok", False)
+            self.assertEqual(variant.uci_variant, "ai-wok")
+            fen = "7k/8/8/P7/8/8/8/7K w - - 0 1"
+            board = FairyBoard("ai-wok", fen, show_promoted=variant.show_promoted)
+            self.assertIn("a5a6a", board.legal_moves())
+            self.assertNotIn("a5a6m", board.legal_moves())
+            self.assertEqual(variant.move_decoding(variant.move_encoding("a5a6a")), "a5a6a")
+            self.assertIn("=A", board.get_san("a5a6a"))
+            board.push("a5a6a")
+            self.assertIn("A~", board.fen)
+            restored = FairyBoard("ai-wok", board.fen, show_promoted=variant.show_promoted)
+            self.assertEqual(restored.legal_moves(), board.legal_moves())
+            board.pop()
+            self.assertEqual(board.fen, fen)
+
+            exhausted = "7k/8/8/8/8/8/8/R6K w - 128 129 65"
+            self.assertEqual(sf.is_optional_game_end("ai-wok", exhausted, []), (True, 0))
+            self.assertTrue(variant.n_fold_is_draw)
+        finally:
+            unregister_catalogued_server_variant("ai-wok")
+
     def test_isolation_places_permanent_walls_and_protects_starting_squares(self) -> None:
         for name, first, second, protected, target_count in (
             ("isolation", "c1b1,b1f8", "d8c8,c8f7", {"c1", "d8"}, 45),

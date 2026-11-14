@@ -87,6 +87,30 @@ FSF_CATALOGUED_BUILTIN_VARIANTS: Mapping[str, Mapping[str, Any]] = {
         "promotionOrder": models.CATALOGUED_CHESS_PROMOTION_ORDER,
         "showCheckCounters": True,
     },
+    "ai-wok": {
+        "displayName": "Ai-Wok",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references(
+            "https://github.com/fairy-stockfish/Fairy-Stockfish/blob/master/src/variant.cpp",
+        ),
+        "baseVariant": "makruk",
+        "clientVariant": "makruk",
+        "pieceFamilyOverride": "aiwok",
+        "pieceNames": {"a": "Ai-Wok", "s": "Khon"},
+        "promotionRoles": ("p",),
+        "promotionOrder": ("a",),
+        "showPromoted": True,
+        "legalMovesNeedHistory": True,
+        "nFoldIsDraw": True,
+        # Documentation only, transcribed from aiwok_variant() in src/variant.cpp.
+        "rulesIni": """
+[ai-wok:makruk]
+fers = -
+aiwok = a
+startFen = rnsaksnr/8/pppppppp/8/8/PPPPPPPP/8/RNSKASNR w - - 0 1
+promotionPieceTypes = a
+""",
+    },
     "almost": {
         "displayName": "Almost Chess",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -1196,12 +1220,6 @@ perpetualCheckIllegal = true
 # regionally adjudicated rule sets, so presence here does not imply that the
 # variant is safe or useful to expose.
 FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
-    "ai-wok": {
-        "displayName": "Ai-Wok",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "baseVariant": "makruk",
-        "reviewNotes": "Makruk-family fairy-piece variant; review pieces and promotion UI.",
-    },
     "armageddon": {
         "displayName": "Armageddon Chess",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,

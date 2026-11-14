@@ -154,6 +154,13 @@ label.piece.piece2.centaur {
     background-image: url('images/pieces/disguised/w.svg');
 }
 
+label.piece.piece0.aiwok {
+    background-image: url('images/pieces/alfaerie/wchancellorferz.svg');
+}
+label.piece.piece1.aiwok {
+    background-image: url('images/pieces/disguised/w.svg');
+}
+
 label.piece.piece0.amazons {
     background-image: url('images/pieces/merida/wQ.svg');
 }

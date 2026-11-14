@@ -35,6 +35,7 @@ const variantNames = [
     'testisolation',
     'testisolation7x7',
     'testsnailtrail',
+    'testaiwok',
 ];
 
 function register(meta: CataloguedVariantClientDocument) {
@@ -48,6 +49,38 @@ afterEach(() => {
         delete localStorage[`${name}-piece`];
         delete boardSettings.settings[`${name}-piece`];
     });
+});
+
+test('Ai-Wok uses Alfaerie compound pieces with Makruk defaults and automatic counting', () => {
+    const meta: CataloguedVariantClientDocument = {
+        name: 'testaiwok',
+        displayName: 'Ai-Wok',
+        source: 'fairy-stockfish-builtin',
+        fsfBuiltinVariant: 'ai-wok',
+        baseVariant: 'makruk',
+        clientVariant: 'makruk',
+        ini: '',
+        pieceFamilyOverride: 'aiwok',
+        width: 8,
+        height: 8,
+        startFen: 'rnsaksnr/8/pppppppp/8/8/PPPPPPPP/8/RNSKASNR w - - 0 1',
+        pieces: ['p', 'n', 'r', 's', 'a', 'k'],
+        promotionType: 'regular',
+        promotionRoles: ['p'],
+        promotionOrder: ['a'],
+        showPromoted: true,
+        betzaPieces: { a: 'RNF', s: 'FfW' },
+    };
+    const variant = register(meta);
+    expect(cataloguedCompatiblePieceFamily(meta)).toBe('aiwok');
+    expect(variant.boardFamily).toBe('makruk8x8');
+    expect(boardSettings.pieceCSS(variant.pieceFamily, variant)).toBe('alfaerie');
+    expect(variant.promotion.order).toEqual(['a']);
+    expect(variant.promotion.roles).toEqual(['p-piece']);
+    expect(variant.ui.counting).toBe('automatic');
+    expect(variant.ui.showPromoted).toBe(true);
+    expect(variant.rules.enPassant).toBe(false);
+    expect(variant.ratingEnabled).toBe(false);
 });
 
 test.each([

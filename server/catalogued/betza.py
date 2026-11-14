@@ -42,6 +42,10 @@ BETZA_DIAGRAM_RENDERER_VERSION = 3
 # bishop/queen letters), so the same letter must not be interpreted outside
 # the variant where Fairy-Stockfish assigns that built-in piece name.
 FSF_BUILTIN_PIECE_DIAGRAMS_BY_VARIANT: Mapping[str, tuple[_FsfBuiltinPieceDefinition, ...]] = {
+    "ai-wok": (
+        _FsfBuiltinPieceDefinition("a", "Ai-Wok", "RNF"),
+        _FsfBuiltinPieceDefinition("s", "Khon", "FfW"),
+    ),
     "almost": (_FsfBuiltinPieceDefinition("c", "Chancellor", "RN"),),
     "amazon": (_FsfBuiltinPieceDefinition("a", "Amazon", "QN"),),
     "berolina": (_FsfBuiltinPieceDefinition("p", "Berolina pawn", "mfFcfeWimfnA"),),

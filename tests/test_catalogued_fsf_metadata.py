@@ -22,6 +22,7 @@ from catalogued.repository import (
 class FsfBuiltinMetadataTestCase(TestCase):
     def test_engine_and_client_variant_relationships_are_separate(self) -> None:
         expected = {
+            "ai-wok": ("makruk", "makruk"),
             "amazons": ("", "chess"),
             "atomar": ("nocheckatomic", "atomic"),
             "centaur": ("", "capablanca"),
@@ -79,6 +80,22 @@ class FsfBuiltinMetadataTestCase(TestCase):
             FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES["normal"]["clientVariant"],
             "chess",
         )
+
+    def test_aiwok_uses_its_compound_piece_family_and_promotion(self) -> None:
+        doc = _build_fsf_builtin_doc("ai-wok", FSF_CATALOGUED_BUILTIN_VARIANTS["ai-wok"])
+        self.assertEqual(doc["ini"], "")
+        self.assertEqual(doc["fsfBuiltinVariant"], "ai-wok")
+        self.assertEqual((doc["width"], doc["height"]), (8, 8))
+        self.assertEqual(set(doc["pieces"]), {"p", "r", "n", "s", "a", "k"})
+        self.assertEqual(doc["pieceFamilyOverride"], "aiwok")
+        self.assertEqual(doc["promotionRoles"], ["p"])
+        self.assertEqual(doc["promotionOrder"], ["a"])
+        self.assertTrue(doc["showPromoted"])
+        self.assertTrue(doc["legalMovesNeedHistory"])
+        self.assertTrue(doc["nFoldIsDraw"])
+        self.assertFalse(_client_doc(doc)["replayOnly"])
+        self.assertEqual(_client_doc(doc)["betzaPieces"], {"a": "RNF", "s": "FfW"})
+        self.assertNotIn("ai-wok", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
 
     def test_micro_has_its_4x5_board_and_capture_flip_piece_set(self) -> None:
         doc = _build_fsf_builtin_doc("micro", FSF_CATALOGUED_BUILTIN_VARIANTS["micro"])

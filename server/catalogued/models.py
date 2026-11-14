@@ -62,6 +62,7 @@ PYCHESS_PIECES_METADATA_KEY = "pychesspieces"
 CATALOGUED_NON_RULE_OPTIONS = frozenset({"varianttemplate", "piecetochartable", "pocketsize"})
 CATALOGUED_PIECE_FAMILY_OVERRIDES = frozenset(
     {
+        "aiwok",
         "amazons",
         "asean",
         "ataxx",

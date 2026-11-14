@@ -305,6 +305,7 @@ const ORDA_NAMES: PieceNameTable = {
 };
 
 export const PIECE_FAMILIES: Record<string, PieceFamily> = {
+    aiwok: { pieceCSS: ['alfaerie', 'disguised'] },
     amazons: { pieceCSS: ['classic', 'arrow', 'disguised'], wallCSS: ['classic', 'arrow'] },
     snailtrail: { pieceCSS: ['classic', 'disguised'] },
     isolation: { pieceCSS: ['classic', 'disguised'] },
@@ -2627,9 +2628,11 @@ type CataloguedPieceIdentityMap = Record<string, string>;
 // example c can be Chancellor, Centaur or Champion; n can be Knight,
 // Nightrider or Kniroo), so keep the known identities variant-scoped.
 const CATALOGUED_PIECE_IDENTITIES_BY_CONTEXT: Record<string, CataloguedPieceIdentityMap> = {
+    'pieceFamily:aiwok': { a: 'ai-wok', s: 'khon' },
     'pieceFamily:capa': { a: 'archbishop', c: 'chancellor' },
     'pieceFamily:centaur': { a: 'archbishop', c: 'chancellor', g: 'centaur' },
     'pieceFamily:shatranj': { b: 'alfil', q: 'fers' },
+    'ai-wok': { a: 'ai-wok', s: 'khon' },
     almost: { c: 'chancellor' },
     amazon: { a: 'amazon' },
     berolina: { p: 'berolina-pawn' },
@@ -2666,6 +2669,7 @@ const CATALOGUED_PIECE_IDENTITIES_BY_CONTEXT: Record<string, CataloguedPieceIden
 };
 
 const CATALOGUED_FSF_PIECE_OPTION_IDENTITIES: Record<string, string> = {
+    aiwok: 'ai-wok',
     king: 'king',
     commoner: 'commoner',
     queen: 'queen',
@@ -3007,7 +3011,8 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
             showPromoted: !!meta.showPromoted || !!clientVariant?.ui.showPromoted,
             showCheckCounters: !!meta.showCheckCounters || !!clientVariant?.ui.showCheckCounters,
             counting:
-                meta.source === 'fairy-stockfish-builtin' && meta.name === 'karouk'
+                meta.source === 'fairy-stockfish-builtin' &&
+                ['ai-wok', 'karouk'].includes(meta.fsfBuiltinVariant || meta.name)
                     ? 'automatic'
                     : clientVariant?.ui.counting,
             materialPoint:
