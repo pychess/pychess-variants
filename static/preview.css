@@ -110,6 +110,9 @@ label.piece.piece9.standard {
     background-image: url('images/pieces/firi/wpb.svg');
 }
 label.piece.piece10.standard {
+    background-image: url('images/pieces/forest/wN.svg');
+}
+label.piece.piece11.standard {
     background-image: url('images/pieces/disguised/w.svg');
 }
 label.piece.piece0.capa {
@@ -465,6 +468,9 @@ label.piece.piece17.xiangqi {
     background-image: url('images/pieces/xiangqi/euro/red_king.svg');
 }
 label.piece.piece18.xiangqi {
+    background-image: url('images/pieces/xiangqi/forest/red_king.svg');
+}
+label.piece.piece19.xiangqi {
     background-image: url('images/pieces/disguised/3d-red.svg');
 }
 

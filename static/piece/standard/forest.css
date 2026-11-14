@@ -1,0 +1,39 @@
+.standard piece._-piece {
+    background-image: url('../../images/pieces/merida/Duck.svg');
+}
+.standard piece.p-piece.white {
+    background-image: url('../../images/pieces/forest/wP.svg');
+}
+.standard piece.b-piece.white {
+    background-image: url('../../images/pieces/forest/wB.svg');
+}
+.standard piece.n-piece.white {
+    background-image: url('../../images/pieces/forest/wN.svg');
+}
+.standard piece.r-piece.white {
+    background-image: url('../../images/pieces/forest/wR.svg');
+}
+.standard piece.q-piece.white {
+    background-image: url('../../images/pieces/forest/wQ.svg');
+}
+.standard piece.k-piece.white {
+    background-image: url('../../images/pieces/forest/wK.svg');
+}
+.standard piece.p-piece.black {
+    background-image: url('../../images/pieces/forest/bP.svg');
+}
+.standard piece.b-piece.black {
+    background-image: url('../../images/pieces/forest/bB.svg');
+}
+.standard piece.n-piece.black {
+    background-image: url('../../images/pieces/forest/bN.svg');
+}
+.standard piece.r-piece.black {
+    background-image: url('../../images/pieces/forest/bR.svg');
+}
+.standard piece.q-piece.black {
+    background-image: url('../../images/pieces/forest/bQ.svg');
+}
+.standard piece.k-piece.black {
+    background-image: url('../../images/pieces/forest/bK.svg');
+}
