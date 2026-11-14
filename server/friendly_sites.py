@@ -63,6 +63,12 @@ FRIENDLY_SITES = (
         icon_url="/static/images/friendly-sites/schemingmind-alice.png",
     ),
     FriendlySite(
+        name="Paper Generals",
+        url="https://papergenerals.com/",
+        description="Xiangqi and chess for families, in a colored-pencil style — free, bilingual, no sign-up.",
+        icon_url="/static/images/friendly-sites/papergenerals.svg",
+    ),
+    FriendlySite(
         name="PyChess Desktop",
         url="https://pychess.github.io/",
         description="Desktop chess client with engines, variants, and offline play.",
