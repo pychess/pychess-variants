@@ -44,6 +44,8 @@ MOD_ACTION_LABELS: dict[str, str] = {
     "fishnet_key_created": "Create fishnet key",
     "fishnet_key_removed": "Remove fishnet key",
     "logging_level_changed": "Change logging level",
+    "event_loop_lag_enabled": "Enable event-loop lag monitoring",
+    "event_loop_lag_disabled": "Disable event-loop lag monitoring",
     "system_message_sent": "Send system message",
     "close_team": "Close team",
     "reopen_team": "Reopen team",

@@ -26,6 +26,12 @@ class EventLoopLagMonitor:
 
     def __init__(self, enabled: bool = False):
         self.enabled = enabled
+        self.reset()
+        self._loop: asyncio.AbstractEventLoop | None = None
+        self._handle: asyncio.TimerHandle | None = None
+
+    def reset(self) -> None:
+        """Start a fresh measurement window without creating another timer."""
         self.checks = 0
         self.stalls_20ms = 0
         self.stalls_50ms = 0
@@ -35,8 +41,6 @@ class EventLoopLagMonitor:
         self.max_lag_utc: str | None = None
         self.last_lag_ms = 0.0
         self.last_stall_utc: str | None = None
-        self._loop: asyncio.AbstractEventLoop | None = None
-        self._handle: asyncio.TimerHandle | None = None
         self._next_log_at = 0.0
         self._unlogged_stalls = 0
         self._unlogged_max_ms = 0.0
@@ -47,6 +51,17 @@ class EventLoopLagMonitor:
             return
         self._loop = loop
         self._schedule(loop.time())
+
+    def set_enabled(self, enabled: bool, loop: asyncio.AbstractEventLoop) -> bool:
+        """Change monitoring state without restarting the application."""
+        if self.enabled == enabled:
+            return False
+        self.stop()
+        self.enabled = enabled
+        if enabled:
+            self.reset()
+            self.start(loop)
+        return True
 
     def _schedule(self, now: float) -> None:
         if self._loop is not None:

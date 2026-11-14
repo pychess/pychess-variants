@@ -62,6 +62,36 @@
 
                 <section class="admin-ops-card admin-ops-card--wide">
                     <header>
+                        <h2>Event-loop lag monitoring</h2>
+                        <p>Measure Python event-loop scheduling delays every 50 ms without restarting the server. Enabling starts a fresh measurement window; the runtime setting resets on server restart.</p>
+                    </header>
+                    <div class="admin-ops-state">
+                        <span>Monitoring</span>
+                        <span class="admin-status{% if admin_operations_event_loop_lag.enabled %} is-ok{% endif %}">
+                            {{ "Enabled" if admin_operations_event_loop_lag.enabled else "Disabled" }}
+                        </span>
+                    </div>
+                    <div class="admin-ops-state">
+                        <span>Peak scheduling delay</span>
+                        <strong>{{ admin_operations_event_loop_lag.max_lag_ms }} ms</strong>
+                    </div>
+                    <div class="admin-ops-state">
+                        <span>Stalls ≥ 100 ms</span>
+                        <strong>{{ admin_operations_event_loop_lag.stalls_100ms }}</strong>
+                    </div>
+                    {% if admin_operations_event_loop_lag.enabled %}
+                    <form data-admin-operation action="/api/admin/operations/loop-lag-disable" method="post">
+                        <button class="admin-action-button" type="submit">Disable monitoring</button>
+                    </form>
+                    {% else %}
+                    <form data-admin-operation action="/api/admin/operations/loop-lag-enable" method="post">
+                        <button class="admin-action-button is-positive" type="submit">Enable monitoring</button>
+                    </form>
+                    {% endif %}
+                </section>
+
+                <section class="admin-ops-card admin-ops-card--wide">
+                    <header>
                         <h2>YouTube streams</h2>
                         <p>Manually add or remove streams shown on the lobby.</p>
                     </header>

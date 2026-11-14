@@ -13,6 +13,7 @@ from aiohttp import web
 from bson import ObjectId
 from bson.errors import InvalidId
 from cheat_report import valid_overlay_svg
+from event_loop_lag import loop_lag_monitor_key
 from pychess_global_app_state_utils import get_app_state
 from report_api import TIMEOUT_REASONS
 from security_evasion import BAN_SIGNAL_COLLECTION, signal_ids_from_user_doc
@@ -379,6 +380,7 @@ async def admin_operations(request: web.Request) -> ViewContext:
         level if level in {"DEBUG", "INFO", "WARNING", "ERROR"} else "UNKNOWN"
     )
     context["admin_operations_anons_disabled"] = app_state.disable_new_anons
+    context["admin_operations_event_loop_lag"] = request.app[loop_lag_monitor_key].snapshot()
     context["admin_operations_streams"] = sorted(
         app_state.youtube.live_streams,
         key=lambda stream: str(stream.get("username") or "").casefold(),

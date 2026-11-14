@@ -46,6 +46,33 @@ class EventLoopLagMonitorTests(unittest.TestCase):
 
 
 class EventLoopLagSchedulingTests(unittest.IsolatedAsyncioTestCase):
+    async def test_enable_disable_and_restart_measurement_without_duplicate_callbacks(self):
+        monitor = EventLoopLagMonitor()
+        loop = asyncio.get_running_loop()
+        with patch("event_loop_lag.CHECK_INTERVAL_SECONDS", 0.005):
+            self.assertTrue(monitor.set_enabled(True, loop))
+            original_handle = monitor._handle
+            self.assertIsNotNone(original_handle)
+            self.assertFalse(monitor.set_enabled(True, loop))
+            self.assertIs(monitor._handle, original_handle)
+            await asyncio.sleep(0.02)
+            self.assertGreater(monitor.checks, 0)
+
+            monitor.record_lag(120.0, now=loop.time())
+            self.assertTrue(monitor.set_enabled(False, loop))
+            self.assertTrue(original_handle.cancelled() or monitor._handle is None)
+            self.assertIsNone(monitor._handle)
+            checks = monitor.checks
+            await asyncio.sleep(0.02)
+            self.assertEqual(monitor.checks, checks)
+            self.assertFalse(monitor.set_enabled(False, loop))
+
+            self.assertTrue(monitor.set_enabled(True, loop))
+            self.assertEqual(monitor.stalls_100ms, 0)
+            self.assertEqual(monitor.max_lag_ms, 0.0)
+            self.assertIsNotNone(monitor._handle)
+            monitor.stop()
+
     async def test_synchronous_block_registers_lag_and_stop_cancels_timer(self):
         monitor = EventLoopLagMonitor(enabled=True)
         with (
