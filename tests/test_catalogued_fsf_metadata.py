@@ -174,7 +174,7 @@ class FsfBuiltinMetadataTestCase(TestCase):
                 self.assertTrue(doc["rulesArrowing"])
                 self.assertTrue(_client_doc(doc)["rulesArrowing"])
                 self.assertTrue(_fsf_builtin_synced_fields(doc)["rulesArrowing"])
-                self.assertEqual(doc["pieceFamilyOverride"], "snailtrail")
+                self.assertEqual(doc["pieceFamilyOverride"], "isolation")
                 if name == "isolation7x7":
                     self.assertEqual(doc["boardFamilyOverride"], "ataxx7x7")
                 self.assertNotIn(name, FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)

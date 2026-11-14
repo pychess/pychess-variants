@@ -55,6 +55,7 @@ test.each([
     ['testisolation7x7', 'isolation7x7', 7, 7, '3p3/7/7/7/7/7/3P3 w - - 0 1'],
     ['testsnailtrail', 'snailtrail', 7, 7, '6p/7/7/7/7/7/P6 w - - 0 1'],
 ] as const)('%s uses nonroyal tokens and compound wall input', (name, builtin, width, height, startFen) => {
+    const pieceFamily = builtin === 'snailtrail' ? 'snailtrail' : 'isolation';
     const variant = register({
         name,
         displayName: name,
@@ -63,7 +64,7 @@ test.each([
         fsfBuiltinVariant: builtin,
         baseVariant: builtin === 'isolation7x7' ? 'isolation' : '',
         clientVariant: 'chess',
-        pieceFamilyOverride: 'snailtrail',
+        pieceFamilyOverride: pieceFamily,
         boardFamilyOverride: builtin === 'isolation' ? undefined : 'ataxx7x7',
         pieceNames: { p: 'Token' },
         width,
@@ -76,7 +77,7 @@ test.each([
         betzaPieces: { p: 'mK' },
         rulesArrowing: true,
     });
-    expect(variant.pieceFamily).toBe('snailtrail');
+    expect(variant.pieceFamily).toBe(pieceFamily);
     expect(boardSettings.pieceCSS(variant.pieceFamily, variant)).toBe('classic');
     expect(BOARD_FAMILIES[variant.boardFamily].dimensions).toEqual({ width, height });
     expect(variant.rules.arrowing).toBe(true);

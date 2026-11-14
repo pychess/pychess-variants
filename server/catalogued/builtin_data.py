@@ -498,7 +498,7 @@ passOnStalemate = false
         ),
         "baseVariant": "",
         "clientVariant": "chess",
-        "pieceFamilyOverride": "snailtrail",
+        "pieceFamilyOverride": "isolation",
         "pieceNames": {"p": "Token"},
         "rulesArrowing": True,
         # Documentation only, transcribed from isolation_variant() in
@@ -528,7 +528,7 @@ wallingRegion = a1 b1 d1 e1 f1 *2 *3 *4 *5 *6 *7 a8 b8 c8 e8 f8
         "baseVariant": "isolation",
         "clientVariant": "chess",
         "boardFamilyOverride": "ataxx7x7",
-        "pieceFamilyOverride": "snailtrail",
+        "pieceFamilyOverride": "isolation",
         "pieceNames": {"p": "Token"},
         "rulesArrowing": True,
         # Documentation only, transcribed from isolation7x7_variant().

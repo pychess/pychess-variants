@@ -165,9 +165,12 @@ label.piece.piece2.amazons {
 }
 
 label.piece.piece0.snailtrail {
+    background-image: url('images/pieces/snailtrail/wP.svg');
+}
+label.piece.piece0.isolation {
     background-image: url('images/pieces/merida/wK.svg');
 }
-label.piece.piece1.snailtrail {
+label.piece.piece1.snailtrail, label.piece.piece1.isolation {
     background-image: url('images/pieces/disguised/w.svg');
 }
 

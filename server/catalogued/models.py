@@ -76,6 +76,7 @@ CATALOGUED_PIECE_FAMILY_OVERRIDES = frozenset(
         "dragon",
         "empire",
         "hoppel",
+        "isolation",
         "janggi",
         "khans",
         "kyoto",
