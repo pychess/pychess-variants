@@ -507,6 +507,33 @@ adjudicateFullBoard = true
 passOnStalemate = false
 """,
     },
+    "fox-and-hounds": {
+        "displayName": "Fox and Hounds",
+        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
+        "references": _fsf_builtin_references(
+            "https://boardgamegeek.com/boardgame/148180/fox-and-hounds",
+        ),
+        "baseVariant": "",
+        "clientVariant": "chess",
+        "pieceFamilyOverride": "foxandhounds",
+        "pieceNames": {"f": "Fox", "h": "Hound"},
+        # Documentation only, transcribed from fox_and_hounds_variant() in src/variant.cpp.
+        "rulesIni": """
+[fox-and-hounds]
+pawn = -
+knight = -
+bishop = -
+rook = -
+queen = -
+king = -
+customPiece1 = h:mfF
+customPiece2 = f:mF
+startFen = 1h1h1h1h/8/8/8/8/8/8/4F3 w - - 0 1
+stalemateValue = loss
+flagPieceWhite = f
+flagRegionWhite = *8
+""",
+    },
     "georgian": {
         "displayName": "Georgian Chess",
         "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
@@ -1298,16 +1325,6 @@ FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES: Mapping[str, Mapping[str, Any]] = {
         ),
         "baseVariant": "chess",
         "reviewNotes": "Alias of Chess960; pychess already exposes this as Chess960.",
-    },
-    "fox-and-hounds": {
-        "displayName": "Fox and Hounds",
-        "description": FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-        "references": _fsf_builtin_references(
-            "https://boardgamegeek.com/boardgame/148180/fox-and-hounds",
-        ),
-        "baseVariant": "",
-        "clientVariant": "chess",
-        "reviewNotes": "Asymmetric non-capturing game; verify result handling and pieces.",
     },
     "gorogoro": {
         "displayName": "Gorogoro Shogi",

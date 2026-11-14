@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <title>White fox</title>
+  <!-- Original artwork by pychess-variants contributors, made with AI assistance.
+       SPDX-License-Identifier: CC-BY-4.0
+       https://creativecommons.org/licenses/by/4.0/ -->
+  <g stroke="#30251f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 48 13 14q-1-6 5-3l20 16q12-5 24 0l20-16q6-3 5 3l-5 34 8 10-10 5 3 6-19 9-9 9q-5 4-10 0l-9-9-19-9 3-6-10-5Z" fill="#e88b3d"/>
+    <path d="m21 22 12 11-10 10Zm58 0L67 33l10 10Z" fill="#b84c35" stroke-width="2"/>
+    <path d="M20 54q14-6 30 13 16-19 30-13l-6 13q-8 11-24 20-16-9-24-20Z" fill="#fff1d6" stroke="none"/>
+    <path d="m43 68q7-4 14 0 0 4-7 8-7-4-7-8Z" fill="#30251f" stroke-width="2"/>
+    <path d="M50 76v3m-10 0q5 6 10 0 5 6 10 0" fill="none" stroke-width="2.5"/>
+  </g>
+  <g fill="#30251f">
+    <ellipse cx="34" cy="51" rx="3" ry="4"/>
+    <ellipse cx="66" cy="51" rx="3" ry="4"/>
+  </g>
+  <g fill="#fff1d6">
+    <circle cx="35" cy="50" r="1"/>
+    <circle cx="67" cy="50" r="1"/>
+  </g>
+</svg>

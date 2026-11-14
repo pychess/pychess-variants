@@ -55,6 +55,20 @@ describe('catalogued variant premoves', () => {
         expect(new Set(destinations)).toEqual(new Set(expected));
     });
 
+    test('Fox and Hounds uses diagonal fox steps and forward-only hound steps', () => {
+        registerCataloguedPremove({
+            name: 'betza-test',
+            source: 'fairy-stockfish-builtin',
+            baseVariant: '',
+            clientVariant: 'chess',
+            ini: '',
+            betzaPieces: { f: 'mF', h: 'mfF' },
+        });
+        const moves = premoveForVariant('betza-test', false, dimensions);
+        expect(new Set(moves(board(['d4', 'f', 'white']), 'd4', false))).toEqual(new Set(['c3', 'e3', 'c5', 'e5']));
+        expect(new Set(moves(board(['d4', 'h', 'black']), 'd4', false))).toEqual(new Set(['c3', 'e3']));
+    });
+
     test('clientVariant controls fallback without changing engine baseVariant', () => {
         registerCataloguedPremove({
             name: 'betza-test',

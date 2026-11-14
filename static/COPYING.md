@@ -33,6 +33,7 @@ static/images/pieces/dubrovny/* | sadsnake1 | [CC BY-NC-SA 4.0](https://creative
 static/images/pieces/empire/* | Couch Tomato | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/pieces/firi/* | [James Faure](https://github.com/jfaure/Firi-pieceset) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
 static/images/pieces/forest/* | [hehehai (Paper Generals)](https://papergenerals.com/pieces) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Forest Friends pieces; made with AI assistance
+static/images/pieces/fox-and-hounds/* | pychess-variants contributors | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Original SVG artwork made with AI assistance
 static/images/pieces/green/* | Colin M.L. Burnett and Uray M. János | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/deed.en) | From lichess and [Green Chess](https://greenchess.net/info.php?item=downloads)
 static/images/pieces/hoppel/* | pychess-variants contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/pieces/janggi/* | [Kadagaden](https://github.com/Kadagaden/chess-pieces) | [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) |

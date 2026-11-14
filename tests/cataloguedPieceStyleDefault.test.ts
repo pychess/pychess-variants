@@ -36,6 +36,7 @@ const variantNames = [
     'testisolation7x7',
     'testsnailtrail',
     'testaiwok',
+    'testfoxandhounds',
 ];
 
 function register(meta: CataloguedVariantClientDocument) {
@@ -49,6 +50,37 @@ afterEach(() => {
         delete localStorage[`${name}-piece`];
         delete boardSettings.settings[`${name}-piece`];
     });
+});
+
+test('Fox and Hounds uses its artwork without royal pieces or chess pawn rules', () => {
+    const variant = register({
+        name: 'testfoxandhounds',
+        displayName: 'Fox and Hounds',
+        source: 'fairy-stockfish-builtin',
+        fsfBuiltinVariant: 'fox-and-hounds',
+        baseVariant: '',
+        clientVariant: 'chess',
+        ini: '',
+        startFen: '1h1h1h1h/8/8/8/8/8/8/4F3 w - - 0 1',
+        width: 8,
+        height: 8,
+        pieces: ['f', 'h'],
+        kingRoles: [],
+        promotionRoles: [],
+        pocketRoles: [],
+        pieceFamilyOverride: 'foxandhounds',
+        pieceNames: { f: 'Fox', h: 'Hound' },
+        betzaPieces: { f: 'mF', h: 'mfF' },
+    });
+    expect(variant.pieceFamily).toBe('foxandhounds');
+    expect(boardSettings.pieceCSS(variant.pieceFamily, variant)).toBe('classic');
+    expect(variant.kingRoles).toEqual([]);
+    expect(variant.promotion.roles).toEqual([]);
+    expect(variant.pocket).toBeUndefined();
+    expect(variant.rules.enPassant).toBe(false);
+    expect(variant.pieceNames.f).toBe('Fox');
+    expect(variant.pieceNames.h).toBe('Hound');
+    expect(variant.ratingEnabled).toBe(false);
 });
 
 test('Ai-Wok uses Alfaerie compound pieces with Makruk defaults and automatic counting', () => {

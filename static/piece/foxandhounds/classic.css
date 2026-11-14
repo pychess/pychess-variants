@@ -1,0 +1,12 @@
+.foxandhounds piece.f-piece.white {
+    background-image: url('../../images/pieces/fox-and-hounds/wF.svg');
+}
+.foxandhounds piece.f-piece.black {
+    background-image: url('../../images/pieces/fox-and-hounds/bF.svg');
+}
+.foxandhounds piece.h-piece.white {
+    background-image: url('../../images/pieces/fox-and-hounds/wH.svg');
+}
+.foxandhounds piece.h-piece.black {
+    background-image: url('../../images/pieces/fox-and-hounds/bH.svg');
+}

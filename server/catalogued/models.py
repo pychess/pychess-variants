@@ -76,6 +76,7 @@ CATALOGUED_PIECE_FAMILY_OVERRIDES = frozenset(
         "dobutsu",
         "dragon",
         "empire",
+        "foxandhounds",
         "hoppel",
         "isolation",
         "janggi",

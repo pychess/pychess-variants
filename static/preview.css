@@ -161,6 +161,12 @@ label.piece.piece1.aiwok {
     background-image: url('images/pieces/disguised/w.svg');
 }
 
+label.piece.piece0.foxandhounds {
+    background-image: url('images/pieces/fox-and-hounds/wF.svg');
+}
+label.piece.piece1.foxandhounds {
+    background-image: url('images/pieces/disguised/w.svg');
+}
 label.piece.piece0.amazons {
     background-image: url('images/pieces/merida/wQ.svg');
 }

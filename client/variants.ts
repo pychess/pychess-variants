@@ -306,6 +306,7 @@ const ORDA_NAMES: PieceNameTable = {
 
 export const PIECE_FAMILIES: Record<string, PieceFamily> = {
     aiwok: { pieceCSS: ['alfaerie', 'disguised'] },
+    foxandhounds: { pieceCSS: ['classic', 'disguised'] },
     amazons: { pieceCSS: ['classic', 'arrow', 'disguised'], wallCSS: ['classic', 'arrow'] },
     snailtrail: { pieceCSS: ['classic', 'disguised'] },
     isolation: { pieceCSS: ['classic', 'disguised'] },
@@ -2950,7 +2951,7 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
     const isBreakthrough = meta.source === 'fairy-stockfish-builtin' && meta.name === 'breakthrough';
     const usesNonCapturingTokens =
         meta.source === 'fairy-stockfish-builtin' &&
-        ['isolation', 'isolation7x7', 'snailtrail'].includes(meta.fsfBuiltinVariant || meta.name);
+        ['isolation', 'isolation7x7', 'snailtrail', 'fox-and-hounds'].includes(meta.fsfBuiltinVariant || meta.name);
     const isJanggi =
         meta.source === 'fairy-stockfish-builtin' &&
         ['janggicasual', 'janggimodern', 'janggitraditional'].includes(meta.name);
@@ -3008,8 +3009,7 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
         },
         rules: {
             defaultTimeControl: clientVariant?.rules.defaultTimeControl ?? 'incremental',
-            // Breakthrough has no en passant; Isolation and Snail Trail use p
-            // for non-capturing tokens rather than chess pawns.
+            // Breakthrough has no en passant; non-capturing token games do not use chess pawns.
             enPassant: !!clientVariant?.rules.enPassant && !isBreakthrough && !usesNonCapturingTokens,
             gate: !!meta.rulesGate || !!clientVariant?.rules.gate,
             duck: !!clientVariant?.rules.duck,

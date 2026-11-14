@@ -32,6 +32,7 @@ class FsfBuiltinMetadataTestCase(TestCase):
             "codrus": ("giveaway", "antichess"),
             "courier": ("", "shatranj"),
             "euroshogi": ("", "shogi"),
+            "fox-and-hounds": ("", "chess"),
             "georgian": ("amazon", "chess"),
             "giveaway": ("", "antichess"),
             "isolation": ("", "chess"),
@@ -82,6 +83,20 @@ class FsfBuiltinMetadataTestCase(TestCase):
             FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES["normal"]["clientVariant"],
             "chess",
         )
+
+    def test_fox_and_hounds_has_named_nonroyal_pieces_and_its_own_artwork(self) -> None:
+        name = "fox-and-hounds"
+        doc = _build_fsf_builtin_doc(name, FSF_CATALOGUED_BUILTIN_VARIANTS[name])
+        self.assertEqual(doc["ini"], "")
+        self.assertEqual((doc["width"], doc["height"]), (8, 8))
+        self.assertEqual(set(doc["pieces"]), {"f", "h"})
+        self.assertEqual(doc["pieceFamilyOverride"], "foxandhounds")
+        self.assertEqual(doc["pieceNames"], {"f": "Fox", "h": "Hound"})
+        self.assertEqual(doc["kingRoles"], [])
+        self.assertEqual(doc["promotionRoles"], [])
+        self.assertEqual(doc["pocketRoles"], [])
+        self.assertEqual(_client_doc(doc)["betzaPieces"], {"h": "mfF", "f": "mF"})
+        self.assertNotIn(name, FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
 
     def test_aiwok_uses_its_compound_piece_family_and_promotion(self) -> None:
         doc = _build_fsf_builtin_doc("ai-wok", FSF_CATALOGUED_BUILTIN_VARIANTS["ai-wok"])

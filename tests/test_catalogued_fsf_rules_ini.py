@@ -20,6 +20,30 @@ from variants import get_server_variant, unregister_catalogued_server_variant
 
 
 class FsfBuiltinRulesIniTestCase(TestCase):
+    def test_fox_and_hounds_non_capturing_moves_and_win_conditions(self) -> None:
+        name = "fox-and-hounds"
+        doc = _build_fsf_builtin_doc(name, FSF_CATALOGUED_BUILTIN_VARIANTS[name])
+        context = catalogued_variant_rule_context(doc)
+        self.assertIn("flagRegionWhite = *8", context["ini"])
+        start = sf.start_fen(name)
+        self.assertEqual(set(sf.legal_moves(name, start, [])), {"e1d2", "e1f2"})
+        self.assertEqual(
+            set(sf.legal_moves(name, start, ["e1d2"])),
+            {"b8a7", "b8c7", "d8c7", "d8e7", "f8e7", "f8g7", "h8g7"},
+        )
+        fox = "8/8/8/8/3F4/8/8/1h6 w - - 0 1"
+        self.assertEqual(set(sf.legal_moves(name, fox, [])), {"d4c3", "d4e3", "d4c5", "d4e5"})
+        hound = "8/8/8/8/3h4/8/8/4F3 b - - 0 1"
+        self.assertEqual(set(sf.legal_moves(name, hound, [])), {"d4c3", "d4e3"})
+        blocked = "8/8/8/8/8/8/3h1h2/4F3 w - - 0 1"
+        self.assertEqual(sf.legal_moves(name, blocked, []), [])
+        self.assertLess(sf.game_result(name, blocked, []), 0)
+        goal = "8/5F2/8/8/8/8/1h1h1h1h/8 w - - 0 1"
+        self.assertIn("f7e8", sf.legal_moves(name, goal, []))
+        ended, result = sf.is_immediate_game_end(name, goal, ["f7e8"])
+        self.assertTrue(ended)
+        self.assertLess(result, 0)  # Black is to move after the fox reaches rank eight.
+
     def test_asymmetric_promotion_targets_match_the_engine_for_both_sides(self) -> None:
         for name, white, black in (
             ("sortofalmost", "crbn", "qrbn"),
