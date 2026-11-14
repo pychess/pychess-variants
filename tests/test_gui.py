@@ -1479,9 +1479,9 @@ class TestGUI:
                     await page.goto(f"{base_url}/{game.id}")
                     await page.wait_for_function("() => window.cg?.state.movable.dests?.size > 0")
                     await expect(page.locator("body")).to_have_attribute("data-theme", theme)
-                    for color, image_name in (("white", "wK.svg"), ("black", "bK.svg")):
+                    for color, image_name in (("white", "wP.svg"), ("black", "bP.svg")):
                         artwork = base64.b64encode(
-                            Path(f"static/images/pieces/merida/{image_name}").read_bytes()
+                            Path(f"static/images/pieces/snailtrail/{image_name}").read_bytes()
                         ).decode()
                         assert await page.locator(f"#mainboard piece.p-piece.{color}").evaluate(
                             "(piece, artwork) => getComputedStyle(piece).backgroundImage.includes(artwork)",
@@ -1497,7 +1497,7 @@ class TestGUI:
                             image_path = (
                                 f"static/images/pieces/disguised/{prefix}.svg"
                                 if style == "disguised"
-                                else f"static/images/pieces/merida/{prefix}K.svg"
+                                else f"static/images/pieces/snailtrail/{prefix}P.svg"
                             )
                             artwork = base64.b64encode(Path(image_path).read_bytes()).decode()
                             await expect(page.locator("#mainboard")).to_have_class(

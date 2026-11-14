@@ -47,9 +47,14 @@ class CataloguedVariantRuleChangesTestCase(unittest.TestCase):
                 _ensure_catalogued_rule_changes(f"[cosmetic:chess]\n{option}\n")
 
     def test_rejects_alias_of_curated_playable_engine_variant(self) -> None:
-        with self.assertRaises(web.HTTPBadRequest) as exc:
-            _ensure_catalogued_rule_changes("[myshatar:shatar]\n# new board")
-        self.assertIn("already playable on PyChess as Shatar", exc.exception.text)
+        for name, display_name in (
+            ("shatar", "Shatar"),
+            ("chigorin", "Chigorin Chess"),
+            ("sortofalmost", "Sort-of-Almost Chess"),
+        ):
+            with self.subTest(name=name), self.assertRaises(web.HTTPBadRequest) as exc:
+                _ensure_catalogued_rule_changes(f"[myvariant:{name}]\n# new board")
+            self.assertIn(f"already playable on PyChess as {display_name}", exc.exception.text)
 
     def test_accepts_gameplay_overrides_alongside_cosmetic_settings(self) -> None:
         for option in (
@@ -61,7 +66,12 @@ class CataloguedVariantRuleChangesTestCase(unittest.TestCase):
                 _ensure_catalogued_rule_changes(COSMETIC_INI + option + "\n")
 
     def test_does_not_claim_unexposed_engine_variant_is_already_playable(self) -> None:
-        _ensure_catalogued_rule_changes("[mychigorin:chigorin]\n# new catalogue entry")
+        candidates = {"candidatevariant": {"displayName": "Candidate Chess"}}
+        with (
+            patch("catalogued.builtin_data.FSF_CATALOGUED_BUILTIN_VARIANTS", {}),
+            patch("catalogued.builtin_data.FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES", candidates),
+        ):
+            _ensure_catalogued_rule_changes("[myvariant:candidatevariant]\n# new catalogue entry")
 
     def test_allows_standalone_rule_definitions(self) -> None:
         _ensure_catalogued_rule_changes("[standalone]\ncustomPiece1 = x:W\n")
