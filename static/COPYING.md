@@ -74,6 +74,7 @@ static/images/trophy/* | pychess-variants contributors | [AGPLv3+](https://www.g
 static/images/\*Guide/* | pychess-variants contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/bughouse.jpg | [Alexandre Duret-Lutz](https://www.flickr.com/photos/gadl/91700546) | [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/) |
 static/images/greenchess-logo.png | Uray M. János | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/deed.en) | From [Green Chess](https://greenchess.net/info.php?item=downloads)
+static/images/friendly-sites/papergenerals.svg | hehehai ([Paper Generals](https://papergenerals.com/)) | All rights reserved | Paper Generals logo, used with permission to link to papergenerals.com
 static/images/friendly-sites/schemingmind-alice.png | [John Tenniel](https://commons.wikimedia.org/wiki/File:Alice_crown.jpg) | Public Domain | Derived from Tenniel's 1871 *Through the Looking-Glass* illustration used by SchemingMind
 static/images/bugroundchat/* | pychess-variants contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/emoji/* | Lichess contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) | From lichess
