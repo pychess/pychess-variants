@@ -32,6 +32,7 @@ static/images/pieces/disguised/* | danegraphics | [CC BY-NC-SA 4.0](https://crea
 static/images/pieces/dubrovny/* | sadsnake1 | [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) | From lichess
 static/images/pieces/empire/* | Couch Tomato | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/pieces/firi/* | [James Faure](https://github.com/jfaure/Firi-pieceset) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+static/images/pieces/forest/* | [hehehai (Paper Generals)](https://papergenerals.com/pieces) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Forest Friends pieces; made with AI assistance
 static/images/pieces/green/* | Colin M.L. Burnett and Uray M. János | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/deed.en) | From lichess and [Green Chess](https://greenchess.net/info.php?item=downloads)
 static/images/pieces/hoppel/* | pychess-variants contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/pieces/janggi/* | [Kadagaden](https://github.com/Kadagaden/chess-pieces) | [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) |
@@ -56,6 +57,7 @@ static/images/pieces/spartan/* | pychess-variants contributors | [AGPLv3+](https
 static/images/pieces/synochess/* | Couch Tomato | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/pieces/tori/* | Couch Tomato | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/pieces/xiangqi/euro/* | Jasmin Scharrer and Sebastian Pipping | [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) |
+static/images/pieces/xiangqi/forest/* | [hehehai (Paper Generals)](https://papergenerals.com/pieces) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Forest Friends pieces; made with AI assistance
 static/images/pieces/xiangqi/playok/* | Sebastian Pipping | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 static/images/pieces/xiangqi/* | pychess-variants contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/sound/bugchat/* | [rhasspy/piper](https://github.com/rhasspy/piper) | [MIT](https://github.com/rhasspy/piper/blob/master/LICENSE.md) | Generated with `en_GB-northern_english_male-medium` voice. Voice models are under a different license.
