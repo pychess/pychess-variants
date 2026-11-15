@@ -4,7 +4,11 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
-PYTHON="${PYCHESS_PROFILE_PYTHON:-$ROOT/.venv/bin/python}"
+DEFAULT_PYTHON="$ROOT/.venv-py315/bin/python"
+if [[ ! -x "$DEFAULT_PYTHON" ]]; then
+  DEFAULT_PYTHON="$ROOT/.venv/bin/python"
+fi
+PYTHON="${PYCHESS_PROFILE_PYTHON:-$DEFAULT_PYTHON}"
 if [[ ! -x "$PYTHON" ]]; then
   echo "Python environment not found: $PYTHON" >&2
   exit 1

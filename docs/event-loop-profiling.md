@@ -108,15 +108,18 @@ read-only HTML/API traffic **while** test users play games against Random-Mover.
 The default original stress-test configuration is unchanged: the extra HTTP
 workload is enabled only by flags. The preset is explicitly local-only.
 
-From the repository root, with your Python **3.15** environment activated
-(`.venv/bin/python --version` should show 3.15):
+From the repository root, use the Python 3.15 setup launcher. It creates a separate
+`.venv-py315` environment without changing `.venv` or `uv.lock`. It installs
+the locked server dependencies, compiles `py4swiss==0.3.1` from its tagged
+upstream source (because the pinned PyPI release has no 3.15 wheel), and then
+starts the profiler:
 
 **Terminal A** — start (or find) the local server, enable loop-lag monitoring if
 started here, automatically discover its PID, and capture a 120-second Tachyon
 Gecko profile (sudo prompts for ptrace privileges, as on Ubuntu):
 
 ```bash
-.venv/bin/python scripts/profile_local_server.py
+./scripts/run_profile_local_315.sh
 ```
 
 If the server already runs from this checkout, the command attaches to it;
@@ -200,3 +203,11 @@ To use another cookie-file location, set `PYCHESS_STRESS_PGN_COOKIE_FILE`.
 By default the profiler writes into a private `/tmp/pychess-tachyon-*/timeline.json`,
 restores its ownership after sudo, and prints the exact path. Compare the
 server's `event_loop_lag` warnings with the sampled stacks in Firefox Profiler.
+
+The launcher requires `uv`, `git`, and a C++ compiler (`g++`); it installs packages
+only in `.venv-py315`. If an upstream package lacks a compatible wheel, `uv`
+may compile it from source, so build tools may also be needed. When you have
+local CPython 3.15 wheels, set `PYCHESS_CP315_WHEELS=/path/to/wheels` for the
+launcher to prefer them. The `scripts/run_profile_stress.sh` wrapper uses the
+same `.venv-py315` interpreter by default; override it with
+`PYCHESS_PROFILE_PYTHON` if needed. A completed build is reused on later runs.
