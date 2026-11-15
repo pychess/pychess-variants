@@ -110,11 +110,12 @@ workload is enabled only by flags. The preset is explicitly local-only.
 
 From the repository root, use the Python 3.15 setup launcher. It creates a separate
 `.venv-py315` environment without changing `.venv` or `uv.lock`. It installs
-the locked runtime dependencies except for three native packages; installs
-new CPython 3.15 `pyffish` and `pyffish-alice` wheels from PyPI; compiles
-`py4swiss==0.3.1` from the GitHub release source archive (PyPI has no sdist or
-3.15 wheel); and then starts the profiler. These native package versions may
-differ from the production pins in `uv.lock`:
+runtime requirements from `pyproject.toml`, resolving dependencies for Python 3.15
+independently of `uv.lock`. It uses the local
+[`py4swiss` source override](../requirements/python315-overrides.in), installs
+CPython 3.15 wheels for the engines and other supported native dependencies
+(including `pydantic-core`), and then starts the profiler. Transitive versions
+may differ from the production lockfile:
 
 **Terminal A** — start (or find) the local server, enable loop-lag monitoring if
 started here, automatically discover its PID, and capture a 120-second Tachyon
