@@ -1443,30 +1443,33 @@ def pgn(doc):
 
     fen = initial_fen if initial_fen is not None else FairyBoard.start_fen(variant)
     # print(variant, fen, mlist)
-    # Try SAN conversion in stored variant first for backward compatibility.
-    # If that fails, retry with modded castling semantics (capablanca->embassy).
-    san_variants = [variant]
-    variant_fallback = modded_variant(variant, chess960, fen)
-    if variant_fallback != variant:
-        san_variants.append(variant_fallback)
+    # Match Game.pgn: Jieqi coordinates carry reveal suffixes that the engine's
+    # bulk SAN converter cannot replay without the hidden-piece mapping.
+    if variant != "jieqi":
+        # Try SAN conversion in stored variant first for backward compatibility.
+        # If that fails, retry with modded castling semantics (capablanca->embassy).
+        san_variants = [variant]
+        variant_fallback = modded_variant(variant, chess960, fen)
+        if variant_fallback != variant:
+            san_variants.append(variant_fallback)
 
-    for san_variant in san_variants:
-        try:
-            mlist = get_san_moves(san_variant, fen, mlist, chess960, NOTATION_SAN)
-            break
-        except Exception:
-            log.error("%s %s %s movelist contains invalid move", doc["_id"], san_variant, doc["d"])
-    else:
         for san_variant in san_variants:
             try:
-                mlist = get_san_moves(san_variant, fen, mlist[:-1], chess960, NOTATION_SAN)
+                mlist = get_san_moves(san_variant, fen, mlist, chess960, NOTATION_SAN)
                 break
             except Exception:
-                log.error(
-                    "%s %s %s movelist contains invalid move", doc["_id"], san_variant, doc["d"]
-                )
+                pass
         else:
-            mlist = mlist[0]
+            log.error("%s %s %s movelist contains invalid move", doc["_id"], variant, doc["d"])
+            for san_variant in san_variants:
+                try:
+                    mlist = get_san_moves(san_variant, fen, mlist[:-1], chess960, NOTATION_SAN)
+                    break
+                except Exception:
+                    pass
+            else:
+                log.error("%s %s %s movelist contains invalid move", doc["_id"], variant, doc["d"])
+                mlist = mlist[0]
 
     moves = " ".join(
         (
