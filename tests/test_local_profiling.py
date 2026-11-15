@@ -5,7 +5,8 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 import client_stresstest as stress
 from aiohttp import web
@@ -51,6 +52,55 @@ class LocalProfilingConfigurationTests(unittest.TestCase):
             self.assertTrue(is_test_user_server(123, proc))
             (target / "cmdline").write_bytes(b"/usr/bin/python3.15\0server/server.py\0")
             self.assertFalse(is_test_user_server(123, proc))
+
+    def test_auto_started_server_receives_private_snapshot_path(self) -> None:
+        from scripts.profile_local_server import main
+
+        with tempfile.TemporaryDirectory() as directory:
+            timeline = Path(directory) / "timeline.json"
+            fake_server = Mock(pid=12345)
+            server_start = Mock(return_value=fake_server)
+
+            def fake_run(args, **_kwargs):
+                # Only the profiler invocation occurs with --no-sudo.
+                output = Path(args[args.index("-o") + 1])
+                output.write_text('{"meta": {}}', encoding="utf-8")
+                return SimpleNamespace(returncode=0)
+
+            def fake_stop(_server):
+                env = server_start.call_args.kwargs["env"]
+                Path(env["PYCHESS_LOOP_LAG_SNAPSHOT_PATH"]).write_text(
+                    '{"event_loop_lag": {}}', encoding="utf-8"
+                )
+
+            with (
+                patch.dict("os.environ", {"MONGO_HOST": "mongodb://127.0.0.1:27017"}),
+                patch(
+                    "scripts.profile_local_server.ensure_local_mode",
+                    return_value="http://127.0.0.1:8080",
+                ),
+                patch("scripts.profile_local_server.find_local_server_pids", return_value=[]),
+                patch(
+                    "scripts.profile_local_server.socket.create_connection",
+                    side_effect=ConnectionRefusedError,
+                ),
+                patch("scripts.profile_local_server.subprocess.Popen", server_start),
+                patch("scripts.profile_local_server.wait_until_ready"),
+                patch("scripts.profile_local_server.assert_python315_process"),
+                patch("scripts.profile_local_server.subprocess.run", side_effect=fake_run),
+                patch("scripts.profile_local_server.stop_server", side_effect=fake_stop),
+            ):
+                code = main(["--no-sudo", "--duration", "1", "--output", str(timeline)])
+
+            self.assertEqual(code, 0)
+            env = server_start.call_args.kwargs["env"]
+            self.assertEqual(env["PYCHESS_LOOP_LAG_ENABLED"], "1")
+            self.assertEqual(
+                env["PYCHESS_LOOP_LAG_SNAPSHOT_PATH"],
+                str(Path(directory) / "event-loop-lag.json"),
+            )
+            self.assertTrue(timeline.is_file())
+            self.assertTrue((Path(directory) / "event-loop-lag.json").is_file())
 
     def test_local_profile_rejects_production_uri(self) -> None:
         from scripts.profile_local_server import ensure_local_mode

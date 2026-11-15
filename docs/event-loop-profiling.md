@@ -203,9 +203,25 @@ The preset requests at most 100 recent `gbtami` games **once during the
 If no cookie file exists, the preset still exercises all the public paths.
 
 To use another cookie-file location, set `PYCHESS_STRESS_PGN_COOKIE_FILE`.
-By default the profiler writes into a private `/tmp/pychess-tachyon-*/timeline.json`,
-restores its ownership after sudo, and prints the exact path. Compare the
-server's `event_loop_lag` warnings with the sampled stacks in Firefox Profiler.
+By default the profiler writes into a private `/tmp/pychess-tachyon-*/`
+directory and prints the exact file locations:
+
+- `timeline.json` is written when Tachyon finishes its 120-second capture.
+- `event-loop-lag.json` is written **on graceful server shutdown** after
+  sampling, with the complete `event_loop_lag` counters and UTC peak timestamp,
+  including any stalls not printed due to the warning cooldown.
+
+The snapshot covers the server's entire monitored lifetime, including startup
+and the brief interval after profiling ends. It measures scheduling lateness,
+not the duration of HTTP requests. Both files stay private; the Gecko profile's
+ownership is restored after sudo. Compare the snapshot's peak timestamps and
+counts with the sampled stacks in Firefox Profiler.
+
+The automatic final snapshot is available only when the profiler helper
+**starts its own** server, since an existing server cannot inherit the snapshot
+output path. If you attach to an already-running server, inspect its authenticated
+`/metrics?summary=True` endpoint instead. Neither the shutdown file nor the
+sampling monitor is enabled by default in production.
 
 The launcher requires `uv` and a C++ compiler (`g++`); it installs packages
 only in `.venv-py315`. Building `py4swiss` from the tagged GitHub source

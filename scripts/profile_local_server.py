@@ -116,8 +116,18 @@ def main(argv: list[str] | None = None) -> int:
     if args.duration < 1:
         parser.error("--duration must be positive")
     uri = ensure_local_mode()
+    output = args.output or (Path(tempfile.mkdtemp(prefix="pychess-tachyon-")) / "timeline.json")
+    output = output.expanduser().absolute()
+    snapshot_output = output.with_name("event-loop-lag.json")
     launched: subprocess.Popen[bytes] | None = None
+    started = False
     try:
+        if output.exists():
+            raise RuntimeError(f"Refusing to overwrite existing profile: {output}")
+        output.parent.mkdir(parents=True, exist_ok=True)
+        # A snapshot from an older run must never be mistaken for this capture.
+        if snapshot_output.exists():
+            raise RuntimeError(f"Refusing to overwrite existing lag snapshot: {snapshot_output}")
         pids = find_local_server_pids()
         if len(pids) > 1:
             raise RuntimeError(
@@ -133,6 +143,11 @@ def main(argv: list[str] | None = None) -> int:
                     "python3.15 server/server.py -a"
                 )
             print("Make sure PYCHESS_LOOP_LAG_ENABLED=1 was set when it started.", flush=True)
+            print(
+                "Automatic final lag snapshots require a server started by this helper; "
+                "an already-running server cannot inherit the output setting.",
+                flush=True,
+            )
         else:
             if args.attach_only:
                 raise RuntimeError("No PyChess server is running in this checkout.")
@@ -157,7 +172,11 @@ def main(argv: list[str] | None = None) -> int:
                 "Starting local server in test-user mode (-a), with loop-lag monitoring.",
                 flush=True,
             )
-            env = dict(os.environ, PYCHESS_LOOP_LAG_ENABLED="1")
+            env = dict(
+                os.environ,
+                PYCHESS_LOOP_LAG_ENABLED="1",
+                PYCHESS_LOOP_LAG_SNAPSHOT_PATH=str(snapshot_output),
+            )
             launched = subprocess.Popen(
                 [sys.executable, str(SERVER), "-a"],
                 cwd=ROOT,
@@ -166,14 +185,8 @@ def main(argv: list[str] | None = None) -> int:
             )
             pid = launched.pid
             wait_until_ready(launched, uri)
+            started = True
         assert_python315_process(pid)
-        output = args.output or (
-            Path(tempfile.mkdtemp(prefix="pychess-tachyon-")) / "timeline.json"
-        )
-        output = output.expanduser().absolute()
-        if output.exists():
-            raise RuntimeError(f"Refusing to overwrite existing profile: {output}")
-        output.parent.mkdir(parents=True, exist_ok=True)
         cmd = [
             sys.executable,
             "-m",
@@ -192,22 +205,39 @@ def main(argv: list[str] | None = None) -> int:
             # Prompt for sudo before inviting the user to start the workload.
             subprocess.run(["sudo", "-v"], check=True)
         print(
-            f"Sampling server PID {pid} for {args.duration}s; start the stress test now.",
+            f"Sampling server PID {pid} for {args.duration}s; start the stress test now.\n"
+            f"Timeline (written after sampling finishes): {output}",
             flush=True,
         )
+        if launched is not None:
+            print(
+                f"Final event-loop lag snapshot (written on shutdown): {snapshot_output}",
+                flush=True,
+            )
         result = subprocess.run(cmd, check=False)
         if output.is_file() and not args.no_sudo:
             subprocess.run(
                 ["sudo", "chown", f"{os.getuid()}:{os.getgid()}", str(output)], check=True
             )
-        if result.returncode == 0:
-            print(f"Profile: {output}\nLoad in https://profiler.firefox.com/", flush=True)
-        return result.returncode
+        if result.returncode != 0:
+            raise RuntimeError(f"Tachyon exited with status {result.returncode}")
+        if not output.is_file() or output.stat().st_size == 0:
+            raise RuntimeError(f"Tachyon reported success but did not write a profile: {output}")
     except (OSError, RuntimeError, subprocess.CalledProcessError) as exc:
         print(f"Profiling failed: {exc}", file=sys.stderr)
         return 1
     finally:
         stop_server(launched)
+        if started:
+            if snapshot_output.is_file() and snapshot_output.stat().st_size:
+                print(f"Event-loop lag snapshot: {snapshot_output}", flush=True)
+            else:
+                print(
+                    f"WARNING: no shutdown lag snapshot was saved at {snapshot_output}",
+                    file=sys.stderr,
+                )
+    print(f"Profile: {output}\nLoad in https://profiler.firefox.com/", flush=True)
+    return 0
 
 
 if __name__ == "__main__":

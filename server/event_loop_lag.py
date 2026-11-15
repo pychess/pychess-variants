@@ -7,9 +7,12 @@ Correlate UTC warning timestamps with a separate sampling profiler capture.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
+import os
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
+from pathlib import Path
 
 from aiohttp import web
 
@@ -146,6 +149,21 @@ class EventLoopLagMonitor:
         self._loop = None
 
 
+def save_lag_snapshot(path: Path, monitor: EventLoopLagMonitor) -> None:
+    """Persist final counters only when a local profiling run opts in.
+
+    The file is new and owner-only; never overwrite an earlier run's results.
+    """
+    data = {
+        "captured_at_utc": datetime.now(UTC).isoformat(),
+        "event_loop_lag": monitor.snapshot(),
+    }
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as output:
+        json.dump(data, output, indent=2)
+        output.write("\n")
+
+
 loop_lag_monitor_key = web.AppKey("event_loop_lag_monitor", EventLoopLagMonitor)
 
 
@@ -155,4 +173,16 @@ async def loop_lag_context(app: web.Application) -> AsyncIterator[None]:
     try:
         yield
     finally:
-        monitor.stop()
+        # aiohttp calls cleanup contexts before the event loop exits. Preserve
+        # all counters, including warnings still pending in the rate limiter.
+        try:
+            if snapshot_file := os.getenv("PYCHESS_LOOP_LAG_SNAPSHOT_PATH"):
+                path = Path(snapshot_file)
+                if not path.is_absolute():
+                    raise ValueError("lag snapshot path must be absolute")
+                save_lag_snapshot(path, monitor)
+                log.info("Event-loop lag snapshot saved to %s", path)
+        except (OSError, ValueError):
+            log.exception("Failed to save final event-loop lag snapshot")
+        finally:
+            monitor.stop()
