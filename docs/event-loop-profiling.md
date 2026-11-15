@@ -110,9 +110,11 @@ workload is enabled only by flags. The preset is explicitly local-only.
 
 From the repository root, use the Python 3.15 setup launcher. It creates a separate
 `.venv-py315` environment without changing `.venv` or `uv.lock`. It installs
-the locked server dependencies, compiles `py4swiss==0.3.1` from its tagged
-upstream source (because the pinned PyPI release has no 3.15 wheel), and then
-starts the profiler:
+the locked runtime dependencies except for three native packages; installs
+new CPython 3.15 `pyffish` and `pyffish-alice` wheels from PyPI; compiles
+`py4swiss==0.3.1` from the GitHub release source archive (PyPI has no sdist or
+3.15 wheel); and then starts the profiler. These native package versions may
+differ from the production pins in `uv.lock`:
 
 **Terminal A** — start (or find) the local server, enable loop-lag monitoring if
 started here, automatically discover its PID, and capture a 120-second Tachyon
@@ -204,9 +206,12 @@ By default the profiler writes into a private `/tmp/pychess-tachyon-*/timeline.j
 restores its ownership after sudo, and prints the exact path. Compare the
 server's `event_loop_lag` warnings with the sampled stacks in Firefox Profiler.
 
-The launcher requires `uv`, `git`, and a C++ compiler (`g++`); it installs packages
-only in `.venv-py315`. If an upstream package lacks a compatible wheel, `uv`
-may compile it from source, so build tools may also be needed. When you have
+The launcher requires `uv` and a C++ compiler (`g++`); it installs packages
+only in `.venv-py315`. Building `py4swiss` from the tagged GitHub source
+archive additionally requires network access and its build dependencies
+(`setuptools`, `pybind11`), which `uv` installs into an isolated build
+environment. `pyffish` and `pyffish-alice` must have CPython 3.15 wheels;
+the script will not silently compile them from source. When you have
 local CPython 3.15 wheels, set `PYCHESS_CP315_WHEELS=/path/to/wheels` for the
 launcher to prefer them. The `scripts/run_profile_stress.sh` wrapper uses the
 same `.venv-py315` interpreter by default; override it with
