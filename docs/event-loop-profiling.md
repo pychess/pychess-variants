@@ -100,3 +100,103 @@ those, add a targeted `time.perf_counter()` measurement around the suspected
 operation instead of keeping expensive tracing enabled permanently.
 
 Reference: https://docs.python.org/3.15/library/profiling.sampling.html
+
+## Repeatable mixed-load profiling (two terminal commands)
+
+The existing `tests/client_stresstest.py` can now generate modest, bounded
+read-only HTML/API traffic **while** test users play games against Random-Mover.
+The default original stress-test configuration is unchanged: the extra HTTP
+workload is enabled only by flags. The preset is explicitly local-only.
+
+From the repository root, with your Python **3.15** environment activated
+(`.venv/bin/python --version` should show 3.15):
+
+**Terminal A** — start (or find) the local server, enable loop-lag monitoring if
+started here, automatically discover its PID, and capture a 120-second Tachyon
+Gecko profile (sudo prompts for ptrace privileges, as on Ubuntu):
+
+```bash
+.venv/bin/python scripts/profile_local_server.py
+```
+
+If the server already runs from this checkout, the command attaches to it;
+start that server with `PYCHESS_LOOP_LAG_ENABLED=1` to get stall logs too. If
+none is running, the helper launches `server/server.py -a` in local test-user
+mode with the lag monitor enabled, and stops that child when profiling ends.
+Auto-start is restricted to a **local MongoDB**: if your development database
+is remote, start the server yourself before invoking the profiler. `-a` lets
+anonymous stress users act like logged-in test players. It verifies
+that `URI` is loopback and `PROD` is not true. **It is not a production tool.**
+The script profiles the **server**, not the stress-test client. If more than
+one server matches this checkout, it refuses to guess which to profile.
+
+**Terminal B** — when Terminal A prints `Sampling server PID ...`, run:
+
+```bash
+./scripts/run_profile_stress.sh
+```
+
+The preset starts 20 clients playing one game each, modest spectator traffic,
+and 2 additional read-only HTTP requests/second against various page and API
+handlers (`/games`, `/players`, `/study/all`, `/tournaments`,
+`/variants/community`, `/api/stats`, `/api/calendar`, `/api/catalogued-variants`,
+`/@/gbtami`, etc.). Traffic is interleaved for 110 seconds with a concurrency
+limit of four. The output summarizes HTTP statuses, latency and bytes, allowing
+you to detect when throttling/authorization prevents real work. You can append
+stress-test flags to the wrapper (e.g. `--users 40 --http-rps 3`). Do not
+interpret rejected requests as a performance measurement of the requested
+handler. The test server should use a **local/disposable database**: `-a` can
+create and play test games. If attaching to an existing server, the helper now
+verifies it was started with `-a`; otherwise restart your DEV server as:
+
+```bash
+PYCHESS_LOOP_LAG_ENABLED=1 python3.15 server/server.py -a
+```
+
+### Automatically export a test user's own PGN
+
+`-a` promotes anonymous stress clients to persistent, logged-in `Test–*` users.
+The stress wrapper now enables `--test-user-pgn`: when the first non-aborted
+test game finishes, it attempts **one** PGN export using that player's existing
+authenticated session. This requires no manual cookie and is reported separately
+from the background HTTP metrics. If no game finishes during the capture, the
+script honestly reports the export as skipped; if no PGN is saved yet, it
+reports a zero-byte export. Test-user PGNs are usually much smaller than an
+established user's archive, so they don't fully benchmark a large export.
+
+The server still authorizes PGN export **only for the same account or an admin**.
+A `Test–*` user cannot use `-a` to export `gbtami`'s PGNs. The optional
+`gbtami` cookie described below is still needed to benchmark a large real
+account export. One test-user export plus one `gbtami` export fit within the
+local shared two-per-120-seconds export limit.
+
+### Optional authenticated `gbtami` PGN export
+
+`/api/games/user/gbtami/pgn` requires an authenticated **gbtami** session (or
+admin session). An anonymous request returns an empty response after a delay,
+so simply adding the URL to the public traffic pool would produce misleading
+results. The preset therefore skips it unless you provide a private local
+cookie file. Log in as `gbtami` on your **localhost DEV** site, then copy the
+**value** of its `AIOHTTP_SESSION` cookie from Firefox DevTools → Storage →
+Cookies. Create the file once without putting the secret in command history:
+
+```bash
+mkdir -p ~/.config/pychess
+umask 077
+read -rsp 'Local AIOHTTP_SESSION value: ' COOKIE; echo
+printf '%s' "$COOKIE" > ~/.config/pychess/stress-session-cookie
+unset COOKIE
+```
+
+Only do this with a development session; never use the production-site cookie.
+The cookie is sent exclusively on PGN export requests and never to anonymous
+test users, spectators, or other HTTP requests. Keep it private (mode 0600),
+remove it after the experiment, and do not upload it with a profile or log.
+The preset requests at most 100 recent `gbtami` games **once during the
+110-second run**, safely below the server's two-exports-per-120-seconds limit.
+If no cookie file exists, the preset still exercises all the public paths.
+
+To use another cookie-file location, set `PYCHESS_STRESS_PGN_COOKIE_FILE`.
+By default the profiler writes into a private `/tmp/pychess-tachyon-*/timeline.json`,
+restores its ownership after sudo, and prints the exact path. Compare the
+server's `event_loop_lag` warnings with the sampled stacks in Firefox Profiler.

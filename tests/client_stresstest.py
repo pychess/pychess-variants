@@ -21,18 +21,22 @@ import argparse
 import asyncio
 import cProfile
 import json
+import math
 import pstats
 import random
 import re
 from collections import Counter, defaultdict, deque
+from dataclasses import dataclass, field
 from itertools import cycle
+from pathlib import Path
 from time import monotonic
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import quote, urlsplit, urlunsplit
 
 import aiohttp
 import pyffish as sf
 import test_logger
-from settings import URI
+from const import TEST_PREFIX
+from settings import PROD, URI
 from websocket_utils import ws_send_json
 
 test_logger.init_test_logger()
@@ -81,6 +85,24 @@ DEFAULT_ROUND_MAX_IDLE_CYCLES = 3
 DEFAULT_PENDING_CHALLENGE_MAX_WAIT_SECS = 300.0
 DEFAULT_ROUND_RECONNECT_BACKOFF_MIN_SECS = 0.3
 DEFAULT_ROUND_RECONNECT_BACKOFF_MAX_SECS = 1.0
+# Read-only requests that cover distinct page/API handlers and DB queries.
+# Keep HTML rates below anonymous browsing admission budgets in local DEV.
+PROFILE_HTTP_PATHS = (
+    ("games", "/games"),
+    ("calendar", "/api/calendar"),
+    ("community", "/variants/community"),
+    ("stats", "/api/stats"),
+    ("players", "/players"),
+    ("forum_categories", "/api/forum/categs"),
+    ("tournaments", "/tournaments"),
+    ("catalogue", "/api/catalogued-variants"),
+    ("studies", "/study/all"),
+    ("forum", "/forum"),
+    ("profile", "/@/gbtami"),
+    ("tv", "/tv"),
+    ("search_page", "/games/search"),
+    ("profile_tournaments", "/@/gbtami/tournaments"),
+)
 
 
 def profile_me(fn):
@@ -229,10 +251,263 @@ def parse_args() -> argparse.Namespace:
             f"(default: {DEFAULT_SPECTATORS_REGULAR_PER_GAME})."
         ),
     )
+    parser.add_argument(
+        "--http-rps",
+        type=non_negative_float,
+        default=0.0,
+        help="Additional read-only HTTP requests per second (off by default).",
+    )
+    parser.add_argument(
+        "--http-duration-secs",
+        type=non_negative_float,
+        default=0.0,
+        help="How long to keep read-only HTTP requests running (off by default).",
+    )
+    parser.add_argument(
+        "--http-concurrency",
+        type=positive_int,
+        default=4,
+        help="Maximum in-flight background HTTP requests (default: 4).",
+    )
+    parser.add_argument(
+        "--test-user-pgn",
+        action="store_true",
+        help="Export one completed Test-* user's own games using its existing -a test session.",
+    )
+    parser.add_argument(
+        "--pgn-cookie-file",
+        type=Path,
+        help="Private local file containing your AIOHTTP_SESSION cookie value; enables gbtami PGN export.",
+    )
+    parser.add_argument(
+        "--pgn-max-games",
+        type=positive_int,
+        default=100,
+        help="Limit the number of games exported per PGN request (default: 100).",
+    )
+    parser.add_argument(
+        "--run-duration-secs",
+        type=non_negative_float,
+        default=0.0,
+        help="Stop generating game load after this many seconds (0: wait for all games).",
+    )
     args = parser.parse_args()
+    if any(
+        not math.isfinite(value)
+        for value in (args.http_rps, args.http_duration_secs, args.run_duration_secs)
+    ):
+        parser.error("HTTP rates and durations must be finite")
+    if args.test_user_pgn and (
+        PROD or urlsplit(URI).hostname not in {"localhost", "127.0.0.1", "::1"}
+    ):
+        parser.error("Test-user PGN profiling only supports localhost, never production")
+    if args.http_rps > 0:
+        if args.http_duration_secs <= 0:
+            parser.error("--http-duration-secs must be > 0 when --http-rps is set")
+        if PROD or urlsplit(URI).hostname not in {"localhost", "127.0.0.1", "::1"}:
+            parser.error("Background HTTP profiling only supports localhost, never production")
+    elif args.pgn_cookie_file is not None:
+        parser.error("--pgn-cookie-file requires --http-rps")
     if args.challenge_delay_max_secs < args.challenge_delay_min_secs:
         parser.error("--challenge-delay-max-secs must be >= --challenge-delay-min-secs")
     return args
+
+
+def read_session_cookie(path: Path) -> str:
+    """Read a pre-existing LOCAL browser session, never a username/password.
+
+    Accept only the cookie value, or one `AIOHTTP_SESSION=value` entry.
+    Do not print it or attach it to anonymous spectator/game clients.
+    """
+    if path.stat().st_mode & 0o077:
+        raise ValueError(f"Cookie file {path} must be private (chmod 600).")
+    value = path.read_text(encoding="utf-8").strip()
+    if value.startswith("AIOHTTP_SESSION="):
+        value = value.partition("=")[2]
+    if not value or any(ch.isspace() or ch in ";\r\n" for ch in value):
+        raise ValueError(f"Cookie file {path} must contain only an AIOHTTP_SESSION value.")
+    return value
+
+
+@dataclass
+class HttpRequestStats:
+    counts: Counter[str] = field(default_factory=Counter)
+    statuses: Counter[str] = field(default_factory=Counter)
+    elapsed_ms: list[float] = field(default_factory=list)
+    bytes_received: int = 0
+    dropped: int = 0
+    pgn_ok: int = 0
+    pgn_empty: int = 0
+
+    def record(self, label: str, status: int | str, elapsed_ms: float, received: int) -> None:
+        self.counts[label] += 1
+        self.statuses[f"{label}:{status}"] += 1
+        self.elapsed_ms.append(elapsed_ms)
+        self.bytes_received += received
+        if label == "pgn":
+            if status == 200 and received > 0:
+                self.pgn_ok += 1
+            else:
+                self.pgn_empty += 1
+
+    def report(self) -> None:
+        latencies = sorted(self.elapsed_ms)
+        p95 = latencies[math.ceil(0.95 * len(latencies)) - 1] if latencies else 0.0
+        print("=== BACKGROUND HTTP SUMMARY ===")
+        print(f"requests_by_path={dict(sorted(self.counts.items()))}")
+        print(f"statuses_by_path={dict(sorted(self.statuses.items()))}")
+        print(f"http_p95_ms={p95:.1f} http_max_ms={max(latencies, default=0.0):.1f}")
+        print(
+            f"http_bytes_received={self.bytes_received} http_dropped_at_concurrency_cap={self.dropped}"
+        )
+        print(f"pgn_nonempty_exports={self.pgn_ok} pgn_empty_or_failed={self.pgn_empty}")
+        if self.pgn_empty:
+            print("PGN warning: empty/failed responses may mean expired or unauthorized cookie.")
+
+
+async def run_http_workload(
+    *,
+    rps: float,
+    duration: float,
+    concurrency: int,
+    pgn_cookie: str | None,
+    pgn_max_games: int,
+) -> HttpRequestStats:
+    """Independent traffic during gameplay, with one shared concurrency limit.
+
+    PGN requires the authenticated gbtami session and is sent at most once per
+    120 seconds, below the server's explicit export admission budget.
+    """
+    stats = HttpRequestStats()
+    throttle = asyncio.Semaphore(concurrency)
+    timeout = aiohttp.ClientTimeout(total=30)
+    pending: set[asyncio.Task[None]] = set()
+    start = monotonic()
+    stop = start + duration
+    next_pgn = start + min(10, duration / 3)
+    paths = cycle(PROFILE_HTTP_PATHS)
+
+    async with aiohttp.ClientSession(cookie_jar=make_cookie_jar(), timeout=timeout) as public:
+        # The authentication cookie must NOT be attached to spectator/game users.
+        if pgn_cookie is not None:
+            authenticated = aiohttp.ClientSession(
+                cookie_jar=make_cookie_jar(),
+                cookies={"AIOHTTP_SESSION": pgn_cookie},
+                timeout=timeout,
+            )
+        else:
+            authenticated = None
+        try:
+
+            async def fetch(label: str, path: str, session: aiohttp.ClientSession) -> None:
+                async with throttle:
+                    began = monotonic()
+                    status: int | str = "connection_error"
+                    received = 0
+                    try:
+                        async with session.get(URI.rstrip("/") + path) as resp:
+                            status = resp.status
+                            async for chunk in resp.content.iter_chunked(65536):
+                                received += len(chunk)
+                            # Some authorization failures return HTTP 200 + an
+                            # empty body. Classify these separately in the report.
+                            if label == "pgn" and resp.content_type != "text/pgn":
+                                status = f"{resp.status}:{resp.content_type}"
+                    except (aiohttp.ClientError, TimeoutError, OSError) as exc:
+                        status = type(exc).__name__
+                    stats.record(label, status, (monotonic() - began) * 1000, received)
+
+            interval = 1.0 / rps
+            next_http = start
+            while monotonic() < stop:
+                now = monotonic()
+                if authenticated is not None and now >= next_pgn:
+                    if len(pending) < concurrency:
+                        task = asyncio.create_task(
+                            fetch(
+                                "pgn",
+                                f"/api/games/user/gbtami/pgn?max={pgn_max_games}",
+                                authenticated,
+                            )
+                        )
+                        pending.add(task)
+                        task.add_done_callback(pending.discard)
+                    else:
+                        stats.dropped += 1
+                    next_pgn = now + 120
+                if now >= next_http:
+                    if len(pending) < concurrency:
+                        label, path = next(paths)
+                        task = asyncio.create_task(fetch(label, path, public))
+                        pending.add(task)
+                        task.add_done_callback(pending.discard)
+                    else:
+                        stats.dropped += 1
+                    next_http = now + interval
+                await asyncio.sleep(
+                    max(0.01, min(0.2, next_http - monotonic(), stop - monotonic()))
+                )
+            if pending:
+                await asyncio.gather(*pending)
+        finally:
+            if authenticated is not None:
+                await authenticated.close()
+    return stats
+
+
+class TestUserPgnExporter:
+    """Export at most one finished test user's own games during a profiling run.
+
+    Uses the same aiohttp session that authenticated the Test-* user for
+    gameplay. No copied browser cookie, credential, or admin privilege is needed.
+    The one-export limit also leaves room for an optional gbtami export under
+    the shared local PGN rate limit (two requests per 120 seconds).
+    """
+
+    def __init__(self, max_games: int):
+        self.max_games = max_games
+        self._lock = asyncio.Lock()
+        self.attempted = False
+        self.username: str | None = None
+        self.status: int | str | None = None
+        self.bytes_received = 0
+        self.elapsed_ms = 0.0
+
+    async def maybe_export(self, session: aiohttp.ClientSession, username: str) -> None:
+        if not username.startswith(TEST_PREFIX):
+            return
+        async with self._lock:
+            if self.attempted:
+                return
+            self.attempted = True
+            self.username = username
+
+        start = monotonic()
+        try:
+            path = f"/api/games/user/{quote(username, safe='')}/pgn?max={self.max_games}"
+            async with asyncio.timeout(30):
+                async with session.get(URI.rstrip("/") + path) as response:
+                    self.status = response.status
+                    async for chunk in response.content.iter_chunked(65536):
+                        self.bytes_received += len(chunk)
+                    if response.content_type != "text/pgn":
+                        self.status = f"{response.status}:{response.content_type}"
+        except (aiohttp.ClientError, TimeoutError, OSError) as exc:
+            self.status = type(exc).__name__
+        finally:
+            self.elapsed_ms = (monotonic() - start) * 1000
+
+    def report(self) -> None:
+        if not self.attempted:
+            print("test_user_pgn=skipped (no completed non-aborted Test–* game)")
+            return
+        print(
+            "test_user_pgn="
+            f"user:{self.username} status:{self.status} bytes:{self.bytes_received} "
+            f"elapsed_ms:{self.elapsed_ms:.1f}"
+        )
+        if self.status != 200 or self.bytes_received == 0:
+            print("Test-user PGN warning: export was rejected or had no saved game to export.")
 
 
 class SpectatorAllocator:
@@ -461,6 +736,7 @@ class TestUser:
         spectator_allocator: SpectatorAllocator | None = None,
         bot_scheduler: BotChallengeScheduler | None = None,
         run_stats: RunStats | None = None,
+        test_user_pgn_exporter: TestUserPgnExporter | None = None,
     ):
         self.username = ""
         self.seeks = []
@@ -476,6 +752,7 @@ class TestUser:
         self.spectator_allocator = spectator_allocator
         self.bot_scheduler = bot_scheduler
         self.run_stats = run_stats
+        self.test_user_pgn_exporter = test_user_pgn_exporter
         self.spectators = []
         self.round_tasks: set[asyncio.Task[None]] = set()
         self.active_round_games: set[str] = set()
@@ -1154,6 +1431,13 @@ class TestUser:
                                             if not game_completed:
                                                 self.games_completed += 1
                                                 game_completed = True
+                                                if (
+                                                    self.test_user_pgn_exporter is not None
+                                                    and data["status"] != 0
+                                                ):
+                                                    await self.test_user_pgn_exporter.maybe_export(
+                                                        session, self.username
+                                                    )
                                             await self._release_bot_slot_for_game(
                                                 game_id, resolved_bot_profile
                                             )
@@ -1230,6 +1514,13 @@ class TestUser:
                                         if not game_completed:
                                             self.games_completed += 1
                                             game_completed = True
+                                            if (
+                                                self.test_user_pgn_exporter is not None
+                                                and data["status"] != 0
+                                            ):
+                                                await self.test_user_pgn_exporter.maybe_export(
+                                                    session, self.username
+                                                )
                                         await self._release_bot_slot_for_game(
                                             game_id, resolved_bot_profile
                                         )
@@ -1332,6 +1623,7 @@ async def spectators(
 async def main(args: argparse.Namespace):
     spectator_http_semaphore = asyncio.Semaphore(args.max_spectator_http_concurrency)
     run_stats = RunStats()
+    test_user_pgn_exporter = TestUserPgnExporter(args.pgn_max_games) if args.test_user_pgn else None
     bot_scheduler = BotChallengeScheduler()
     spectator_allocator = SpectatorAllocator(
         featured_games=args.featured_games,
@@ -1350,6 +1642,7 @@ async def main(args: argparse.Namespace):
             spectator_allocator=spectator_allocator,
             bot_scheduler=bot_scheduler,
             run_stats=run_stats,
+            test_user_pgn_exporter=test_user_pgn_exporter,
         )
         for i in range(args.users)
     ]
@@ -1359,8 +1652,42 @@ async def main(args: argparse.Namespace):
             await asyncio.sleep(random.uniform(0, args.user_start_spread_secs))
         await user.go_to_lobby()
 
+    pgn_cookie: str | None = None
+    if args.pgn_cookie_file is not None:
+        pgn_cookie = read_session_cookie(args.pgn_cookie_file)
+    http_task = (
+        asyncio.create_task(
+            run_http_workload(
+                rps=args.http_rps,
+                duration=args.http_duration_secs,
+                concurrency=args.http_concurrency,
+                pgn_cookie=pgn_cookie,
+                pgn_max_games=args.pgn_max_games,
+            )
+        )
+        if args.http_rps > 0
+        else None
+    )
     tasks = [asyncio.create_task(start_user(user)) for user in users]
-    await asyncio.gather(*tasks)
+    try:
+        if args.run_duration_secs > 0:
+            try:
+                await asyncio.wait_for(asyncio.gather(*tasks), timeout=args.run_duration_secs)
+            except TimeoutError:
+                print(f"Game load stopped after {args.run_duration_secs:g}s (partial game stats).")
+        else:
+            await asyncio.gather(*tasks)
+    finally:
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+        if http_task is not None:
+            # Continue HTTP load to its intended deadline if games ended early.
+            http_stats = await http_task
+            http_stats.report()
+        if test_user_pgn_exporter is not None:
+            test_user_pgn_exporter.report()
     (
         total_games,
         aborted_games,
