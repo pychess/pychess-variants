@@ -113,10 +113,17 @@ class ArenaTournament(Tournament):
 
         if nb_waiting_players == 2:
             x, y = waiting_players
-            # Match lila's duel exception using active participants, including those
-            # currently playing or disconnected. Paused/withdrawn players do not count.
+            # A duel has only two available participants. Disconnected idle entrants
+            # cannot be paired, so they must not block rematches. Players still in
+            # a game count even when their tournament page is disconnected.
             only_two_active_players = (
-                sum(not data.paused and not data.withdrawn for data in self.players.values()) == 2
+                sum(
+                    not data.paused
+                    and not data.withdrawn
+                    and (not data.free or bool(self.player_round_sockets(player, data)))
+                    for player, data in self.players.items()
+                )
+                == 2
             )
             if only_two_active_players or (
                 not self.just_played_together(x, y) and not self.color_streak_problem(x, y)

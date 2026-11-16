@@ -161,12 +161,37 @@ class ArenaPairingTestCase(TournamentTestCase):
         await self.tournament.create_games([(players[2], players[3])])
         self.assert_pairing(players[:2], [(players[0], players[1])])
 
-    async def test_disconnected_active_players_prevent_immediate_rematch_duel(self):
+    async def test_disconnected_idle_players_do_not_prevent_immediate_rematch_duel(self):
+        players = await self.make_tournament(8)
+        await self.record_colors(players[:2], "W")
+        for player in players[2:]:
+            player.tournament_sockets[self.tournament.id].clear()
+        waiting = self.tournament.waiting_players()
+        self.assertEqual(waiting, players[:2])
+        self.assert_pairing(waiting, [(players[0], players[1])])
+
+    async def test_reconnected_idle_player_prevents_immediate_rematch_duel(self):
         players = await self.make_tournament(3)
         await self.record_colors(players[:2], "W")
-        players[2].tournament_sockets[self.tournament.id].clear()
-        self.assertEqual(self.tournament.waiting_players(), players[:2])
+        # The tournament socket registry takes precedence over the User's sockets.
+        app_state = get_app_state(self.app)
+        app_state.tourneysockets[self.tournament.id] = {players[2].username: set()}
+        self.assert_pairing(self.tournament.waiting_players(), [(players[0], players[1])])
+        app_state.tourneysockets[self.tournament.id][players[2].username].add(None)
+        waiting = self.tournament.waiting_players()
+        self.assertEqual(waiting, players)
         self.assertEqual(self.tournament.create_pairing(players[:2]), [])
+        self.assert_pairing(waiting, [(players[1], players[2])])
+
+    async def test_disconnected_players_still_playing_prevent_immediate_rematch_duel(self):
+        players = await self.make_tournament(4)
+        await self.record_colors(players[:2], "W")
+        await self.tournament.create_games([(players[2], players[3])])
+        for player in players[2:]:
+            player.tournament_sockets[self.tournament.id].clear()
+        waiting = self.tournament.waiting_players()
+        self.assertEqual(waiting, players[:2])
+        self.assertEqual(self.tournament.create_pairing(waiting), [])
 
     async def test_either_players_last_opponent_prevents_immediate_rematch(self):
         players = await self.make_tournament(4)
