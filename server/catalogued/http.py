@@ -37,16 +37,21 @@ async def get_catalogued_variants(request: web.Request) -> web.Response:
             if user is not None
             else set()
         )
-        docs = getattr(app_state, "catalogued_variants", {})
+        # Explicit metadata requests also serve historical game previews. Use
+        # artwork read permissions so archived public/unlisted entries can be
+        # rendered without adding them back to the active catalogue.
+        client_docs = []
+        for name in dict.fromkeys(names):
+            doc = await repository.find_catalogued_variant_doc(
+                app_state, name, username, for_assets=True
+            )
+            if doc is not None:
+                client_docs.append(documents._client_doc(doc, favorite_names=favorite_names))
         return json_response(
             {
                 "variants": variants.catalogued_variant_client_docs_with_dependencies(
                     app_state,
-                    [
-                        documents._client_doc(docs[name], favorite_names=favorite_names)
-                        for name in dict.fromkeys(names)
-                        if name in docs and documents._can_open_catalogued_doc(username, docs[name])
-                    ],
+                    client_docs,
                     username,
                     favorite_names=favorite_names,
                 )

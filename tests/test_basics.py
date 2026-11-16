@@ -419,6 +419,67 @@ class RequestLobbyTestCase(AioHTTPTestCase):
         )
         self.assertEqual(resp.status, 400)
 
+    async def test_named_catalogue_api_renders_archived_variants_without_reactivating_them(self):
+        from catalogued.variants import can_create_catalogued_seek
+
+        app_state = get_app_state(self.app)
+        sample = {
+            "displayName": "Archived Sample",
+            "baseVariant": "chess",
+            "startFen": "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+            "width": 8,
+            "height": 8,
+            "pieces": ["k"],
+            "enabled": False,
+            "archived": True,
+            "author": "someone",
+            "pieceSet": {
+                "wK": {"svg": "<svg />"},
+                "bK": {"svg": "<svg />"},
+            },
+        }
+        for visibility in ("public", "unlisted", "private"):
+            name = f"archived-{visibility}"
+            await app_state.db.catalogued_variant.insert_one(
+                {
+                    **sample,
+                    "_id": name,
+                    "name": name,
+                    "ini": f"[{name}:chess]",
+                    "visibility": visibility,
+                }
+            )
+        # Historical replay may already have restored a metadata-only snapshot.
+        # The named API must still retrieve its uploaded artwork from storage.
+        app_state.catalogued_variants["archived-public"] = {
+            **sample,
+            "name": "archived-public",
+            "ini": "[archived-public:chess]",
+            "visibility": "public",
+        }
+        del app_state.catalogued_variants["archived-public"]["pieceSet"]
+        response = await self.client.get(
+            "/api/catalogued-variants?name=archived-public&name=archived-unlisted"
+            "&name=archived-private&name=missing-variant&name=archived-public"
+        )
+        self.assertEqual(response.status, 200)
+        definitions = (await response.json())["variants"]
+        self.assertEqual(
+            [doc["name"] for doc in definitions], ["archived-public", "archived-unlisted"]
+        )
+        for doc in definitions:
+            self.assertTrue(doc["archived"])
+            self.assertFalse(doc["enabled"])
+            self.assertTrue(doc["hasPieceSet"])
+            self.assertFalse(can_create_catalogued_seek(app_state, doc["name"], "someone"))
+        self.assertNotIn("archived-unlisted", app_state.catalogued_variants)
+        # The unfiltered API remains a catalogue of active, accessible variants.
+        response = await self.client.get("/api/catalogued-variants")
+        self.assertEqual(response.status, 200)
+        self.assertFalse(
+            any(doc["name"].startswith("archived-") for doc in (await response.json())["variants"])
+        )
+
     async def test_analysis_960_route_normalizes_variant_and_chess960(self):
         resp = await self.client.request("GET", "/analysis/chess960")
         self.assertEqual(resp.status, 200)
