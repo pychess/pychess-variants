@@ -350,7 +350,7 @@ async def set_catalogued_variant_favorite(request: web.Request) -> web.Response:
 
 async def _read_upload_payload(
     request: web.Request,
-) -> tuple[str, str, str, dict[str, str], bool | None, str, str, str]:
+) -> tuple[str, str, str, dict[str, str], bool | None, bool | None, str, str, str]:
     content_type = request.content_type or ""
 
     if content_type == "application/json":
@@ -368,6 +368,9 @@ async def _read_upload_payload(
         piece_set_directional = validation._read_bool_metadata(
             data, "pieceSetDirectional", "piece_set_directional"
         )
+        piece_set_shadow = validation._read_bool_metadata(
+            data, "pieceSetShadow", "piece_set_shadow"
+        )
         piece_family_override = validation._read_piece_family_override(data)
         board_family_override = validation._read_board_family_override(data)
         visibility = validation._clean_visibility(
@@ -379,6 +382,7 @@ async def _read_upload_payload(
             description,
             piece_names,
             piece_set_directional,
+            piece_set_shadow,
             piece_family_override,
             board_family_override,
             visibility,
@@ -386,7 +390,7 @@ async def _read_upload_payload(
 
     if content_type.startswith("text/"):
         ini = await read_text_data(request)
-        return ini or "", "", "", {}, None, "", "", models.CATALOGUED_VISIBILITY_PRIVATE
+        return ini or "", "", "", {}, None, None, "", "", models.CATALOGUED_VISIBILITY_PRIVATE
 
     data = await read_post_data(request)
     if data is None:
@@ -409,6 +413,7 @@ async def _read_upload_payload(
     piece_set_directional = validation._read_bool_metadata(
         data, "pieceSetDirectional", "piece_set_directional"
     )
+    piece_set_shadow = validation._read_bool_metadata(data, "pieceSetShadow", "piece_set_shadow")
     piece_family_override = validation._read_piece_family_override(data)
     board_family_override = validation._read_board_family_override(data)
     visibility = validation._clean_visibility(
@@ -420,6 +425,7 @@ async def _read_upload_payload(
         description,
         piece_names,
         piece_set_directional,
+        piece_set_shadow,
         piece_family_override,
         board_family_override,
         visibility,
@@ -462,6 +468,7 @@ async def upload_catalogued_variant(request: web.Request) -> web.Response:
         description,
         piece_names,
         piece_set_directional,
+        piece_set_shadow,
         piece_family_override,
         board_family_override,
         visibility,
@@ -512,6 +519,7 @@ async def upload_catalogued_variant(request: web.Request) -> web.Response:
         show_check_counters=validated.show_check_counters,
         created_at=now,
         piece_set_directional=bool(piece_set_directional),
+        piece_set_shadow=bool(piece_set_shadow),
         visibility=visibility,
         piece_family_override=piece_family_override,
         board_family_override=board_family_override,
@@ -759,6 +767,7 @@ async def get_catalogued_piece_css(request: web.Request) -> web.Response:
             str(doc["name"]),
             piece_set,
             directional=assets._catalogued_piece_set_is_directional(doc),
+            shadow=bool(doc.get("pieceSetShadow", False)),
         ),
         content_type="text/css",
         headers={"Cache-Control": "private, max-age=300"},
@@ -901,6 +910,7 @@ async def update_catalogued_variant(request: web.Request) -> web.Response:
         description,
         piece_names,
         piece_set_directional,
+        piece_set_shadow,
         piece_family_override,
         board_family_override,
         visibility,
@@ -908,6 +918,8 @@ async def update_catalogued_variant(request: web.Request) -> web.Response:
     ini = ini.strip()
     if piece_set_directional is None:
         piece_set_directional = bool(existing.get("pieceSetDirectional", False))
+    if piece_set_shadow is None:
+        piece_set_shadow = bool(existing.get("pieceSetShadow", False))
     if documents._is_fsf_builtin_catalogued_doc(existing):
         now = datetime.now(UTC)
         cleaned_description = validation._clean_description(description)
@@ -916,6 +928,7 @@ async def update_catalogued_variant(request: web.Request) -> web.Response:
                 "displayName": validation._clean_display_name(display_name, old_name),
                 "visibility": visibility,
                 "pieceSetDirectional": piece_set_directional,
+                "pieceSetShadow": piece_set_shadow,
                 "updatedAt": now,
             }
         }
@@ -1076,6 +1089,7 @@ async def update_catalogued_variant(request: web.Request) -> web.Response:
         show_check_counters=show_check_counters,
         created_at=existing.get("createdAt", datetime.now(UTC)),
         piece_set_directional=piece_set_directional,
+        piece_set_shadow=piece_set_shadow,
         visibility=visibility,
         piece_family_override=piece_family_override,
         board_family_override=board_family_override,
@@ -1257,6 +1271,7 @@ async def clone_catalogued_variant(request: web.Request) -> web.Response:
         show_check_counters=validated.show_check_counters,
         created_at=now,
         piece_set_directional=bool(doc.get("pieceSetDirectional", False)),
+        piece_set_shadow=bool(doc.get("pieceSetShadow", False)),
         piece_family_override=validation._catalogued_piece_family_override(doc),
         board_family_override=validation._catalogued_board_family_override(doc),
     )

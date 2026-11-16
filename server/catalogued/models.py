@@ -266,6 +266,7 @@ class CataloguedVariantDocument(TypedDict):
     pieceFamilyOverride: NotRequired[str]
     boardFamilyOverride: NotRequired[str]
     pieceSetDirectional: bool
+    pieceSetShadow: bool
     references: NotRequired[list[CataloguedVariantReference]]
     pieceSet: NotRequired[dict[str, CataloguedVariantPieceSetSvg]]
     pieceSetUpdatedAt: NotRequired[datetime]
@@ -333,6 +334,7 @@ class CataloguedVariantClientDocument(TypedDict):
     aiDisabledUntil: NotRequired[datetime]
     favorite: NotRequired[bool]
     pieceSetDirectional: NotRequired[bool]
+    pieceSetShadow: NotRequired[bool]
     directionalPieceSet: NotRequired[bool]
     hasPieceSet: NotRequired[bool]
     pieceSetRevision: NotRequired[str]

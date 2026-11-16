@@ -62,6 +62,7 @@ type State = {
     draftDescription: string;
     draftPieceNames: string;
     draftPieceSetDirectional: boolean;
+    draftPieceSetShadow: boolean;
     draftPieceFamilyOverride: string;
     draftBoardFamilyOverride: string;
     draftVisibility: VariantVisibility;
@@ -93,6 +94,7 @@ const state: State = {
     draftDescription: '',
     draftPieceNames: '',
     draftPieceSetDirectional: false,
+    draftPieceSetShadow: false,
     draftPieceFamilyOverride: '',
     draftBoardFamilyOverride: '',
     draftVisibility: 'private',
@@ -232,6 +234,7 @@ type VariantFormBody = {
     description: string;
     pieceNames: string;
     pieceSetDirectional: boolean;
+    pieceSetShadow: boolean;
     pieceFamilyOverride: string;
     boardFamilyOverride: string;
     visibility: VariantVisibility;
@@ -278,6 +281,9 @@ function readForm(): VariantFormBody {
         pieceSetDirectional:
             (document.getElementById('catalogued-piece-set-directional') as HTMLInputElement | null)?.checked ??
             state.draftPieceSetDirectional,
+        pieceSetShadow:
+            (document.getElementById('catalogued-piece-set-shadow') as HTMLInputElement | null)?.checked ??
+            state.draftPieceSetShadow,
         pieceFamilyOverride: cleanPieceFamilyOverrideDraft(
             (document.getElementById('catalogued-piece-family-override') as HTMLSelectElement | null)?.value ??
                 state.draftPieceFamilyOverride,
@@ -320,6 +326,7 @@ function clearDraft(): void {
     state.draftDescription = '';
     state.draftPieceNames = '';
     state.draftPieceSetDirectional = false;
+    state.draftPieceSetShadow = false;
     state.draftPieceFamilyOverride = '';
     state.draftBoardFamilyOverride = '';
     state.draftVisibility = 'private';
@@ -339,6 +346,7 @@ function setDraftFromVariant(variant: ManagedVariant): void {
     state.draftDescription = variant.tooltip === 'Catalogued variant' ? '' : (variant.tooltip ?? '');
     state.draftPieceNames = formatPieceNames(variant.pieceNames);
     state.draftPieceSetDirectional = variant.pieceSetDirectional ?? false;
+    state.draftPieceSetShadow = variant.pieceSetShadow ?? false;
     state.draftPieceFamilyOverride = cleanPieceFamilyOverrideDraft(variant.pieceFamilyOverride);
     state.draftBoardFamilyOverride = cleanBoardFamilyOverrideDraft(variant.boardFamilyOverride);
     state.draftVisibility = variant.visibility ?? 'private';
@@ -509,6 +517,7 @@ async function saveVariant(model: PyChessModel): Promise<void> {
                           description: body.description,
                           pieceNames: body.pieceNames,
                           pieceSetDirectional: body.pieceSetDirectional,
+                          pieceSetShadow: body.pieceSetShadow,
                           pieceFamilyOverride: body.pieceFamilyOverride,
                           boardFamilyOverride: body.boardFamilyOverride,
                           visibility: body.visibility,
@@ -1016,6 +1025,32 @@ function renderForm(model: PyChessModel): VNode {
                         _(
                             'Enable for standalone variants whose piece direction shows ownership. One complete white or black SVG set can then serve both players. Shogi-derived variants are detected automatically.',
                         ),
+                    ),
+                ]),
+                h('label.catalogued-field.catalogued-field-half.catalogued-checkbox-field', [
+                    h('span.catalogued-checkbox-row', [
+                        h('span', _('Custom piece shadows')),
+                        h('input#catalogued-piece-set-shadow', {
+                            props: {
+                                type: 'checkbox',
+                                checked: state.draftPieceSetShadow,
+                                disabled: state.saving,
+                            },
+                            attrs: {
+                                'aria-describedby': 'catalogued-piece-set-shadow-help',
+                            },
+                            on: {
+                                change: (event: Event) => {
+                                    state.draftPieceSetShadow = (event.target as HTMLInputElement).checked;
+                                    state.formMessage = '';
+                                    state.formMessageTone = 'neutral';
+                                },
+                            },
+                        }),
+                    ]),
+                    h(
+                        'span#catalogued-piece-set-shadow-help.catalogued-help',
+                        _('Add drop shadows to uploaded SVG pieces, including previews and pieces in hand.'),
                     ),
                 ]),
                 h('label.catalogued-field.catalogued-field-half', [

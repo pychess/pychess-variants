@@ -290,6 +290,7 @@ def study_variant_client_doc(
         "enabled": True,
         "hasPieceSet": bool(meta.get("pieceSet")),
         "pieceSetDirectional": bool(meta.get("pieceSetDirectional", False)),
+        "pieceSetShadow": bool(meta.get("pieceSetShadow", False)),
         "directionalPieceSet": bool(meta.get("pieceSetDirectional", False)),
         "hasBoard": bool(meta.get("boardSvg")),
     }

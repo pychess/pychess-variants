@@ -696,3 +696,28 @@ test('catalogued piece family override bypasses conservative identity detection'
     expect(cataloguedCompatiblePieceFamily(meta, { ignoreCustomPieceSet: true })).toBe('standard');
     expect(variant.pieceFamily).toBe('standard');
 });
+
+test('custom piece stylesheet revisions replace each other when shadows toggle repeatedly', async () => {
+    const { ensurePieceCSS } = await import('../client/document');
+    const family = 'catalogued-shadowtoggle';
+    const otherFamily = 'catalogued-shadowtoggle-other';
+    const sheets = () =>
+        Array.from(document.querySelectorAll<HTMLLinkElement>('link[id^="piece-set-catalogued-shadowtoggle-"]'));
+    try {
+        ensurePieceCSS('/static', otherFamily, 'custom-r1');
+        for (const revision of ['custom-r1', 'custom-r1-shadow', 'custom-r1', 'custom-r1-shadow']) {
+            ensurePieceCSS('/static', family, revision);
+            expect(
+                sheets()
+                    .map(link => link.id)
+                    .sort(),
+            ).toEqual([`piece-set-${family}-${revision}`, `piece-set-${otherFamily}-custom-r1`].sort());
+            const sheet = document.getElementById(`piece-set-${family}-${revision}`) as HTMLLinkElement;
+            expect(sheet.getAttribute('href')).toBe(
+                `/api/catalogued-variants/shadowtoggle/piece-css.css?v=${revision.slice('custom-'.length)}`,
+            );
+        }
+    } finally {
+        sheets().forEach(link => link.remove());
+    }
+});

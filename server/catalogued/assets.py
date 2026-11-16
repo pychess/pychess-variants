@@ -302,8 +302,10 @@ def _catalogued_piece_set_public_filename(key: str) -> str:
 def _piece_set_revision(doc: Mapping[str, Any]) -> str:
     updated_at = doc.get("pieceSetUpdatedAt")
     if isinstance(updated_at, datetime):
-        return str(int(updated_at.timestamp()))
-    return re.sub(r"\W+", "", str(updated_at or "0")) or "0"
+        revision = str(int(updated_at.timestamp()))
+    else:
+        revision = re.sub(r"\W+", "", str(updated_at or "0")) or "0"
+    return revision + ("-shadow" if doc.get("pieceSetShadow", False) else "")
 
 
 def _board_svg_revision(doc: Mapping[str, Any]) -> str:
@@ -468,13 +470,33 @@ def _catalogued_piece_set_css(
     piece_set: Mapping[str, Any],
     *,
     directional: bool = False,
+    shadow: bool = False,
 ) -> str:
     lines: list[str] = []
     stored_keys = {_catalogued_piece_set_storage_key(str(key)) for key in piece_set}
     stored_colors = {key[0] for key in stored_keys if key and key[0] in {"w", "b"}}
     canonical_color = next(iter(stored_colors)) if directional and len(stored_colors) == 1 else None
+    style_class = f".piece-style-catalogued-{variant_name}-custom"
+    if shadow:
+        # Keep the light direction fixed while the image layer rotates. Use the
+        # same cell-relative size as shogik, with a fixed size for label previews.
+        lines.append(
+            f"{style_class} piece "
+            "{--custom-piece-shadow-size:max("
+            "calc(var(--cg-width) / var(--cg-board-files, var(--files)) * 0.0385),"
+            "calc(var(--cg-height) / var(--cg-board-ranks, var(--ranks)) * 0.03333));"
+            "filter:drop-shadow(2px 2px 2px #000);"
+            "filter:drop-shadow(var(--custom-piece-shadow-size) "
+            "var(--custom-piece-shadow-size) var(--custom-piece-shadow-size) #000);}"
+        )
+        lines.append(
+            f".catalogued-piece-preview-grid{style_class} piece {{--custom-piece-shadow-size:2px;}}"
+        )
+        lines.append(
+            f"label.piece.catalogued-custom-preview{style_class} "
+            "{filter:drop-shadow(2px 2px 2px #000);}"
+        )
     if directional:
-        style_class = f".piece-style-catalogued-{variant_name}-custom"
         lines.append(
             f"{style_class} piece::before "
             '{content:"";display:block;width:100%;height:100%;pointer-events:none;}'

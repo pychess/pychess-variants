@@ -105,7 +105,17 @@ class CataloguedVariantRuleChangesApiTestCase(unittest.IsolatedAsyncioTestCase):
             patch(
                 "catalogued.http._read_upload_payload",
                 AsyncMock(
-                    return_value=(COSMETIC_INI, "Chinese skin", "", "", False, "", "", "private")
+                    return_value=(
+                        COSMETIC_INI,
+                        "Chinese skin",
+                        "",
+                        "",
+                        False,
+                        None,
+                        "",
+                        "",
+                        "private",
+                    )
                 ),
             )
         )
@@ -161,6 +171,7 @@ class CataloguedVariantRuleChangesApiTestCase(unittest.IsolatedAsyncioTestCase):
             "",
             "",
             False,
+            None,
             "",
             "",
             "private",

@@ -16,6 +16,7 @@ PAYLOAD = (
     "",
     "",
     False,
+    True,
     "standard",
     "standard8x8",
     "private",
@@ -88,6 +89,7 @@ class CataloguedVariantAppearanceAccessTestCase(unittest.IsolatedAsyncioTestCase
             FSF_CATALOGUED_BUILTIN_DESCRIPTION,
             "",
             False,
+            None,
             "",
             "",
             "public",
@@ -150,9 +152,19 @@ class CataloguedVariantAppearanceAccessTestCase(unittest.IsolatedAsyncioTestCase
         self.assertEqual(collection.inserted["author"], "alice")
         self.assertEqual(collection.inserted["pieceFamilyOverride"], "standard")
         self.assertEqual(collection.inserted["boardFamilyOverride"], "standard8x8")
+        self.assertTrue(collection.inserted["pieceSetShadow"])
         is_admin.assert_not_called()
 
     async def test_non_admin_update_can_change_appearance_overrides(self):
+        await self._check_appearance_update(True, False)
+
+    async def test_non_admin_update_can_disable_piece_shadows(self):
+        await self._check_appearance_update(False, True)
+
+    async def test_omitted_piece_shadow_setting_preserves_existing_value(self):
+        await self._check_appearance_update(None, True)
+
+    async def _check_appearance_update(self, shadow, previous_shadow):
         existing = _build_doc(
             name=VALIDATION.name,
             base_variant=VALIDATION.base_variant,
@@ -179,6 +191,8 @@ class CataloguedVariantAppearanceAccessTestCase(unittest.IsolatedAsyncioTestCase
             show_check_counters=VALIDATION.show_check_counters,
             created_at=datetime.now(UTC),
         )
+        existing["pieceSetShadow"] = previous_shadow
+        existing["gameCount"] = 14
         collection = AppearanceCollection()
         app_state = SimpleNamespace(
             db=AppearanceDatabase(collection),
@@ -196,7 +210,7 @@ class CataloguedVariantAppearanceAccessTestCase(unittest.IsolatedAsyncioTestCase
             ),
             patch(
                 "catalogued.http._read_upload_payload",
-                new=AsyncMock(return_value=PAYLOAD),
+                new=AsyncMock(return_value=(*PAYLOAD[:5], shadow, *PAYLOAD[6:])),
             ),
             patch(
                 "catalogued.repository._update_catalogued_variant_document",
@@ -209,6 +223,10 @@ class CataloguedVariantAppearanceAccessTestCase(unittest.IsolatedAsyncioTestCase
             response = await update_catalogued_variant(request)
 
         payload = json.loads(response.text)
+        self.assertEqual(
+            payload["variant"]["pieceSetShadow"],
+            previous_shadow if shadow is None else shadow,
+        )
         self.assertEqual(payload["variant"]["pieceFamilyOverride"], "standard")
         self.assertEqual(payload["variant"]["boardFamilyOverride"], "standard8x8")
         is_admin.assert_not_called()

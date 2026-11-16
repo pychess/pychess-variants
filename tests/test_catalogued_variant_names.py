@@ -298,7 +298,9 @@ class CataloguedVariantNameAvailabilityTestCase(unittest.IsolatedAsyncioTestCase
         with (
             patch(
                 "catalogued.http._read_upload_payload",
-                AsyncMock(return_value=(self.ini, "New rules", "", {}, False, "", "", "private")),
+                AsyncMock(
+                    return_value=(self.ini, "New rules", "", {}, False, None, "", "", "private")
+                ),
             ),
             patch("catalogued.repository._ensure_catalogued_variant_quota", AsyncMock()),
             patch(
