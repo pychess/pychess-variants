@@ -20,7 +20,7 @@ dependencies = [
     "pyffish==0.0.91",
     "pyffish-alice==0.0.5",
     "py4swiss==0.3.1",
-    "pymongo==4.19.0",
+    "pymongo==4.20.0",
     "pywebpush==2.5.0",
     "rapidfuzz==3.14.6",
     "pyopenssl==26.4.0",
