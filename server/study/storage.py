@@ -24,6 +24,7 @@ from study.constants import (
     STUDY_TOPIC_MIN_LENGTH,
 )
 from study.document import encode_chapter
+from study.flair import study_flair
 from study.models import (
     Study,
     StudyChapter,
@@ -1009,6 +1010,7 @@ async def create_study_from_draft(
     name: str | None = None,
     visibility: StudyVisibility = "private",
     settings: Mapping[str, object] | None = None,
+    flair: str = "",
 ) -> tuple[Study, StudyChapter]:
     study = await make_study(
         app_state.db.study,
@@ -1016,6 +1018,7 @@ async def create_study_from_draft(
         name=_clean_name(name, fallback=f"{owner}'s Study", max_length=STUDY_NAME_MAX_LENGTH),
         visibility=visibility,
         settings=settings,
+        flair=flair,
         source=draft.source,
     )
     chapter = await make_chapter(
@@ -1058,6 +1061,7 @@ async def create_study_from_drafts(
     name: str | None = None,
     visibility: StudyVisibility = "private",
     settings: Mapping[str, object] | None = None,
+    flair: str = "",
 ) -> tuple[Study, list[StudyChapter]]:
     if not drafts:
         raise StudyStorageError("PGN import contains no chapters")
@@ -1071,6 +1075,7 @@ async def create_study_from_drafts(
         name=name,
         visibility=visibility,
         settings=settings,
+        flair=flair,
     )
     if len(drafts) == 1:
         return study, [first]
@@ -1127,6 +1132,7 @@ async def clone_study(
         app_state.db.study,
         owner=owner,
         name=source.name,
+        flair=source.flair,
         source=StudySource("study", source.id),
         now=now,
     )
@@ -1534,18 +1540,20 @@ async def reset_concealment(
     )
 
 
-async def rename_study(app_state: Any, study: Study, name: object) -> str:
+async def rename_study(
+    app_state: Any, study: Study, name: object, *, flair: str | None = None
+) -> str:
     clean = _clean_name(name, fallback=study.name, max_length=STUDY_NAME_MAX_LENGTH)
-    now = datetime.now(UTC)
+    fields: dict[str, object] = {"name": clean, "updatedAt": datetime.now(UTC)}
+    update: dict[str, object] = {"$set": fields, "$inc": {"revision": 1}}
+    if flair is not None:
+        if flair:
+            fields["flair"] = study_flair(flair)
+        else:
+            update["$unset"] = {"flair": ""}
     await app_state.db.study.update_one(
         {"_id": study.id, "owner": study.owner},
-        {
-            "$set": {
-                "name": clean,
-                "updatedAt": now,
-            },
-            "$inc": {"revision": 1},
-        },
+        update,
     )
     await refresh_study_search_tokens(app_state, study.id)
     return clean

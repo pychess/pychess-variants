@@ -1,4 +1,16 @@
 {% extends "template.html" %}
+{% macro study_icon(study) %}
+    {% if study.flair %}
+        {% set flair_icon = study_flair_icon(study.flair) %}
+        {% if study.flair.startswith('variant:') %}
+        <span class="study-card__flair study-flair-icon" data-icon="{{ flair_icon }}" aria-hidden="true"></span>
+        {% else %}
+        <span class="study-card__flair study-flair-icon" aria-hidden="true">{{ flair_icon }}</span>
+        {% endif %}
+    {% else %}
+    <span class="study-card__icon" aria-hidden="true"></span>
+    {% endif %}
+{% endmacro %}
 {% block content %}
 <div id="main-wrap" class="study-index-wrap">
     <main class="study-index-page{% if study_list_navigation %} page-menu{% endif %}">
@@ -124,14 +136,14 @@
                 {% for study in studies %}
                 {% if study_list_compact %}
                 <a class="study-card study-list__entry" data-infinite-scroll-key="{{ study.id }}" href="/study/{{ study.id }}" title="{{ study.name }}">
-                    <span class="study-card__icon" aria-hidden="true"></span>
+                    {{ study_icon(study) }}
                     <span class="study-list__name">{{ study.name }}</span>
                 </a>
                 {% else %}
                 <article class="study-card" data-infinite-scroll-key="{{ study.id }}">
                     <a class="study-card__overlay" href="/study/{{ study.id }}" title="{{ study.name }}" aria-label="{{ study.name }}"></a>
                     <div class="study-card__top">
-                        <span class="study-card__icon" aria-hidden="true"></span>
+                        {{ study_icon(study) }}
                         <div class="study-card__summary">
                             <strong class="study-card__name">{{ study.name }}</strong>
                             <div class="study-card__meta">
@@ -230,10 +242,13 @@
         <button class="study-icon-button study-dialog__close" type="button" data-study-new-close aria-label="{% trans %}Close{% endtrans %}">×</button>
     </div>
     <form id="study-create-form" class="study-dialog__form study-create-form">
-        <label class="study-dialog__field">
-            <span>{% trans %}Name{% endtrans %}</span>
-            <input type="text" name="name" value="{{ username }}'s Study" maxlength="100" autocomplete="off">
-        </label>
+        <div class="study-flair-and-name">
+            <div id="study-flair-mount"></div>
+            <label class="study-dialog__field">
+                <span>{% trans %}Name{% endtrans %}</span>
+                <input type="text" name="name" value="{{ username }}'s Study" maxlength="100" autocomplete="off">
+            </label>
+        </div>
         <div class="study-dialog__split">
             <label class="study-dialog__field">
                 <span>{% trans %}Visibility{% endtrans %}</span>

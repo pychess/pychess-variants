@@ -414,6 +414,7 @@ class StudyStorageTestCase(unittest.IsolatedAsyncioTestCase):
             study,
             settings={"example": "preserved"},
             topics=("Opening", "King pawn"),
+            flair="variant:chess960",
         )
 
         with patch.object(
@@ -433,6 +434,7 @@ class StudyStorageTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(cloned.source, StudySource("study", study.id))
         self.assertEqual(cloned.settings, {"example": "preserved"})
         self.assertEqual(cloned.topics, ("Opening", "King pawn"))
+        self.assertEqual(cloned.flair, "variant:chess960")
         self.assertEqual(cloned.revision, 0)
         self.assertEqual(cloned.current_chapter, cloned_first.id)
         self.assertNotEqual(cloned_first.id, first.id)

@@ -8,6 +8,7 @@ describe('Study index creation dialogs', () => {
             <button type="button" data-study-new-open>New study</button>
             <dialog id="study-new-dialog">
                 <form id="study-create-form">
+                    <div id="study-flair-mount"></div>
                     <input name="name" value="owner's Study">
                     <select name="visibility"><option value="private" selected>Private</option></select>
                     <select name="computer"><option value="everyone" selected>Everyone</option></select>
@@ -64,6 +65,34 @@ describe('Study index creation dialogs', () => {
         expect([...mode.options].map(option => option.value)).toEqual(['normal', 'conceal']);
     });
 
+    test('keeps the variant flair category selected when emoji finish loading', async () => {
+        const originalFetch = globalThis.fetch;
+        let finishFetch!: (response: Response) => void;
+        const fetchResponse = new Promise<Response>(resolve => (finishFetch = resolve));
+        globalThis.fetch = jest.fn(() => fetchResponse);
+        try {
+            initStudyIndex();
+            const picker = document.querySelector<HTMLDetailsElement>('.study-flair-picker')!;
+            picker.open = true;
+            picker.dispatchEvent(new Event('toggle'));
+            const category = picker.querySelector('select')!;
+            category.value = 'variants';
+            category.dispatchEvent(new Event('change'));
+            finishFetch({
+                ok: true,
+                json: async () => ({ groups: { 'Smileys & Emotion': [['😀', 'grinning face']] } }),
+            } as Response);
+            await new Promise(resolve => setTimeout(resolve, 0));
+
+            expect(category.value).toBe('variants');
+            picker.querySelector<HTMLButtonElement>('button[aria-label="SHOGI"]')!.click();
+            expect(document.querySelector<HTMLInputElement>('input[name="flair"]')?.value).toBe('variant:shogi');
+            expect(picker.open).toBe(false);
+        } finally {
+            globalThis.fetch = originalFetch;
+        }
+    });
+
     test('Start opens the first-chapter dialog without submitting the Study settings form', () => {
         const dialog = document.querySelector<HTMLDialogElement>('#study-new-dialog')!;
         const chapterDialog = document.querySelector<HTMLDialogElement>('#study-first-chapter-dialog')!;
@@ -75,6 +104,7 @@ describe('Study index creation dialogs', () => {
 
         initStudyIndex();
         const chapterForm = document.querySelector<HTMLFormElement>('#study-first-chapter-form')!;
+        settingsForm.querySelector<HTMLInputElement>('input[name="flair"]')!.value = 'variant:shogi';
         const chapterName = chapterDialog.querySelector<HTMLInputElement>('input[name="chapterName"]')!;
         openButton.click();
         settingsForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
@@ -89,6 +119,7 @@ describe('Study index creation dialogs', () => {
         expect(mode.value).toBe('normal');
         expect([...mode.options].map(option => option.value)).toEqual(['normal', 'practice', 'gamebook']);
         expect(chapterForm.querySelector<HTMLInputElement>('input[name="name"]')?.value).toBe("owner's Study");
+        expect(chapterForm.querySelector<HTMLInputElement>('input[name="flair"]')?.value).toBe('variant:shogi');
         expect(chapterForm.querySelector<HTMLInputElement>('input[name="visibility"]')?.value).toBe('private');
         expect(chapterForm.querySelector<HTMLInputElement>('input[name="computer"]')?.value).toBe('everyone');
         expect(chapterForm.querySelector<HTMLInputElement>('input[name="cloneable"]')?.value).toBe('everyone');
@@ -115,6 +146,7 @@ describe('Study index creation dialogs', () => {
         const settingsForm = document.querySelector<HTMLFormElement>('#study-create-form')!;
         settingsForm.reportValidity = jest.fn(() => true);
         settingsForm.querySelector<HTMLInputElement>('input[name="name"]')!.value = 'Imported Study';
+        settingsForm.querySelector<HTMLInputElement>('input[name="flair"]')!.value = 'emoji:👽';
         settingsForm.querySelector<HTMLSelectElement>('select[name="visibility"]')!.innerHTML =
             '<option value="unlisted" selected>Unlisted</option>';
         settingsForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
@@ -131,6 +163,7 @@ describe('Study index creation dialogs', () => {
             pgn,
             {
                 name: 'Imported Study',
+                flair: 'emoji:👽',
                 visibility: 'unlisted',
                 computer: 'everyone',
                 explorer: 'everyone',

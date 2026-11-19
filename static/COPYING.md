@@ -80,6 +80,7 @@ static/images/friendly-sites/papergenerals.svg | hehehai ([Paper Generals](https
 static/images/friendly-sites/schemingmind-alice.png | [John Tenniel](https://commons.wikimedia.org/wiki/File:Alice_crown.jpg) | Public Domain | Derived from Tenniel's 1871 *Through the Looking-Glass* illustration used by SchemingMind
 static/images/bugroundchat/* | pychess-variants contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/emoji/* | Lichess contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) | From lichess
+static/study-flair/emoji.json | Unicode, Inc. | [Unicode License v3](study-flair/LICENSE.txt) | Emoji sequences and names from Unicode 17.0
 static/images/Santa_hat.svg | [openclipart](https://openclipart.org/detail/190172/santa-hat) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 static/fonts/pychess.* and icomoon.io/pychess-variants.json | Lichess contributors and pychess-variants contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) | PyChess icon font contains the Lichess Wings glyph (licon U+E06C)
 static/images/puzzles.jpg | [puzzles.one](https://puzzles.one/) | | From puzzles.one website

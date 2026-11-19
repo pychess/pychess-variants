@@ -29,6 +29,7 @@ from study.constants import (
     STUDY_TOPIC_MAX_LENGTH,
     STUDY_TOPIC_MIN_LENGTH,
 )
+from study.flair import study_flair, study_flair_icon
 from study.models import (
     Study,
     StudyChapter,
@@ -154,7 +155,11 @@ def _study_sync_enabled(value: object, *, default: bool = True) -> bool:
 
 def _study_creation_metadata(
     data: Mapping[str, object],
-) -> tuple[str, StudyVisibility, dict[str, object]]:
+) -> tuple[str, StudyVisibility, dict[str, object], str]:
+    try:
+        flair = study_flair(data.get("flair"))
+    except ValueError as exc:
+        raise StudyStorageError(str(exc)) from exc
     try:
         visibility = study_visibility(data.get("visibility", "private"))
         settings = {
@@ -164,7 +169,7 @@ def _study_creation_metadata(
     except ValueError as exc:
         raise StudyStorageError("Invalid Study settings") from exc
     name = str(data.get("name") or "").strip()
-    return name, visibility, settings
+    return name, visibility, settings, flair
 
 
 def _study_context(context: ViewContext) -> None:
@@ -266,6 +271,7 @@ def _populate_study_page(
     context["study_list_compact"] = _study_list_is_compact(request)
     context["study_list_return_to"] = str(request.rel_url)
     context["study_list_order"] = order
+    context["study_flair_icon"] = study_flair_icon
     context["study_search_order"] = order if order in _STUDY_ORDER_MENUS["search"] else "relevant"
     context["study_order_hrefs"] = {
         key: _study_list_query_href(request, order=key) for key in choices
@@ -887,7 +893,7 @@ async def study_create(request: web.Request) -> web.StreamResponse:
     if data is None:
         raise web.HTTPNoContent()
     try:
-        name, visibility, settings = _study_creation_metadata(data)
+        name, visibility, settings, flair = _study_creation_metadata(data)
     except StudyStorageError as exc:
         raise web.HTTPBadRequest(text=str(exc)) from exc
 
@@ -908,6 +914,7 @@ async def study_create(request: web.Request) -> web.StreamResponse:
             name=name or None,
             visibility=visibility,
             settings=settings,
+            flair=flair,
         )
     except (StudyStorageError, StudyChapterBuildError) as exc:
         await release_study_creation_slot(app_state, user.username, quota_claim)
@@ -971,6 +978,7 @@ async def _populate_study_chapter_context(
         {
             "id": study.id,
             "name": study.name,
+            "flair": study.flair,
             "owner": study.owner,
             "visibility": study.visibility,
             "isOwner": (
@@ -1310,7 +1318,7 @@ async def study_create_pgn(request: web.Request) -> web.StreamResponse:
     if not isinstance(data, Mapping):
         return web.json_response({"ok": False, "error": "invalid import payload"}, status=400)
     try:
-        name, visibility, settings = _study_creation_metadata(data)
+        name, visibility, settings, flair = _study_creation_metadata(data)
         drafts = await _pgn_import_drafts(app_state, user.username, data)
     except StudyVariantCapacityError as exc:
         return web.json_response({"ok": False, "error": str(exc)}, status=503)
@@ -1332,6 +1340,7 @@ async def study_create_pgn(request: web.Request) -> web.StreamResponse:
             name=name or None,
             visibility=visibility,
             settings=settings,
+            flair=flair,
         )
     except (StudyStorageError, StudyChapterBuildError) as exc:
         await release_study_creation_slot(app_state, user.username, quota_claim)
@@ -1504,16 +1513,22 @@ async def study_edit(request: web.Request) -> web.StreamResponse:
         except ValueError as exc:
             raise web.HTTPBadRequest(text="Invalid Study visibility") from exc
         try:
+            flair = study_flair(data.get("flair", current.flair))
+        except ValueError as exc:
+            raise web.HTTPBadRequest(text=str(exc)) from exc
+        try:
             settings = await set_study_feature_settings(app_state, current, data)
         except StudyStorageError as exc:
             raise web.HTTPBadRequest(text=str(exc)) from exc
         settings_changed = settings != dict(current.settings)
-        await rename_study(app_state, current, data.get("name"))
+        await rename_study(app_state, current, data.get("name"), flair=flair)
         await set_study_visibility(app_state, current, visibility)
         if settings_changed:
             await broadcast_study_reload(
                 app_state, current.id, reason="feature_permissions_changed"
             )
+        elif flair != current.flair:
+            await broadcast_study_reload(app_state, current.id, reason="flair_changed")
         if visibility == "private" and current.visibility != "private":
             await close_study_sockets(app_state, current.id)
     raise web.HTTPFound(f"/study/{study.id}")

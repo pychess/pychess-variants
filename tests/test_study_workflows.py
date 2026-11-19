@@ -144,6 +144,7 @@ async def test_study_create_from_normalized_pgn_batch_preserves_settings_and_all
         "/study/import-pgn",
         json={
             "name": "Imported PGN Study",
+            "flair": "emoji:👽",
             "visibility": "unlisted",
             "computer": "member",
             "explorer": "owner",
@@ -183,6 +184,7 @@ async def test_study_create_from_normalized_pgn_batch_preserves_settings_and_all
     study_doc = await app_state.db.study.find_one({"_id": payload["studyId"]})
     assert study_doc is not None
     assert study_doc["name"] == "Imported PGN Study"
+    assert study_doc["flair"] == "emoji:👽"
     assert study_doc["visibility"] == "unlisted"
     assert study_doc["settings"] == {
         "computer": "member",
@@ -1387,6 +1389,57 @@ async def test_invalid_study_feature_permission_does_not_partially_edit_study(
     assert stored["name"] == study.name
     assert stored["visibility"] == study.visibility
     assert stored.get("settings", {}) == dict(study.settings)
+
+
+@pytest.mark.asyncio
+async def test_study_flair_survives_creation_and_can_be_edited_or_removed(aiohttp_client) -> None:
+    app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+    client = await aiohttp_client(app)
+    app_state = get_app_state(app)
+    username = "flair_owner"
+    await _insert_user(app_state, username)
+    client.session.cookie_jar.update_cookies({"AIOHTTP_SESSION": _login_cookie(username)})
+
+    response = await client.post(
+        "/study",
+        data={
+            "name": "Flair test",
+            "variant": "chess",
+            "flair": "emoji:🐢",
+            "visibility": "public",
+        },
+        allow_redirects=False,
+    )
+    assert response.status == 302
+    chapter_url = response.headers["Location"]
+    study_id = chapter_url.split("/")[2]
+    study_url = f"/study/{study_id}"
+    response = await client.get(chapter_url, headers={"Accept": "application/json"})
+    assert (await response.json())["study"]["flair"] == "emoji:🐢"
+    response = await client.get("/study/all")
+    assert 'aria-hidden="true">🐢</span>' in await response.text()
+
+    response = await client.post(
+        f"{study_url}/edit", data={"flair": "variant:shogi"}, allow_redirects=False
+    )
+    assert response.status == 302
+    response = await client.get(chapter_url, headers={"Accept": "application/json"})
+    assert (await response.json())["study"]["flair"] == "variant:shogi"
+
+    response = await client.post(
+        f"{study_url}/edit", data={"name": "Renamed", "flair": "emoji:abc"}, allow_redirects=False
+    )
+    assert response.status == 400
+    persisted = await app_state.db.study.find_one({"_id": study_id})
+    assert persisted["name"] == "Flair test"
+    assert persisted["flair"] == "variant:shogi"
+
+    response = await client.post(f"{study_url}/edit", data={"flair": ""}, allow_redirects=False)
+    assert response.status == 302
+    response = await client.get("/study/all")
+    html = await response.text()
+    assert 'class="study-card__icon"' in html
+    assert 'class="study-card__flair' not in html
 
 
 @pytest.mark.asyncio
