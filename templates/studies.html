@@ -66,7 +66,7 @@
                 </h1>
                 {% if study_search_value is defined %}
                 <form class="study-search" method="get" action="{{ home }}/study/search">
-                    {% if study_page is defined %}<input type="hidden" name="order" value="{{ study_list_order }}">{% endif %}
+                    {% if study_page is defined %}<input type="hidden" name="order" value="{{ study_search_order }}">{% endif %}
                     <label class="study-search__query">
                         <input type="search" name="q" value="{{ study_search_value }}" minlength="3" maxlength="100" placeholder="{% trans %}Search studies{% endtrans %}" aria-label="{% trans %}Search studies{% endtrans %}" enterkeyhint="search">
                     </label>
@@ -79,15 +79,24 @@
                 </form>
                 {% endif %}
                 {% if study_page is defined %}
+                {% set order_labels = {
+                    'hot': gettext('Hot'),
+                    'newest': gettext('Date added (newest)'),
+                    'oldest': gettext('Date added (oldest)'),
+                    'updated': gettext('Recently updated'),
+                    'popular': gettext('Most popular'),
+                    'alphabetical': gettext('Alphabetical'),
+                    'mine': gettext('My studies'),
+                    'relevant': gettext('Relevant')
+                } %}
                 <details class="study-list-order">
                     <summary class="button button-empty">
-                        {{ study_list_order_label }}
+                        {{ order_labels[study_list_order] }}
                     </summary>
                     <div class="study-list-order__menu">
-                        <a{% if study_list_order == 'updated' %} class="current"{% endif %} href="{{ study_order_hrefs['updated'] }}">{% trans %}Recently updated{% endtrans %}</a>
-                        <a{% if study_list_order == 'newest' %} class="current"{% endif %} href="{{ study_order_hrefs['newest'] }}">{% trans %}Date added (newest){% endtrans %}</a>
-                        <a{% if study_list_order == 'oldest' %} class="current"{% endif %} href="{{ study_order_hrefs['oldest'] }}">{% trans %}Date added (oldest){% endtrans %}</a>
-                        <a{% if study_list_order == 'alphabetical' %} class="current"{% endif %} href="{{ study_order_hrefs['alphabetical'] }}">{% trans %}Alphabetical{% endtrans %}</a>
+                        {% for order, href in study_order_hrefs.items() %}
+                        <a{% if order == study_list_order %} class="current" aria-current="true"{% endif %} href="{{ href }}">{{ order_labels[order] }}</a>
+                        {% endfor %}
                     </div>
                 </details>
                 {% endif %}

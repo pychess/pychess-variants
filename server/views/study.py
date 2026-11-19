@@ -60,6 +60,7 @@ from study.quota import (
 from study.sequencer import sequence_study
 from study.snapshot import chapter_snapshot_token, study_snapshot_token
 from study.storage import (
+    StudyListOrder,
     StudyStorageError,
     add_chapter_from_draft,
     add_chapters_from_drafts,
@@ -83,6 +84,7 @@ from study.storage import (
     load_study,
     member_study_topics,
     owner_studies_page,
+    owner_view_studies_page,
     popular_study_topics,
     public_studies_page,
     remove_study_member,
@@ -92,9 +94,7 @@ from study.storage import (
     set_study_member_role,
     set_study_topics,
     set_study_visibility,
-    studies_for_owner_view,
     studies_writable_by,
-    study_list_chapter_names,
     study_list_order,
     study_search_page,
     topic_studies_page,
@@ -181,12 +181,28 @@ def _positive_page(value: str | None) -> int:
         return 1
 
 
-_STUDY_ORDER_LABELS = {
-    "updated": "Recently updated",
-    "newest": "Date added (newest)",
-    "oldest": "Date added (oldest)",
-    "alphabetical": "Alphabetical",
+_STUDY_ORDERS: tuple[StudyListOrder, ...] = (
+    "hot",
+    "newest",
+    "oldest",
+    "updated",
+    "popular",
+    "alphabetical",
+)
+_STUDY_ORDER_MENUS: dict[str, tuple[StudyListOrder, ...]] = {
+    "all": ("hot", "newest", "updated", "popular"),
+    "search": ("hot", "newest", "popular", "alphabetical", "relevant"),
+    "topic": (*_STUDY_ORDERS, "mine"),
 }
+
+
+def _requested_study_order(
+    request: web.Request, *, default: StudyListOrder = "updated", allow_mine: bool = False
+) -> StudyListOrder:
+    order = study_list_order(request.rel_url.query.get("order"), default=default)
+    if (order == "mine" and not allow_mine) or (order == "relevant" and default != "relevant"):
+        return default
+    return order
 
 
 def _study_list_query_href(
@@ -234,13 +250,16 @@ def _populate_study_page(
     active: str,
 ) -> None:
     order = study_list_order(result.get("order"))
+    choices = _STUDY_ORDER_MENUS.get(active, _STUDY_ORDERS)
+    if context["anon"] and active == "topic":
+        choices = _STUDY_ORDERS
     context["studies"] = result["studies"]
     context["study_card_chapters"] = result.get("chapter_names", {})
     context["study_page"] = result
     context["study_list_order"] = order
-    context["study_list_order_label"] = _STUDY_ORDER_LABELS[order]
+    context["study_search_order"] = order if order in _STUDY_ORDER_MENUS["search"] else "relevant"
     context["study_order_hrefs"] = {
-        key: _study_list_query_href(request, order=key) for key in _STUDY_ORDER_LABELS
+        key: _study_list_query_href(request, order=key) for key in choices
     }
     context["study_prev_href"] = (
         _study_list_query_href(request, page=result.get("prev_page"))
@@ -252,7 +271,8 @@ def _populate_study_page(
         if isinstance(result.get("next_page"), int)
         else ""
     )
-    _populate_study_list_navigation(context, active=active)
+    if active != "owner":
+        _populate_study_list_navigation(context, active=active)
 
 
 async def _owned_study_and_chapter(
@@ -510,7 +530,7 @@ async def studies(request: web.Request) -> ViewContext:
         raise web.HTTPServiceUnavailable(text="Studies require database access.")
 
     _study_context(context)
-    order = study_list_order(request.rel_url.query.get("order"))
+    order = _requested_study_order(request)
     result = await owner_studies_page(
         app_state,
         user.username,
@@ -538,7 +558,7 @@ async def studies_contributed(request: web.Request) -> ViewContext:
 
     _study_context(context)
     context["title"] = "Studies I contribute to • PyChess"
-    order = study_list_order(request.rel_url.query.get("order"))
+    order = _requested_study_order(request)
     result = await contributed_studies_page(
         app_state,
         user.username,
@@ -566,7 +586,7 @@ async def studies_liked(request: web.Request) -> ViewContext:
 
     _study_context(context)
     context["title"] = "My favorite studies • PyChess"
-    order = study_list_order(request.rel_url.query.get("order"))
+    order = _requested_study_order(request)
     result = await favorite_studies_page(
         app_state,
         user.username,
@@ -594,7 +614,7 @@ async def studies_mine_public(request: web.Request) -> ViewContext:
 
     _study_context(context)
     context["title"] = "My public studies • PyChess"
-    order = study_list_order(request.rel_url.query.get("order"))
+    order = _requested_study_order(request)
     result = await owner_studies_page(
         app_state,
         user.username,
@@ -623,7 +643,7 @@ async def studies_mine_private(request: web.Request) -> ViewContext:
 
     _study_context(context)
     context["title"] = "My private studies • PyChess"
-    order = study_list_order(request.rel_url.query.get("order"))
+    order = _requested_study_order(request)
     result = await owner_studies_page(
         app_state,
         user.username,
@@ -651,7 +671,7 @@ async def studies_public(request: web.Request) -> ViewContext:
 
     _study_context(context)
     context["title"] = "All studies • PyChess"
-    order = study_list_order(request.rel_url.query.get("order"))
+    order = _requested_study_order(request, default="hot")
     result = await public_studies_page(
         app_state,
         q=request.rel_url.query.get("q", ""),
@@ -693,9 +713,13 @@ async def studies_by_owner(request: web.Request) -> ViewContext:
     is_self = viewer == owner
     _study_context(context)
     context["title"] = f"Studies by {owner} • PyChess"
-    owner_studies = await studies_for_owner_view(app_state, owner, viewer)
-    context["studies"] = owner_studies
-    context["study_card_chapters"] = await study_list_chapter_names(app_state, owner_studies)
+    result = await owner_view_studies_page(
+        app_state,
+        owner,
+        viewer,
+        order=_requested_study_order(request, default="hot"),
+        page=_positive_page(request.rel_url.query.get("page")),
+    )
     context["study_list_owner"] = owner
     context["study_list_is_self"] = is_self
     context["study_list_can_create"] = is_self and not user.bot
@@ -703,6 +727,7 @@ async def studies_by_owner(request: web.Request) -> ViewContext:
     context["study_list_show_owner"] = False
     context["study_list_navigation"] = False
     _populate_study_search_form(context, f"owner:{owner} ")
+    _populate_study_page(context, request, result, active="owner")
     return context
 
 
@@ -715,7 +740,7 @@ async def studies_search(request: web.Request) -> ViewContext:
 
     _study_context(context)
     context["title"] = "Search studies • PyChess"
-    order = study_list_order(request.rel_url.query.get("order"))
+    order = _requested_study_order(request, default="relevant")
     viewer = None if user.anon else user.username
     result = await study_search_page(
         app_state,
@@ -733,7 +758,7 @@ async def studies_search(request: web.Request) -> ViewContext:
     _populate_study_search_form(
         context,
         str(result.get("q") or ""),
-        clear_href=f"/study/all?order={order}",
+        clear_href="/study/all" if order == "relevant" else f"/study/all?order={order}",
     )
     _populate_study_page(context, request, result, active="search")
     await _populate_study_navigation_topics(
@@ -787,7 +812,7 @@ async def studies_by_topic(request: web.Request) -> ViewContext:
     except ValueError as exc:
         raise web.HTTPNotFound() from exc
     viewer = None if user.anon else user.username
-    order = study_list_order(request.rel_url.query.get("order"))
+    order = _requested_study_order(request, default="hot", allow_mine=not user.anon)
     result = await topic_studies_page(
         app_state,
         topic,

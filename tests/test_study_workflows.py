@@ -1620,7 +1620,9 @@ async def test_public_study_discovery_and_search_never_expose_link_only_studies(
     assert 'class="study-search-count"' not in html
     assert "<info-date timestamp=" in html
     # Keep Studies with the learning resources, matching Lichess navigation.
-    assert html.index('href="/study/all">Studies</a>') < html.index('href="/tv">Watch</a>')
+    assert html.index('class="nav-link" href="/study/all"') < html.index(
+        'class="nav-link" href="/tv"'
+    )
 
     response = await client.get("/study/all?q=sic")
     assert response.status == 200
@@ -1651,6 +1653,81 @@ async def test_public_study_discovery_and_search_never_expose_link_only_studies(
     # while private remains protected.
     assert (await client.get(f"/study/{unlisted.id}", allow_redirects=False)).status == 302
     assert (await client.get(f"/study/{private.id}", allow_redirects=False)).status == 404
+
+
+@pytest.mark.asyncio
+async def test_study_discovery_sorts_by_likes_recency_and_relevance(aiohttp_client) -> None:
+    app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+    client = await aiohttp_client(app)
+    app_state = get_app_state(app)
+    owner = "sort_owner"
+    other = "sort_other"
+    await _insert_user(app_state, owner)
+    await _insert_user(app_state, other)
+    now = datetime.now(UTC)
+
+    for username, name, chapter_name, age, likes in (
+        (owner, "Classic lines", "Sicilian variations", 30, 40),
+        (owner, "Sicilian updates", "Main line", 0, 1),
+        (other, "Sicilian elsewhere", "Main line", 12, 0),
+    ):
+        draft = await StudyChapterBuilder(app_state, username).blank_or_fen(
+            variant="chess", name=chapter_name
+        )
+        study, _ = await create_study_from_draft(
+            app_state, username, draft, name=name, visibility="public"
+        )
+        await app_state.db.study.update_one(
+            {"_id": study.id},
+            {
+                "$set": {
+                    "createdAt": now - timedelta(days=age),
+                    "likers": [f"fan_{i}" for i in range(likes)],
+                    "topics": ["Openings"],
+                },
+                "$unset": {"likes": ""},
+            },
+        )
+
+    response = await client.get("/study/all")
+    assert response.status == 200
+    html = await response.text()
+    assert (
+        html.index("Sicilian updates")
+        < html.index("Classic lines")
+        < html.index("Sicilian elsewhere")
+    )
+    assert 'class="current" aria-current="true" href="/study/all?order=hot">Hot</a>' in html
+
+    with patch("study.storage.STUDY_LIST_PAGE_SIZE", 1):
+        response = await client.get("/study/search?q=sic&order=popular")
+        assert response.status == 200
+        html = await response.text()
+        assert "Classic lines" in html
+        assert "Sicilian updates" not in html
+        assert 'href="/study/search?q=sic&amp;order=popular&amp;page=2"' in html
+
+        response = await client.get("/study/search?q=sic&order=popular&page=2")
+        assert response.status == 200
+        html = await response.text()
+        assert "Sicilian updates" in html
+        assert "Classic lines" not in html
+        assert 'href="/study/search?q=sic&amp;order=hot"' in html
+
+    response = await client.get("/study/search?q=sic")
+    assert response.status == 200
+    html = await response.text()
+    assert html.index("Sicilian updates") < html.index("Classic lines")
+    assert (
+        'class="current" aria-current="true" href="/study/search?q=sic&amp;order=relevant"' in html
+    )
+
+    client.session.cookie_jar.update_cookies({"AIOHTTP_SESSION": _login_cookie(owner)})
+    response = await client.get("/study/topic/Openings?order=mine")
+    assert response.status == 200
+    html = await response.text()
+    assert html.index("Sicilian updates") < html.index("Classic lines")
+    assert "Sicilian elsewhere" not in html
 
 
 @pytest.mark.asyncio

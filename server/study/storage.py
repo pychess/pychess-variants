@@ -5,7 +5,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from inspect import isawaitable
-from typing import Any, Literal, cast
+from typing import Any, Literal, cast, get_args
 
 from fairy import FairyBoard
 
@@ -60,16 +60,20 @@ class StudySharedPositionResult:
 
 
 STUDY_LIST_PAGE_SIZE = 16
-StudyListOrder = Literal["updated", "newest", "oldest", "alphabetical"]
-_STUDY_LIST_ORDERS = frozenset(("updated", "newest", "oldest", "alphabetical"))
+StudyListOrder = Literal[
+    "hot", "newest", "oldest", "updated", "popular", "alphabetical", "mine", "relevant"
+]
+_STUDY_LIST_ORDERS = frozenset(get_args(StudyListOrder))
+_DAY_MS = 86_400_000
+_EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
 _STUDY_SEARCH_USERNAME_RE = re.compile(r"^[A-Za-z0-9_-]{3,20}$")
 _STUDY_SEARCH_QUERY_MAX_LENGTH = 100
 
 
-def study_list_order(value: object) -> StudyListOrder:
-    order = str(value or "updated")
+def study_list_order(value: object, *, default: StudyListOrder = "updated") -> StudyListOrder:
+    order = str(value or default)
     if order not in _STUDY_LIST_ORDERS:
-        return "updated"
+        return default
     return cast(StudyListOrder, order)
 
 
@@ -80,7 +84,70 @@ def _study_list_sort(order: StudyListOrder) -> list[tuple[str, int]]:
         return [("createdAt", 1), ("_id", 1)]
     if order == "alphabetical":
         return [("name", 1), ("_id", 1)]
+    if order in ("hot", "mine"):
+        return [("listRank", -1), ("_id", 1)]
+    if order == "popular":
+        return [("listLikes", -1), ("_id", 1)]
+    if order == "relevant":
+        return [("listRelevance", -1), ("updatedAt", -1), ("_id", 1)]
     return [("updatedAt", -1), ("_id", 1)]
+
+
+def _study_list_sort_fields(order: StudyListOrder, tokens: tuple[str, ...]) -> dict[str, object]:
+    # Count the actual likers so older documents and interrupted count updates
+    # are ranked by the same number of likes shown on the study card.
+    likes = {"$size": {"$setUnion": [{"$ifNull": ["$likers", []]}, []]}}
+    if order == "popular":
+        return {"listLikes": likes}
+    if order in ("hot", "mine"):
+        # Lichess Study.Rank: creation time plus floor(5 ln(likes) + 1)
+        # days, capped by the number of likes.
+        bonus_days = {
+            "$cond": [
+                {"$gt": ["$$likes", 0]},
+                {
+                    "$min": [
+                        "$$likes",
+                        {"$trunc": {"$add": [{"$multiply": [5, {"$ln": "$$likes"}]}, 1]}},
+                    ]
+                },
+                0,
+            ]
+        }
+        return {
+            "listRank": {
+                "$let": {
+                    "vars": {"likes": likes},
+                    "in": {
+                        "$add": [
+                            {"$subtract": ["$createdAt", _EPOCH]},
+                            {"$multiply": [bonus_days, _DAY_MS]},
+                        ]
+                    },
+                }
+            }
+        }
+    if order == "relevant":
+        # The search index also includes chapter metadata. Prefer hits in the
+        # study title by counting query prefixes that start a word there.
+        title_matches = [
+            {
+                "$cond": [
+                    {
+                        "$regexMatch": {
+                            "input": "$name",
+                            "regex": rf"(?:^|[\W_]){re.escape(token)}",
+                            "options": "i",
+                        }
+                    },
+                    1,
+                    0,
+                ]
+            }
+            for token in tokens
+        ]
+        return {"listRelevance": {"$add": title_matches} if title_matches else 0}
+    return {}
 
 
 async def study_list_chapter_names(
@@ -123,18 +190,27 @@ async def _studies_page(
     *,
     order: StudyListOrder = "updated",
     page: int = 1,
+    search_tokens: tuple[str, ...] = (),
 ) -> dict[str, object]:
     page = max(1, page)
     total = await app_state.db.study.count_documents(query)
     pages = max(1, (total + STUDY_LIST_PAGE_SIZE - 1) // STUDY_LIST_PAGE_SIZE)
     page = min(page, pages)
     skip = (page - 1) * STUDY_LIST_PAGE_SIZE
-    cursor = (
-        app_state.db.study.find(query)
-        .sort(_study_list_sort(order))
-        .skip(skip)
-        .limit(STUDY_LIST_PAGE_SIZE)
-    )
+    collection = app_state.db.study
+    sort = _study_list_sort(order)
+    sort_fields = _study_list_sort_fields(order, search_tokens)
+    if sort_fields:
+        pipeline = [{"$match": query}, {"$addFields": sort_fields}, {"$sort": dict(sort)}]
+        if skip:
+            pipeline.append({"$skip": skip})
+        pipeline.append({"$limit": STUDY_LIST_PAGE_SIZE})
+        cursor_or_awaitable = collection.aggregate(pipeline)
+        cursor = (
+            await cursor_or_awaitable if isawaitable(cursor_or_awaitable) else cursor_or_awaitable
+        )
+    else:
+        cursor = collection.find(query).sort(sort).skip(skip).limit(STUDY_LIST_PAGE_SIZE)
     studies = [Study.from_document(doc) async for doc in cursor]
     return {
         "studies": studies,
@@ -234,9 +310,14 @@ async def topic_studies_page(
 ) -> dict[str, object]:
     """Return Studies with one exact topic that are discoverable to ``viewer``."""
 
+    access = (
+        {"$or": [{"owner": viewer}, _member_query(viewer)]}
+        if order == "mine" and viewer is not None
+        else _study_search_access_query(viewer)
+    )
     return await _studies_page(
         app_state,
-        {"$and": [{"topics": topic}, _study_search_access_query(viewer)]},
+        {"$and": [{"topics": topic}, access]},
         order=order,
         page=page,
     )
@@ -424,13 +505,16 @@ async def study_search_page(
     # Empty /study/search requests behave like All studies rather than exposing
     # every private membership to an accidental blank search.
     if not clean_query:
-        result = await public_studies_page(app_state, order=order, page=page)
+        result = await public_studies_page(
+            app_state, order="hot" if order == "relevant" else order, page=page
+        )
     else:
         result = await _studies_page(
             app_state,
             {"$and": clauses},
             order=order,
             page=page,
+            search_tokens=tokens,
         )
     result["q"] = clean_query
     result["query_too_short"] = False
@@ -574,15 +658,17 @@ def _owner_listing_filter(owner: str, viewer: str | None) -> dict[str, object]:
     return {"owner": owner, "visibility": "public"}
 
 
-async def studies_for_owner_view(
-    app_state: Any, owner: str, viewer: str | None, *, limit: int = 100
-) -> list[Study]:
-    cursor = (
-        app_state.db.study.find(_owner_listing_filter(owner, viewer))
-        .sort("updatedAt", -1)
-        .limit(limit)
+async def owner_view_studies_page(
+    app_state: Any,
+    owner: str,
+    viewer: str | None,
+    *,
+    order: StudyListOrder = "hot",
+    page: int = 1,
+) -> dict[str, object]:
+    return await _studies_page(
+        app_state, _owner_listing_filter(owner, viewer), order=order, page=page
     )
-    return [Study.from_document(doc) async for doc in cursor]
 
 
 async def count_studies_for_owner_view(app_state: Any, owner: str, viewer: str | None) -> int:
