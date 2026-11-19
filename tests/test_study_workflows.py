@@ -1457,7 +1457,7 @@ async def test_profile_study_listing_only_exposes_public_studies(aiohttp_client)
 
 
 @pytest.mark.asyncio
-async def test_study_list_cards_preview_chapters_and_members(aiohttp_client) -> None:
+async def test_study_list_switches_between_card_previews_and_compact_links(aiohttp_client) -> None:
     app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
     client = await aiohttp_client(app)
     app_state = get_app_state(app)
@@ -1487,6 +1487,46 @@ async def test_study_list_cards_preview_chapters_and_members(aiohttp_client) -> 
     assert 'class="study-card__chapter">Fifth line</li>' not in html
     assert f'class="study-card__member study-card__member--write">{owner}</li>' in html
     assert f'class="study-card__member study-card__member--read">{reader}</li>' in html
+
+    return_to = "/study/search?q=preview&order=popular"
+    response = await client.post(
+        "/study/list-format",
+        data={"format": "compact", "return_to": return_to},
+        allow_redirects=False,
+    )
+    assert response.status == 303
+    assert response.headers["Location"] == return_to
+
+    for url in (return_to, "/study/all"):
+        response = await client.get(url)
+        assert response.status == 200
+        html = await response.text()
+        assert 'aria-label="Switch to card view"' in html
+        assert f'class="study-card study-list__entry" data-infinite-scroll-key="{study.id}"' in html
+        assert "Preview repertoire" in html
+        assert "study-card__chapters" not in html
+        assert "study-card__members" not in html
+
+    topic_url = "/study/topic/King;pawn?order=popular"
+    response = await client.post(
+        "/study/list-format",
+        data={"format": "compact", "return_to": topic_url},
+        allow_redirects=False,
+    )
+    assert response.status == 303
+    assert response.headers["Location"] == topic_url
+
+    response = await client.post(
+        "/study/list-format",
+        data={"format": "card", "return_to": "//example.org/"},
+        allow_redirects=False,
+    )
+    assert response.status == 303
+    assert response.headers["Location"] == "/study/all"
+    response = await client.get("/study/all")
+    html = await response.text()
+    assert 'aria-label="Switch to list view"' in html
+    assert "study-card__chapters" in html
 
 
 @pytest.mark.asyncio
@@ -1615,7 +1655,8 @@ async def test_public_study_discovery_and_search_never_expose_link_only_studies(
     assert "discovery_alice" in html
     assert "Sicilian Secret" not in html
     assert "Sicilian Private" not in html
-    assert 'class="study-index__topics"' in html
+    assert 'aria-label="Switch to list view"' in html
+    assert '/study/topic">Topics</a>' in html
     assert 'class="study-topic-list study-topic-list--shortcuts"' not in html
     assert 'class="study-search-count"' not in html
     assert "<info-date timestamp=" in html

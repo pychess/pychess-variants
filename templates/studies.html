@@ -90,8 +90,8 @@
                     'relevant': gettext('Relevant')
                 } %}
                 <details class="study-list-order">
-                    <summary class="button button-empty">
-                        {{ order_labels[study_list_order] }}
+                    <summary>
+                        <span class="study-list-order__label">{{ order_labels[study_list_order] }}</span>
                     </summary>
                     <div class="study-list-order__menu">
                         {% for order, href in study_order_hrefs.items() %}
@@ -99,10 +99,15 @@
                         {% endfor %}
                     </div>
                 </details>
+                {% set format_label = gettext('Switch to card view') if study_list_compact else gettext('Switch to list view') %}
+                <form class="study-list-format" method="post" action="/study/list-format">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                    <input type="hidden" name="return_to" value="{{ study_list_return_to }}">
+                    <button class="study-list-format__toggle{% if study_list_compact %} study-list-format__toggle--active{% endif %}" type="submit" name="format" value="{{ 'card' if study_list_compact else 'compact' }}" title="{{ format_label }}" aria-label="{{ format_label }}">
+                        <span class="icon icon-list" aria-hidden="true"></span>
+                    </button>
+                </form>
                 {% endif %}
-                <a class="study-index__topics" href="{{ home }}/study/topic" title="{% trans %}Topics{% endtrans %}" aria-label="{% trans %}Topics{% endtrans %}">
-                    <span class="icon icon-list" aria-hidden="true"></span>
-                </a>
                 {% if study_list_can_create %}
                 <button class="study-new__toggle" type="button" data-study-new-open title="{% trans %}Create study{% endtrans %}" aria-label="{% trans %}Create study{% endtrans %}" aria-haspopup="dialog" aria-controls="study-new-dialog">
                     <span class="icon icon-plus-square" aria-hidden="true"></span>
@@ -117,6 +122,12 @@
             {% if studies %}
             <div class="studies study-list" data-infinite-scroll-content>
                 {% for study in studies %}
+                {% if study_list_compact %}
+                <a class="study-card study-list__entry" data-infinite-scroll-key="{{ study.id }}" href="/study/{{ study.id }}" title="{{ study.name }}">
+                    <span class="study-card__icon" aria-hidden="true"></span>
+                    <span class="study-list__name">{{ study.name }}</span>
+                </a>
+                {% else %}
                 <article class="study-card" data-infinite-scroll-key="{{ study.id }}">
                     <a class="study-card__overlay" href="/study/{{ study.id }}" title="{{ study.name }}" aria-label="{{ study.name }}"></a>
                     <div class="study-card__top">
@@ -153,6 +164,7 @@
                         </ol>
                     </div>
                 </article>
+                {% endif %}
                 {% endfor %}
             </div>
             {% elif study_search is defined %}

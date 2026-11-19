@@ -588,6 +588,7 @@ post_routes: tuple[RouteDef, ...] = (
     ("/simuls/simul", simul_view.simuls),
     (r"/simul/{simulId:\w{8}}/edit", simul_view.update_simul),
     ("/study", study_view.study_create),
+    ("/study/list-format", study_view.study_list_format),
     ("/study/from-analysis", study_view.study_from_analysis),
     ("/study/import-pgn", study_view.study_create_pgn),
     (r"/study/{studyId:\w{8}}/edit", study_view.study_edit),

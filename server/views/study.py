@@ -181,6 +181,13 @@ def _positive_page(value: str | None) -> int:
         return 1
 
 
+_STUDY_LIST_FORMAT_COOKIE = "studyListFormat"
+
+
+def _study_list_is_compact(request: web.Request) -> bool:
+    return request.cookies.get(_STUDY_LIST_FORMAT_COOKIE) == "compact"
+
+
 _STUDY_ORDERS: tuple[StudyListOrder, ...] = (
     "hot",
     "newest",
@@ -256,6 +263,8 @@ def _populate_study_page(
     context["studies"] = result["studies"]
     context["study_card_chapters"] = result.get("chapter_names", {})
     context["study_page"] = result
+    context["study_list_compact"] = _study_list_is_compact(request)
+    context["study_list_return_to"] = str(request.rel_url)
     context["study_list_order"] = order
     context["study_search_order"] = order if order in _STUDY_ORDER_MENUS["search"] else "relevant"
     context["study_order_hrefs"] = {
@@ -273,6 +282,32 @@ def _populate_study_page(
     )
     if active != "owner":
         _populate_study_list_navigation(context, active=active)
+
+
+async def study_list_format(request: web.Request) -> web.StreamResponse:
+    data = await read_post_data(request)
+    if data is None:
+        raise web.HTTPNoContent()
+    list_format = data.get("format")
+    if list_format not in ("card", "compact"):
+        raise web.HTTPBadRequest(text="Invalid Study list format.")
+    location = "/study/all"
+    return_to = data.get("return_to")
+    if isinstance(return_to, str):
+        path = return_to.partition("?")[0]
+        if path == "/study" or path.startswith("/study/"):
+            location = return_to
+    response = web.HTTPSeeOther(location)
+    response.set_cookie(
+        _STUDY_LIST_FORMAT_COOKIE,
+        list_format,
+        path="/study",
+        max_age=365 * 24 * 60 * 60,
+        httponly=True,
+        secure=settings.PROD or request.secure,
+        samesite="Lax",
+    )
+    return response
 
 
 async def _owned_study_and_chapter(
@@ -536,6 +571,7 @@ async def studies(request: web.Request) -> ViewContext:
         user.username,
         order=order,
         page=_positive_page(request.rel_url.query.get("page")),
+        compact=_study_list_is_compact(request),
     )
     context["study_list_owner"] = user.username
     context["study_list_is_self"] = True
@@ -564,6 +600,7 @@ async def studies_contributed(request: web.Request) -> ViewContext:
         user.username,
         order=order,
         page=_positive_page(request.rel_url.query.get("page")),
+        compact=_study_list_is_compact(request),
     )
     context["study_list_owner"] = user.username
     context["study_list_is_self"] = False
@@ -592,6 +629,7 @@ async def studies_liked(request: web.Request) -> ViewContext:
         user.username,
         order=order,
         page=_positive_page(request.rel_url.query.get("page")),
+        compact=_study_list_is_compact(request),
     )
     context["study_list_owner"] = user.username
     context["study_list_is_self"] = False
@@ -621,6 +659,7 @@ async def studies_mine_public(request: web.Request) -> ViewContext:
         visibility="public",
         order=order,
         page=_positive_page(request.rel_url.query.get("page")),
+        compact=_study_list_is_compact(request),
     )
     context["study_list_owner"] = user.username
     context["study_list_is_self"] = True
@@ -650,6 +689,7 @@ async def studies_mine_private(request: web.Request) -> ViewContext:
         visibility="private-or-unlisted",
         order=order,
         page=_positive_page(request.rel_url.query.get("page")),
+        compact=_study_list_is_compact(request),
     )
     context["study_list_owner"] = user.username
     context["study_list_is_self"] = True
@@ -677,6 +717,7 @@ async def studies_public(request: web.Request) -> ViewContext:
         q=request.rel_url.query.get("q", ""),
         order=order,
         page=_positive_page(request.rel_url.query.get("page")),
+        compact=_study_list_is_compact(request),
     )
     context["study_list_owner"] = ""
     context["study_list_is_self"] = False
@@ -719,6 +760,7 @@ async def studies_by_owner(request: web.Request) -> ViewContext:
         viewer,
         order=_requested_study_order(request, default="hot"),
         page=_positive_page(request.rel_url.query.get("page")),
+        compact=_study_list_is_compact(request),
     )
     context["study_list_owner"] = owner
     context["study_list_is_self"] = is_self
@@ -748,6 +790,7 @@ async def studies_search(request: web.Request) -> ViewContext:
         viewer=viewer,
         order=order,
         page=_positive_page(request.rel_url.query.get("page")),
+        compact=_study_list_is_compact(request),
     )
     context["study_list_owner"] = ""
     context["study_list_is_self"] = False
@@ -819,6 +862,7 @@ async def studies_by_topic(request: web.Request) -> ViewContext:
         viewer=viewer,
         order=order,
         page=_positive_page(request.rel_url.query.get("page")),
+        compact=_study_list_is_compact(request),
     )
     _study_context(context)
     context["title"] = f"{topic} • Study topics • PyChess"

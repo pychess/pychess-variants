@@ -60,6 +60,7 @@ class StudySharedPositionResult:
 
 
 STUDY_LIST_PAGE_SIZE = 16
+STUDY_LIST_COMPACT_PAGE_SIZE = 64
 StudyListOrder = Literal[
     "hot", "newest", "oldest", "updated", "popular", "alphabetical", "mine", "relevant"
 ]
@@ -190,13 +191,15 @@ async def _studies_page(
     *,
     order: StudyListOrder = "updated",
     page: int = 1,
+    compact: bool = False,
     search_tokens: tuple[str, ...] = (),
 ) -> dict[str, object]:
     page = max(1, page)
+    page_size = STUDY_LIST_COMPACT_PAGE_SIZE if compact else STUDY_LIST_PAGE_SIZE
     total = await app_state.db.study.count_documents(query)
-    pages = max(1, (total + STUDY_LIST_PAGE_SIZE - 1) // STUDY_LIST_PAGE_SIZE)
+    pages = max(1, (total + page_size - 1) // page_size)
     page = min(page, pages)
-    skip = (page - 1) * STUDY_LIST_PAGE_SIZE
+    skip = (page - 1) * page_size
     collection = app_state.db.study
     sort = _study_list_sort(order)
     sort_fields = _study_list_sort_fields(order, search_tokens)
@@ -204,17 +207,17 @@ async def _studies_page(
         pipeline = [{"$match": query}, {"$addFields": sort_fields}, {"$sort": dict(sort)}]
         if skip:
             pipeline.append({"$skip": skip})
-        pipeline.append({"$limit": STUDY_LIST_PAGE_SIZE})
+        pipeline.append({"$limit": page_size})
         cursor_or_awaitable = collection.aggregate(pipeline)
         cursor = (
             await cursor_or_awaitable if isawaitable(cursor_or_awaitable) else cursor_or_awaitable
         )
     else:
-        cursor = collection.find(query).sort(sort).skip(skip).limit(STUDY_LIST_PAGE_SIZE)
+        cursor = collection.find(query).sort(sort).skip(skip).limit(page_size)
     studies = [Study.from_document(doc) async for doc in cursor]
     return {
         "studies": studies,
-        "chapter_names": await study_list_chapter_names(app_state, studies),
+        "chapter_names": {} if compact else await study_list_chapter_names(app_state, studies),
         "order": order,
         "page": page,
         "pages": pages,
@@ -231,13 +234,14 @@ async def owner_studies_page(
     visibility: StudyVisibility | Literal["private-or-unlisted"] | None = None,
     order: StudyListOrder = "updated",
     page: int = 1,
+    compact: bool = False,
 ) -> dict[str, object]:
     query: dict[str, object] = {"owner": owner}
     if visibility == "private-or-unlisted":
         query["visibility"] = {"$in": ["private", "unlisted"]}
     elif visibility is not None:
         query["visibility"] = visibility
-    return await _studies_page(app_state, query, order=order, page=page)
+    return await _studies_page(app_state, query, order=order, page=page, compact=compact)
 
 
 async def contributed_studies_page(
@@ -246,6 +250,7 @@ async def contributed_studies_page(
     *,
     order: StudyListOrder = "updated",
     page: int = 1,
+    compact: bool = False,
 ) -> dict[str, object]:
     # memberIds is a bounded indexed array maintained with the member map.
     # Like Lichess's member list, this includes read-only memberships as well
@@ -264,6 +269,7 @@ async def contributed_studies_page(
         },
         order=order,
         page=page,
+        compact=compact,
     )
 
 
@@ -273,6 +279,7 @@ async def favorite_studies_page(
     *,
     order: StudyListOrder = "updated",
     page: int = 1,
+    compact: bool = False,
 ) -> dict[str, object]:
     """Return Studies explicitly liked by ``username`` and still accessible.
 
@@ -297,6 +304,7 @@ async def favorite_studies_page(
         },
         order=order,
         page=page,
+        compact=compact,
     )
 
 
@@ -307,6 +315,7 @@ async def topic_studies_page(
     viewer: str | None,
     order: StudyListOrder = "updated",
     page: int = 1,
+    compact: bool = False,
 ) -> dict[str, object]:
     """Return Studies with one exact topic that are discoverable to ``viewer``."""
 
@@ -320,6 +329,7 @@ async def topic_studies_page(
         {"$and": [{"topics": topic}, access]},
         order=order,
         page=page,
+        compact=compact,
     )
 
 
@@ -477,6 +487,7 @@ async def study_search_page(
     viewer: str | None,
     order: StudyListOrder = "updated",
     page: int = 1,
+    compact: bool = False,
 ) -> dict[str, object]:
     """Search discoverable Studies using text plus Lichess-style owner/member filters."""
 
@@ -506,7 +517,10 @@ async def study_search_page(
     # every private membership to an accidental blank search.
     if not clean_query:
         result = await public_studies_page(
-            app_state, order="hot" if order == "relevant" else order, page=page
+            app_state,
+            order="hot" if order == "relevant" else order,
+            page=page,
+            compact=compact,
         )
     else:
         result = await _studies_page(
@@ -514,6 +528,7 @@ async def study_search_page(
             {"$and": clauses},
             order=order,
             page=page,
+            compact=compact,
             search_tokens=tokens,
         )
     result["q"] = clean_query
@@ -577,6 +592,7 @@ async def public_studies_page(
     q: str = "",
     order: StudyListOrder = "updated",
     page: int = 1,
+    compact: bool = False,
 ) -> dict[str, object]:
     """Return one public Study discovery page, optionally filtered by indexed prefixes."""
 
@@ -620,7 +636,7 @@ async def public_studies_page(
             "query_too_short": True,
         }
 
-    result = await _studies_page(app_state, query, order=order, page=page)
+    result = await _studies_page(app_state, query, order=order, page=page, compact=compact)
     result["q"] = clean_query
     result["query_too_short"] = False
     return result
@@ -665,9 +681,10 @@ async def owner_view_studies_page(
     *,
     order: StudyListOrder = "hot",
     page: int = 1,
+    compact: bool = False,
 ) -> dict[str, object]:
     return await _studies_page(
-        app_state, _owner_listing_filter(owner, viewer), order=order, page=page
+        app_state, _owner_listing_filter(owner, viewer), order=order, page=page, compact=compact
     )
 
 
