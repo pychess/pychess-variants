@@ -292,10 +292,18 @@ def parse_args() -> argparse.Namespace:
         help="Stop generating game load after this many seconds (0: wait for all games).",
     )
     parser.add_argument(
+        "--human-vs-human",
+        action="store_true",
+        help=(
+            "Pair simulated anonymous users into real casual games. "
+            "--users counts players (two per game); localhost -a only."
+        ),
+    )
+    parser.add_argument(
         "--game-minutes",
         type=positive_int,
         default=1,
-        help="Initial clock minutes for each AI game (default: 1).",
+        help="Initial clock minutes for each game (default: 1).",
     )
     parser.add_argument(
         "--move-delay-secs",
@@ -332,6 +340,13 @@ def parse_args() -> argparse.Namespace:
             parser.error("Background HTTP profiling only supports localhost, never production")
     elif args.pgn_cookie_file is not None:
         parser.error("--pgn-cookie-file requires --http-rps")
+    if args.human_vs_human:
+        if PROD or urlsplit(URI).hostname not in {"localhost", "127.0.0.1", "::1"}:
+            parser.error("--human-vs-human may only be run against a localhost server")
+        if args.users < 2 or args.users % 2:
+            parser.error("--human-vs-human requires an even --users count >= 2")
+        if args.games_per_user != 1:
+            parser.error("--human-vs-human currently requires --games-per-user 1")
     if args.challenge_delay_max_secs < args.challenge_delay_min_secs:
         parser.error("--challenge-delay-max-secs must be >= --challenge-delay-min-secs")
     return args
@@ -773,6 +788,24 @@ class RunStats:
             )
 
 
+class HumanPair:
+    """Coordinate one casual seek between two independent test-user sessions."""
+
+    def __init__(self) -> None:
+        self.names: dict[str, str] = {}
+        self.ready = asyncio.Event()
+        self.challenge_sent_at: float | None = None
+
+    def register(self, role: str, username: str) -> None:
+        self.names[role] = username
+        if len(self.names) == 2:
+            self.ready.set()
+
+    @property
+    def creator_name(self) -> str | None:
+        return self.names.get("creator")
+
+
 class TestUser:
     def __init__(
         self,
@@ -789,6 +822,8 @@ class TestUser:
         bot_scheduler: BotChallengeScheduler | None = None,
         run_stats: RunStats | None = None,
         test_user_pgn_exporter: TestUserPgnExporter | None = None,
+        human_pair: HumanPair | None = None,
+        human_role: str | None = None,
     ):
         self.username = ""
         self.seeks = []
@@ -807,6 +842,10 @@ class TestUser:
         self.bot_scheduler = bot_scheduler
         self.run_stats = run_stats
         self.test_user_pgn_exporter = test_user_pgn_exporter
+        self.human_pair = human_pair
+        self.human_role = human_role
+        self.human_seek_sent = False
+        self.human_accepted_seek_ids: set[str] = set()
         self.spectators = []
         self.round_tasks: set[asyncio.Task[None]] = set()
         self.active_round_games: set[str] = set()
@@ -818,6 +857,10 @@ class TestUser:
         self.last_challenge_variant: str | None = None
         self.last_challenge_profile: str | None = None
         self.last_challenge_sent_at: float | None = None
+        if self.human_pair is not None:
+            # Both participants know their test variant before the first board.
+            self.last_challenge_variant = "chess"
+            self.last_challenge_profile = "Human"
         self.round_diag: dict[str, dict[str, object]] = {}
 
     def _is_transient_connection_error(self, exc: BaseException) -> bool:
@@ -996,6 +1039,57 @@ class TestUser:
             await self.bot_scheduler.release_pending(scheduler_token, challenge_profile)
         return sent
 
+    async def _send_create_human_seek(self, wsl) -> bool:
+        if self.human_pair is None or self.human_role != "creator":
+            return False
+        if not self.human_pair.ready.is_set() or self.human_seek_sent:
+            return False
+        payload = {
+            "type": "create_seek",
+            "variant": "chess",
+            "fen": "",
+            "color": "r",
+            "minutes": self.game_minutes,
+            "increment": 0,
+            "byoyomiPeriod": 0,
+            "rated": False,
+            "chess960": False,
+            "target": self.human_pair.names["acceptor"],
+        }
+        sent = await self._send_json_safe(wsl, payload)
+        if sent:
+            self.human_seek_sent = True
+            sent_at = monotonic()
+            self.human_pair.challenge_sent_at = sent_at
+            self.pending_challenges.append(("chess", "Human", sent_at, None))
+            self.last_challenge_sent_at = sent_at
+            if self.run_stats is not None:
+                await self.run_stats.record_challenge_sent("Human")
+        return sent
+
+    async def _accept_human_seek(self, wsl, seeks: list[dict]) -> None:
+        if self.human_pair is None or self.human_role != "acceptor":
+            return
+        if self._has_active_round_task():
+            return
+        creator_name = self.human_pair.creator_name
+        if creator_name is None:
+            return
+        for seek in seeks:
+            if (
+                seek.get("user") != creator_name
+                or seek.get("variant") != "chess"
+                or seek.get("target") != self.username
+                or not isinstance(seek.get("seekID"), str)
+            ):
+                continue
+            seek_id = seek["seekID"]
+            if seek_id in self.human_accepted_seek_ids:
+                return
+            if await self._send_json_safe(wsl, {"type": "accept_seek", "seekID": seek_id}):
+                self.human_accepted_seek_ids.add(seek_id)
+            return
+
     def _variant_for_game(self, game_id: str) -> str | None:
         variant = self.game_variants.get(game_id)
         if variant is not None:
@@ -1062,6 +1156,10 @@ class TestUser:
         if self.run_stats is None:
             return
         latency_secs: float | None = None
+        if self.human_pair is not None:
+            # The acceptor normally sees new_game first, but did not send the seek.
+            # Both participants must use the creator's timestamp for game latency.
+            challenge_sent_at = self.human_pair.challenge_sent_at
         if isinstance(challenge_sent_at, (int, float)):
             latency_secs = max(0.0, monotonic() - challenge_sent_at)
         await self.run_stats.record_game_start(game_id, actual_bot_profile, latency_secs)
@@ -1237,6 +1335,10 @@ class TestUser:
                             self.playing = self._has_active_round_task()
 
                             async def maybe_send_challenge(now: float) -> float:
+                                if self.human_pair is not None:
+                                    if self._can_issue_new_challenge() and await self._send_create_human_seek(wsl):
+                                        return loop_time()
+                                    return last_challenge_sent
                                 if (
                                     self._can_issue_new_challenge()
                                     and self.challenge_retry_secs > 0
@@ -1245,7 +1347,7 @@ class TestUser:
                                     return loop_time()
                                 return last_challenge_sent
 
-                            if (
+                            if self.human_pair is None and (
                                 self._can_issue_new_challenge()
                                 and await self._send_create_ai_challenge(wsl)
                             ):
@@ -1317,7 +1419,7 @@ class TestUser:
                                                 self.game_bot_profiles[game_id] = actual_bot_profile
                                             await self._record_game_start(
                                                 game_id,
-                                                actual_bot_profile or game_bot_profile,
+                                                "Human" if self.human_pair is not None else (actual_bot_profile or game_bot_profile),
                                                 challenge_sent_at,
                                             )
                                             self._start_round_task(
@@ -1338,7 +1440,9 @@ class TestUser:
                                             challenge_sent_at,
                                         ) = await self._bind_game_challenge(game_id)
                                         await self._record_game_start(
-                                            game_id, game_bot_profile, challenge_sent_at
+                                            game_id,
+                                            "Human" if self.human_pair is not None else game_bot_profile,
+                                            challenge_sent_at,
                                         )
                                         self._start_round_task(
                                             session,
@@ -1348,9 +1452,19 @@ class TestUser:
                                             game_bot_profile=game_bot_profile,
                                         )
 
+                                    elif data["type"] == "get_seeks" and self.human_pair is not None:
+                                        await self._accept_human_seek(wsl, data.get("seeks", []))
                                     elif data["type"] == "lobby_user_connected":
                                         if data.get("username") == self.username:
                                             print("Connected as %s" % data["username"])
+                                            if self.human_pair is not None and self.human_role is not None:
+                                                self.human_pair.register(self.human_role, self.username)
+                                                last_challenge_sent = await maybe_send_challenge(loop_time())
+                                    elif data["type"] == "error" and self.human_pair is not None:
+                                        raise RuntimeError(
+                                            f"Human matchmaking failed for {self.username}: "
+                                            f"{data.get('message')}"
+                                        )
                                     elif data["type"] == "error" and self.pending_challenges:
                                         _, profile, _, scheduler_token = (
                                             self.pending_challenges.popleft()
@@ -1395,6 +1509,7 @@ class TestUser:
         print("---------ROUND baby")
         game_completed = False
         last_ply: int | None = None
+        last_sent_ply: int | None = None
         resolved_variant = game_variant or self._variant_for_game(game_id)
         resolved_bot_profile = game_bot_profile or self._profile_for_game(game_id)
         try:
@@ -1525,19 +1640,22 @@ class TestUser:
                                         if variant_for_moves is None:
                                             continue
                                         resolved_variant = variant_for_moves
-                                        legal_moves = sf.legal_moves(
-                                            variant_for_moves, data["fen"], [], False
-                                        )
                                         should_move = (
                                             (turn_color == mycolor)
                                             if mycolor is not None
                                             else data.get("tp") == self.username
                                         )
+                                        if self.human_pair is not None and (
+                                            not should_move or last_sent_ply == board_ply
+                                        ):
+                                            continue
+                                        legal_moves = sf.legal_moves(
+                                            variant_for_moves, data["fen"], [], False
+                                        )
                                         if legal_moves and should_move:
                                             if self.move_delay_secs:
                                                 await asyncio.sleep(self.move_delay_secs)
-                                            self._mark_move_sent(game_id)
-                                            await self._send_json_safe(
+                                            sent = await self._send_json_safe(
                                                 wsr,
                                                 {
                                                     "type": "move",
@@ -1547,6 +1665,10 @@ class TestUser:
                                                     "ply": data["ply"] + 1,
                                                 },
                                             )
+                                            if sent:
+                                                self._mark_move_sent(game_id)
+                                                if self.human_pair is not None:
+                                                    last_sent_ply = board_ply
                                             await asyncio.sleep(0)
 
                                     elif data["type"] == "setup":
@@ -1693,12 +1815,13 @@ async def main(args: argparse.Namespace):
     spectator_http_semaphore = asyncio.Semaphore(args.max_spectator_http_concurrency)
     run_stats = RunStats()
     test_user_pgn_exporter = TestUserPgnExporter(args.pgn_max_games) if args.test_user_pgn else None
-    bot_scheduler = BotChallengeScheduler()
+    bot_scheduler = None if args.human_vs_human else BotChallengeScheduler()
     spectator_allocator = SpectatorAllocator(
         featured_games=args.featured_games,
         featured_count=args.spectators_per_game,
         regular_count=args.spectators_regular_per_game,
     )
+    human_pairs = [HumanPair() for _ in range(args.users // 2)] if args.human_vs_human else []
     users = [
         TestUser(
             spectators_per_game=args.spectators_per_game,
@@ -1714,9 +1837,14 @@ async def main(args: argparse.Namespace):
             bot_scheduler=bot_scheduler,
             run_stats=run_stats,
             test_user_pgn_exporter=test_user_pgn_exporter,
+            human_pair=human_pairs[i // 2] if args.human_vs_human else None,
+            human_role=("creator" if i % 2 == 0 else "acceptor") if args.human_vs_human else None,
         )
         for i in range(args.users)
     ]
+
+    if args.human_vs_human:
+        print(f"Human vs human: {args.users} players, {args.users // 2} paired games")
 
     async def start_user(user: TestUser):
         if args.user_start_spread_secs > 0:
