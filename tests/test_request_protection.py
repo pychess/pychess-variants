@@ -15,7 +15,7 @@ from request_protection import (
     SlidingWindowLimiter,
     request_protection_middleware,
 )
-from typedefs import request_protection_state_key
+from typedefs import anon_as_test_users_key, request_protection_state_key
 
 from server import make_app
 
@@ -591,6 +591,45 @@ class AnonymousHtmlAdmissionMiddlewareTestCase(unittest.IsolatedAsyncioTestCase)
             ),
         ):
             return await request_protection_middleware(request, handler)
+
+    async def test_local_stress_lobby_bypasses_anonymous_html_limits_only_in_test_mode(self):
+        self.state._ANON_HTML_IP_LIMIT = RouteRateLimit("anon_html", 0, 30.0)
+        self.state._ANON_HTML_GLOBAL_LIMIT = RouteRateLimit("anon_html_global", 0, 60.0)
+        self.state._local_dev_mode = True
+        self.app[anon_as_test_users_key] = True
+        handler = AsyncMock(return_value=web.Response(text="test lobby"))
+        with (
+            patch.object(self.state, "is_public_browsing_request", return_value=True),
+            patch.object(self.state, "client_key", return_value="127.0.0.1"),
+        ):
+            for _ in range(3):
+                request = make_mocked_request("GET", "/", app=self.app)
+                response = await request_protection_middleware(request, handler)
+                self.assertEqual(response.text, "test lobby")
+            self.assertEqual(handler.await_count, 3)
+            self.assertEqual(len(self.state._anonymous_html_events), 0)
+            self.assertEqual(len(self.state._limiter._events), 0)
+
+            # The exception must not affect regular anonymous pages.
+            request = make_mocked_request("GET", "/about", app=self.app)
+            with patch(
+                "request_protection.aiohttp_session.get_session",
+                AsyncMock(return_value={}),
+            ):
+                with self.assertRaises(web.HTTPTooManyRequests):
+                    await request_protection_middleware(request, handler)
+
+            # Production must not gain the test-mode exception, even if the
+            # test-user flag is accidentally enabled.
+            self.state._local_dev_mode = False
+            request = make_mocked_request("GET", "/", app=self.app)
+            with patch(
+                "request_protection.aiohttp_session.get_session",
+                AsyncMock(return_value={}),
+            ):
+                with self.assertRaises(web.HTTPTooManyRequests):
+                    await request_protection_middleware(request, handler)
+        self.assertEqual(handler.await_count, 3)
 
     async def test_authenticated_browsing_bypasses_exhausted_anonymous_limits(self):
         self.state._anonymous_html_inflight = self.state._ANON_HTML_MAX_INFLIGHT

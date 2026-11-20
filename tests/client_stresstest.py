@@ -1210,8 +1210,19 @@ class TestUser:
                     ):
                         break
                     async with session.get(URI) as resp:
+                        if resp.status != 200:
+                            raise RuntimeError(
+                                f"Lobby GET {resp.url} failed: HTTP {resp.status}; "
+                                f"Retry-After={resp.headers.get('Retry-After', 'n/a')}"
+                            )
                         text = await resp.text()
-                        current_username = extract_username(text)
+                        try:
+                            current_username = extract_username(text)
+                        except RuntimeError as exc:
+                            raise RuntimeError(
+                                f"Lobby GET {resp.url} returned HTTP 200 but no username "
+                                f"(content-type={resp.content_type}, body_length={len(text)})"
+                            ) from exc
                         if self.username != current_username:
                             self.username = current_username
                             print(self.username)

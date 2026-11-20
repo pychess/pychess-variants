@@ -15,6 +15,7 @@ from request_utils import request_log_fingerprint, safe_log_value
 from settings import ANON_HTML_MAX_INFLIGHT, ANON_HTML_REQUESTS_PER_MINUTE, LOCALHOST, URI
 from typedefs import (
     REQUEST_RATE_LIMIT_BUCKET_KEY,
+    anon_as_test_users_key,
     request_protection_state_key,
 )
 
@@ -490,6 +491,19 @@ async def request_protection_middleware(
 
     route_limit = state.classify(path)
     browsing_request = state.is_public_browsing_request(request)
+    # The local -a stress runner bootstraps each simulated user with GET /.
+    # Hundreds of those requests originate from 127.0.0.1 and would hit the
+    # production-oriented per-IP/global anonymous HTML budgets before we can
+    # measure game capacity. Keep this exception limited to local test mode
+    # and loopback lobby requests; ordinary browsing and production remain protected.
+    if (
+        path == "/"
+        and browsing_request
+        and state._local_dev_mode
+        and client in {"127.0.0.1", "::1"}
+        and request.app.get(anon_as_test_users_key, False)
+    ):
+        return await handler(request)
     if route_limit is None and not browsing_request:
         return await handler(request)
 
