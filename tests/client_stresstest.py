@@ -1883,6 +1883,14 @@ class TestUser:
                                 last_challenge_sent = loop_time()
 
                             while True:
+                                # A real browser sends frequent /n heartbeats. When
+                                # these keep the receive loop busy, its idle timeout
+                                # cannot be relied on to start replacement games.
+                                # Recheck pair readiness on every loop iteration.
+                                if self.maintain_human_games:
+                                    last_challenge_sent = await maybe_send_challenge(
+                                        loop_time()
+                                    )
                                 try:
                                     msg = await asyncio.wait_for(
                                         wsl.receive(),
