@@ -26,6 +26,7 @@ import pstats
 import random
 import re
 from collections import Counter, defaultdict, deque
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from itertools import cycle
 from pathlib import Path
@@ -88,6 +89,33 @@ DEFAULT_ROUND_RECONNECT_BACKOFF_MAX_SECS = 1.0
 DEFAULT_MOVE_ACK_TIMEOUT_SECS = 10.0
 DEFAULT_POSTGAME_LINGER_MAX_SECS = 15.0
 DEFAULT_POSTGAME_LINGER_PROBABILITY = 0.5
+
+
+@asynccontextmanager
+async def browser_heartbeat(ws, interval_secs: float):
+    """Send the browser's `/n` keepalive independently of thinking time.
+
+    Without this the load client doesn't match production's heartbeat traffic,
+    and a game WebSocket may hit aiohttp's 30-second receive timeout.
+    Disabled by default to preserve historical stress-test comparisons.
+    """
+    async def heartbeat_loop():
+        while not ws.closed:
+            await asyncio.sleep(interval_secs)
+            if ws.closed:
+                break
+            try:
+                await ws.send_str("/n")
+            except (aiohttp.ClientError, OSError, RuntimeError):
+                break
+
+    task = asyncio.create_task(heartbeat_loop()) if interval_secs > 0 else None
+    try:
+        yield
+    finally:
+        if task is not None:
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
 
 
 @dataclass(frozen=True)
@@ -404,6 +432,15 @@ def parse_args() -> argparse.Namespace:
         help="Seed for reproducible mixed time-control assignment (default: 42).",
     )
     parser.add_argument(
+        "--client-heartbeat-secs",
+        type=non_negative_float,
+        default=0.0,
+        help=(
+            "Send browser-style /n pings on lobby and round WebSockets at this "
+            "interval (0: disabled, 2.5: production-like)."
+        ),
+    )
+    parser.add_argument(
         "--move-ack-timeout-secs",
         type=positive_float,
         default=DEFAULT_MOVE_ACK_TIMEOUT_SECS,
@@ -448,6 +485,7 @@ def parse_args() -> argparse.Namespace:
             args.run_duration_secs,
             args.move_delay_secs,
             args.report_interval_secs,
+            args.client_heartbeat_secs,
             args.postgame_linger_max_secs,
             args.postgame_linger_probability,
             *(
@@ -834,6 +872,8 @@ class RunStats:
         self.move_timeouts = 0
         self.unexpected_round_ws_disconnects = 0
         self.unexpected_round_ws_disconnect_reasons: Counter[str] = Counter()
+        self.unexpected_round_ws_disconnects_by_time_control: Counter[str] = Counter()
+        self.unexpected_round_ws_close_codes: Counter[str] = Counter()
         self.postgame_round_ws_disconnect_reasons: Counter[str] = Counter()
         self.round_tasks_cancelled_at_shutdown = 0
         self.moves_sent_by_time_control: Counter[str] = Counter()
@@ -976,9 +1016,14 @@ class RunStats:
                 self._last_observed_move_ply.get(game_id, -1), ply
             )
 
-    def record_unexpected_disconnect(self, reason: str) -> None:
+    def record_unexpected_disconnect(
+        self, reason: str, *, time_control: str = "custom", close_code: int | None = None
+    ) -> None:
         self.unexpected_round_ws_disconnects += 1
         self.unexpected_round_ws_disconnect_reasons[reason] += 1
+        self.unexpected_round_ws_disconnects_by_time_control[time_control] += 1
+        if close_code is not None:
+            self.unexpected_round_ws_close_codes[str(close_code)] += 1
 
     def record_postgame_disconnect(self, reason: str) -> None:
         # A game can finish with its WebSocket still open. Count post-game
@@ -1025,6 +1070,12 @@ class RunStats:
             **counts,
             "unexpected_round_ws_disconnect_reasons": dict(
                 sorted(self.unexpected_round_ws_disconnect_reasons.items())
+            ),
+            "unexpected_round_ws_disconnects_by_time_control": dict(
+                sorted(self.unexpected_round_ws_disconnects_by_time_control.items())
+            ),
+            "unexpected_round_ws_close_codes": dict(
+                sorted(self.unexpected_round_ws_close_codes.items())
             ),
             "postgame_round_ws_departure_reasons": dict(
                 sorted(self.postgame_round_ws_disconnect_reasons.items())
@@ -1203,6 +1254,7 @@ class TestUser:
         maintain_human_games: bool = False,
         postgame_linger_max_secs: float = 0.0,
         postgame_linger_probability: float = 0.0,
+        client_heartbeat_secs: float = 0.0,
     ):
         self.username = ""
         self.seeks = []
@@ -1228,6 +1280,7 @@ class TestUser:
         self.maintain_human_games = maintain_human_games
         self.postgame_linger_max_secs = postgame_linger_max_secs
         self.postgame_linger_probability = postgame_linger_probability
+        self.client_heartbeat_secs = client_heartbeat_secs
         self.human_generation = human_pair.generation if human_pair is not None else 0
         self.time_control_name = (
             human_pair.time_control.name
@@ -1740,7 +1793,9 @@ class TestUser:
                             print(self.username)
 
                     try:
-                        async with session.ws_connect(LOBBY_URL, headers={"Origin": URI}) as wsl:
+                        async with session.ws_connect(
+                            LOBBY_URL, headers={"Origin": URI}
+                        ) as wsl, browser_heartbeat(wsl, self.client_heartbeat_secs):
                             # await wsl.send_json({"type": "lobby_user_connected", "username": self.username})
                             # await wsl.send_json({"type": "get_seeks"})
                             loop_time = asyncio.get_running_loop().time
@@ -1786,6 +1841,8 @@ class TestUser:
                                 # print('Lobby message received from server:', msg)
 
                                 if msg.type == aiohttp.WSMsgType.TEXT:
+                                    if msg.data == "/n":
+                                        continue
                                     data = json.loads(msg.data)
                                     # print('Lobby message received from server:', data["type"])
                                     if data["type"] == "ping":
@@ -1937,6 +1994,8 @@ class TestUser:
                         self.run_stats.record_postgame_disconnect(msg.type.name)
                     return
                 if msg.type == aiohttp.WSMsgType.TEXT:
+                    if msg.data == "/n":
+                        continue
                     data = json.loads(msg.data)
                     if data.get("type") == "ping":
                         await self._send_json_safe(wsr, {"type": "pong"})
@@ -1982,7 +2041,7 @@ class TestUser:
                 try:
                     async with session.ws_connect(
                         ROUND_URL + game_id, timeout=20.0, headers={"Origin": URI}
-                    ) as wsr:
+                    ) as wsr, browser_heartbeat(wsr, self.client_heartbeat_secs):
                         self._mark_round_connected(game_id, resolved_variant, resolved_bot_profile)
                         # TODO: am I player or am I spectator ???
                         ok = await self._send_json_safe(
@@ -2011,7 +2070,9 @@ class TestUser:
                                 if round_idle_cycles >= DEFAULT_ROUND_MAX_IDLE_CYCLES:
                                     reconnect_needed = True
                                     if self.run_stats is not None:
-                                        self.run_stats.record_unexpected_disconnect("idle_timeout")
+                                        self.run_stats.record_unexpected_disconnect(
+                                            "idle_timeout", time_control=self.time_control_name
+                                        )
                                     break
                                 await self._send_json_safe(
                                     wsr, {"type": "board", "gameId": game_id}
@@ -2021,6 +2082,8 @@ class TestUser:
                             round_idle_cycles = 0
 
                             if msg.type == aiohttp.WSMsgType.TEXT:
+                                if msg.data == "/n":
+                                    continue
                                 data = json.loads(msg.data)
                                 try:
                                     if "type" not in data:
@@ -2223,7 +2286,11 @@ class TestUser:
                             ):
                                 reconnect_needed = not game_completed
                                 if reconnect_needed and self.run_stats is not None:
-                                    self.run_stats.record_unexpected_disconnect(msg.type.name)
+                                    self.run_stats.record_unexpected_disconnect(
+                                        msg.type.name,
+                                        time_control=self.time_control_name,
+                                        close_code=wsr.close_code,
+                                    )
                                 break
                         await wsr.close()
                 except Exception as exc:
@@ -2231,7 +2298,9 @@ class TestUser:
                         raise
                     reconnect_needed = True
                     if self.run_stats is not None:
-                        self.run_stats.record_unexpected_disconnect(type(exc).__name__)
+                        self.run_stats.record_unexpected_disconnect(
+                            type(exc).__name__, time_control=self.time_control_name
+                        )
 
                 if game_completed or not reconnect_needed:
                     break
@@ -2355,6 +2424,7 @@ async def main(args: argparse.Namespace):
             human_pair=human_pairs[i // 2] if args.human_vs_human else None,
             human_role=("creator" if i % 2 == 0 else "acceptor") if args.human_vs_human else None,
             maintain_human_games=args.maintain_human_games,
+            client_heartbeat_secs=args.client_heartbeat_secs,
             postgame_linger_max_secs=(
                 args.postgame_linger_max_secs if args.maintain_human_games else 0.0
             ),
