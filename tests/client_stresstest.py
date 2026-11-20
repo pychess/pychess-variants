@@ -105,6 +105,25 @@ MIXED_TIME_CONTROLS = (
 )
 
 
+def simulated_human_clocks(
+    clocks: list[int | float], turn_color: str, elapsed_secs: float, board_ply: int
+) -> list[int | float]:
+    """Charge simulated thinking time to the mover's reported chess clock.
+
+    Casual human games have free opening moves (ply < 2). Afterwards the
+    browser normally sends a locally ticking clock; reusing the raw server
+    board clocks would effectively give test players free time each move.
+    """
+    updated = list(clocks)
+    if board_ply < 2:
+        return updated
+    if turn_color not in {"w", "b"} or len(updated) != 2:
+        raise ValueError("Expected a chess turn and two clock values")
+    mover_index = 0 if turn_color == "w" else 1
+    updated[mover_index] = max(0, int(updated[mover_index] - max(0.0, elapsed_secs) * 1000))
+    return updated
+
+
 def distribute_time_controls(game_count: int, seed: int) -> list[TimeControlProfile]:
     """Exact weighted quotas (largest remainders), shuffled deterministically."""
     if game_count < 0:
@@ -783,6 +802,7 @@ class RunStats:
         self.moves_observed_by_opponent = 0
         self.move_timeouts = 0
         self.unexpected_round_ws_disconnects = 0
+        self.unexpected_round_ws_disconnect_reasons: Counter[str] = Counter()
         self.moves_sent_by_time_control: Counter[str] = Counter()
         self.moves_confirmed_by_time_control: Counter[str] = Counter()
         self.moves_observed_by_opponent_by_time_control: Counter[str] = Counter()
@@ -923,8 +943,9 @@ class RunStats:
                 self._last_observed_move_ply.get(game_id, -1), ply
             )
 
-    def record_unexpected_disconnect(self) -> None:
+    def record_unexpected_disconnect(self, reason: str) -> None:
         self.unexpected_round_ws_disconnects += 1
+        self.unexpected_round_ws_disconnect_reasons[reason] += 1
 
     def _update_move_timeouts(self, now: float, threshold: float) -> None:
         for pending in self._pending_moves.values():
@@ -952,6 +973,9 @@ class RunStats:
         duration = (now - self.first_move_at) if self.first_move_at is not None else 0
         return {
             **counts,
+            "unexpected_round_ws_disconnect_reasons": dict(
+                sorted(self.unexpected_round_ws_disconnect_reasons.items())
+            ),
             "moves_observed_by_opponent": self.moves_observed_by_opponent,
             "moves_confirmed_per_second": (
                 round(self.moves_confirmed / duration, 2) if duration > 0 else 0.0
@@ -1848,6 +1872,8 @@ class TestUser:
                                 round_idle_cycles += 1
                                 if round_idle_cycles >= DEFAULT_ROUND_MAX_IDLE_CYCLES:
                                     reconnect_needed = True
+                                    if self.run_stats is not None:
+                                        self.run_stats.record_unexpected_disconnect("idle_timeout")
                                     break
                                 await self._send_json_safe(
                                     wsr, {"type": "board", "gameId": game_id}
@@ -1871,6 +1897,7 @@ class TestUser:
                                         )
 
                                     elif data["type"] == "board":
+                                        board_received_at = monotonic()
                                         board_variant = data.get("variant")
                                         if isinstance(board_variant, str):
                                             resolved_variant = board_variant
@@ -1960,13 +1987,29 @@ class TestUser:
                                                 await asyncio.sleep(move_delay)
                                             chosen_move = random.choice(legal_moves)
                                             submitted_at = monotonic()
+                                            move_clocks = (
+                                                simulated_human_clocks(
+                                                    data["clocks"], turn_color,
+                                                    submitted_at - board_received_at,
+                                                    board_ply,
+                                                )
+                                                if self.human_pair is not None
+                                                else data["clocks"]
+                                            )
+                                            # If the simulated player's clock expired,
+                                            # don't manufacture a move with 0 time left.
+                                            # The server clock will flag the player.
+                                            if self.human_pair is not None and board_ply >= 2:
+                                                mover_index = 0 if turn_color == "w" else 1
+                                                if move_clocks[mover_index] <= 0:
+                                                    continue
                                             sent = await self._send_json_safe(
                                                 wsr,
                                                 {
                                                     "type": "move",
                                                     "gameId": game_id,
                                                     "move": chosen_move,
-                                                    "clocks": data["clocks"],
+                                                    "clocks": move_clocks,
                                                     "ply": data["ply"] + 1,
                                                 },
                                             )
@@ -2044,7 +2087,7 @@ class TestUser:
                             ):
                                 reconnect_needed = not game_completed
                                 if reconnect_needed and self.run_stats is not None:
-                                    self.run_stats.record_unexpected_disconnect()
+                                    self.run_stats.record_unexpected_disconnect(msg.type.name)
                                 break
                         await wsr.close()
                 except Exception as exc:
@@ -2052,7 +2095,7 @@ class TestUser:
                         raise
                     reconnect_needed = True
                     if self.run_stats is not None:
-                        self.run_stats.record_unexpected_disconnect()
+                        self.run_stats.record_unexpected_disconnect(type(exc).__name__)
 
                 if game_completed or not reconnect_needed:
                     break
