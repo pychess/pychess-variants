@@ -312,6 +312,18 @@ def parse_args() -> argparse.Namespace:
         help="Extra delay before each test user's move (default: 0).",
     )
     parser.add_argument(
+        "--move-delay-min-secs",
+        type=non_negative_float,
+        default=None,
+        help="Minimum random delay before each move (requires --move-delay-max-secs).",
+    )
+    parser.add_argument(
+        "--move-delay-max-secs",
+        type=non_negative_float,
+        default=None,
+        help="Maximum random delay before each move (requires --move-delay-min-secs).",
+    )
+    parser.add_argument(
         "--report-interval-secs",
         type=non_negative_float,
         default=0.0,
@@ -326,6 +338,11 @@ def parse_args() -> argparse.Namespace:
             args.run_duration_secs,
             args.move_delay_secs,
             args.report_interval_secs,
+            *(
+                value
+                for value in (args.move_delay_min_secs, args.move_delay_max_secs)
+                if value is not None
+            ),
         )
     ):
         parser.error("HTTP rates and durations must be finite")
@@ -347,6 +364,13 @@ def parse_args() -> argparse.Namespace:
             parser.error("--human-vs-human requires an even --users count >= 2")
         if args.games_per_user != 1:
             parser.error("--human-vs-human currently requires --games-per-user 1")
+    if (args.move_delay_min_secs is None) != (args.move_delay_max_secs is None):
+        parser.error("--move-delay-min-secs and --move-delay-max-secs must be used together")
+    if args.move_delay_min_secs is not None:
+        if args.move_delay_max_secs < args.move_delay_min_secs:
+            parser.error("--move-delay-max-secs must be >= --move-delay-min-secs")
+        if args.move_delay_secs != 0:
+            parser.error("--move-delay-secs cannot be combined with a random delay range")
     if args.challenge_delay_max_secs < args.challenge_delay_min_secs:
         parser.error("--challenge-delay-max-secs must be >= --challenge-delay-min-secs")
     return args
@@ -816,6 +840,8 @@ class TestUser:
         challenge_retry_secs: float = DEFAULT_CHALLENGE_RETRY_SECS,
         game_minutes: int = 1,
         move_delay_secs: float = 0.0,
+        move_delay_min_secs: float | None = None,
+        move_delay_max_secs: float | None = None,
         spectator_request_gap_secs: float = DEFAULT_SPECTATOR_REQUEST_GAP_SECS,
         spectator_http_semaphore: asyncio.Semaphore | None = None,
         spectator_allocator: SpectatorAllocator | None = None,
@@ -837,6 +863,8 @@ class TestUser:
         self.challenge_retry_secs = challenge_retry_secs
         self.game_minutes = game_minutes
         self.move_delay_secs = move_delay_secs
+        self.move_delay_min_secs = move_delay_min_secs
+        self.move_delay_max_secs = move_delay_max_secs
         self.spectator_http_semaphore = spectator_http_semaphore
         self.spectator_allocator = spectator_allocator
         self.bot_scheduler = bot_scheduler
@@ -1495,6 +1523,11 @@ class TestUser:
             await self._cancel_round_tasks()
             await self._cancel_spectator_tasks()
 
+    def _next_move_delay_secs(self) -> float:
+        if self.move_delay_min_secs is not None and self.move_delay_max_secs is not None:
+            return random.uniform(self.move_delay_min_secs, self.move_delay_max_secs)
+        return self.move_delay_secs
+
     # @profile
     async def go_to_round(
         self,
@@ -1653,8 +1686,9 @@ class TestUser:
                                             variant_for_moves, data["fen"], [], False
                                         )
                                         if legal_moves and should_move:
-                                            if self.move_delay_secs:
-                                                await asyncio.sleep(self.move_delay_secs)
+                                            move_delay = self._next_move_delay_secs()
+                                            if move_delay:
+                                                await asyncio.sleep(move_delay)
                                             sent = await self._send_json_safe(
                                                 wsr,
                                                 {
@@ -1831,6 +1865,8 @@ async def main(args: argparse.Namespace):
             challenge_retry_secs=args.challenge_retry_secs,
             game_minutes=args.game_minutes,
             move_delay_secs=args.move_delay_secs,
+            move_delay_min_secs=args.move_delay_min_secs,
+            move_delay_max_secs=args.move_delay_max_secs,
             spectator_request_gap_secs=args.spectator_request_gap_secs,
             spectator_http_semaphore=spectator_http_semaphore,
             spectator_allocator=spectator_allocator,
