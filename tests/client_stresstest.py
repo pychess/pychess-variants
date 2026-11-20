@@ -291,10 +291,34 @@ def parse_args() -> argparse.Namespace:
         default=0.0,
         help="Stop generating game load after this many seconds (0: wait for all games).",
     )
+    parser.add_argument(
+        "--game-minutes",
+        type=positive_int,
+        default=1,
+        help="Initial clock minutes for each AI game (default: 1).",
+    )
+    parser.add_argument(
+        "--move-delay-secs",
+        type=non_negative_float,
+        default=0.0,
+        help="Extra delay before each test user's move (default: 0).",
+    )
+    parser.add_argument(
+        "--report-interval-secs",
+        type=non_negative_float,
+        default=0.0,
+        help="Print observed concurrent unfinished games every N seconds (0: off).",
+    )
     args = parser.parse_args()
     if any(
         not math.isfinite(value)
-        for value in (args.http_rps, args.http_duration_secs, args.run_duration_secs)
+        for value in (
+            args.http_rps,
+            args.http_duration_secs,
+            args.run_duration_secs,
+            args.move_delay_secs,
+            args.report_interval_secs,
+        )
     ):
         parser.error("HTTP rates and durations must be finite")
     if args.test_user_pgn and (
@@ -591,6 +615,9 @@ class RunStats:
         self.challenges_sent_by_profile: Counter[str] = Counter()
         self.new_games_by_actual_bot_profile: Counter[str] = Counter()
         self._seen_game_start_ids: set[str] = set()
+        self._seen_game_end_ids: set[str] = set()
+        self._unfinished_game_ids: set[str] = set()
+        self.peak_unfinished_games = 0
         self.challenge_to_game_start_count_by_bot_profile: Counter[str] = Counter()
         self.challenge_to_game_start_sum_by_bot_profile: defaultdict[str, float] = defaultdict(
             float
@@ -614,6 +641,10 @@ class RunStats:
             if game_id in self._seen_game_start_ids:
                 return
             self._seen_game_start_ids.add(game_id)
+            self._unfinished_game_ids.add(game_id)
+            self.peak_unfinished_games = max(
+                self.peak_unfinished_games, len(self._unfinished_game_ids)
+            )
             self.new_games_by_actual_bot_profile[profile_key] += 1
             if isinstance(challenge_to_start_latency_secs, (int, float)):
                 latency = max(0.0, float(challenge_to_start_latency_secs))
@@ -628,6 +659,7 @@ class RunStats:
 
     async def record_game_end(
         self,
+        game_id: str,
         result: str,
         status: int,
         ply: int | None,
@@ -635,6 +667,10 @@ class RunStats:
         bot_profile: str | None = None,
     ) -> None:
         async with self._lock:
+            if game_id in self._seen_game_end_ids:
+                return
+            self._seen_game_end_ids.add(game_id)
+            self._unfinished_game_ids.discard(game_id)
             profile_key = bot_profile if isinstance(bot_profile, str) else "unknown"
             self.total_games += 1
             self.games_by_bot_profile[profile_key] += 1
@@ -656,6 +692,20 @@ class RunStats:
                 self.games_without_ply += 1
             else:
                 self.by_game_length_ply[ply] += 1
+
+    async def activity_snapshot(self) -> tuple[int, int, int, int]:
+        """Starts, unfinished games, high-water mark, and observed ends.
+
+        Unfinished means no terminal message was seen by the test client;
+        it does not guarantee the round websocket is still connected.
+        """
+        async with self._lock:
+            return (
+                len(self._seen_game_start_ids),
+                len(self._unfinished_game_ids),
+                self.peak_unfinished_games,
+                self.total_games,
+            )
 
     async def snapshot(
         self,
@@ -731,6 +781,8 @@ class TestUser:
         challenge_delay_min_secs: float = DEFAULT_CHALLENGE_DELAY_MIN_SECS,
         challenge_delay_max_secs: float = DEFAULT_CHALLENGE_DELAY_MAX_SECS,
         challenge_retry_secs: float = DEFAULT_CHALLENGE_RETRY_SECS,
+        game_minutes: int = 1,
+        move_delay_secs: float = 0.0,
         spectator_request_gap_secs: float = DEFAULT_SPECTATOR_REQUEST_GAP_SECS,
         spectator_http_semaphore: asyncio.Semaphore | None = None,
         spectator_allocator: SpectatorAllocator | None = None,
@@ -748,6 +800,8 @@ class TestUser:
         self.challenge_delay_min_secs = challenge_delay_min_secs
         self.challenge_delay_max_secs = challenge_delay_max_secs
         self.challenge_retry_secs = challenge_retry_secs
+        self.game_minutes = game_minutes
+        self.move_delay_secs = move_delay_secs
         self.spectator_http_semaphore = spectator_http_semaphore
         self.spectator_allocator = spectator_allocator
         self.bot_scheduler = bot_scheduler
@@ -909,7 +963,7 @@ class TestUser:
             "rm": challenge_profile == "Random-Mover",
             "fen": "",
             "color": "r",
-            "minutes": 1,
+            "minutes": self.game_minutes,
             "increment": 0,
             "byoyomiPeriod": 0,
             "level": 0,
@@ -1122,7 +1176,9 @@ class TestUser:
         abort_diag = self._abort_diag(game_id, end_source) if status == 0 else None
         bot_profile = self._profile_for_game(game_id)
         if self.run_stats is not None:
-            await self.run_stats.record_game_end(result, status, ply, abort_diag, bot_profile)
+            await self.run_stats.record_game_end(
+                game_id, result, status, ply, abort_diag, bot_profile
+            )
 
     async def get(self, url=None):
         async with aiohttp.ClientSession(cookie_jar=make_cookie_jar()) as session:
@@ -1467,6 +1523,8 @@ class TestUser:
                                             else data.get("tp") == self.username
                                         )
                                         if legal_moves and should_move:
+                                            if self.move_delay_secs:
+                                                await asyncio.sleep(self.move_delay_secs)
                                             self._mark_move_sent(game_id)
                                             await self._send_json_safe(
                                                 wsr,
@@ -1637,6 +1695,8 @@ async def main(args: argparse.Namespace):
             challenge_delay_min_secs=args.challenge_delay_min_secs,
             challenge_delay_max_secs=args.challenge_delay_max_secs,
             challenge_retry_secs=args.challenge_retry_secs,
+            game_minutes=args.game_minutes,
+            move_delay_secs=args.move_delay_secs,
             spectator_request_gap_secs=args.spectator_request_gap_secs,
             spectator_http_semaphore=spectator_http_semaphore,
             spectator_allocator=spectator_allocator,
@@ -1669,6 +1729,22 @@ async def main(args: argparse.Namespace):
         else None
     )
     tasks = [asyncio.create_task(start_user(user)) for user in users]
+
+    async def report_activity() -> None:
+        began = monotonic()
+        while True:
+            await asyncio.sleep(args.report_interval_secs)
+            started, unfinished, peak, ended = await run_stats.activity_snapshot()
+            print(
+                f"game_load_elapsed_secs={monotonic() - began:.1f} "
+                f"games_started={started} games_unfinished={unfinished} "
+                f"peak_unfinished={peak} games_ended={ended}",
+                flush=True,
+            )
+
+    reporter = (
+        asyncio.create_task(report_activity()) if args.report_interval_secs > 0 else None
+    )
     try:
         if args.run_duration_secs > 0:
             try:
@@ -1678,6 +1754,9 @@ async def main(args: argparse.Namespace):
         else:
             await asyncio.gather(*tasks)
     finally:
+        if reporter is not None:
+            reporter.cancel()
+            await asyncio.gather(reporter, return_exceptions=True)
         for task in tasks:
             if not task.done():
                 task.cancel()
@@ -1722,7 +1801,11 @@ async def main(args: argparse.Namespace):
         profile: dict(sorted(result_map.items()))
         for profile, result_map in sorted(by_result_by_bot_profile.items())
     }
+    started_games, unfinished_games, peak_unfinished, _ = await run_stats.activity_snapshot()
     print("=== STRESS SUMMARY ===")
+    print(f"games_started={started_games}")
+    print(f"games_unfinished_at_stop={unfinished_games}")
+    print(f"peak_unfinished_games={peak_unfinished}")
     print(f"games_total={total_games}")
     print(f"games_aborted={aborted_games} ({abort_ratio:.1f}%)")
     print(f"by_status={dict(sorted(by_status.items()))}")
