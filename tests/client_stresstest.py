@@ -917,6 +917,9 @@ class RunStats:
         self.unexpected_round_ws_disconnect_reasons: Counter[str] = Counter()
         self.unexpected_round_ws_disconnects_by_time_control: Counter[str] = Counter()
         self.unexpected_round_ws_close_codes: Counter[str] = Counter()
+        self.shutdown_started = False
+        self.round_ws_closures_during_shutdown = 0
+        self.round_ws_shutdown_close_codes: Counter[str] = Counter()
         self.postgame_round_ws_disconnect_reasons: Counter[str] = Counter()
         self.round_tasks_cancelled_at_shutdown = 0
         self.moves_sent_by_time_control: Counter[str] = Counter()
@@ -1059,9 +1062,19 @@ class RunStats:
                 self._last_observed_move_ply.get(game_id, -1), ply
             )
 
+    def begin_shutdown(self) -> None:
+        # Set before cancelling user tasks: their shared ClientSession may close
+        # round transports before the round receive loops finish.
+        self.shutdown_started = True
+
     def record_unexpected_disconnect(
         self, reason: str, *, time_control: str = "custom", close_code: int | None = None
     ) -> None:
+        if self.shutdown_started:
+            self.round_ws_closures_during_shutdown += 1
+            if close_code is not None:
+                self.round_ws_shutdown_close_codes[str(close_code)] += 1
+            return
         self.unexpected_round_ws_disconnects += 1
         self.unexpected_round_ws_disconnect_reasons[reason] += 1
         self.unexpected_round_ws_disconnects_by_time_control[time_control] += 1
@@ -1119,6 +1132,10 @@ class RunStats:
             ),
             "unexpected_round_ws_close_codes": dict(
                 sorted(self.unexpected_round_ws_close_codes.items())
+            ),
+            "round_ws_closures_during_shutdown": self.round_ws_closures_during_shutdown,
+            "round_ws_shutdown_close_codes": dict(
+                sorted(self.round_ws_shutdown_close_codes.items())
             ),
             "postgame_round_ws_departure_reasons": dict(
                 sorted(self.postgame_round_ws_disconnect_reasons.items())
@@ -2409,13 +2426,15 @@ class TestUser:
                                 aiohttp.WSMsgType.CLOSING,
                                 aiohttp.WSMsgType.CLOSE,
                             ):
-                                reconnect_needed = not game_completed
-                                if reconnect_needed and self.run_stats is not None:
+                                if not game_completed and self.run_stats is not None:
                                     self.run_stats.record_unexpected_disconnect(
                                         msg.type.name,
                                         time_control=self.time_control_name,
                                         close_code=wsr.close_code,
                                     )
+                                reconnect_needed = not game_completed and not (
+                                    self.run_stats is not None and self.run_stats.shutdown_started
+                                )
                                 if (
                                     reconnect_needed
                                     and os.getenv("PYCHESS_TEST_WS_DIAGNOSTICS") == "1"
@@ -2439,7 +2458,9 @@ class TestUser:
                 except Exception as exc:
                     if not self._is_transient_connection_error(exc):
                         raise
-                    reconnect_needed = True
+                    reconnect_needed = not (
+                        self.run_stats is not None and self.run_stats.shutdown_started
+                    )
                     if self.run_stats is not None:
                         self.run_stats.record_unexpected_disconnect(
                             type(exc).__name__, time_control=self.time_control_name
@@ -2518,6 +2539,28 @@ async def spectators(
                 await asyncio.sleep(request_gap_secs)
             tasks.append(asyncio.create_task(_fetch_spectator_page(session, url, semaphore)))
         await asyncio.gather(*tasks, return_exceptions=True)
+
+
+async def wait_for_client_tasks(
+    tasks: list[asyncio.Task[None]], duration_secs: float
+) -> bool:
+    """Wait until completion or deadline without cancelling sessions on timeout.
+
+    Returns whether some clients were still running when the deadline expired.
+    An early client failure is propagated instead of hiding it until the deadline.
+    """
+    if duration_secs <= 0:
+        await asyncio.gather(*tasks)
+        return False
+    done, pending = await asyncio.wait(
+        tasks, timeout=duration_secs, return_when=asyncio.FIRST_EXCEPTION
+    )
+    for task in done:
+        if not task.cancelled():
+            error = task.exception()
+            if error is not None:
+                raise error
+    return bool(pending)
 
 
 async def main(args: argparse.Namespace):
@@ -2640,14 +2683,13 @@ async def main(args: argparse.Namespace):
         asyncio.create_task(report_activity()) if args.report_interval_secs > 0 else None
     )
     try:
-        if args.run_duration_secs > 0:
-            try:
-                await asyncio.wait_for(asyncio.gather(*tasks), timeout=args.run_duration_secs)
-            except TimeoutError:
-                print(f"Game load stopped after {args.run_duration_secs:g}s (partial game stats).")
-        else:
-            await asyncio.gather(*tasks)
+        timed_out = await wait_for_client_tasks(tasks, args.run_duration_secs)
+        if timed_out:
+            print(f"Game load stopped after {args.run_duration_secs:g}s (partial game stats).")
     finally:
+        # Mark the shutdown *before* cancelling lobby tasks. Their session
+        # cleanup also closes round WebSockets, often with local code 1006.
+        run_stats.begin_shutdown()
         if reporter is not None:
             reporter.cancel()
             await asyncio.gather(reporter, return_exceptions=True)
