@@ -22,6 +22,7 @@ import asyncio
 import cProfile
 import json
 import math
+import os
 import pstats
 import random
 import re
@@ -2088,6 +2089,9 @@ class TestUser:
                         browser_heartbeat(wsr, self.client_heartbeat_secs),
                         independent_human_moves() as pending_human_move,
                     ):
+                        connected_at = monotonic()
+                        last_received_at = connected_at
+                        last_app_pong_at: float | None = None
                         self._mark_round_connected(game_id, resolved_variant, resolved_bot_profile)
                         # TODO: am I player or am I spectator ???
                         ok = await self._send_json_safe(
@@ -2125,10 +2129,12 @@ class TestUser:
                                 )
                                 continue
                             # print('Round message received from server:', msg)
+                            last_received_at = monotonic()
                             round_idle_cycles = 0
 
                             if msg.type == aiohttp.WSMsgType.TEXT:
                                 if msg.data == "/n":
+                                    last_app_pong_at = monotonic()
                                     continue
                                 data = json.loads(msg.data)
                                 try:
@@ -2409,6 +2415,24 @@ class TestUser:
                                         msg.type.name,
                                         time_control=self.time_control_name,
                                         close_code=wsr.close_code,
+                                    )
+                                if (
+                                    reconnect_needed
+                                    and os.getenv("PYCHESS_TEST_WS_DIAGNOSTICS") == "1"
+                                ):
+                                    now = monotonic()
+                                    pong_age = (
+                                        None
+                                        if last_app_pong_at is None
+                                        else round(now - last_app_pong_at, 1)
+                                    )
+                                    print(
+                                        f"TEST_ROUND_WS_CLIENT_CLOSE user={self.username} "
+                                        f"game={game_id} type={msg.type.name} "
+                                        f"code={wsr.close_code} exception={wsr.exception()!r} "
+                                        f"lifetime_secs={now-connected_at:.1f} "
+                                        f"last_rx_age_secs={now-last_received_at:.1f} "
+                                        f"last_app_pong_age_secs={pong_age}"
                                     )
                                 break
                         await wsr.close()
