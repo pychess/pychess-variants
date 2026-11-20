@@ -118,6 +118,48 @@ async def browser_heartbeat(ws, interval_secs: float):
             await asyncio.gather(task, return_exceptions=True)
 
 
+class PendingHumanMove:
+    """Keep the round receive loop free while a simulated player thinks.
+
+    Only one action is scheduled per position. A new position invalidates a
+    pending move, and closing the socket always cancels the task.
+    """
+
+    def __init__(self):
+        self.ply: int | None = None
+        self.task: asyncio.Task[None] | None = None
+
+    def position_changed(self, ply: int) -> None:
+        if self.ply is not None and ply != self.ply:
+            if self.task is not None:
+                self.task.cancel()
+            self.task = None
+            self.ply = None
+
+    def schedule(self, ply: int, coroutine_factory) -> bool:
+        if self.ply == ply:
+            return False
+        self.position_changed(ply)
+        self.ply = ply
+        self.task = asyncio.create_task(coroutine_factory())
+        return True
+
+    async def close(self) -> None:
+        if self.task is not None:
+            self.task.cancel()
+            await asyncio.gather(self.task, return_exceptions=True)
+            self.task = None
+
+
+@asynccontextmanager
+async def independent_human_moves():
+    pending = PendingHumanMove()
+    try:
+        yield pending
+    finally:
+        await pending.close()
+
+
 @dataclass(frozen=True)
 class TimeControlProfile:
     name: str
@@ -2039,9 +2081,13 @@ class TestUser:
             while not game_completed:
                 reconnect_needed = False
                 try:
-                    async with session.ws_connect(
-                        ROUND_URL + game_id, timeout=20.0, headers={"Origin": URI}
-                    ) as wsr, browser_heartbeat(wsr, self.client_heartbeat_secs):
+                    async with (
+                        session.ws_connect(
+                            ROUND_URL + game_id, timeout=20.0, headers={"Origin": URI}
+                        ) as wsr,
+                        browser_heartbeat(wsr, self.client_heartbeat_secs),
+                        independent_human_moves() as pending_human_move,
+                    ):
                         self._mark_round_connected(game_id, resolved_variant, resolved_bot_profile)
                         # TODO: am I player or am I spectator ???
                         ok = await self._send_json_safe(
@@ -2117,6 +2163,7 @@ class TestUser:
                                         board_ply = data.get("ply")
                                         if isinstance(board_ply, int):
                                             last_ply = board_ply
+                                            pending_human_move.position_changed(board_ply)
                                         self._mark_board_seen(game_id, data.get("tp"))
                                         if (
                                             self.run_stats is not None
@@ -2130,6 +2177,7 @@ class TestUser:
                                                 monotonic(),
                                             )
                                         if data["result"] != "*":
+                                            await pending_human_move.close()
                                             await self._record_game_end(
                                                 game_id,
                                                 data["result"],
@@ -2160,7 +2208,8 @@ class TestUser:
                                             await self._leave_finished_game(wsr, wsl)
                                             break
 
-                                        await asyncio.sleep(random.uniform(0, 0.1))
+                                        if self.human_pair is None:
+                                            await asyncio.sleep(random.uniform(0, 0.1))
                                         parts = data["fen"].split(" ")
                                         turn_color = parts[1]
                                         variant_for_moves = (
@@ -2177,6 +2226,75 @@ class TestUser:
                                         if self.human_pair is not None and (
                                             not should_move or last_sent_ply == board_ply
                                         ):
+                                            continue
+                                        if self.human_pair is not None:
+                                            # Unlike the old sleep inside the receive loop,
+                                            # this preserves continuous WebSocket reads (and
+                                            # protocol PING/PONG handling) while thinking.
+                                            if not isinstance(board_ply, int):
+                                                continue
+                                            if pending_human_move.ply == board_ply:
+                                                continue
+                                            move_snapshot = data
+                                            delay = self._next_move_delay_secs()
+
+                                            async def delayed_human_move(
+                                                snapshot=move_snapshot,
+                                                delay_secs=delay,
+                                                position_ply=board_ply,
+                                                color=turn_color,
+                                                received_at=board_received_at,
+                                                variant=variant_for_moves,
+                                            ):
+                                                nonlocal last_sent_ply
+                                                await asyncio.sleep(
+                                                    random.uniform(0, 0.1) + delay_secs
+                                                )
+                                                if wsr.closed:
+                                                    return
+                                                legal_moves = sf.legal_moves(
+                                                    variant,
+                                                    snapshot["fen"],
+                                                    [],
+                                                    False,
+                                                )
+                                                if not legal_moves:
+                                                    return
+                                                chosen_move = random.choice(legal_moves)
+                                                submitted_at = monotonic()
+                                                move_clocks = simulated_human_clocks(
+                                                    snapshot["clocks"],
+                                                    color,
+                                                    submitted_at - received_at,
+                                                    position_ply,
+                                                )
+                                                # Don't submit a move after the local clock expires.
+                                                if position_ply >= 2:
+                                                    mover_index = 0 if color == "w" else 1
+                                                    if move_clocks[mover_index] <= 0:
+                                                        return
+                                                sent = await self._send_json_safe(
+                                                    wsr,
+                                                    {
+                                                        "type": "move",
+                                                        "gameId": game_id,
+                                                        "move": chosen_move,
+                                                        "clocks": move_clocks,
+                                                        "ply": position_ply + 1,
+                                                    },
+                                                )
+                                                if sent:
+                                                    self._mark_move_sent(game_id)
+                                                    if self.run_stats is not None:
+                                                        self.run_stats.record_move_sent(
+                                                            game_id, position_ply + 1, chosen_move,
+                                                            self.username, submitted_at,
+                                                        )
+                                                    last_sent_ply = position_ply
+
+                                            pending_human_move.schedule(
+                                                board_ply, delayed_human_move
+                                            )
                                             continue
                                         legal_moves = sf.legal_moves(
                                             variant_for_moves, data["fen"], [], False
@@ -2245,6 +2363,7 @@ class TestUser:
                                         print("START", game_id)
 
                                     elif data["type"] == "gameEnd":
+                                        await pending_human_move.close()
                                         game_end_ply = data.get("ply")
                                         if not isinstance(game_end_ply, int):
                                             game_end_ply = last_ply
