@@ -85,6 +85,48 @@ DEFAULT_ROUND_MAX_IDLE_CYCLES = 3
 DEFAULT_PENDING_CHALLENGE_MAX_WAIT_SECS = 300.0
 DEFAULT_ROUND_RECONNECT_BACKOFF_MIN_SECS = 0.3
 DEFAULT_ROUND_RECONNECT_BACKOFF_MAX_SECS = 1.0
+DEFAULT_MOVE_ACK_TIMEOUT_SECS = 10.0
+
+
+@dataclass(frozen=True)
+class TimeControlProfile:
+    name: str
+    minutes: int
+    min_move_delay_secs: float
+    max_move_delay_secs: float
+    weight: int
+
+
+# Workload assumptions, not measured production usage proportions.
+MIXED_TIME_CONTROLS = (
+    TimeControlProfile("bullet", 1, 0.2, 2.0, 50),
+    TimeControlProfile("blitz", 5, 1.0, 5.0, 40),
+    TimeControlProfile("rapid", 10, 3.0, 15.0, 10),
+)
+
+
+def distribute_time_controls(game_count: int, seed: int) -> list[TimeControlProfile]:
+    """Exact weighted quotas (largest remainders), shuffled deterministically."""
+    if game_count < 0:
+        raise ValueError("game_count must be >= 0")
+    weight_total = sum(profile.weight for profile in MIXED_TIME_CONTROLS)
+    quotas = [game_count * profile.weight // weight_total for profile in MIXED_TIME_CONTROLS]
+    remaining = game_count - sum(quotas)
+    by_remainder = sorted(
+        range(len(quotas)),
+        key=lambda i: (-(game_count * MIXED_TIME_CONTROLS[i].weight % weight_total), i),
+    )
+    for index in by_remainder[:remaining]:
+        quotas[index] += 1
+    assigned = [
+        profile
+        for profile, quota in zip(MIXED_TIME_CONTROLS, quotas)
+        for _ in range(quota)
+    ]
+    random.Random(seed).shuffle(assigned)
+    return assigned
+
+
 # Read-only requests that cover distinct page/API handlers and DB queries.
 # Keep HTML rates below anonymous browsing admission budgets in local DEV.
 PROFILE_HTTP_PATHS = (
@@ -157,6 +199,13 @@ def non_negative_float(value: str) -> float:
     parsed = float(value)
     if parsed < 0:
         raise argparse.ArgumentTypeError("value must be >= 0")
+    return parsed
+
+
+def positive_float(value: str) -> float:
+    parsed = float(value)
+    if not math.isfinite(parsed) or parsed <= 0:
+        raise argparse.ArgumentTypeError("value must be positive and finite")
     return parsed
 
 
@@ -300,6 +349,26 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--mixed-time-controls",
+        action="store_true",
+        help=(
+            "Human-vs-human only: 50%% bullet (1+0, 0.2-2s moves), "
+            "40%% blitz (5+0, 1-5s), 10%% rapid (10+0, 3-15s)."
+        ),
+    )
+    parser.add_argument(
+        "--mix-seed",
+        type=int,
+        default=42,
+        help="Seed for reproducible mixed time-control assignment (default: 42).",
+    )
+    parser.add_argument(
+        "--move-ack-timeout-secs",
+        type=positive_float,
+        default=DEFAULT_MOVE_ACK_TIMEOUT_SECS,
+        help=f"Threshold for an unconfirmed move (default: {DEFAULT_MOVE_ACK_TIMEOUT_SECS:g}s).",
+    )
+    parser.add_argument(
         "--game-minutes",
         type=positive_int,
         default=1,
@@ -364,6 +433,19 @@ def parse_args() -> argparse.Namespace:
             parser.error("--human-vs-human requires an even --users count >= 2")
         if args.games_per_user != 1:
             parser.error("--human-vs-human currently requires --games-per-user 1")
+    if args.mixed_time_controls:
+        if not args.human_vs_human:
+            parser.error("--mixed-time-controls requires --human-vs-human")
+        if (
+            args.game_minutes != 1
+            or args.move_delay_secs != 0
+            or args.move_delay_min_secs is not None
+            or args.move_delay_max_secs is not None
+        ):
+            parser.error(
+                "--mixed-time-controls sets clocks and delays automatically; "
+                "do not also pass --game-minutes or --move-delay-*"
+            )
     if (args.move_delay_min_secs is None) != (args.move_delay_max_secs is None):
         parser.error("--move-delay-min-secs and --move-delay-max-secs must be used together")
     if args.move_delay_min_secs is not None:
@@ -632,6 +714,36 @@ class BotChallengeScheduler:
             self._fairy_active_games.discard(game_id)
 
 
+@dataclass
+class PendingMove:
+    sent_at: float
+    sender: str
+    move: str
+    profile: str
+    confirmed: bool = False
+    timed_out: bool = False
+
+
+def latency_summary(values: list[float]) -> dict[str, float | int | None]:
+    """All durations in milliseconds. No artificial zero for missing data."""
+    if not values:
+        return {"count": 0, "p50_ms": None, "p95_ms": None, "max_ms": None}
+    ordered = sorted(values)
+
+    def percentile(fraction: float) -> float:
+        position = (len(ordered) - 1) * fraction
+        lo = int(position)
+        hi = min(lo + 1, len(ordered) - 1)
+        return ordered[lo] + (ordered[hi] - ordered[lo]) * (position - lo)
+
+    return {
+        "count": len(ordered),
+        "p50_ms": round(percentile(0.5), 2),
+        "p95_ms": round(percentile(0.95), 2),
+        "max_ms": round(ordered[-1], 2),
+    }
+
+
 class RunStats:
     def __init__(self) -> None:
         self._lock = asyncio.Lock()
@@ -663,6 +775,27 @@ class RunStats:
         )
         self.challenge_to_game_start_min_by_bot_profile: dict[str, float] = {}
         self.challenge_to_game_start_max_by_bot_profile: dict[str, float] = {}
+        self.game_time_controls: dict[str, str] = {}
+        self.games_started_by_time_control: Counter[str] = Counter()
+        self.games_ended_by_time_control: Counter[str] = Counter()
+        self.moves_sent = 0
+        self.moves_confirmed = 0
+        self.moves_observed_by_opponent = 0
+        self.move_timeouts = 0
+        self.unexpected_round_ws_disconnects = 0
+        self.moves_sent_by_time_control: Counter[str] = Counter()
+        self.moves_confirmed_by_time_control: Counter[str] = Counter()
+        self.moves_observed_by_opponent_by_time_control: Counter[str] = Counter()
+        self.move_timeouts_by_time_control: Counter[str] = Counter()
+        self.move_acks_ms: list[float] = []
+        self.opponent_moves_ms: list[float] = []
+        self.move_acks_by_time_control: defaultdict[str, list[float]] = defaultdict(list)
+        self.opponent_moves_by_time_control: defaultdict[str, list[float]] = defaultdict(list)
+        self._pending_moves: dict[tuple[str, int], PendingMove] = {}
+        # Simulated games never take back moves, so a per-game high-water mark
+        # avoids retaining a (game, ply) key for every confirmed move.
+        self._last_observed_move_ply: dict[str, int] = {}
+        self.first_move_at: float | None = None
 
     async def record_challenge_sent(self, bot_profile: str | None) -> None:
         profile_key = bot_profile if isinstance(bot_profile, str) else "unknown"
@@ -674,12 +807,15 @@ class RunStats:
         game_id: str,
         actual_bot_profile: str | None,
         challenge_to_start_latency_secs: float | None,
+        time_control: str = "custom",
     ) -> None:
         profile_key = actual_bot_profile if isinstance(actual_bot_profile, str) else "unknown"
         async with self._lock:
             if game_id in self._seen_game_start_ids:
                 return
             self._seen_game_start_ids.add(game_id)
+            self.game_time_controls[game_id] = time_control
+            self.games_started_by_time_control[time_control] += 1
             self._unfinished_game_ids.add(game_id)
             self.peak_unfinished_games = max(
                 self.peak_unfinished_games, len(self._unfinished_game_ids)
@@ -710,6 +846,7 @@ class RunStats:
                 return
             self._seen_game_end_ids.add(game_id)
             self._unfinished_game_ids.discard(game_id)
+            self.games_ended_by_time_control[self.game_time_controls.get(game_id, "custom")] += 1
             profile_key = bot_profile if isinstance(bot_profile, str) else "unknown"
             self.total_games += 1
             self.games_by_bot_profile[profile_key] += 1
@@ -731,6 +868,119 @@ class RunStats:
                 self.games_without_ply += 1
             else:
                 self.by_game_length_ply[ply] += 1
+
+    def record_move_sent(
+        self, game_id: str, ply: int, move: str, sender: str, sent_at: float
+    ) -> None:
+        """Count each WebSocket move send; keep one outstanding attempt per ply.
+
+        This runner has one asyncio event loop, so these non-awaiting methods
+        cannot interleave and need no separate asyncio lock.
+        """
+        self.moves_sent += 1
+        profile = self.game_time_controls.get(game_id, "custom")
+        self.moves_sent_by_time_control[profile] += 1
+        if self.first_move_at is None:
+            self.first_move_at = sent_at
+        key = (game_id, ply)
+        if (
+            key not in self._pending_moves
+            and ply > self._last_observed_move_ply.get(game_id, -1)
+        ):
+            self._pending_moves[key] = PendingMove(sent_at, sender, move, profile)
+
+    def observe_board(
+        self,
+        game_id: str,
+        ply: int,
+        last_move: str | None,
+        observer: str,
+        received_at: float,
+    ) -> None:
+        """Confirm a submitted ply using an authoritative server board event.
+
+        Both clients receive a board message. Only count the move once,
+        and measure the opponent's receipt separately from first confirmation.
+        """
+        key = (game_id, ply)
+        pending = self._pending_moves.get(key)
+        if pending is None or (last_move is not None and last_move != pending.move):
+            return
+        latency_ms = max(0.0, received_at - pending.sent_at) * 1000
+        if not pending.confirmed:
+            pending.confirmed = True
+            self.moves_confirmed += 1
+            self.moves_confirmed_by_time_control[pending.profile] += 1
+            self.move_acks_ms.append(latency_ms)
+            self.move_acks_by_time_control[pending.profile].append(latency_ms)
+        if observer != pending.sender:
+            self.moves_observed_by_opponent += 1
+            self.moves_observed_by_opponent_by_time_control[pending.profile] += 1
+            self.opponent_moves_ms.append(latency_ms)
+            self.opponent_moves_by_time_control[pending.profile].append(latency_ms)
+            del self._pending_moves[key]
+            self._last_observed_move_ply[game_id] = max(
+                self._last_observed_move_ply.get(game_id, -1), ply
+            )
+
+    def record_unexpected_disconnect(self) -> None:
+        self.unexpected_round_ws_disconnects += 1
+
+    def _update_move_timeouts(self, now: float, threshold: float) -> None:
+        for pending in self._pending_moves.values():
+            if (
+                not pending.confirmed
+                and not pending.timed_out
+                and now - pending.sent_at >= threshold
+            ):
+                pending.timed_out = True
+                self.move_timeouts += 1
+                self.move_timeouts_by_time_control[pending.profile] += 1
+
+    def move_counters(self, now: float, ack_timeout_secs: float) -> dict[str, int]:
+        self._update_move_timeouts(now, ack_timeout_secs)
+        return {
+            "moves_sent": self.moves_sent,
+            "moves_confirmed": self.moves_confirmed,
+            "moves_pending": sum(not p.confirmed for p in self._pending_moves.values()),
+            "move_timeouts": self.move_timeouts,
+            "unexpected_round_ws_disconnects": self.unexpected_round_ws_disconnects,
+        }
+
+    def move_summary(self, now: float, ack_timeout_secs: float) -> dict[str, object]:
+        counts = self.move_counters(now, ack_timeout_secs)
+        duration = (now - self.first_move_at) if self.first_move_at is not None else 0
+        return {
+            **counts,
+            "moves_observed_by_opponent": self.moves_observed_by_opponent,
+            "moves_confirmed_per_second": (
+                round(self.moves_confirmed / duration, 2) if duration > 0 else 0.0
+            ),
+            "move_latency": latency_summary(self.move_acks_ms),
+            "opponent_move_latency": latency_summary(self.opponent_moves_ms),
+            "games_started_by_time_control": dict(
+                sorted(self.games_started_by_time_control.items())
+            ),
+            "games_ended_by_time_control": dict(sorted(self.games_ended_by_time_control.items())),
+            "moves_sent_by_time_control": dict(sorted(self.moves_sent_by_time_control.items())),
+            "moves_confirmed_by_time_control": dict(
+                sorted(self.moves_confirmed_by_time_control.items())
+            ),
+            "moves_observed_by_opponent_by_time_control": dict(
+                sorted(self.moves_observed_by_opponent_by_time_control.items())
+            ),
+            "move_timeouts_by_time_control": dict(
+                sorted(self.move_timeouts_by_time_control.items())
+            ),
+            "move_latency_by_time_control": {
+                profile: latency_summary(latencies)
+                for profile, latencies in sorted(self.move_acks_by_time_control.items())
+            },
+            "opponent_move_latency_by_time_control": {
+                profile: latency_summary(latencies)
+                for profile, latencies in sorted(self.opponent_moves_by_time_control.items())
+            },
+        }
 
     async def activity_snapshot(self) -> tuple[int, int, int, int]:
         """Starts, unfinished games, high-water mark, and observed ends.
@@ -815,7 +1065,8 @@ class RunStats:
 class HumanPair:
     """Coordinate one casual seek between two independent test-user sessions."""
 
-    def __init__(self) -> None:
+    def __init__(self, time_control: TimeControlProfile | None = None) -> None:
+        self.time_control = time_control
         self.names: dict[str, str] = {}
         self.ready = asyncio.Event()
         self.challenge_sent_at: float | None = None
@@ -872,6 +1123,11 @@ class TestUser:
         self.test_user_pgn_exporter = test_user_pgn_exporter
         self.human_pair = human_pair
         self.human_role = human_role
+        self.time_control_name = (
+            human_pair.time_control.name
+            if human_pair is not None and human_pair.time_control is not None
+            else "custom"
+        )
         self.human_seek_sent = False
         self.human_accepted_seek_ids: set[str] = set()
         self.spectators = []
@@ -1190,7 +1446,9 @@ class TestUser:
             challenge_sent_at = self.human_pair.challenge_sent_at
         if isinstance(challenge_sent_at, (int, float)):
             latency_secs = max(0.0, monotonic() - challenge_sent_at)
-        await self.run_stats.record_game_start(game_id, actual_bot_profile, latency_secs)
+        await self.run_stats.record_game_start(
+            game_id, actual_bot_profile, latency_secs, self.time_control_name
+        )
 
     def _diag_for_game(self, game_id: str) -> dict[str, object]:
         diag = self.round_diag.get(game_id)
@@ -1632,6 +1890,17 @@ class TestUser:
                                         if isinstance(board_ply, int):
                                             last_ply = board_ply
                                         self._mark_board_seen(game_id, data.get("tp"))
+                                        if (
+                                            self.run_stats is not None
+                                            and isinstance(board_ply, int)
+                                        ):
+                                            self.run_stats.observe_board(
+                                                game_id,
+                                                board_ply,
+                                                data.get("lastMove"),
+                                                self.username,
+                                                monotonic(),
+                                            )
                                         if data["result"] != "*":
                                             await self._record_game_end(
                                                 game_id,
@@ -1689,18 +1958,26 @@ class TestUser:
                                             move_delay = self._next_move_delay_secs()
                                             if move_delay:
                                                 await asyncio.sleep(move_delay)
+                                            chosen_move = random.choice(legal_moves)
+                                            submitted_at = monotonic()
                                             sent = await self._send_json_safe(
                                                 wsr,
                                                 {
                                                     "type": "move",
                                                     "gameId": game_id,
-                                                    "move": random.choice(legal_moves),
+                                                    "move": chosen_move,
                                                     "clocks": data["clocks"],
                                                     "ply": data["ply"] + 1,
                                                 },
                                             )
                                             if sent:
                                                 self._mark_move_sent(game_id)
+                                                if self.run_stats is not None:
+                                                    self.run_stats.record_move_sent(
+                                                        game_id, data["ply"] + 1,
+                                                        chosen_move, self.username,
+                                                        submitted_at,
+                                                    )
                                                 if self.human_pair is not None:
                                                     last_sent_ply = board_ply
                                             await asyncio.sleep(0)
@@ -1766,12 +2043,16 @@ class TestUser:
                                 aiohttp.WSMsgType.CLOSE,
                             ):
                                 reconnect_needed = not game_completed
+                                if reconnect_needed and self.run_stats is not None:
+                                    self.run_stats.record_unexpected_disconnect()
                                 break
                         await wsr.close()
                 except Exception as exc:
                     if not self._is_transient_connection_error(exc):
                         raise
                     reconnect_needed = True
+                    if self.run_stats is not None:
+                        self.run_stats.record_unexpected_disconnect()
 
                 if game_completed or not reconnect_needed:
                     break
@@ -1855,7 +2136,14 @@ async def main(args: argparse.Namespace):
         featured_count=args.spectators_per_game,
         regular_count=args.spectators_regular_per_game,
     )
-    human_pairs = [HumanPair() for _ in range(args.users // 2)] if args.human_vs_human else []
+    mixed_profiles = (
+        distribute_time_controls(args.users // 2, args.mix_seed)
+        if args.mixed_time_controls else []
+    )
+    human_pairs = (
+        [HumanPair(mixed_profiles[i] if mixed_profiles else None) for i in range(args.users // 2)]
+        if args.human_vs_human else []
+    )
     users = [
         TestUser(
             spectators_per_game=args.spectators_per_game,
@@ -1863,10 +2151,19 @@ async def main(args: argparse.Namespace):
             challenge_delay_min_secs=args.challenge_delay_min_secs,
             challenge_delay_max_secs=args.challenge_delay_max_secs,
             challenge_retry_secs=args.challenge_retry_secs,
-            game_minutes=args.game_minutes,
+            game_minutes=(
+                human_pairs[i // 2].time_control.minutes
+                if args.mixed_time_controls else args.game_minutes
+            ),
             move_delay_secs=args.move_delay_secs,
-            move_delay_min_secs=args.move_delay_min_secs,
-            move_delay_max_secs=args.move_delay_max_secs,
+            move_delay_min_secs=(
+                human_pairs[i // 2].time_control.min_move_delay_secs
+                if args.mixed_time_controls else args.move_delay_min_secs
+            ),
+            move_delay_max_secs=(
+                human_pairs[i // 2].time_control.max_move_delay_secs
+                if args.mixed_time_controls else args.move_delay_max_secs
+            ),
             spectator_request_gap_secs=args.spectator_request_gap_secs,
             spectator_http_semaphore=spectator_http_semaphore,
             spectator_allocator=spectator_allocator,
@@ -1881,6 +2178,12 @@ async def main(args: argparse.Namespace):
 
     if args.human_vs_human:
         print(f"Human vs human: {args.users} players, {args.users // 2} paired games")
+    if mixed_profiles:
+        print(
+            "mixed_time_controls_planned="
+            f"{dict(sorted(Counter(p.name for p in mixed_profiles).items()))} "
+            f"mix_seed={args.mix_seed}"
+        )
 
     async def start_user(user: TestUser):
         if args.user_start_spread_secs > 0:
@@ -1907,13 +2210,25 @@ async def main(args: argparse.Namespace):
 
     async def report_activity() -> None:
         began = monotonic()
+        previous_time = began
+        previous_confirmed = 0
         while True:
             await asyncio.sleep(args.report_interval_secs)
+            now = monotonic()
             started, unfinished, peak, ended = await run_stats.activity_snapshot()
+            moves = run_stats.move_counters(now, args.move_ack_timeout_secs)
+            interval = max(0.001, now - previous_time)
+            recent_rate = (moves["moves_confirmed"] - previous_confirmed) / interval
+            previous_time = now
+            previous_confirmed = moves["moves_confirmed"]
             print(
-                f"game_load_elapsed_secs={monotonic() - began:.1f} "
+                f"game_load_elapsed_secs={now - began:.1f} "
                 f"games_started={started} games_unfinished={unfinished} "
-                f"peak_unfinished={peak} games_ended={ended}",
+                f"peak_unfinished={peak} games_ended={ended} "
+                f"moves_sent={moves['moves_sent']} moves_confirmed={moves['moves_confirmed']} "
+                f"moves_pending={moves['moves_pending']} "
+                f"move_timeouts={moves['move_timeouts']} "
+                f"moves_per_sec={recent_rate:.2f}",
                 flush=True,
             )
 
@@ -1977,10 +2292,13 @@ async def main(args: argparse.Namespace):
         for profile, result_map in sorted(by_result_by_bot_profile.items())
     }
     started_games, unfinished_games, peak_unfinished, _ = await run_stats.activity_snapshot()
+    move_perf = run_stats.move_summary(monotonic(), args.move_ack_timeout_secs)
     print("=== STRESS SUMMARY ===")
     print(f"games_started={started_games}")
     print(f"games_unfinished_at_stop={unfinished_games}")
     print(f"peak_unfinished_games={peak_unfinished}")
+    for name, value in move_perf.items():
+        print(f"{name}={value}")
     print(f"games_total={total_games}")
     print(f"games_aborted={aborted_games} ({abort_ratio:.1f}%)")
     print(f"by_status={dict(sorted(by_status.items()))}")
