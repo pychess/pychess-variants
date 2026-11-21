@@ -5,6 +5,7 @@ import { _ } from './i18n';
 import { patch } from './document';
 import type { Variant } from './variants';
 import { POCKET_HOTKEYS } from './pocketHotkeys';
+import type { KeyboardMove, KeyboardMoveCommands } from './accessibility/keyboardMove';
 
 interface ShortcutItem {
     keys: string[];
@@ -22,21 +23,29 @@ export interface GameKeyboardHelpHost {
     closeKeyboardHelp(): void;
     variant: Variant;
     pocketHotkeyRoles?: readonly cg.Role[];
+    keyboardMove?: KeyboardMove;
+    keyboardMoveCommands?(): KeyboardMoveCommands;
 }
 
 let keyboardHelpVNode: VNode | null = null;
+// What had focus when the dialog opened, given back when it closes.
+let returnFocus: HTMLElement | null = null;
 
 export function isKeyboardHelpShortcut(event: KeyboardEvent) {
     return event.key === '?' || (event.key === '/' && event.shiftKey);
 }
 
+// Whole names only: the move input's words ("upv", "downv") are keys too.
 function formatKeyLabel(key: string) {
-    return key
-        .replace(/left/i, _('Left arrow'))
-        .replace(/right/i, _('Right arrow'))
-        .replace(/up/i, _('Up arrow'))
-        .replace(/down/i, _('Down arrow'))
-        .replace(/enter/i, _('Enter'));
+    const names: Record<string, string> = {
+        left: _('Left arrow'),
+        right: _('Right arrow'),
+        up: _('Up arrow'),
+        down: _('Down arrow'),
+        enter: _('Enter'),
+        escape: _('Escape'),
+    };
+    return names[key] ?? key;
 }
 
 function renderKey(key: string): VNode {
@@ -69,6 +78,43 @@ function buildPocketShortcutSection(ctrl: GameKeyboardHelpHost): ShortcutSection
             },
         ],
     };
+}
+
+// Lichess's help for its keyboard move input, when this page shows one: the moves, with an example
+// from the current position so that it is in the variant's own notation, and the page's words.
+export function buildKeyboardMoveSections(ctrl: GameKeyboardHelpHost): ShortcutSection[] {
+    if (!ctrl.keyboardMove?.active()) return [];
+    const [san, uci] = ctrl.keyboardMove.example() ?? ['Nc3', 'b1c3'];
+    const words: Record<string, string> = {
+        clock: _('Read out the clocks'),
+        who: _("Read out the opponent's name"),
+        draw: _('Offer a draw'),
+        resign: _('Resign'),
+        zerk: _('Berserk'),
+        next: _('Next puzzle'),
+        upv: _('Vote up'),
+        downv: _('Vote down'),
+    };
+    const offered = Object.keys(ctrl.keyboardMoveCommands?.() ?? {});
+    return [
+        {
+            title: _('Typing moves'),
+            items: [
+                { keys: ['m'], description: _('Focus the move input') },
+                { keys: [san, uci], description: _('Play a move, as the move list writes it or by its squares') },
+                { keys: ['enter'], description: _('Play the move typed so far, or confirm a correspondence move') },
+                { keys: ['escape'], description: _('Leave the move input') },
+            ],
+        },
+        {
+            title: _('Typing commands'),
+            items: [
+                ...offered.map(word => ({ keys: [word], description: words[word] })),
+                ...(document.getElementById('chat-entry') ? [{ keys: ['/'], description: _('Focus the chat') }] : []),
+                { keys: ['help', '?'], description: _('Show keyboard shortcuts') },
+            ],
+        },
+    ];
 }
 
 export function buildGameKeyboardHelpSections(
@@ -105,6 +151,7 @@ export function buildGameKeyboardHelpSections(
         });
     }
 
+    sections.push(...buildKeyboardMoveSections(ctrl));
     return sections;
 }
 
@@ -184,6 +231,7 @@ export function showGameKeyboardHelp(ctrl: GameKeyboardHelpHost, sections: Short
     const vnode = view(ctrl, sections);
 
     if (keyboardHelpVNode === null) {
+        returnFocus = document.activeElement as HTMLElement | null;
         container.innerHTML = '';
         const placeholder = document.createElement('div');
         container.appendChild(placeholder);
@@ -197,4 +245,6 @@ export function hideGameKeyboardHelp() {
     const container = document.getElementById('keyboard-help');
     if (container) container.style.display = 'none';
     keyboardHelpVNode = null;
+    returnFocus?.focus();
+    returnFocus = null;
 }

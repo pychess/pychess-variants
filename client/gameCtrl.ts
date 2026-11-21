@@ -38,6 +38,7 @@ import { aliceBoardFen } from './aliceBoard';
 import type { AliceBoardName } from './aliceBoard';
 import { BoardSummaryView } from './accessibility/boardSummary';
 import { ChessgroundKeyboard } from './accessibility/chessgroundKeyboard';
+import { KeyboardMove, KeyboardMoveCommands } from './accessibility/keyboardMove';
 import { result } from './result';
 
 export abstract class GameController extends ChessgroundController implements ChatController {
@@ -123,6 +124,7 @@ export abstract class GameController extends ChessgroundController implements Ch
     keyboardHelpOpen: boolean;
     boardSummary: BoardSummaryView;
     keyboard: ChessgroundKeyboard;
+    keyboardMove: KeyboardMove;
     private readonly onGameKeyboardHelpKeyDown: (event: KeyboardEvent) => void;
 
     get pocketHotkeyRoles(): readonly cg.Role[] | undefined {
@@ -145,6 +147,7 @@ export abstract class GameController extends ChessgroundController implements Ch
         this.boardSummary = new BoardSummaryView(this.variant, boardName);
         this.keyboard = keyboard;
         keyboard.attach(this.chessground, this.boardSummary);
+        this.keyboardMove = new KeyboardMove(this);
 
         this.gameId = model['gameId'] as string;
         this.tournamentId = model['tournamentId'];
@@ -381,6 +384,14 @@ export abstract class GameController extends ChessgroundController implements Ch
         } else {
             this.openKeyboardHelp();
         }
+    }
+
+    /** Enter in an empty move input: a move waiting for confirmation is sent. */
+    confirmPendingMove(): void {}
+
+    /** The typed commands this page can do (the move input adds help and '/'). */
+    keyboardMoveCommands(): KeyboardMoveCommands {
+        return {};
     }
 
     openKeyboardHelp() {
@@ -648,6 +659,7 @@ export abstract class GameController extends ChessgroundController implements Ch
         if (this.gameId) this.boardSummary.setStatus(result(this.variant, this.status, this.result));
         this.boardSummary.setPosition(this.chessground.state.boardState, lastMove);
         this.keyboard.update();
+        this.keyboardMove.positionChanged();
     }
 
     doSend = (message: JSONObject) => {

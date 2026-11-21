@@ -49,6 +49,15 @@ export class GameControllerBughouse extends GameController {
         this.parent.sendMove(this, move);
     }
 
+    // The page's dialog, the same as its own '?' opens.
+    override openKeyboardHelp(): void {
+        this.parent.openKeyboardHelp();
+    }
+
+    override keyboardMoveCommands() {
+        return this.parent.boardKeyboardMoveCommands(this);
+    }
+
     override cancelPromotionInput(): void {
         // This board's steps belong to the two-board controller. Restore its
         // current server position rather than navigating the base's empty history.

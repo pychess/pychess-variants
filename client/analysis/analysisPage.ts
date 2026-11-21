@@ -9,6 +9,7 @@ import { analysisSettings } from './analysisSettings';
 import { BoardSummaryView } from '../accessibility/boardSummary';
 import { ChessgroundKeyboard } from '../accessibility/chessgroundKeyboard';
 import { pageHeading, srHeading } from '../accessibility/headings';
+import { keyboardMovePlaceholder } from '../accessibility/keyboardMove';
 
 export type AnalysisPageParts = {
     side: VNode | VNode[];
@@ -70,7 +71,7 @@ export function renderAnalysisPage(model: PyChessModel, parts: AnalysisPageParts
                 ]),
             ]),
             h('under-left#spectators'),
-            h('under-board', parts.underboard),
+            h('under-board', [keyboardMovePlaceholder(''), ...[parts.underboard].flat()]),
             BoardSummaryView.placeholder('', 'polite'),
         ]),
     ];

@@ -11,6 +11,7 @@ import { _, ngettext } from './i18n';
 import { patch } from './document';
 import { ariaHiddenAttr } from './accessibility/aria';
 import { ChessgroundKeyboard } from './accessibility/chessgroundKeyboard';
+import type { KeyboardMoveCommands } from './accessibility/keyboardMove';
 import { boardSettings } from './boardSettings';
 import { Clock } from './clock';
 import { materializeGameHistory } from './analysis/gameHistory';
@@ -426,13 +427,7 @@ export class RoundController extends GameController {
                 );
             }
 
-            const onBerserk = () => {
-                if (this.berserkable) {
-                    this.berserkable = false;
-                    this.berserk(this.mycolor);
-                    this.doSend({ type: 'berserk', gameId: this.gameId, color: this.mycolor });
-                }
-            };
+            const onBerserk = this.goBerserk;
 
             if (this.berserkable && this.status < 0 && this.ply < 2) {
                 const container = document.getElementById('berserk1') as HTMLElement;
@@ -822,13 +817,35 @@ export class RoundController extends GameController {
         );
     };
 
-    private draw = async () => {
-        const confirmed = await confirmDialog({
-            text: _('Are you sure you want to draw?'),
-            confirmText: _('Offer draw'),
-            cancelText: _('Cancel'),
-        });
-        if (!confirmed) return;
+    private goBerserk = () => {
+        if (this.berserkable) {
+            this.berserkable = false;
+            this.berserk(this.mycolor);
+            this.doSend({ type: 'berserk', gameId: this.gameId, color: this.mycolor });
+        }
+    };
+
+    // Typed "draw" and "resign" act at once, as lichess's; a click asks first.
+    keyboardMoveCommands(): KeyboardMoveCommands {
+        const playing = !this.spectator && this.status < 0;
+        const opponent = this.mycolor === 'white' ? this.bplayer : this.wplayer;
+        return {
+            clock: () => this.boardSummary.clockText(),
+            ...(this.spectator ? {} : { who: () => opponent }),
+            ...(playing ? { draw: () => void this.draw(true), resign: () => void this.resign(true) } : {}),
+            ...(playing && this.berserkable ? { zerk: this.goBerserk } : {}),
+        };
+    }
+
+    private draw = async (immediately = false) => {
+        if (!immediately) {
+            const confirmed = await confirmDialog({
+                text: _('Are you sure you want to draw?'),
+                confirmText: _('Offer draw'),
+                cancelText: _('Cancel'),
+            });
+            if (!confirmed) return;
+        }
         this.doSend({ type: 'draw', gameId: this.gameId });
         this.setDialog(_('Draw offer sent'));
     };
@@ -874,19 +891,31 @@ export class RoundController extends GameController {
     };
 
     private rejectCorrMove = () => {
+        this.corrMoveConfirm = undefined;
         this.undo();
         this.clearDialog();
     };
 
+    // The open correspondence confirmation's Confirm, for the move input's Enter.
+    private corrMoveConfirm: (() => void) | undefined;
+
+    confirmPendingMove(): void {
+        this.corrMoveConfirm?.();
+    }
+
     private renderConfirmCorrMove = (callback: any, move: string) => {
         (document.querySelector('.btn-controls.game') as HTMLElement).style.display = 'none';
+        this.corrMoveConfirm = () => {
+            this.corrMoveConfirm = undefined;
+            callback(move);
+        };
         this.vdialog = patch(
             this.vdialog,
             this.offerDialog([
                 h('div.dcontrols', [
                     this.offerButton('reject', _('Cancel'), () => this.rejectCorrMove()),
                     h('div.text', _('Confirm move')),
-                    this.offerButton('accept', _('Confirm'), () => callback(move)),
+                    this.offerButton('accept', _('Confirm'), this.corrMoveConfirm),
                 ]),
             ]),
         );
@@ -915,8 +944,8 @@ export class RoundController extends GameController {
         if (el) el.style.display = 'flex';
     };
 
-    private resign = async () => {
-        const skipConfirm = localStorage.getItem('confirmresign') === 'false';
+    private resign = async (immediately = false) => {
+        const skipConfirm = immediately || localStorage.getItem('confirmresign') === 'false';
         if (!skipConfirm) {
             const confirmed = await confirmDialog({
                 text: _('Are you sure you want to resign?'),

@@ -12,6 +12,7 @@ import { RatedSettings, AutoNextSettings } from './puzzleSettings';
 import { boardSettings } from './boardSettings';
 import { updatePoint } from './info';
 import { ChessgroundKeyboard } from './accessibility/chessgroundKeyboard';
+import type { KeyboardMoveCommands } from './accessibility/keyboardMove';
 
 export class PuzzleController extends AnalysisController {
     username: string;
@@ -529,6 +530,16 @@ export class PuzzleController extends AnalysisController {
             this.localAnalysis =
                 localStorage.localAnalysis === undefined ? false : localStorage.localAnalysis === 'true';
         }
+    }
+
+    // Lichess's puzzle words, once the puzzle is over and its vote and continue links are shown.
+    keyboardMoveCommands(): KeyboardMoveCommands {
+        if (!this.completed) return {};
+        return {
+            next: () => this.continueTraining(this.variant.name),
+            upv: () => this.postVote(true),
+            downv: () => this.postVote(false),
+        };
     }
 
     continueTraining(variant: string) {

@@ -9,6 +9,7 @@ import { analysisSettings } from './analysis/analysisSettings';
 import { BoardSummaryView } from './accessibility/boardSummary';
 import { pageHeading } from './accessibility/headings';
 import { ChessgroundKeyboard } from './accessibility/chessgroundKeyboard';
+import { keyboardMovePlaceholder } from './accessibility/keyboardMove';
 
 function runPuzzle(vnode: VNode, model: PyChessModel, keyboard: ChessgroundKeyboard) {
     const el = vnode.elm as HTMLElement;
@@ -67,7 +68,7 @@ export function puzzleView(model: PyChessModel): VNode[] {
                 ]),
             ]),
             h('under-left#spectators'),
-            h('under-board'),
+            h('under-board', [keyboardMovePlaceholder('')]),
             BoardSummaryView.placeholder('', 'polite'),
         ]),
     ];

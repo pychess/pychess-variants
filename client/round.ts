@@ -7,6 +7,7 @@ import { VARIANTS } from './variants';
 import { PyChessModel } from './types';
 import { BoardSummaryView } from './accessibility/boardSummary';
 import { ChessgroundKeyboard } from './accessibility/chessgroundKeyboard';
+import { keyboardMovePlaceholder } from './accessibility/keyboardMove';
 import { _ } from './i18n';
 import { pageHeading, srHeading } from './accessibility/headings';
 
@@ -23,6 +24,8 @@ export function roundView(model: PyChessModel): VNode[] {
     let mainboardVNode: VNode;
     let aliceBoardVNode: VNode | undefined;
     const keyboard = new ChessgroundKeyboard(variant, '');
+    // Typing moves is for the players, as lichess's.
+    const playing = model.username === model.wplayer || model.username === model.bplayer;
 
     renderTimeago();
 
@@ -84,7 +87,7 @@ export function roundView(model: PyChessModel): VNode[] {
             ],
         ),
         h('under-left#spectators'),
-        h('under-board', [h('div.ctable-container'), h('div.games-container')]),
+        h('under-board', [playing ? keyboardMovePlaceholder('') : '', h('div.ctable-container'), h('div.games-container')]),
         BoardSummaryView.placeholder('', 'assertive'),
     ];
 }

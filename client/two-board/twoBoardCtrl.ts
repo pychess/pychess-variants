@@ -4,6 +4,15 @@ import { uci2LastMove } from '../chess';
 import { Step } from '../messages';
 import { BugBoardName, PyChessModel } from '../types';
 import { ChessgroundKeyboard } from '../accessibility/chessgroundKeyboard';
+import type { KeyboardMoveCommands } from '../accessibility/keyboardMove';
+import { _ } from '../i18n';
+import {
+    buildGameKeyboardHelpSections,
+    buildKeyboardMoveSections,
+    hideGameKeyboardHelp,
+    isKeyboardHelpShortcut,
+    showGameKeyboardHelp,
+} from '../gameKeyboardHelp';
 import { Variant, VARIANTS } from '../variants';
 import { boardSettings } from '@/boardSettings';
 import { ChessgroundController } from '@/cgCtrl';
@@ -139,6 +148,50 @@ export abstract class TwoBoardController {
             if (step?.boardName === boardName) return step.san;
         }
         return undefined;
+    }
+
+    keyboardHelpOpen = false;
+
+    helpDialog() {
+        if (this.keyboardHelpOpen) this.closeKeyboardHelp();
+        else this.openKeyboardHelp();
+    }
+
+    // One dialog for the page, whichever '?' opened it: the page's keys, then the move input of
+    // the viewer's own board.
+    openKeyboardHelp() {
+        this.keyboardHelpOpen = true;
+        document.addEventListener('keydown', this.onKeyboardHelpKeyDown, true);
+        const own = ownBoardName(this.seats) === 'a' ? this.boardA : this.boardB;
+        showGameKeyboardHelp(this, [
+            ...buildGameKeyboardHelpSections(this, { flipDescription: _('Flip boards') }),
+            ...buildKeyboardMoveSections(own),
+        ]);
+    }
+
+    closeKeyboardHelp() {
+        if (!this.keyboardHelpOpen) return;
+        this.keyboardHelpOpen = false;
+        document.removeEventListener('keydown', this.onKeyboardHelpKeyDown, true);
+        hideGameKeyboardHelp();
+    }
+
+    private onKeyboardHelpKeyDown = (event: KeyboardEvent) => {
+        if (!this.keyboardHelpOpen) return;
+        if (event.key === 'Escape' || isKeyboardHelpShortcut(event)) {
+            event.preventDefault();
+            event.stopPropagation();
+            this.closeKeyboardHelp();
+            return;
+        }
+        if (event.key === 'Tab') return;
+        event.preventDefault();
+        event.stopPropagation();
+    };
+
+    // Typed commands for one board's move input; the round page offers some, analysis none.
+    boardKeyboardMoveCommands(_board: GameControllerBughouse): KeyboardMoveCommands {
+        return {};
     }
 
     // The game status is the same on both boards, so only the viewer's own board reports it.

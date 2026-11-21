@@ -23,6 +23,7 @@ import { PgnView } from './pgn';
 import { AnalysisClockView } from './analysisClock';
 import { AnalysisSeatView } from './analysisSeatView';
 import { MovetimeChartView } from './movetimeChart';
+import { keyboardMovePlaceholder } from '../../accessibility/keyboardMove';
 
 /** The blank analysis board's variant picker, the content of its VARIANT tab.
  *
@@ -320,6 +321,7 @@ export function analysisView(model: PyChessModel): VNode[] {
                 hook: { insert: vnode => (mainboardVNode = vnode) },
             }),
             keyboards.a.boardView(),
+            keyboardMovePlaceholder('a'),
             ...mainClocks.bottom,
         ],
     );
@@ -331,6 +333,7 @@ export function analysisView(model: PyChessModel): VNode[] {
                 hook: { insert: vnode => (bugboardVNode = vnode) },
             }),
             keyboards.b.boardView(),
+            keyboardMovePlaceholder('b'),
             ...bugClocks.bottom,
         ],
     );

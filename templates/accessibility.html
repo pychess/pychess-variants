@@ -41,6 +41,18 @@
 </ul>
 <p>{% trans %}Posting in the forum asks you to find a checkmate in one move. The position is described under the heading that names the side to move, the board works as described above, and the result is read out.{% endtrans %}</p>
 
+<h2 id="typing-moves">{% trans %}Typing moves{% endtrans %}</h2>
+<p>{% trans %}You can also type your moves. Turn on "Input moves with the keyboard" under Settings, Board Settings. A text field named "Your move" then appears under the board on game, analysis, puzzle and study pages. On phones and on two-board pages it is there for screen readers only.{% endtrans %}</p>
+<ul>
+<li>{% trans %}Press M to go to the field, when no square of the board has focus, and Escape to leave it. On two-board pages there is one field per board you play, named "Your move: Board A" and "Your move: Board B"; M in an empty field goes on to the other one.{% endtrans %}</li>
+<li>{% trans %}Type a move the way the move list writes it, for example Nf3, exd5, O-O, e8=Q, or P@e4 to drop a pawn. Shogi, xiangqi and the other variants use the notation of their own move list. The x of a capture is optional, and 0-0 works as O-O.{% endtrans %}</li>
+<li>{% trans %}You can also type the two squares, for example e2e4: the first square picks up the piece and the second plays the move.{% endtrans %}</li>
+<li>{% trans %}A move is played as soon as the text can only mean that move. When a longer move also starts the same way, such as O-O while O-O-O is possible, press Enter to play what you typed.{% endtrans %}</li>
+<li>{% trans %}Text that cannot become a move or a command turns red with a short sound, and your screen reader reports the field as invalid. A move typed while it is not your turn is played when your turn comes, if it is legal then.{% endtrans %}</li>
+<li>{% trans %}Commands: "clock" reads both clocks, "who" your opponent's name, "draw" offers a draw, "resign" resigns at once, and "zerk" berserks in an arena game. Typed draw and resign do not ask for confirmation. In a finished puzzle, "next" opens the next one, and "upv" and "downv" vote. A slash goes to the chat, and "help" or the question mark lists all keys and commands.{% endtrans %}</li>
+<li>{% trans %}In the field, the arrow keys step through the moves, and Enter in the empty field confirms a correspondence move that is waiting for confirmation.{% endtrans %}</li>
+</ul>
+
 <h2 id="moving-through-a-game">{% trans %}Moving through a game{% endtrans %}</h2>
 <ul>
 <li>{% trans %}Left and Right arrow: previous and next move. Up and Down arrow: first and last move. Each step is read out as the last move. These keys work when the board does not have focus.{% endtrans %}</li>

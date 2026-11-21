@@ -30,6 +30,7 @@ import {
 } from '../../roundType';
 import { BoardName, BugBoardName, JSONObject, PyChessModel } from '../../types';
 import { ChessgroundKeyboard } from '../../accessibility/chessgroundKeyboard';
+import type { KeyboardMoveCommands } from '../../accessibility/keyboardMove';
 import { GameControllerBughouse } from '../common/gameCtrl';
 import { BLACK, WHITE, getTurnColor, uci2LastMove } from '../../chess';
 import { result } from '../../result';
@@ -50,12 +51,6 @@ import {
     swapBoardsForSwitch,
     markRoles,
 } from './roundControls';
-import {
-    buildGameKeyboardHelpSections,
-    hideGameKeyboardHelp,
-    isKeyboardHelpShortcut,
-    showGameKeyboardHelp,
-} from '../../gameKeyboardHelp';
 import { ROUND_DROPPABLE, trackToolsPlacement } from '../common/toolsPlacement';
 import { trackSeatNamePlacement } from '../common/seatNamePlacement';
 import { bindPocketHotkeys } from '../../pocketHotkeys';
@@ -100,9 +95,6 @@ export class RoundControllerBughouse extends TwoBoardController implements ChatC
     spectator: boolean;
 
     controlsView: RoundControlsView;
-
-    keyboardHelpOpen: boolean;
-    private readonly onKeyboardHelpKeyDown: (event: KeyboardEvent) => void;
 
     get pocketHotkeyRoles(): readonly cg.Role[] | undefined {
         if (this.spectator || this.finishedGame || !this.variant.pocket) return undefined;
@@ -273,22 +265,6 @@ export class RoundControllerBughouse extends TwoBoardController implements ChatC
         // last so when it receive initial messages on connect all dom is ready to be updated
         this.socket = new RoundControllerBughouseSocket(this);
 
-        this.keyboardHelpOpen = false;
-        this.onKeyboardHelpKeyDown = (event: KeyboardEvent) => {
-            if (!this.keyboardHelpOpen) return;
-
-            if (event.key === 'Escape' || isKeyboardHelpShortcut(event)) {
-                event.preventDefault();
-                event.stopPropagation();
-                this.closeKeyboardHelp();
-                return;
-            }
-
-            if (event.key === 'Tab') return;
-
-            event.preventDefault();
-            event.stopPropagation();
-        };
 
         Mousetrap.bind('left', () => this.movelistView.selectMove(this, this.movelistView.ply() - 1));
         Mousetrap.bind('right', () => this.movelistView.selectMove(this, this.movelistView.ply() + 1));
@@ -308,30 +284,6 @@ export class RoundControllerBughouse extends TwoBoardController implements ChatC
         }
 
         soundThemeSettings.buildBugChatSounds();
-    }
-
-    helpDialog() {
-        if (this.keyboardHelpOpen) {
-            this.closeKeyboardHelp();
-        } else {
-            this.openKeyboardHelp();
-        }
-    }
-
-    openKeyboardHelp() {
-        this.keyboardHelpOpen = true;
-        document.addEventListener('keydown', this.onKeyboardHelpKeyDown, true);
-        showGameKeyboardHelp(
-            this,
-            buildGameKeyboardHelpSections(this, { flipDescription: _('Flip boards') }),
-        );
-    }
-
-    closeKeyboardHelp() {
-        if (!this.keyboardHelpOpen) return;
-        this.keyboardHelpOpen = false;
-        document.removeEventListener('keydown', this.onKeyboardHelpKeyDown, true);
-        hideGameKeyboardHelp();
     }
 
     private viewAt(position: 0 | 1, board: BugBoardName): RoundSeatView {
@@ -576,6 +528,18 @@ export class RoundControllerBughouse extends TwoBoardController implements ChatC
     private draw = () => {
         this.socket.doSend({ type: 'draw', gameId: this.gameId });
     };
+
+    // As the single-board round's; draw and resign ask no confirmation here to begin with.
+    override boardKeyboardMoveCommands(board: GameControllerBughouse): KeyboardMoveCommands {
+        const color = this.seats.myColor(board.boardName);
+        if (color === undefined) return {};
+        const opponent = this.seats.byBoardAndColor(board.boardName, color === 'white' ? 'black' : 'white').player.username;
+        return {
+            clock: () => board.boardSummary.clockText(),
+            who: () => opponent,
+            ...(this.isGameOver() ? {} : { draw: this.draw, resign: this.resign }),
+        };
+    }
     //
     // Accepting sends the same message; the server knows it is an acceptance because it
     // comes from the team that did not offer. Deliberately a separate method from draw()

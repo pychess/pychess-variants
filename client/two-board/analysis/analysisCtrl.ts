@@ -68,6 +68,7 @@ export default class AnalysisControllerBughouse extends TwoBoardController {
         super(el1, el1Pocket1, el1Pocket2, el2, el2Pocket1, el2Pocket2, model, keyboards, movelistView, gameInfoView);
         // Each board binds 'f' to flip itself and board B's binding wins; flip both, as the round does.
         Mousetrap.bind('f', () => this.flipBoards());
+        Mousetrap.bind('?', () => this.helpDialog());
 
         // orient the boards as the viewer experienced the game: own/partner color at
         // the bottom for participants, white-A/black-B for spectators (the old default)

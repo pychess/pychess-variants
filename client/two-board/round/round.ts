@@ -30,6 +30,7 @@ const INFO_TAB = 3;
 import { ChatPresetsView } from './chatPresets';
 import { twoBoardSeats } from '../common/seatConfiguration';
 import { _ } from '../../i18n';
+import { keyboardMovePlaceholder } from '../../accessibility/keyboardMove';
 
 function createBoards(
     mainboardVNode: VNode,
@@ -100,7 +101,9 @@ export function roundView(model: PyChessModel): VNode[] {
     // same condition the shared chat view used to apply, asked here instead, and
     // through the same seat logic the controller will use rather than a second
     // copy of it. When there are none, the Chat tab simply has one part.
-    const chatPresetsView = twoBoardSeats(model, model.username).isSpectator()
+    // Typing moves is for the boards this user plays, as lichess's: one, or both in a simul.
+    const seats = twoBoardSeats(model, model.username);
+    const chatPresetsView = seats.isSpectator()
         ? undefined
         : new ChatPresetsView(variant);
 
@@ -177,6 +180,7 @@ export function roundView(model: PyChessModel): VNode[] {
                                         hook: { insert: vnode => (bugboardVNode = vnode) },
                                     }),
                                     keyboards.b.boardView(),
+                                    seats.myColor('b') ? keyboardMovePlaceholder('b') : '',
                                 ],
                             ),
                             seatViews.b[1].view(pocketB1),
@@ -302,6 +306,7 @@ export function roundView(model: PyChessModel): VNode[] {
                             hook: { insert: vnode => (mainboardVNode = vnode) /*runGround(vnode, model)*/ },
                         }),
                         keyboards.a.boardView(),
+                        seats.myColor('a') ? keyboardMovePlaceholder('a') : '',
                     ]),
                     seatViews.a[1].view(pocketA1),
                 ]),

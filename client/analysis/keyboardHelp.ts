@@ -3,6 +3,7 @@ import { h, type VNode } from 'snabbdom';
 import { _ } from '../i18n';
 import { patch } from '../document';
 import type { AnalysisController } from './analysisCtrl';
+import { buildKeyboardMoveSections } from '../gameKeyboardHelp';
 
 interface ShortcutItem {
     keys: string[];
@@ -15,22 +16,31 @@ interface ShortcutSection {
 }
 
 let keyboardHelpVNode: VNode | null = null;
+// What had focus when the dialog opened, given back when it closes.
+let returnFocus: HTMLElement | null = null;
 
 export function isKeyboardHelpShortcut(event: KeyboardEvent) {
     return event.key === '?' || (event.key === '/' && event.shiftKey);
 }
 
+// Whole names only, per part of a combination: the move input's words ("upv", "downv") are keys too.
 function formatKeyLabel(key: string) {
+    const names: Record<string, string> = {
+        left: _('Left arrow'),
+        right: _('Right arrow'),
+        up: _('Up arrow'),
+        down: _('Down arrow'),
+        home: _('Home'),
+        end: _('End'),
+        shift: _('Shift'),
+        enter: _('Enter'),
+        space: _('Space'),
+        escape: _('Escape'),
+    };
     return key
-        .replace(/left/i, _('Left arrow'))
-        .replace(/right/i, _('Right arrow'))
-        .replace(/up/i, _('Up arrow'))
-        .replace(/down/i, _('Down arrow'))
-        .replace(/home/i, _('Home'))
-        .replace(/end/i, _('End'))
-        .replace(/shift/i, _('Shift'))
-        .replace(/enter/i, _('Enter'))
-        .replace(/space/i, _('Space'));
+        .split('+')
+        .map(part => names[part] ?? part)
+        .join('+');
 }
 
 function renderKey(key: string): VNode {
@@ -76,6 +86,7 @@ export function buildKeyboardHelpSections(ctrl: AnalysisController): ShortcutSec
         });
     }
 
+    sections.push(...buildKeyboardMoveSections(ctrl));
     return sections;
 }
 
@@ -154,6 +165,7 @@ export function showKeyboardHelp(ctrl: AnalysisController) {
     const vnode = view(ctrl);
 
     if (keyboardHelpVNode === null) {
+        returnFocus = document.activeElement as HTMLElement | null;
         container.innerHTML = '';
         const placeholder = document.createElement('div');
         container.appendChild(placeholder);
@@ -167,4 +179,6 @@ export function hideKeyboardHelp() {
     const container = document.getElementById('analysis-keyboard-help');
     if (container) container.style.display = 'none';
     keyboardHelpVNode = null;
+    returnFocus?.focus();
+    returnFocus = null;
 }
