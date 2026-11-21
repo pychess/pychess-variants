@@ -39,9 +39,11 @@ class LobbyTargetedSeeksTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(2, send.await_count)
         self.assertEqual(
             {alice.username, bob.username},
-            {name for name, socket in sockets.items() if any(
-                socket in call.args[0] for call in send.await_args_list
-            )},
+            {
+                name
+                for name, socket in sockets.items()
+                if any(socket in call.args[0] for call in send.await_args_list)
+            },
         )
         for call in send.await_args_list:
             self.assertEqual("get_seeks", call.args[1]["type"])

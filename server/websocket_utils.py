@@ -287,11 +287,7 @@ async def process_ws(
                 ws.exception(),
                 now - opened_at,
                 now - last_received_at,
-                (
-                    None
-                    if last_app_heartbeat_at is None
-                    else round(now - last_app_heartbeat_at, 1)
-                ),
+                (None if last_app_heartbeat_at is None else round(now - last_app_heartbeat_at, 1)),
             )
         user.authenticated_sockets.discard(ws)
         log.debug("%s finally: await ws.close() %s", request.rel_url.path, user.username)
