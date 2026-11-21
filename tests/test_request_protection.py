@@ -612,23 +612,27 @@ class AnonymousHtmlAdmissionMiddlewareTestCase(unittest.IsolatedAsyncioTestCase)
 
             # The exception must not affect regular anonymous pages.
             request = make_mocked_request("GET", "/about", app=self.app)
-            with patch(
-                "request_protection.aiohttp_session.get_session",
-                AsyncMock(return_value={}),
+            with (
+                patch(
+                    "request_protection.aiohttp_session.get_session",
+                    AsyncMock(return_value={}),
+                ),
+                self.assertRaises(web.HTTPTooManyRequests),
             ):
-                with self.assertRaises(web.HTTPTooManyRequests):
-                    await request_protection_middleware(request, handler)
+                await request_protection_middleware(request, handler)
 
             # Production must not gain the test-mode exception, even if the
             # test-user flag is accidentally enabled.
             self.state._local_dev_mode = False
             request = make_mocked_request("GET", "/", app=self.app)
-            with patch(
-                "request_protection.aiohttp_session.get_session",
-                AsyncMock(return_value={}),
+            with (
+                patch(
+                    "request_protection.aiohttp_session.get_session",
+                    AsyncMock(return_value={}),
+                ),
+                self.assertRaises(web.HTTPTooManyRequests),
             ):
-                with self.assertRaises(web.HTTPTooManyRequests):
-                    await request_protection_middleware(request, handler)
+                await request_protection_middleware(request, handler)
         self.assertEqual(handler.await_count, 3)
 
     async def test_authenticated_browsing_bypasses_exhausted_anonymous_limits(self):

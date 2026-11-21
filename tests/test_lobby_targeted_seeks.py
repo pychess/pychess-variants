@@ -37,15 +37,13 @@ class LobbyTargetedSeeksTests(unittest.IsolatedAsyncioTestCase):
             await lobby.lobby_broadcast_seeks((alice.username, bob.username))
 
         self.assertEqual(2, send.await_count)
-        self.assertEqual(
-            {alice.username, bob.username},
-            {name for name, socket in sockets.items() if any(
-                socket in call.args[0] for call in send.await_args_list
-            )},
+        self.assertCountEqual(
+            [
+                ({sockets[alice.username]}, {"type": "get_seeks", "seeks": []}),
+                ({sockets[bob.username]}, {"type": "get_seeks", "seeks": [seek.seek_json]}),
+            ],
+            [call.args for call in send.await_args_list],
         )
-        for call in send.await_args_list:
-            self.assertEqual("get_seeks", call.args[1]["type"])
-            self.assertEqual([seek.id], [s["_id"] for s in call.args[1]["seeks"]])
 
         # Public seek updates still refresh the entire connected lobby.
         with patch("lobby.ws_send_json_many", new_callable=AsyncMock) as send_all:

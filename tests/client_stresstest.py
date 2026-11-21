@@ -100,6 +100,7 @@ async def browser_heartbeat(ws, interval_secs: float):
     and a game WebSocket may hit aiohttp's 30-second receive timeout.
     Disabled by default to preserve historical stress-test comparisons.
     """
+
     async def heartbeat_loop():
         while not ws.closed:
             await asyncio.sleep(interval_secs)
@@ -211,9 +212,7 @@ def distribute_time_controls(game_count: int, seed: int) -> list[TimeControlProf
     for index in by_remainder[:remaining]:
         quotas[index] += 1
     assigned = [
-        profile
-        for profile, quota in zip(MIXED_TIME_CONTROLS, quotas)
-        for _ in range(quota)
+        profile for profile, quota in zip(MIXED_TIME_CONTROLS, quotas) for _ in range(quota)
     ]
     random.Random(seed).shuffle(assigned)
     return assigned
@@ -1022,10 +1021,7 @@ class RunStats:
         if self.first_move_at is None:
             self.first_move_at = sent_at
         key = (game_id, ply)
-        if (
-            key not in self._pending_moves
-            and ply > self._last_observed_move_ply.get(game_id, -1)
-        ):
+        if key not in self._pending_moves and ply > self._last_observed_move_ply.get(game_id, -1):
             self._pending_moves[key] = PendingMove(sent_at, sender, move, profile)
 
     def observe_board(
@@ -1348,7 +1344,7 @@ class TestUser:
             else "custom"
         )
         self.human_seek_sent = False
-        self.human_accepted_seek_ids: set[str] = set()
+        self.last_human_accepted_seek_id: str | None = None
         self.spectators = []
         self.round_tasks: set[asyncio.Task[None]] = set()
         self.active_round_games: set[str] = set()
@@ -1590,8 +1586,7 @@ class TestUser:
         if self.human_pair is None or self.human_role != "acceptor":
             return
         if self.maintain_human_games and (
-            self.human_pair.active_game_id is not None
-            or self.human_pair.challenge_sent_at is None
+            self.human_pair.active_game_id is not None or self.human_pair.challenge_sent_at is None
         ):
             return
         if self._has_active_round_task():
@@ -1608,10 +1603,10 @@ class TestUser:
             ):
                 continue
             seek_id = seek["seekID"]
-            if seek_id in self.human_accepted_seek_ids:
+            if seek_id == self.last_human_accepted_seek_id:
                 return
             if await self._send_json_safe(wsl, {"type": "accept_seek", "seekID": seek_id}):
-                self.human_accepted_seek_ids.add(seek_id)
+                self.last_human_accepted_seek_id = seek_id
             return
 
     def _variant_for_game(self, game_id: str) -> str | None:
@@ -1853,9 +1848,10 @@ class TestUser:
                             print(self.username)
 
                     try:
-                        async with session.ws_connect(
-                            LOBBY_URL, headers={"Origin": URI}
-                        ) as wsl, browser_heartbeat(wsl, self.client_heartbeat_secs):
+                        async with (
+                            session.ws_connect(LOBBY_URL, headers={"Origin": URI}) as wsl,
+                            browser_heartbeat(wsl, self.client_heartbeat_secs),
+                        ):
                             # await wsl.send_json({"type": "lobby_user_connected", "username": self.username})
                             # await wsl.send_json({"type": "get_seeks"})
                             loop_time = asyncio.get_running_loop().time
@@ -1865,7 +1861,10 @@ class TestUser:
 
                             async def maybe_send_challenge(now: float) -> float:
                                 if self.human_pair is not None:
-                                    if self._can_issue_new_challenge() and await self._send_create_human_seek(wsl):
+                                    if (
+                                        self._can_issue_new_challenge()
+                                        and await self._send_create_human_seek(wsl)
+                                    ):
                                         return loop_time()
                                     return last_challenge_sent
                                 if (
@@ -1888,9 +1887,7 @@ class TestUser:
                                 # cannot be relied on to start replacement games.
                                 # Recheck pair readiness on every loop iteration.
                                 if self.maintain_human_games:
-                                    last_challenge_sent = await maybe_send_challenge(
-                                        loop_time()
-                                    )
+                                    last_challenge_sent = await maybe_send_challenge(loop_time())
                                 try:
                                     msg = await asyncio.wait_for(
                                         wsl.receive(),
@@ -1958,7 +1955,9 @@ class TestUser:
                                                 self.game_bot_profiles[game_id] = actual_bot_profile
                                             await self._record_game_start(
                                                 game_id,
-                                                "Human" if self.human_pair is not None else (actual_bot_profile or game_bot_profile),
+                                                "Human"
+                                                if self.human_pair is not None
+                                                else (actual_bot_profile or game_bot_profile),
                                                 challenge_sent_at,
                                             )
                                             self._start_round_task(
@@ -1980,7 +1979,9 @@ class TestUser:
                                         ) = await self._bind_game_challenge(game_id)
                                         await self._record_game_start(
                                             game_id,
-                                            "Human" if self.human_pair is not None else game_bot_profile,
+                                            "Human"
+                                            if self.human_pair is not None
+                                            else game_bot_profile,
                                             challenge_sent_at,
                                         )
                                         self._start_round_task(
@@ -1991,14 +1992,23 @@ class TestUser:
                                             game_bot_profile=game_bot_profile,
                                         )
 
-                                    elif data["type"] == "get_seeks" and self.human_pair is not None:
+                                    elif (
+                                        data["type"] == "get_seeks" and self.human_pair is not None
+                                    ):
                                         await self._accept_human_seek(wsl, data.get("seeks", []))
                                     elif data["type"] == "lobby_user_connected":
                                         if data.get("username") == self.username:
                                             print("Connected as %s" % data["username"])
-                                            if self.human_pair is not None and self.human_role is not None:
-                                                self.human_pair.register(self.human_role, self.username)
-                                                last_challenge_sent = await maybe_send_challenge(loop_time())
+                                            if (
+                                                self.human_pair is not None
+                                                and self.human_role is not None
+                                            ):
+                                                self.human_pair.register(
+                                                    self.human_role, self.username
+                                                )
+                                                last_challenge_sent = await maybe_send_challenge(
+                                                    loop_time()
+                                                )
                                     elif data["type"] == "error" and self.human_pair is not None:
                                         raise RuntimeError(
                                             f"Human matchmaking failed for {self.username}: "
@@ -2196,9 +2206,8 @@ class TestUser:
                                             last_ply = board_ply
                                             pending_human_move.position_changed(board_ply)
                                         self._mark_board_seen(game_id, data.get("tp"))
-                                        if (
-                                            self.run_stats is not None
-                                            and isinstance(board_ply, int)
+                                        if self.run_stats is not None and isinstance(
+                                            board_ply, int
                                         ):
                                             self.run_stats.observe_board(
                                                 game_id,
@@ -2318,8 +2327,11 @@ class TestUser:
                                                     self._mark_move_sent(game_id)
                                                     if self.run_stats is not None:
                                                         self.run_stats.record_move_sent(
-                                                            game_id, position_ply + 1, chosen_move,
-                                                            self.username, submitted_at,
+                                                            game_id,
+                                                            position_ply + 1,
+                                                            chosen_move,
+                                                            self.username,
+                                                            submitted_at,
                                                         )
                                                     last_sent_ply = position_ply
 
@@ -2338,7 +2350,8 @@ class TestUser:
                                             submitted_at = monotonic()
                                             move_clocks = (
                                                 simulated_human_clocks(
-                                                    data["clocks"], turn_color,
+                                                    data["clocks"],
+                                                    turn_color,
                                                     submitted_at - board_received_at,
                                                     board_ply,
                                                 )
@@ -2366,8 +2379,10 @@ class TestUser:
                                                 self._mark_move_sent(game_id)
                                                 if self.run_stats is not None:
                                                     self.run_stats.record_move_sent(
-                                                        game_id, data["ply"] + 1,
-                                                        chosen_move, self.username,
+                                                        game_id,
+                                                        data["ply"] + 1,
+                                                        chosen_move,
+                                                        self.username,
                                                         submitted_at,
                                                     )
                                                 if self.human_pair is not None:
@@ -2457,8 +2472,8 @@ class TestUser:
                                         f"TEST_ROUND_WS_CLIENT_CLOSE user={self.username} "
                                         f"game={game_id} type={msg.type.name} "
                                         f"code={wsr.close_code} exception={wsr.exception()!r} "
-                                        f"lifetime_secs={now-connected_at:.1f} "
-                                        f"last_rx_age_secs={now-last_received_at:.1f} "
+                                        f"lifetime_secs={now - connected_at:.1f} "
+                                        f"last_rx_age_secs={now - last_received_at:.1f} "
                                         f"last_app_pong_age_secs={pong_age}"
                                     )
                                 break
@@ -2549,9 +2564,7 @@ async def spectators(
         await asyncio.gather(*tasks, return_exceptions=True)
 
 
-async def wait_for_client_tasks(
-    tasks: list[asyncio.Task[None]], duration_secs: float
-) -> bool:
+async def wait_for_client_tasks(tasks: list[asyncio.Task[None]], duration_secs: float) -> bool:
     """Wait until completion or deadline without cancelling sessions on timeout.
 
     Returns whether some clients were still running when the deadline expired.
@@ -2582,12 +2595,12 @@ async def main(args: argparse.Namespace):
         regular_count=args.spectators_regular_per_game,
     )
     mixed_profiles = (
-        distribute_time_controls(args.users // 2, args.mix_seed)
-        if args.mixed_time_controls else []
+        distribute_time_controls(args.users // 2, args.mix_seed) if args.mixed_time_controls else []
     )
     human_pairs = (
         [HumanPair(mixed_profiles[i] if mixed_profiles else None) for i in range(args.users // 2)]
-        if args.human_vs_human else []
+        if args.human_vs_human
+        else []
     )
     users = [
         TestUser(
@@ -2598,16 +2611,19 @@ async def main(args: argparse.Namespace):
             challenge_retry_secs=args.challenge_retry_secs,
             game_minutes=(
                 human_pairs[i // 2].time_control.minutes
-                if args.mixed_time_controls else args.game_minutes
+                if args.mixed_time_controls
+                else args.game_minutes
             ),
             move_delay_secs=args.move_delay_secs,
             move_delay_min_secs=(
                 human_pairs[i // 2].time_control.min_move_delay_secs
-                if args.mixed_time_controls else args.move_delay_min_secs
+                if args.mixed_time_controls
+                else args.move_delay_min_secs
             ),
             move_delay_max_secs=(
                 human_pairs[i // 2].time_control.max_move_delay_secs
-                if args.mixed_time_controls else args.move_delay_max_secs
+                if args.mixed_time_controls
+                else args.move_delay_max_secs
             ),
             spectator_request_gap_secs=args.spectator_request_gap_secs,
             spectator_http_semaphore=spectator_http_semaphore,
@@ -2687,9 +2703,7 @@ async def main(args: argparse.Namespace):
                 flush=True,
             )
 
-    reporter = (
-        asyncio.create_task(report_activity()) if args.report_interval_secs > 0 else None
-    )
+    reporter = asyncio.create_task(report_activity()) if args.report_interval_secs > 0 else None
     try:
         timed_out = await wait_for_client_tasks(tasks, args.run_duration_secs)
         if timed_out:
@@ -2754,8 +2768,7 @@ async def main(args: argparse.Namespace):
     print(f"active_games_by_time_control_at_stop={await run_stats.active_time_controls()}")
     if args.maintain_human_games:
         planned = Counter(
-            pair.time_control.name if pair.time_control else "custom"
-            for pair in human_pairs
+            pair.time_control.name if pair.time_control else "custom" for pair in human_pairs
         )
         print(f"target_active_games={len(human_pairs)}")
         print(f"target_active_games_by_time_control={dict(sorted(planned.items()))}")

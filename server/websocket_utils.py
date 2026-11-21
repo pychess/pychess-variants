@@ -24,12 +24,12 @@ if TYPE_CHECKING:
     from user import User
 
 from pychess_global_app_state_utils import get_app_state
-from settings import PROD
 from session_security import (
     GAMEPLAY_EXPIRY_GRACE_KEY,
     session_matches_user,
     websocket_session_lifetime,
 )
+from settings import PROD
 
 log = logging.getLogger(__name__)
 
@@ -287,11 +287,7 @@ async def process_ws(
                 ws.exception(),
                 now - opened_at,
                 now - last_received_at,
-                (
-                    None
-                    if last_app_heartbeat_at is None
-                    else round(now - last_app_heartbeat_at, 1)
-                ),
+                (None if last_app_heartbeat_at is None else round(now - last_app_heartbeat_at, 1)),
             )
         user.authenticated_sockets.discard(ws)
         log.debug("%s finally: await ws.close() %s", request.rel_url.path, user.username)
