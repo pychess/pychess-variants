@@ -131,8 +131,7 @@ class ArenaTournament(Tournament):
             ):
                 pair_them(x, y)
             log.info(
-                "ARENA_PAIRING tid=%s waiting=%d edges=0 paired=%d "
-                "cpu_ms=%.2f wall_ms=%.2f",
+                "ARENA_PAIRING tid=%s waiting=%d edges=0 paired=%d cpu_ms=%.2f wall_ms=%.2f",
                 self.id,
                 nb_waiting_players,
                 len(pairing),
@@ -204,8 +203,7 @@ class ArenaTournament(Tournament):
             log.debug("Pairing: %s %s", p[0].username, p[1].username)
 
         log.info(
-            "ARENA_PAIRING tid=%s waiting=%d edges=%d paired=%d "
-            "cpu_ms=%.2f wall_ms=%.2f",
+            "ARENA_PAIRING tid=%s waiting=%d edges=%d paired=%d cpu_ms=%.2f wall_ms=%.2f",
             self.id,
             nb_waiting_players,
             rxg.num_edges(),

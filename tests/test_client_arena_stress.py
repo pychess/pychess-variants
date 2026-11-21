@@ -1,17 +1,19 @@
 """Focused no-network coverage for the local arena stress-test client."""
 
+import argparse
 import asyncio
 import json
 import unittest
 from unittest.mock import patch
 
 from aiohttp import WSMsgType, web
-
 from client_stresstest import (
     RunStats,
-    TestUser as StressTestUser,
     create_local_arenas,
     parse_arena_spec,
+)
+from client_stresstest import (
+    TestUser as StressTestUser,
 )
 
 
@@ -35,7 +37,7 @@ class ArenaSpecTests(unittest.TestCase):
             "abcdefgh:20:bullet:bad/variant",
             "abcdefgh:20",
         ):
-            with self.subTest(raw=raw), self.assertRaises(Exception):
+            with self.subTest(raw=raw), self.assertRaises(argparse.ArgumentTypeError):
                 parse_arena_spec(raw)
 
 
@@ -199,7 +201,9 @@ class ArenaProtocolTests(unittest.IsolatedAsyncioTestCase):
                 await asyncio.wait_for(user.go_to_arena(), timeout=5)
         finally:
             await runner.cleanup()
-        self.assertEqual(messages, ["tournament_user_connected", "join", "tournament_user_connected"])
+        self.assertEqual(
+            messages, ["tournament_user_connected", "join", "tournament_user_connected"]
+        )
         self.assertEqual(captured_games, [("game1234", 0)])
         self.assertEqual(page_views, 2)
         self.assertEqual(connections, 2)

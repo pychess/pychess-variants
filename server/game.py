@@ -314,6 +314,8 @@ class Game:
         self.result: str = "*"
         self.last_server_clock: float = monotonic()
         self.last_move_time: datetime | None = None
+        self.arena_pending = False
+        self.arena_started_at: datetime | None = None
         # Wall-clock time which elapsed on the current turn before this Game
         # instance was reconstructed after a server restart. ``monotonic()``
         # cannot span processes, so restart recovery records the missing part
@@ -529,12 +531,14 @@ class Game:
         between the persisted turn start and ``loaded_at`` has to be carried
         separately. Once a move is played that restart offset is reset to 0.
         """
-        if self.corr or self.status > STARTED:
+        if self.corr or self.status > STARTED or self.arena_pending:
             return
 
         self.loaded_at = loaded_at
 
-        turn_started_at = self.last_move_time if self.board.ply > 0 else self.date
+        turn_started_at = (
+            self.last_move_time if self.board.ply > 0 else self.arena_started_at or self.date
+        )
         if turn_started_at is not None:
             if turn_started_at.tzinfo is None:
                 turn_started_at = turn_started_at.replace(tzinfo=UTC)

@@ -211,6 +211,7 @@ GameDocument = TypedDict(
         "y": NotRequired[int],
         "z": NotRequired[int],
         "tid": NotRequired[str],
+        "arenaStart": NotRequired[datetime | None],
         "rn": NotRequired[int],
         "aid": NotRequired[str],
         "sid": NotRequired[str],

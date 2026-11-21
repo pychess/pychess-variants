@@ -38,7 +38,7 @@ from urllib.parse import quote, urlsplit, urlunsplit
 import aiohttp
 import pyffish as sf
 import test_logger
-from const import ARENA, TEST_PREFIX, T_STARTED
+from const import ARENA, T_STARTED, TEST_PREFIX
 from settings import PROD, URI
 from websocket_utils import ws_send_json
 
@@ -189,7 +189,9 @@ def parse_arena_spec(raw: str) -> ArenaSpec:
     tournament_id, players_raw, profile_name = fields[:3]
     variant = fields[3] if len(fields) == 4 else "chess"
     if tournament_id != "auto" and re.fullmatch(r"\w{8}", tournament_id, flags=re.ASCII) is None:
-        raise argparse.ArgumentTypeError("Arena ID must be eight ASCII letters/digits/underscores, or auto")
+        raise argparse.ArgumentTypeError(
+            "Arena ID must be eight ASCII letters/digits/underscores, or auto"
+        )
     try:
         players = int(players_raw)
     except ValueError:
@@ -255,9 +257,10 @@ async def create_local_arenas(arenas: list[ArenaSpec], run_duration_secs: float)
                     )
                 body = await response.json()
             tournament_id = body.get("tournamentId")
-            if not isinstance(tournament_id, str) or re.fullmatch(
-                r"[A-Za-z0-9]{8}", tournament_id
-            ) is None:
+            if (
+                not isinstance(tournament_id, str)
+                or re.fullmatch(r"[A-Za-z0-9]{8}", tournament_id) is None
+            ):
                 raise RuntimeError(f"Invalid tournament creation response: {body!r}")
             resolved.append(replace(spec, tournament_id=tournament_id))
             print(
@@ -2283,9 +2286,7 @@ class TestUser:
                     pairing: tuple[str, str, str] | None = None
                     try:
                         async with (
-                            session.ws_connect(
-                                TOURNAMENT_URL, headers={"Origin": URI}
-                            ) as wst,
+                            session.ws_connect(TOURNAMENT_URL, headers={"Origin": URI}) as wst,
                             browser_heartbeat(wst, self.client_heartbeat_secs),
                         ):
                             await wst.send_json(
@@ -2337,8 +2338,7 @@ class TestUser:
                                                 f"{self.username}: {data.get('ustatus')}"
                                             )
                                     elif (
-                                        kind == "ustatus"
-                                        and data.get("username") == self.username
+                                        kind == "ustatus" and data.get("username") == self.username
                                     ):
                                         if data.get("ustatus") != "joined":
                                             raise RuntimeError(
@@ -3031,14 +3031,10 @@ async def main(args: argparse.Namespace):
             maintain_human_games=args.maintain_human_games,
             client_heartbeat_secs=args.client_heartbeat_secs,
             postgame_linger_max_secs=(
-                args.postgame_linger_max_secs
-                if args.maintain_human_games or args.arena
-                else 0.0
+                args.postgame_linger_max_secs if args.maintain_human_games or args.arena else 0.0
             ),
             postgame_linger_probability=(
-                args.postgame_linger_probability
-                if args.maintain_human_games or args.arena
-                else 0.0
+                args.postgame_linger_probability if args.maintain_human_games or args.arena else 0.0
             ),
             arena_spec=arena_assignments[i] if args.arena else None,
         )

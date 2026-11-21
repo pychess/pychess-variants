@@ -7,6 +7,8 @@ import random
 import traceback
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping
+from contextlib import nullcontext
+from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from functools import lru_cache
 from operator import neg
@@ -48,7 +50,7 @@ from lobby_panels_cache import refresh_lobby_tournament_winners_cache
 from misc import time_control_str
 from newid import new_id
 from pymongo import ReturnDocument
-from pymongo.errors import BulkWriteError
+from pymongo.errors import BulkWriteError, DuplicateKeyError, OperationFailure
 from rated_start import can_rate_start
 from sortedcollections import ValueSortedDict
 from sortedcontainers import SortedKeysView
@@ -81,7 +83,7 @@ from profile_counts import refresh_tournament_points
 from settings import URI
 from spectators import spectators
 from user import User
-from utils import insert_game_to_db, realtime_game_conflict
+from utils import insert_game_to_db, publish_game_to_tv, realtime_game_conflict
 from variants import get_server_variant, is_catalogued_variant
 
 log = logging.getLogger(__name__)
@@ -119,6 +121,20 @@ class EnoughPlayer(Exception):
 
 class PairingUnavailable(RuntimeError):
     """Raised when a fixed-round pairing backend cannot produce legal pairings."""
+
+
+class ArenaPairingsRejected(RuntimeError):
+    def __init__(self, game_ids: set[str]) -> None:
+        self.game_ids = game_ids
+        super().__init__("Rejected Arena pairings: " + ", ".join(sorted(game_ids)))
+
+
+@dataclass
+class ArenaPairingWave:
+    games: list[Game] = field(default_factory=list)
+    unpersisted_game: Game | None = None
+    pairings_saved: bool = False
+    publish: bool = True
 
 
 class ByeGame:
@@ -463,9 +479,8 @@ class Tournament(ABC):
         self.manual_next_round_pending = False
         self.prev_pairing: datetime | None = None
         self.bye_players: list[User] = []
-        # Pairings created in memory but not yet durably saved/published. A transient
-        # MongoDB error must not strand their players or create a second game wave.
-        self._pending_arena_games: list[Game] | None = None
+        self._arena_wave: ArenaPairingWave | None = None
+        self._arena_wave_lock = asyncio.Lock()
 
         self.messages: collections.deque = collections.deque([], MAX_CHAT_LINES)
         self.spectators: set[User] = set()
@@ -1140,7 +1155,7 @@ class Tournament(ABC):
                             self.prev_pairing = now - self.wave - self.wave_delta
 
                         try:
-                            if self._pending_arena_games is not None:
+                            if self._arena_wave is not None:
                                 await self.retry_pending_arena_pairings()
                                 self.prev_pairing = now
                             elif now >= self.prev_pairing + self.wave + (
@@ -1416,8 +1431,8 @@ class Tournament(ABC):
 
     async def finalize(self, status: int) -> None:
         self.status = status
-        # No pairing wave can be delivered after the tournament has ended.
-        self._pending_arena_games = None
+        if self.system == ARENA:
+            await self._discard_unpublished_arena_wave()
         if status == T_FINISHED:
             self.normalize_finished_swiss_round_state()
 
@@ -1475,6 +1490,8 @@ class Tournament(ABC):
 
     async def destroy(self) -> None:
         """Permanently remove a tournament and its tournament-owned metadata."""
+        if self.system == ARENA:
+            await self._discard_unpublished_arena_wave()
         if self.app_state.db is not None:
             await self.app_state.db.tournament.delete_many({"_id": self.id})
             await self.app_state.db.tournament_pairing.delete_many({"tid": self.id})
@@ -1748,15 +1765,24 @@ class Tournament(ABC):
         *,
         publish_pairings: bool = True,
     ) -> tuple[list[tuple[User, User]], list[Game]]:
-        if self.system == ARENA and self._pending_arena_games is not None:
-            raise RuntimeError("Previous arena pairing wave has not been persisted/published")
+        async with self._arena_wave_lock if self.system == ARENA else nullcontext():
+            if self.system == ARENA:
+                if self.status != T_STARTED:
+                    return [], []
+                if self._arena_wave is not None:
+                    raise RuntimeError("Previous arena pairing wave is still pending")
+            return await self._create_new_pairings(waiting_players, publish_pairings)
 
+    async def _create_new_pairings(
+        self, waiting_players: list[User], publish_pairings: bool
+    ) -> tuple[list[tuple[User, User]], list[Game]]:
         start = monotonic()
         stage_start = start
         stage = "pairing"
         timings: dict[str, float] = {}
         pairing: list[tuple[User, User]] = []
         games: list[Game] = []
+        wave: ArenaPairingWave | None = None
         completed = False
         try:
             self.bye_players = []
@@ -1776,30 +1802,31 @@ class Tournament(ABC):
 
             stage = "create"
             stage_start = monotonic()
+            if self.system == ARENA:
+                wave = ArenaPairingWave(publish=publish_pairings)
+                self._arena_wave = wave
             games = await self.create_games(pairing)
             timings[stage] = (monotonic() - stage_start) * 1000
 
-            # In a large wave, earlier games can finish before the entire batch
-            # has been created. Keep this batch for a safe retry if persistence
-            # fails after create_games() has already occupied its players.
-            if self.system == ARENA:
-                self._pending_arena_games = games
-
             stage = "persist"
             stage_start = monotonic()
-            await self.db_insert_pairing(games)
-            await self.persist_unpaired_round_entries(
-                self.current_round, pairing, round_bye_players
-            )
+            if wave is None:
+                await self.db_insert_pairing(games)
+                await self.persist_unpaired_round_entries(
+                    self.current_round, pairing, round_bye_players
+                )
+            elif self.status == T_STARTED:
+                await self._persist_arena_wave(wave)
             timings[stage] = (monotonic() - stage_start) * 1000
 
             stage = "publish"
             stage_start = monotonic()
-            if publish_pairings:
+            if publish_pairings and (wave is None or self.status == T_STARTED):
                 await self.publish_pairings(games)
             timings[stage] = (monotonic() - stage_start) * 1000
-            self._pending_arena_games = None
-            completed = True
+            completed = wave is None or self.status == T_STARTED
+            if wave is not None and completed:
+                self._arena_wave = None
             return (pairing, games)
         finally:
             if self.system == ARENA:
@@ -1812,7 +1839,7 @@ class Tournament(ABC):
                     self.id,
                     len(waiting_players),
                     len(pairing),
-                    len(games),
+                    len(wave.games) if wave is not None else len(games),
                     timings.get("pairing", 0.0),
                     timings.get("create", 0.0),
                     timings.get("persist", 0.0),
@@ -1824,23 +1851,98 @@ class Tournament(ABC):
 
     async def retry_pending_arena_pairings(self) -> None:
         """Finish a created wave before allowing the clock to start another one."""
-        games = self._pending_arena_games
-        if games is None:
-            return
-        start = monotonic()
-        await self.db_insert_pairing(games)
-        persisted_ms = (monotonic() - start) * 1000
-        # Retrying an already published game may redeliver a new_game message,
-        # but it must never create another game or overwrite a finished result.
-        await self.publish_pairings(games)
-        self._pending_arena_games = None
-        log.info(
-            "ARENA_PAIRING_RETRY tid=%s games=%d persist_ms=%.2f publish_ms=%.2f",
-            self.id,
-            len(games),
-            persisted_ms,
-            (monotonic() - start) * 1000 - persisted_ms,
-        )
+        async with self._arena_wave_lock:
+            wave = self._arena_wave
+            if wave is None or self.status != T_STARTED:
+                return
+            start = monotonic()
+            created_at = persisted_at = start
+            stage = "create"
+            outcome = "error"
+            try:
+                await self._persist_arena_game(wave)
+                created_at = monotonic()
+                stage = "persist"
+                if self.status == T_STARTED and not wave.pairings_saved:
+                    await self._persist_arena_wave(wave)
+                persisted_at = monotonic()
+                stage = "publish"
+                if self.status == T_STARTED and wave.publish:
+                    await self.publish_pairings(wave.games)
+                if self.status == T_STARTED:
+                    self._arena_wave = None
+                    outcome = "ok"
+                else:
+                    outcome = "ended"
+            finally:
+                end = monotonic()
+                if stage == "create":
+                    created_at = persisted_at = end
+                elif stage == "persist":
+                    persisted_at = end
+                log.info(
+                    "ARENA_PAIRING_RETRY tid=%s games=%d create_ms=%.2f persist_ms=%.2f "
+                    "publish_ms=%.2f total_ms=%.2f outcome=%s stage=%s",
+                    self.id,
+                    len(wave.games),
+                    (created_at - start) * 1000,
+                    (persisted_at - created_at) * 1000,
+                    (end - persisted_at) * 1000,
+                    (end - start) * 1000,
+                    outcome,
+                    stage,
+                )
+
+    async def _persist_arena_wave(self, wave: ArenaPairingWave) -> None:
+        try:
+            await self.db_insert_pairing(wave.games)
+        except ArenaPairingsRejected as exc:
+            log.exception("Discarding rejected games from Arena %s", self.id)
+            rejected = [game for game in wave.games if game.id in exc.game_ids]
+            await self.discard_unpublished_arena_games(rejected)
+            wave.games[:] = [game for game in wave.games if game.id not in exc.game_ids]
+        wave.pairings_saved = True
+
+    async def _discard_unpublished_arena_wave(self) -> None:
+        async with self._arena_wave_lock:
+            wave = self._arena_wave
+            self._arena_wave = None
+            if wave is None:
+                return
+            games = wave.games[:]
+            if wave.unpersisted_game is not None:
+                games.append(wave.unpersisted_game)
+            unpublished = [game for game in games if game.arena_pending and game.status <= STARTED]
+            try:
+                await self.discard_unpublished_arena_games(unpublished)
+            except Exception:
+                for game in unpublished:
+                    await self._release_unpublished_arena_game(game)
+                log.exception("Could not discard unpublished games from Arena %s", self.id)
+
+    async def discard_unpublished_arena_games(self, games: list[Game]) -> None:
+        if games and self.app_state.db is not None:
+            pairings = []
+            game_docs = []
+            for game in games:
+                # An ID collision must not remove the other tournament's pairing or game.
+                identity = {"_id": game.id, "d": game.date}
+                usernames = [game.wplayer.username, game.bplayer.username]
+                pairings.append({**identity, "u": usernames})
+                game_docs.append({**identity, "us": usernames})
+            filters = {"tid": self.id, "r": R2C["*"]}
+            await self.app_state.db.tournament_pairing.delete_many({**filters, "$or": pairings})
+            await self.app_state.db.game.delete_many(
+                {**filters, "$or": game_docs, "arenaStart": {"$exists": True}}
+            )
+        for game in games:
+            await self._release_unpublished_arena_game(game)
+
+    async def _release_unpublished_arena_game(self, game: Game) -> None:
+        if self.app_state.games.get(game.id) is game:
+            self.app_state.games.pop(game.id)
+        game.status = ABORTED
+        await game.cancel_clocks_for_eviction()
 
     async def persist_byes(self) -> None:
         if not self.bye_players:
@@ -1862,10 +1964,13 @@ class Tournament(ABC):
         return
 
     async def create_games(self, pairing: list[tuple[User, User]]) -> list[Game]:
-        games = []
+        wave = self._arena_wave
+        games = [] if wave is None else wave.games
         game_table = None if self.app_state.db is None else self.app_state.db.game
         for wp, bp in pairing:
             async with self.app_state.realtime_game_creation_lock:
+                if wave is not None and self.status != T_STARTED:
+                    break
                 conflict = realtime_game_conflict(self.app_state, (wp, bp))
                 if conflict is not None:
                     player, active_game = conflict
@@ -1879,6 +1984,8 @@ class Tournament(ABC):
                     continue
 
                 game_id = await new_id(game_table)
+                if wave is not None and self.status != T_STARTED:
+                    break
                 game = Game(
                     self.app_state,
                     game_id,
@@ -1896,81 +2003,126 @@ class Tournament(ABC):
                 # Round index is persisted with pairing docs to keep Swiss round history unambiguous.
                 game.round = self.current_round  # type: ignore[attr-defined]
                 self.app_state.games[game_id] = game
+                if wave is not None:
+                    game.arena_pending = True
+                    game.stopwatch.stop()
+                    for player in game.non_bot_players:
+                        if player.game_in_progress == game.id:
+                            player.game_in_progress = None
+                    wave.unpersisted_game = game
 
-            if game.has_crosstable:
-                doc = await self.app_state.db.crosstable.find_one({"_id": game.ct_id})
-                if doc is not None:
-                    game.crosstable = doc
-
-            games.append(game)
-            await insert_game_to_db(game, self.app_state)
-
-            self.ongoing_games.add(game)
-            self.update_players(game)
-            self.update_game_ranks(game)
+            if wave is None:
+                await self._insert_pairing_game(game)
+                games.append(game)
+                self.ongoing_games.add(game)
+                self.update_players(game)
+                self.update_game_ranks(game)
+            else:
+                await self._persist_arena_game(wave)
 
         return games
+
+    async def _insert_pairing_game(self, game: Game) -> None:
+        if game.has_crosstable and self.app_state.db is not None:
+            doc = await self.app_state.db.crosstable.find_one({"_id": game.ct_id})
+            if doc is not None:
+                game.crosstable = doc
+        await insert_game_to_db(game, self.app_state)
+
+    async def _persist_arena_game(self, wave: ArenaPairingWave) -> None:
+        game = wave.unpersisted_game
+        if game is None:
+            return
+        try:
+            await self._insert_pairing_game(game)
+        except OperationFailure as exc:
+            if not isinstance(exc, DuplicateKeyError) and exc.code != 121:
+                raise
+            log.exception("Discarding rejected Arena game %s in %s", game.id, self.id)
+            await self.discard_unpublished_arena_games([game])
+        else:
+            wave.games.append(game)
+        wave.unpersisted_game = None
+
+    async def _activate_arena_game(self, game: Game) -> bool:
+        started_at = datetime.now(UTC)
+        if self.app_state.db is not None and game.persist_to_db:
+            doc = await self.app_state.db.game.find_one_and_update(
+                {"_id": game.id, "tid": self.id, "d": game.date},
+                {"$currentDate": {"arenaStart": True}},
+                projection={"arenaStart": 1},
+                return_document=ReturnDocument.AFTER,
+            )
+            if doc is None:
+                log.error("Missing Arena game %s at publication in %s", game.id, self.id)
+                await self.discard_unpublished_arena_games([game])
+                return False
+            started_at = doc["arenaStart"]
+        if self.status != T_STARTED:
+            return False
+
+        game.arena_started_at = started_at
+        game.arena_pending = False
+        for player in game.non_bot_players:
+            player.game_in_progress = game.id
+        self.ongoing_games.add(game)
+        self.update_players(game)
+        return True
+
+    async def _send_pairing_to_player(self, game: Game, player: User) -> bool:
+        if player.title == "TEST":
+            return True
+        response = {
+            "type": "new_game",
+            "gameId": game.id,
+            "wplayer": game.wplayer.username,
+            "bplayer": game.bplayer.username,
+        }
+        player_data = self.player_data_by_name(player.username)
+        return await ws_send_json_many(self.player_round_sockets(player, player_data), response) > 0
 
     async def publish_pairings(self, games: list[Game]) -> None:
         is_new_top_game = False
 
         for game in games:
+            if self.system == ARENA:
+                if self.status != T_STARTED:
+                    return
+                if not game.arena_pending or game.status > STARTED:
+                    continue
+                if not await self._activate_arena_game(game):
+                    continue
+
             if self.update_game_ranks(game):
                 is_new_top_game = True
 
-            response = {
-                "type": "new_game",
-                "gameId": game.id,
-                "wplayer": game.wplayer.username,
-                "bplayer": game.bplayer.username,
-            }
-
-            ws_ok = False
-            if game.wplayer.title != "TEST":
-                wp_data = self.player_data_by_name(game.wplayer.username)
-                ws_ok = (
-                    await ws_send_json_many(
-                        self.player_round_sockets(game.wplayer, wp_data),
-                        response,
+            if self.system == ARENA:
+                try:
+                    delivered = await asyncio.gather(
+                        self._send_pairing_to_player(game, game.wplayer),
+                        self._send_pairing_to_player(game, game.bplayer),
                     )
-                    > 0
-                )
-            if self.system == ARENA and (not ws_ok) and game.wplayer.title != "TEST":
-                await self.pause(game.wplayer)
-                log.debug(
-                    "White player %s left the tournament (ws send failed)",
-                    game.wplayer.username,
-                )
-            elif (not ws_ok) and game.wplayer.title != "TEST":
-                log.debug(
-                    "Fixed-round redirect not delivered for white player %s in tournament %s",
-                    game.wplayer.username,
-                    self.id,
-                )
+                finally:
+                    if game.status <= STARTED:
+                        game.last_server_clock = monotonic()
+                        game.stopwatch.restart()
+                if self.status != T_STARTED:
+                    return
+                for player, notified in zip((game.wplayer, game.bplayer), delivered):
+                    if not notified:
+                        await self.pause(player)
+                await publish_game_to_tv(game, self.app_state)
+            else:
+                for player in (game.wplayer, game.bplayer):
+                    if not await self._send_pairing_to_player(game, player):
+                        log.debug(
+                            "Fixed-round redirect not delivered for %s in tournament %s",
+                            player.username,
+                            self.id,
+                        )
 
-            ws_ok = False
-            if game.bplayer.title != "TEST":
-                bp_data = self.player_data_by_name(game.bplayer.username)
-                ws_ok = (
-                    await ws_send_json_many(
-                        self.player_round_sockets(game.bplayer, bp_data),
-                        response,
-                    )
-                    > 0
-                )
-            if self.system == ARENA and (not ws_ok) and game.bplayer.title != "TEST":
-                await self.pause(game.bplayer)
-                log.debug(
-                    "Black player %s left the tournament (ws send failed)",
-                    game.bplayer.username,
-                )
-            elif (not ws_ok) and game.bplayer.title != "TEST":
-                log.debug(
-                    "Fixed-round redirect not delivered for black player %s in tournament %s",
-                    game.bplayer.username,
-                    self.id,
-                )
-
+        if self.system == ARENA and self.status != T_STARTED:
+            return
         if is_new_top_game:
             await self.broadcast(self.top_game_json)
 
@@ -2526,21 +2678,32 @@ class Tournament(ABC):
             errors = details.get("writeErrors", [])
             if details.get("writeConcernErrors") or not errors:
                 raise
-            if any(error.get("code") != 11000 for error in errors):
-                raise
+            rejected: set[str] = set()
             for error in errors:
                 index = error.get("index")
                 if not isinstance(index, int) or not 0 <= index < len(pairing_documents):
                     raise
                 expected = pairing_documents[index]
-                existing = await pairing_table.find_one({"_id": expected["_id"]})
-                # Never conceal a genuine game-ID collision or a different pairing.
-                if (
-                    existing is None
-                    or existing.get("tid") != expected["tid"]
-                    or tuple(existing.get("u", ())) != tuple(expected["u"])
-                ):
+                code = error.get("code")
+                if code == 11000:
+                    existing = await pairing_table.find_one(
+                        {
+                            "_id": expected["_id"],
+                            "tid": expected["tid"],
+                            "u": list(expected["u"]),
+                            "d": expected["d"],
+                        },
+                        {"_id": 1},
+                    )
+                    if existing is not None:
+                        continue
+                elif code != 121:
                     raise
+                if self.system != ARENA:
+                    raise
+                rejected.add(expected["_id"])
+            if rejected:
+                raise ArenaPairingsRejected(rejected) from exc
             log.info(
                 "TOURNAMENT_PAIRING_ALREADY_PERSISTED tid=%s duplicates=%d total=%d",
                 self.id,

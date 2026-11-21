@@ -8,7 +8,6 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
-
 PAIRING_RE = re.compile(
     r"ARENA_PAIRING tid=(?P<tid>\w{8}) waiting=(?P<waiting>\d+) "
     r"edges=(?P<edges>\d+) paired=(?P<paired>\d+) "
@@ -45,10 +44,10 @@ def main() -> None:
             f"max_waiting={int(max(row['waiting'] for row in rows))} "
             f"max_edges={int(max(row['edges'] for row in rows))} "
             f"total_pairs={int(sum(row['paired'] for row in rows))} "
-            f"cpu_ms_p50={percentile(cpu, .50):.2f} "
-            f"cpu_ms_p95={percentile(cpu, .95):.2f} "
+            f"cpu_ms_p50={percentile(cpu, 0.50):.2f} "
+            f"cpu_ms_p95={percentile(cpu, 0.95):.2f} "
             f"cpu_ms_max={max(cpu):.2f} "
-            f"wall_ms_p95={percentile(wall, .95):.2f}"
+            f"wall_ms_p95={percentile(wall, 0.95):.2f}"
         )
 
 

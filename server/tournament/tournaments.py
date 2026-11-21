@@ -53,7 +53,7 @@ from typing_defs import (
     TournamentPoint,
 )
 from user import User
-from utils import load_game
+from utils import load_game, load_game_from_doc
 from variants import ALL_VARIANTS, C2V, VARIANTS, get_server_variant, is_catalogued_variant
 from ws_types import ChatLine
 
@@ -389,9 +389,22 @@ async def _repair_missing_pairing_docs_from_games(tournament: Tournament) -> Non
         async for doc in pairing_table.find({"tid": tournament.id}, projection={"_id": 1})
     }
     repaired_ids: list[str] = []
+    unpublished: list[Game] = []
 
     async for game_doc in game_table.find({"tid": tournament.id}):
         game_id = game_doc["_id"]
+        if (
+            tournament.system == ARENA
+            and "arenaStart" in game_doc
+            and game_doc["arenaStart"] is None
+            and game_doc["s"] <= STARTED
+        ):
+            game = await load_game_from_doc(tournament.app_state, game_doc)
+            if game is not None:
+                if TYPE_CHECKING:
+                    assert isinstance(game, Game)
+                unpublished.append(game)
+            continue
         if game_id in pairing_ids:
             continue
 
@@ -425,6 +438,9 @@ async def _repair_missing_pairing_docs_from_games(tournament: Tournament) -> Non
         await tournament.db_update_pairing(pairing_game)
         repaired_ids.append(game_id)
 
+    if unpublished:
+        # A new process can pair these players again when they reconnect.
+        await tournament.discard_unpublished_arena_games(unpublished)
     if repaired_ids:
         log.warning(
             "Recovered %s missing tournament pairing docs from db.game in %s: %s",

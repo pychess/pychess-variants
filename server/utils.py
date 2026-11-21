@@ -40,6 +40,7 @@ from fairy import (
 )
 from game import Game, StaleMovePersistenceError
 from newid import new_id
+from pymongo.errors import DuplicateKeyError
 from seek import (
     ANON_RESTRICTED_SEEK_MESSAGE,
     TWO_BOARD_TARGETED_SEEK_MESSAGE,
@@ -225,11 +226,14 @@ async def load_game(
 ) -> Game | GameBug | None:
     """Return Game object from app cache or from database."""
     if game_id in app_state.games:
-        return app_state.games[game_id]
+        game = app_state.games[game_id]
+        if isinstance(game, Game) and game.arena_pending and game.status <= STARTED:
+            return None
+        return game
 
     # log.debug("load_game() %s from db ", game_id)
     doc: GameDocument | None = await app_state.db.game.find_one({"_id": game_id})
-    if doc is None:
+    if doc is None or ("arenaStart" in doc and doc["arenaStart"] is None and doc["s"] <= STARTED):
         return None
 
     return await load_game_from_doc(app_state, doc, cache_finished=cache_finished)
@@ -450,13 +454,15 @@ async def _load_game_from_doc(
     level = doc.get("x")
     game.date = doc["d"]
     game.last_move_time = doc.get("l")
+    game.arena_started_at = doc.get("arenaStart")
+    game.arena_pending = "arenaStart" in doc and game.arena_started_at is None
     if game.date.tzinfo is None:
         game.date = game.date.replace(tzinfo=UTC)
     game.status = doc["s"]
     game.level = level if level is not None else 0
     game.result = C2R[doc["r"]]
     if not game.corr:
-        if game.status <= STARTED:
+        if game.status <= STARTED and not game.arena_pending:
             for player in game.non_bot_players:
                 player.game_in_progress = game.id
         else:
@@ -1042,12 +1048,36 @@ async def insert_game_to_db(game, app_state: PychessGlobalAppState):
     if game.initial_fen or game.chess960:
         document["if"] = game.initial_fen
 
+    if game.arena_pending:
+        document["arenaStart"] = None
+        try:
+            await app_state.db.game.insert_one(document)
+        except DuplicateKeyError:
+            # An earlier attempt can commit before its acknowledgement is lost.
+            existing = await app_state.db.game.find_one(
+                {
+                    "_id": game.id,
+                    "tid": game.tournamentId,
+                    "us": document["us"],
+                    "d": game.date,
+                    "arenaStart": {"$exists": True},
+                },
+                {"_id": 1},
+            )
+            if existing is None:
+                raise
+        return
+
     result = await app_state.db.game.insert_one(document)
     if result.inserted_id != game.id:
         log.error("db insert game result %s failed !!!", game.id)
 
+    await publish_game_to_tv(game, app_state)
+
+
+async def publish_game_to_tv(game, app_state: PychessGlobalAppState) -> None:
     # No corr and Fog of War games to TV
-    if (not game.corr) and (game.variant != "fogofwar"):
+    if game.persist_to_db and (not game.corr) and (game.variant != "fogofwar"):
         app_state.tv = game.id
         await app_state.lobby.lobby_broadcast(game.tv_game_json)
         game.wplayer.tv = game.id
