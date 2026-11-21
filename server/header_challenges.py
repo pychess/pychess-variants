@@ -396,8 +396,9 @@ async def challenge_seek_accept(request: web.Request) -> web.StreamResponse:
     if result["type"] == "new_game" and len(seek.creator.lobby_sockets) == 0:
         game_ids = {seek.creator.username: result["gameId"]}
 
-    await broadcast_challenge_state(app_state, challenge_participants(seek), game_ids=game_ids)
-    await app_state.lobby.lobby_broadcast_seeks()
+    participants = challenge_participants(seek)
+    await broadcast_challenge_state(app_state, participants, game_ids=game_ids)
+    await app_state.lobby.lobby_broadcast_seeks(participants)
     return json_response(result)
 
 
@@ -432,7 +433,7 @@ async def challenge_seek_decline(request: web.Request) -> web.StreamResponse:
     seek.set_challenge_decline_reason(decline_reason)
     set_direct_challenge_status(seek, DIRECT_CHALLENGE_DECLINED)
     await broadcast_challenge_state(app_state, usernames)
-    await app_state.lobby.lobby_broadcast_seeks()
+    await app_state.lobby.lobby_broadcast_seeks(usernames)
     return json_response({"ok": True})
 
 
@@ -461,5 +462,5 @@ async def challenge_seek_cancel(request: web.Request) -> web.StreamResponse:
     usernames = challenge_participants(seek)
     set_direct_challenge_status(seek, DIRECT_CHALLENGE_CANCELED)
     await broadcast_challenge_state(app_state, usernames)
-    await app_state.lobby.lobby_broadcast_seeks()
+    await app_state.lobby.lobby_broadcast_seeks(usernames)
     return json_response({"ok": True})

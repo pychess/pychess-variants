@@ -42,7 +42,6 @@ from game import Game, StaleMovePersistenceError
 from newid import new_id
 from seek import (
     ANON_RESTRICTED_SEEK_MESSAGE,
-    DIRECT_CHALLENGE_ACCEPTED,
     TWO_BOARD_TARGETED_SEEK_MESSAGE,
     is_anon_restricted_seek,
     is_targeted_two_board_seek,
@@ -943,10 +942,9 @@ async def new_game(
         # game invitation; only consume it after admission succeeded
         app_state.invites.pop(seek.game_id, None)
 
-    if seek.is_direct_challenge:
-        seek.set_challenge_status(DIRECT_CHALLENGE_ACCEPTED)
-    else:
-        remove_seek(app_state.seeks, seek)
+    # A successfully consumed direct challenge is no longer a seek, just as
+    # for a public seek.  The game ID is delivered separately to participants.
+    remove_seek(app_state.seeks, seek)
 
     await insert_game_to_db(game, app_state)
 

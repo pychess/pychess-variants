@@ -424,7 +424,10 @@ async def handle_create_seek(
         auto_paired = await auto_pair(app_state, matching_user, variant_tc, user, seek_value)
 
     if not auto_paired:
-        await app_state.lobby.lobby_broadcast_seeks()
+        if seek_value.is_direct_challenge:
+            await app_state.lobby.lobby_broadcast_seeks(challenge_participants(seek_value))
+        else:
+            await app_state.lobby.lobby_broadcast_seeks()
         if getattr(seek_value, "is_direct_challenge", False):
             response: DirectChallengeCreatedMessage = {
                 "type": "direct_challenge_created",
@@ -592,11 +595,15 @@ async def handle_delete_seek(
         await app_state.lobby.lobby_broadcast_seeks()
         return
 
+    # A private challenge may only be canceled/deleted by its creator.
+    if seek.is_direct_challenge and seek.creator.username != user.username:
+        return
+
     if getattr(seek, "is_direct_challenge", False):
         if getattr(seek, "challenge_status", None) in ACTIVE_DIRECT_CHALLENGE_STATUSES:
             challenge_users = challenge_participants(seek)
             set_direct_challenge_status(seek, DIRECT_CHALLENGE_CANCELED)
-            await app_state.lobby.lobby_broadcast_seeks()
+            await app_state.lobby.lobby_broadcast_seeks(challenge_users)
             await broadcast_challenge_state(app_state, challenge_users)
             return
         app_state.seeks.pop(seek_id, None)
@@ -619,7 +626,7 @@ async def handle_delete_seek(
     if user is not seek.creator:
         user.seeks.pop(seek_id, None)
     log.debug("handle_delete_seek() deleted seek %s", seek_id)
-    await app_state.lobby.lobby_broadcast_seeks()
+    await app_state.lobby.lobby_broadcast_seeks(challenge_users if challenge_users else None)
     if challenge_users:
         await broadcast_challenge_state(app_state, challenge_users)
 
@@ -647,11 +654,12 @@ async def handle_accept_seek(
         return
 
     seek = app_state.seeks[data["seekID"]]
-    if (
-        getattr(seek, "is_direct_challenge", False)
-        and getattr(seek, "challenge_status", None) not in ACTIVE_DIRECT_CHALLENGE_STATUSES
-    ):
-        return
+    if seek.is_direct_challenge:
+        if seek.target != user.username:
+            await ws_send_json(ws, {"type": "error", "message": "Challenge not available"})
+            return
+        if seek.challenge_status not in ACTIVE_DIRECT_CHALLENGE_STATUSES:
+            return
 
     if getattr(seek, "day", 0) == 0:
         no = await send_game_in_progress_if_any(app_state, user, ws)
@@ -682,8 +690,11 @@ async def handle_accept_seek(
             else:
                 await ws_send_json_many(ws_set, response)
 
-        # Inform others about the accepted challenge / seek removal.
-        await app_state.lobby.lobby_broadcast_seeks()
+        # Only the two participants need a lobby refresh for a direct challenge.
+        if seek.is_direct_challenge:
+            await app_state.lobby.lobby_broadcast_seeks(challenge_participants(seek))
+        else:
+            await app_state.lobby.lobby_broadcast_seeks()
         if getattr(seek, "is_direct_challenge", False):
             game_ids = None
             if response["type"] == "new_game" and len(seek.creator.lobby_sockets) == 0:

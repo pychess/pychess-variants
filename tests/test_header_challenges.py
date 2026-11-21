@@ -1,7 +1,8 @@
+import asyncio
 import unittest
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import test_logger
 from glicko2.glicko2 import new_default_perf_map
@@ -18,6 +19,7 @@ from seek import (
 )
 from user import User
 from utils import join_seek
+from wsl import handle_accept_seek, handle_delete_seek
 from variants import VARIANTS
 
 test_logger.init_test_logger()
@@ -139,6 +141,94 @@ class HeaderChallengeTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual([], bob_challenges)
         self.assertEqual([], alice_challenges)
+
+    async def test_unrelated_user_cannot_accept_direct_challenge_over_lobby(self):
+        app_state = self.make_app_state()
+        alice = User(app_state, username="alice", perfs=PERFS)
+        bob = User(app_state, username="bob", perfs=PERFS)
+        carol = User(app_state, username="carol", perfs=PERFS)
+        app_state.users.update({u.username: u for u in (alice, bob, carol)})
+        seek = Seek("seek1", alice, "chess", target=bob.username, player1=alice)
+        app_state.seeks[seek.id] = seek
+        alice.seeks[seek.id] = seek
+
+        with patch("wsl.ws_send_json", new_callable=AsyncMock) as send:
+            await handle_accept_seek(app_state, object(), carol, {"seekID": seek.id})
+
+        self.assertEqual(
+            {"type": "error", "message": "Challenge not available"},
+            send.await_args.args[1],
+        )
+        self.assertIsNone(seek.player2)
+        self.assertIn(seek.id, app_state.seeks)
+
+    async def test_unrelated_user_cannot_delete_direct_challenge_over_lobby(self):
+        app_state = self.make_app_state()
+        alice = User(app_state, username="alice", perfs=PERFS)
+        bob = User(app_state, username="bob", perfs=PERFS)
+        carol = User(app_state, username="carol", perfs=PERFS)
+        app_state.users.update({u.username: u for u in (alice, bob, carol)})
+        seek = Seek("seek1", alice, "chess", target=bob.username, player1=alice)
+        app_state.seeks[seek.id] = seek
+        alice.seeks[seek.id] = seek
+
+        await handle_delete_seek(app_state, carol, {"seekID": seek.id})
+
+        self.assertIn(seek.id, app_state.seeks)
+        self.assertIn(seek.id, alice.seeks)
+        self.assertEqual(DIRECT_CHALLENGE_CREATED, seek.challenge_status)
+        app_state.lobby.lobby_broadcast_seeks.assert_not_awaited()
+
+    async def test_accepted_direct_challenge_is_removed_when_game_created(self):
+        app_state = self.make_app_state()
+        app_state.games = {}
+        app_state.realtime_game_creation_lock = asyncio.Lock()
+        alice = User(app_state, username="alice", perfs=PERFS)
+        bob = User(app_state, username="bob", perfs=PERFS)
+        app_state.users.update({alice.username: alice, bob.username: bob})
+
+        seek = Seek("seek-to-consume", alice, "chess", target=bob.username, player1=alice)
+        app_state.seeks[seek.id] = seek
+        alice.seeks[seek.id] = seek
+
+        game = SimpleNamespace(corr=False, has_crosstable=False)
+        with (
+            patch("utils.Game", return_value=game),
+            patch("utils.new_id", new=AsyncMock(return_value="game-test")),
+            patch("utils.insert_game_to_db", new=AsyncMock()),
+        ):
+            response = await join_seek(app_state, bob, seek)
+
+        self.assertEqual("new_game", response["type"])
+        self.assertEqual("game-test", response["gameId"])
+        self.assertNotIn(seek.id, app_state.seeks)
+        self.assertNotIn(seek.id, alice.seeks)
+        self.assertEqual([], get_user_challenges(app_state, alice.username))
+        self.assertEqual([], get_user_challenges(app_state, bob.username))
+
+    async def test_public_seek_is_also_removed_when_game_created(self):
+        app_state = self.make_app_state()
+        app_state.games = {}
+        app_state.realtime_game_creation_lock = asyncio.Lock()
+        alice = User(app_state, username="alice", perfs=PERFS)
+        bob = User(app_state, username="bob", perfs=PERFS)
+        app_state.users.update({alice.username: alice, bob.username: bob})
+
+        seek = Seek("public-seek", alice, "chess", player1=alice)
+        app_state.seeks[seek.id] = seek
+        alice.seeks[seek.id] = seek
+
+        game = SimpleNamespace(corr=False, has_crosstable=False)
+        with (
+            patch("utils.Game", return_value=game),
+            patch("utils.new_id", new=AsyncMock(return_value="public-game")),
+            patch("utils.insert_game_to_db", new=AsyncMock()),
+        ):
+            response = await join_seek(app_state, bob, seek)
+
+        self.assertEqual("new_game", response["type"])
+        self.assertNotIn(seek.id, app_state.seeks)
+        self.assertNotIn(seek.id, alice.seeks)
 
     async def test_get_user_challenges_keeps_accepted_direct_challenge_status(self):
         app_state = self.make_app_state()
