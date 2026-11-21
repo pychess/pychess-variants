@@ -107,6 +107,13 @@ td .icon {
 .slist td:last-child {
     text-align: right;
 }
+.players-count {
+    white-space: nowrap;
+}
+td .players-count .icon {
+    font-size: 1em;
+    margin-right: 0.25em;
+}
 td a {
     display: block;
     color: var(--font-color);

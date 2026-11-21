@@ -233,6 +233,9 @@
 .icon-bell-o:before {
   content: "\77";
 }
+.icon-players:before {
+  content: "👥";
+}
 .icon-trophy:before {
   content: "\78";
 }
