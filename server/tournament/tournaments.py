@@ -901,7 +901,7 @@ async def create_or_update_tournament(
     *,
     creator_is_director: bool = True,
     editor_is_admin: bool = False,
-) -> None:
+) -> Tournament:
     """Manual tournament creation from /tournaments/new form input values"""
 
     variant = str(form.get("variant", ""))
@@ -1267,8 +1267,11 @@ async def create_or_update_tournament(
         await upsert_tournament_to_db(tournament, app_state)
 
     await broadcast_tournament_creation(
-        app_state, tournament, announce_to_discord=creator_is_director
+        app_state,
+        tournament,
+        announce_to_discord=creator_is_director and not app_state.is_test_user(username),
     )
+    return tournament
 
 
 async def broadcast_tournament_creation(

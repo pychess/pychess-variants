@@ -81,7 +81,8 @@ class ArenaTournament(Tournament):
         return self._create_pairing(waiting_players)
 
     def _create_pairing(self, waiting_players: list[User]) -> list[tuple[User, User]]:
-        start = time.time()
+        wall_start = time.perf_counter()
+        cpu_start = time.thread_time()
         pairing = []
 
         nb_waiting_players = len(waiting_players)
@@ -129,6 +130,15 @@ class ArenaTournament(Tournament):
                 not self.just_played_together(x, y) and not self.color_streak_problem(x, y)
             ):
                 pair_them(x, y)
+            log.info(
+                "ARENA_PAIRING tid=%s waiting=%d edges=0 paired=%d "
+                "cpu_ms=%.2f wall_ms=%.2f",
+                self.id,
+                nb_waiting_players,
+                len(pairing),
+                (time.thread_time() - cpu_start) * 1000,
+                (time.perf_counter() - wall_start) * 1000,
+            )
             return pairing
 
         rxg = rx.PyGraph()
@@ -193,6 +203,14 @@ class ArenaTournament(Tournament):
         for p in pairing:
             log.debug("Pairing: %s %s", p[0].username, p[1].username)
 
-        end = time.time()
-        log.info("Pairing time: %r", end - start)
+        log.info(
+            "ARENA_PAIRING tid=%s waiting=%d edges=%d paired=%d "
+            "cpu_ms=%.2f wall_ms=%.2f",
+            self.id,
+            nb_waiting_players,
+            rxg.num_edges(),
+            len(pairing),
+            (time.thread_time() - cpu_start) * 1000,
+            (time.perf_counter() - wall_start) * 1000,
+        )
         return pairing

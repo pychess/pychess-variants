@@ -26,9 +26,10 @@ import os
 import pstats
 import random
 import re
+import secrets
 from collections import Counter, defaultdict, deque
 from contextlib import asynccontextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from itertools import cycle
 from pathlib import Path
 from time import monotonic
@@ -37,7 +38,7 @@ from urllib.parse import quote, urlsplit, urlunsplit
 import aiohttp
 import pyffish as sf
 import test_logger
-from const import TEST_PREFIX
+from const import ARENA, TEST_PREFIX, T_STARTED
 from settings import PROD, URI
 from websocket_utils import ws_send_json
 
@@ -53,6 +54,7 @@ def http_to_ws_url(base_url: str, path: str) -> str:
 
 
 LOBBY_URL = http_to_ws_url(URI, "/wsl")
+TOURNAMENT_URL = http_to_ws_url(URI, "/wst")
 ROUND_URL = http_to_ws_url(URI, "/wsr/")
 URLS = ("about", "players", "games", "tv", "variants")
 TEST_VARIANTS = (
@@ -169,6 +171,100 @@ class TimeControlProfile:
     min_move_delay_secs: float
     max_move_delay_secs: float
     weight: int
+
+
+@dataclass(frozen=True)
+class ArenaSpec:
+    tournament_id: str
+    players: int
+    profile: TimeControlProfile
+    variant: str
+
+
+def parse_arena_spec(raw: str) -> ArenaSpec:
+    """--arena ID|auto:PLAYERS:bullet|blitz|rapid[:VARIANT]."""
+    fields = raw.split(":")
+    if len(fields) not in (3, 4):
+        raise argparse.ArgumentTypeError("Expected ID:PLAYERS:PROFILE[:VARIANT]")
+    tournament_id, players_raw, profile_name = fields[:3]
+    variant = fields[3] if len(fields) == 4 else "chess"
+    if tournament_id != "auto" and re.fullmatch(r"\w{8}", tournament_id, flags=re.ASCII) is None:
+        raise argparse.ArgumentTypeError("Arena ID must be eight ASCII letters/digits/underscores, or auto")
+    try:
+        players = int(players_raw)
+    except ValueError:
+        raise argparse.ArgumentTypeError("Arena players must be a positive integer") from None
+    if players < 2:
+        raise argparse.ArgumentTypeError("Each arena needs at least two players")
+    profiles = {profile.name: profile for profile in MIXED_TIME_CONTROLS}
+    if profile_name not in profiles:
+        raise argparse.ArgumentTypeError("Arena profile must be bullet, blitz, or rapid")
+    if not variant or not re.fullmatch(r"[A-Za-z0-9_+.-]+", variant):
+        raise argparse.ArgumentTypeError("Invalid variant name")
+    return ArenaSpec(tournament_id, players, profiles[profile_name], variant)
+
+
+async def create_local_arenas(arenas: list[ArenaSpec], run_duration_secs: float) -> list[ArenaSpec]:
+    """Create auto arenas through the normal tournament form on the local -a server.
+
+    The server generates and checks the real tournament IDs. No test-only route,
+    artificial pairing, or direct database manipulation is required. The local
+    -a test user is an authorized tournament director and can start immediately.
+    """
+    if not any(spec.tournament_id == "auto" for spec in arenas):
+        return arenas
+
+    duration_minutes = max(20, math.ceil(run_duration_secs / 60) + 10)
+    resolved: list[ArenaSpec] = []
+    async with aiohttp.ClientSession(cookie_jar=make_cookie_jar()) as session:
+        async with session.get(URI) as response:
+            if response.status != 200:
+                raise RuntimeError(f"Cannot create arenas: home page HTTP {response.status}")
+            username = extract_username(await response.text())
+            if not username.startswith(TEST_PREFIX):
+                raise RuntimeError("Automatic arena creation requires local server -a")
+
+        for spec in arenas:
+            if spec.tournament_id != "auto":
+                resolved.append(spec)
+                continue
+            name = f"Stress {spec.profile.name} {secrets.token_hex(4)}"
+            form = {
+                "name": name,
+                "system": str(ARENA),
+                "variant": spec.variant,
+                "rated": "0",
+                "clockTime": str(spec.profile.minutes),
+                "clockIncrement": "0",
+                "byoyomiPeriod": "0",
+                "minutes": str(duration_minutes),
+                "waitMinutes": "0",
+                "position": "",
+                "description": "Local automated arena stress test",
+            }
+            async with session.post(
+                f"{URI}/tournaments/new",
+                data=form,
+                headers={"Origin": URI, "Accept": "application/json"},
+            ) as response:
+                if response.status != 200:
+                    error = (await response.text())[:500]
+                    raise RuntimeError(
+                        f"Arena creation failed ({spec.profile.name}): "
+                        f"HTTP {response.status}: {error}"
+                    )
+                body = await response.json()
+            tournament_id = body.get("tournamentId")
+            if not isinstance(tournament_id, str) or re.fullmatch(
+                r"[A-Za-z0-9]{8}", tournament_id
+            ) is None:
+                raise RuntimeError(f"Invalid tournament creation response: {body!r}")
+            resolved.append(replace(spec, tournament_id=tournament_id))
+            print(
+                f"Created local arena {tournament_id}: {name} "
+                f"({spec.players} players, {spec.profile.name}, {spec.variant})"
+            )
+    return resolved
 
 
 # Workload assumptions, not measured production usage proportions.
@@ -440,6 +536,18 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--arena",
+        type=parse_arena_spec,
+        action="append",
+        default=[],
+        metavar="ID|auto:PLAYERS:PROFILE[:VARIANT]",
+        help=(
+            "Join an existing arena or automatically create one using auto. "
+            "Repeat for simultaneous arenas, e.g. --arena auto:250:bullet. "
+            "No direct challenges are sent. Requires localhost server -a."
+        ),
+    )
+    parser.add_argument(
         "--maintain-human-games",
         action="store_true",
         help=(
@@ -519,6 +627,28 @@ def parse_args() -> argparse.Namespace:
         help="Print observed concurrent unfinished games every N seconds (0: off).",
     )
     args = parser.parse_args()
+    if args.arena:
+        if PROD or urlsplit(URI).hostname not in {"localhost", "127.0.0.1", "::1"}:
+            parser.error("--arena may only run against a localhost -a server")
+        if args.human_vs_human or args.maintain_human_games or args.mixed_time_controls:
+            parser.error("--arena cannot be combined with direct-challenge modes")
+        existing_ids = [spec.tournament_id for spec in args.arena if spec.tournament_id != "auto"]
+        if len(set(existing_ids)) != len(existing_ids):
+            parser.error("--arena existing tournament IDs must be unique")
+        if args.run_duration_secs <= 0:
+            parser.error("--arena requires --run-duration-secs > 0")
+        if args.games_per_user != 1:
+            parser.error("--arena manages game turnover; leave --games-per-user at 1")
+        if args.client_heartbeat_secs <= 0:
+            parser.error("--arena requires --client-heartbeat-secs (2.5 recommended)")
+        if (
+            args.move_delay_secs != 0
+            or args.move_delay_min_secs is not None
+            or args.move_delay_max_secs is not None
+            or args.game_minutes != 1
+        ):
+            parser.error("--arena sets clocks and thinking delays from the PROFILE")
+        args.users = sum(spec.players for spec in args.arena)
     if any(
         not math.isfinite(value)
         for value in (
@@ -934,6 +1064,61 @@ class RunStats:
         # avoids retaining a (game, ply) key for every confirmed move.
         self._last_observed_move_ply: dict[str, int] = {}
         self.first_move_at: float | None = None
+        self.arena_joined_players: defaultdict[str, set[str]] = defaultdict(set)
+        self.arena_started_games: Counter[str] = Counter()
+        self.arena_ended_games: Counter[str] = Counter()
+        self.arena_notification_first: dict[str, float] = {}
+        self.arena_notification_skew_ms: defaultdict[str, list[float]] = defaultdict(list)
+        self.arena_first_pair_wait_ms: defaultdict[str, list[float]] = defaultdict(list)
+        self.arena_repair_wait_ms: defaultdict[str, list[float]] = defaultdict(list)
+
+    def record_arena_joined(self, tournament_id: str, username: str) -> None:
+        self.arena_joined_players[tournament_id].add(username)
+
+    def record_arena_notification(
+        self,
+        tournament_id: str,
+        game_id: str,
+        *,
+        joined_at: float | None,
+        last_game_end_at: float | None,
+    ) -> None:
+        now = monotonic()
+        first = self.arena_notification_first.pop(game_id, None)
+        if first is None:
+            self.arena_notification_first[game_id] = now
+            self.arena_started_games[tournament_id] += 1
+        else:
+            self.arena_notification_skew_ms[tournament_id].append((now - first) * 1000)
+        if last_game_end_at is not None:
+            self.arena_repair_wait_ms[tournament_id].append((now - last_game_end_at) * 1000)
+        elif joined_at is not None:
+            self.arena_first_pair_wait_ms[tournament_id].append((now - joined_at) * 1000)
+
+    def record_arena_game_end(self, tournament_id: str) -> None:
+        self.arena_ended_games[tournament_id] += 1
+
+    def arena_summary(self, arenas: list[ArenaSpec]) -> dict[str, object]:
+        return {
+            spec.tournament_id: {
+                "profile": spec.profile.name,
+                "variant": spec.variant,
+                "planned_players": spec.players,
+                "joined_players": len(self.arena_joined_players[spec.tournament_id]),
+                "games_started": self.arena_started_games[spec.tournament_id],
+                "player_game_ends_observed": self.arena_ended_games[spec.tournament_id],
+                "notification_skew_ms": latency_summary(
+                    self.arena_notification_skew_ms[spec.tournament_id]
+                ),
+                "join_to_first_pairing_ms": latency_summary(
+                    self.arena_first_pair_wait_ms[spec.tournament_id]
+                ),
+                "game_end_to_next_pairing_ms": latency_summary(
+                    self.arena_repair_wait_ms[spec.tournament_id]
+                ),
+            }
+            for spec in arenas
+        }
 
     async def record_challenge_sent(self, bot_profile: str | None) -> None:
         profile_key = bot_profile if isinstance(bot_profile, str) else "unknown"
@@ -1311,6 +1496,7 @@ class TestUser:
         postgame_linger_max_secs: float = 0.0,
         postgame_linger_probability: float = 0.0,
         client_heartbeat_secs: float = 0.0,
+        arena_spec: ArenaSpec | None = None,
     ):
         self.username = ""
         self.seeks = []
@@ -1332,17 +1518,24 @@ class TestUser:
         self.run_stats = run_stats
         self.test_user_pgn_exporter = test_user_pgn_exporter
         self.human_pair = human_pair
+        self.arena_spec = arena_spec
+        self.arena_id = arena_spec.tournament_id if arena_spec is not None else None
+        self.arena_joined_at: float | None = None
+        self.last_arena_game_end_at: float | None = None
+        self._arena_end_recorded: set[str] = set()
+        self._arena_games_seen: set[str] = set()
+
         self.human_role = human_role
         self.maintain_human_games = maintain_human_games
         self.postgame_linger_max_secs = postgame_linger_max_secs
         self.postgame_linger_probability = postgame_linger_probability
         self.client_heartbeat_secs = client_heartbeat_secs
         self.human_generation = human_pair.generation if human_pair is not None else 0
-        self.time_control_name = (
-            human_pair.time_control.name
-            if human_pair is not None and human_pair.time_control is not None
-            else "custom"
-        )
+        self.time_control_name = "custom"
+        if arena_spec is not None:
+            self.time_control_name = arena_spec.profile.name
+        elif human_pair is not None and human_pair.time_control is not None:
+            self.time_control_name = human_pair.time_control.name
         self.human_seek_sent = False
         self.last_human_accepted_seek_id: str | None = None
         self.spectators = []
@@ -1356,11 +1549,17 @@ class TestUser:
         self.last_challenge_variant: str | None = None
         self.last_challenge_profile: str | None = None
         self.last_challenge_sent_at: float | None = None
-        if self.human_pair is not None:
-            # Both participants know their test variant before the first board.
-            self.last_challenge_variant = "chess"
+        if self.human_pair is not None or self.arena_spec is not None:
+            # Both participants know their variant before the first board.
+            self.last_challenge_variant = (
+                self.arena_spec.variant if self.arena_spec is not None else "chess"
+            )
             self.last_challenge_profile = "Human"
         self.round_diag: dict[str, dict[str, object]] = {}
+
+    @property
+    def simulated_human(self) -> bool:
+        return self.human_pair is not None or self.arena_id is not None
 
     def _is_transient_connection_error(self, exc: BaseException) -> bool:
         if self._is_fd_limit_error(exc):
@@ -1792,6 +1991,11 @@ class TestUser:
         end_source: str = "unknown",
     ) -> None:
         print("END", game_id, result, status)
+        if self.arena_id is not None and game_id not in self._arena_end_recorded:
+            self._arena_end_recorded.add(game_id)
+            self.last_arena_game_end_at = monotonic()
+            if self.run_stats is not None:
+                self.run_stats.record_arena_game_end(self.arena_id)
         abort_diag = self._abort_diag(game_id, end_source) if status == 0 else None
         bot_profile = self._profile_for_game(game_id)
         if self.run_stats is not None:
@@ -2044,6 +2248,185 @@ class TestUser:
             await self._cancel_round_tasks()
             await self._cancel_spectator_tasks()
 
+    async def go_to_arena(self) -> None:
+        """Follow the browser's tournament -> round -> tournament navigation.
+
+        Pairings and joins use the real /wst protocol. On a new_game message,
+        the tournament websocket is closed (as when the browser redirects to
+        /{gameId}), and a /wsr round is played. A new tournament page and WST
+        connection are opened only after leaving that round. This matters for
+        Arena waiting-player eligibility and realistic socket counts.
+        """
+        assert self.arena_spec is not None
+        tournament_id = self.arena_spec.tournament_id
+        try:
+            async with aiohttp.ClientSession(cookie_jar=make_cookie_jar()) as session:
+                async with session.get(URI) as resp:
+                    if resp.status != 200:
+                        raise RuntimeError(f"Arena identity GET failed: HTTP {resp.status}")
+                    self.username = extract_username(await resp.text())
+                    if not self.username.startswith(TEST_PREFIX):
+                        raise RuntimeError(
+                            "Arena mode requires local server -a (logged-in Test users). "
+                            f"Received {self.username!r} instead."
+                        )
+
+                while True:
+                    # A real navigation back to the tournament renders its page.
+                    async with session.get(f"{URI}/tournament/{tournament_id}") as resp:
+                        if resp.status != 200:
+                            raise RuntimeError(
+                                f"Arena {tournament_id} page failed: HTTP {resp.status}"
+                            )
+                        await resp.read()
+
+                    pairing: tuple[str, str, str] | None = None
+                    try:
+                        async with (
+                            session.ws_connect(
+                                TOURNAMENT_URL, headers={"Origin": URI}
+                            ) as wst,
+                            browser_heartbeat(wst, self.client_heartbeat_secs),
+                        ):
+                            await wst.send_json(
+                                {"type": "tournament_user_connected", "tournamentId": tournament_id}
+                            )
+                            join_pending = False
+                            joined = False
+                            last_refresh_at = monotonic()
+                            while True:
+                                try:
+                                    msg = await asyncio.wait_for(wst.receive(), timeout=10)
+                                except TimeoutError:
+                                    if monotonic() - last_refresh_at >= 30:
+                                        await self._send_json_safe(
+                                            wst,
+                                            {
+                                                "type": "get_players",
+                                                "tournamentId": tournament_id,
+                                                "page": 1,
+                                            },
+                                        )
+                                        last_refresh_at = monotonic()
+                                    continue
+                                if msg.type == aiohttp.WSMsgType.TEXT:
+                                    if msg.data == "/n":
+                                        continue
+                                    data = json.loads(msg.data)
+                                    kind = data.get("type")
+                                    if kind == "ping":
+                                        await self._send_json_safe(wst, {"type": "pong"})
+                                    elif kind == "tournament_user_connected":
+                                        if data.get("tsystem") != ARENA:
+                                            raise RuntimeError(
+                                                f"Tournament {tournament_id} is not an Arena"
+                                            )
+                                        if data.get("tstatus", 0) > T_STARTED:
+                                            return
+                                        if data.get("ustatus") == "joined":
+                                            joined = True
+                                        elif data.get("ustatus") == "spectator":
+                                            if not join_pending:
+                                                await wst.send_json(
+                                                    {"type": "join", "tournamentId": tournament_id}
+                                                )
+                                                join_pending = True
+                                        else:
+                                            raise RuntimeError(
+                                                f"Arena {tournament_id} rejected/paused "
+                                                f"{self.username}: {data.get('ustatus')}"
+                                            )
+                                    elif (
+                                        kind == "ustatus"
+                                        and data.get("username") == self.username
+                                    ):
+                                        if data.get("ustatus") != "joined":
+                                            raise RuntimeError(
+                                                f"Arena {tournament_id} join failed for "
+                                                f"{self.username}: {data.get('ustatus')}"
+                                            )
+                                        joined = True
+                                        join_pending = False
+                                    elif kind == "new_game":
+                                        game_id = data.get("gameId")
+                                        wplayer = data.get("wplayer")
+                                        bplayer = data.get("bplayer")
+                                        if self.username not in (wplayer, bplayer):
+                                            continue
+                                        if not (joined or join_pending):
+                                            raise RuntimeError(
+                                                f"Arena {tournament_id} paired an unjoined user"
+                                            )
+                                        if not isinstance(game_id, str):
+                                            raise RuntimeError("Invalid arena game ID")
+                                        if game_id in self._arena_games_seen:
+                                            continue
+                                        self._arena_games_seen.add(game_id)
+                                        if self.run_stats is not None:
+                                            self.run_stats.record_arena_notification(
+                                                tournament_id,
+                                                game_id,
+                                                joined_at=self.arena_joined_at,
+                                                last_game_end_at=self.last_arena_game_end_at,
+                                            )
+                                        self.last_arena_game_end_at = None
+                                        await self._record_game_start(game_id, "Human", None)
+                                        pairing = (game_id, wplayer, bplayer)
+                                        # Match the tournament client's short beep before redirect.
+                                        await asyncio.sleep(0.7)
+                                        break
+                                    elif kind == "tstatus":
+                                        if data.get("tstatus", 0) > T_STARTED:
+                                            return
+                                    elif kind == "error":
+                                        raise RuntimeError(
+                                            f"Arena {tournament_id} protocol error for "
+                                            f"{self.username}: {data.get('message')}"
+                                        )
+
+                                    if joined and self.arena_joined_at is None:
+                                        self.arena_joined_at = monotonic()
+                                        if self.run_stats is not None:
+                                            self.run_stats.record_arena_joined(
+                                                tournament_id, self.username
+                                            )
+                                elif msg.type in (
+                                    aiohttp.WSMsgType.CLOSE,
+                                    aiohttp.WSMsgType.CLOSED,
+                                    aiohttp.WSMsgType.CLOSING,
+                                    aiohttp.WSMsgType.ERROR,
+                                ):
+                                    break
+                    except Exception as exc:
+                        if not self._is_transient_connection_error(exc):
+                            raise
+
+                    if pairing is None:
+                        await asyncio.sleep(random.uniform(0.3, 1.0))
+                        continue
+
+                    # The browser redirected away and closed WST after its
+                    # notification delay. Now open the round page/WebSocket.
+                    game_id, wplayer, bplayer = pairing
+                    self._start_round_task(
+                        session,
+                        None,  # Arena round cleanup never logs out of the closed WST.
+                        game_id,
+                        wplayer,
+                        bplayer,
+                        self.arena_spec.variant,
+                        "Human",
+                    )
+                    # One active game per player. Don't reconnect to the Arena
+                    # until the round is finished or its reconnect attempts end.
+                    round_tasks = tuple(self.round_tasks)
+                    if round_tasks:
+                        await asyncio.gather(*round_tasks)
+                    await asyncio.sleep(random.uniform(0.1, 0.5))
+        finally:
+            await self._cancel_round_tasks()
+            await self._cancel_spectator_tasks()
+
     def _next_move_delay_secs(self) -> float:
         if self.move_delay_min_secs is not None and self.move_delay_max_secs is not None:
             return random.uniform(self.move_delay_min_secs, self.move_delay_max_secs)
@@ -2051,7 +2434,9 @@ class TestUser:
 
     async def _leave_finished_game(self, wsr, wsl) -> None:
         """Keep some post-game connections open, just as real users might."""
-        if self.maintain_human_games and random.random() < self.postgame_linger_probability:
+        if (
+            self.maintain_human_games or self.arena_id is not None
+        ) and random.random() < self.postgame_linger_probability:
             until = monotonic() + random.uniform(0, self.postgame_linger_max_secs)
             while (remaining := until - monotonic()) > 0:
                 try:
@@ -2082,7 +2467,7 @@ class TestUser:
         await self._send_json_safe(wsr, {"type": "logout"})
         # Keep the lobby session connected so these same two simulated players
         # can start their next game, without creating more anonymous users.
-        if not self.maintain_human_games:
+        if not self.maintain_human_games and self.arena_id is None:
             await self._send_json_safe(wsl, {"type": "logout"})
 
     # @profile
@@ -2248,7 +2633,7 @@ class TestUser:
                                             await self._leave_finished_game(wsr, wsl)
                                             break
 
-                                        if self.human_pair is None:
+                                        if not self.simulated_human:
                                             await asyncio.sleep(random.uniform(0, 0.1))
                                         parts = data["fen"].split(" ")
                                         turn_color = parts[1]
@@ -2263,11 +2648,11 @@ class TestUser:
                                             if mycolor is not None
                                             else data.get("tp") == self.username
                                         )
-                                        if self.human_pair is not None and (
+                                        if self.simulated_human and (
                                             not should_move or last_sent_ply == board_ply
                                         ):
                                             continue
-                                        if self.human_pair is not None:
+                                        if self.simulated_human:
                                             # Unlike the old sleep inside the receive loop,
                                             # this preserves continuous WebSocket reads (and
                                             # protocol PING/PONG handling) while thinking.
@@ -2355,13 +2740,13 @@ class TestUser:
                                                     submitted_at - board_received_at,
                                                     board_ply,
                                                 )
-                                                if self.human_pair is not None
+                                                if self.simulated_human
                                                 else data["clocks"]
                                             )
                                             # If the simulated player's clock expired,
                                             # don't manufacture a move with 0 time left.
                                             # The server clock will flag the player.
-                                            if self.human_pair is not None and board_ply >= 2:
+                                            if self.simulated_human and board_ply >= 2:
                                                 mover_index = 0 if turn_color == "w" else 1
                                                 if move_clocks[mover_index] <= 0:
                                                     continue
@@ -2385,7 +2770,7 @@ class TestUser:
                                                         self.username,
                                                         submitted_at,
                                                     )
-                                                if self.human_pair is not None:
+                                                if self.simulated_human:
                                                     last_sent_ply = board_ply
                                             await asyncio.sleep(0)
 
@@ -2585,6 +2970,8 @@ async def wait_for_client_tasks(tasks: list[asyncio.Task[None]], duration_secs: 
 
 
 async def main(args: argparse.Namespace):
+    if args.arena:
+        args.arena = await create_local_arenas(args.arena, args.run_duration_secs)
     spectator_http_semaphore = asyncio.Semaphore(args.max_spectator_http_concurrency)
     run_stats = RunStats()
     test_user_pgn_exporter = TestUserPgnExporter(args.pgn_max_games) if args.test_user_pgn else None
@@ -2602,6 +2989,8 @@ async def main(args: argparse.Namespace):
         if args.human_vs_human
         else []
     )
+    arena_assignments = [spec for spec in args.arena for _ in range(spec.players)]
+    random.Random(args.mix_seed).shuffle(arena_assignments)
     users = [
         TestUser(
             spectators_per_game=args.spectators_per_game,
@@ -2610,18 +2999,24 @@ async def main(args: argparse.Namespace):
             challenge_delay_max_secs=args.challenge_delay_max_secs,
             challenge_retry_secs=args.challenge_retry_secs,
             game_minutes=(
-                human_pairs[i // 2].time_control.minutes
+                arena_assignments[i].profile.minutes
+                if args.arena
+                else human_pairs[i // 2].time_control.minutes
                 if args.mixed_time_controls
                 else args.game_minutes
             ),
             move_delay_secs=args.move_delay_secs,
             move_delay_min_secs=(
-                human_pairs[i // 2].time_control.min_move_delay_secs
+                arena_assignments[i].profile.min_move_delay_secs
+                if args.arena
+                else human_pairs[i // 2].time_control.min_move_delay_secs
                 if args.mixed_time_controls
                 else args.move_delay_min_secs
             ),
             move_delay_max_secs=(
-                human_pairs[i // 2].time_control.max_move_delay_secs
+                arena_assignments[i].profile.max_move_delay_secs
+                if args.arena
+                else human_pairs[i // 2].time_control.max_move_delay_secs
                 if args.mixed_time_controls
                 else args.move_delay_max_secs
             ),
@@ -2636,17 +3031,29 @@ async def main(args: argparse.Namespace):
             maintain_human_games=args.maintain_human_games,
             client_heartbeat_secs=args.client_heartbeat_secs,
             postgame_linger_max_secs=(
-                args.postgame_linger_max_secs if args.maintain_human_games else 0.0
+                args.postgame_linger_max_secs
+                if args.maintain_human_games or args.arena
+                else 0.0
             ),
             postgame_linger_probability=(
-                args.postgame_linger_probability if args.maintain_human_games else 0.0
+                args.postgame_linger_probability
+                if args.maintain_human_games or args.arena
+                else 0.0
             ),
+            arena_spec=arena_assignments[i] if args.arena else None,
         )
         for i in range(args.users)
     ]
 
     if args.human_vs_human:
         print(f"Human vs human: {args.users} players, {args.users // 2} paired games")
+    if args.arena:
+        print(f"Arena mode: {args.users} players across {len(args.arena)} real arenas")
+        for spec in args.arena:
+            print(
+                f"  arena={spec.tournament_id} players={spec.players} "
+                f"profile={spec.profile.name} variant={spec.variant}"
+            )
     if mixed_profiles:
         print(
             "mixed_time_controls_planned="
@@ -2657,7 +3064,10 @@ async def main(args: argparse.Namespace):
     async def start_user(user: TestUser):
         if args.user_start_spread_secs > 0:
             await asyncio.sleep(random.uniform(0, args.user_start_spread_secs))
-        await user.go_to_lobby()
+        if args.arena:
+            await user.go_to_arena()
+        else:
+            await user.go_to_lobby()
 
     pgn_cookie: str | None = None
     if args.pgn_cookie_file is not None:
@@ -2766,6 +3176,8 @@ async def main(args: argparse.Namespace):
     print(f"games_unfinished_at_stop={unfinished_games}")
     print(f"peak_unfinished_games={peak_unfinished}")
     print(f"active_games_by_time_control_at_stop={await run_stats.active_time_controls()}")
+    if args.arena:
+        print(f"arena_stats={run_stats.arena_summary(args.arena)}")
     if args.maintain_human_games:
         planned = Counter(
             pair.time_control.name if pair.time_control else "custom" for pair in human_pairs

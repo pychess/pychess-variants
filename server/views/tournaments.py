@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 
 
 @aiohttp_jinja2.template("tournaments.html")
-async def tournaments(request: web.Request) -> ViewContext:
+async def tournaments(request: web.Request) -> ViewContext | web.Response:
     user, context = await get_user_context(request)
 
     app_state = get_app_state(request.app)
@@ -67,12 +67,16 @@ async def tournaments(request: web.Request) -> ViewContext:
         data = await read_post_data(request)
         if data is None:
             raise web.HTTPNoContent()
-        await create_or_update_tournament(
+        created = await create_or_update_tournament(
             app_state,
             user.username,
             data,
             creator_is_director=director,
         )
+        # The same authenticated creation flow can serve automated local clients
+        # without parsing the rendered tournament listing to discover the ID.
+        if request.headers.get("Accept") == "application/json":
+            return web.json_response({"tournamentId": created.id})
 
     elif request.path.endswith("/edit"):
         data = await read_post_data(request)
