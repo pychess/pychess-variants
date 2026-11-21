@@ -24,12 +24,12 @@ if TYPE_CHECKING:
     from user import User
 
 from pychess_global_app_state_utils import get_app_state
-from settings import PROD
 from session_security import (
     GAMEPLAY_EXPIRY_GRACE_KEY,
     session_matches_user,
     websocket_session_lifetime,
 )
+from settings import PROD
 
 log = logging.getLogger(__name__)
 

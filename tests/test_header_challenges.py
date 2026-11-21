@@ -19,8 +19,8 @@ from seek import (
 )
 from user import User
 from utils import join_seek
-from wsl import handle_accept_seek, handle_delete_seek
 from variants import VARIANTS
+from wsl import handle_accept_seek, handle_delete_seek
 
 test_logger.init_test_logger()
 
