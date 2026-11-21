@@ -3790,6 +3790,142 @@ class TournamentPersistenceTestCase(TournamentTestCase):
             except asyncio.CancelledError:
                 pass
 
+    async def test_arena_pairing_insert_preserves_result_written_early(self):
+        """A game can finish while the rest of its large pairing wave is created."""
+        app_state = get_app_state(self.app)
+        tid = id8()
+        self.tournament = ArenaTestTournament(
+            app_state, tid, variant="chess", before_start=0, minutes=10, with_clock=False
+        )
+        app_state.tournaments[tid] = self.tournament
+        await upsert_tournament_to_db(self.tournament, app_state)
+        await self.tournament.join_players(4)
+        await self.tournament.start(datetime.now(UTC))
+
+        original_create_games = self.tournament.create_games
+
+        async def finish_game_before_batch_insert(pairing):
+            games = await original_create_games(pairing)
+            game = games[0]
+            game.result = "1-0"
+            game.status = FLAG
+            game.board.ply = 18
+            # The game-end path has already upserted the finished result.
+            await self.tournament.db_update_pairing(game)
+            return games
+
+        with patch.object(
+            self.tournament, "create_games", side_effect=finish_game_before_batch_insert
+        ):
+            with self.assertLogs("tournament.tournament", level="INFO") as logs:
+                _, games = await self.tournament.create_new_pairings(
+                    list(self.tournament.waiting_players())
+                )
+
+        self.assertEqual(len(games), 2)
+        doc = await app_state.db.tournament_pairing.find_one({"_id": games[0].id})
+        self.assertEqual(doc["r"], "a")
+        self.assertEqual(doc["s"], FLAG)
+        self.assertEqual(doc["p"], 18)
+        self.assertEqual(
+            await app_state.db.tournament_pairing.count_documents({"_id": games[0].id}), 1
+        )
+        # The batch is safe to replay without overwriting the already completed game.
+        await self.tournament.db_insert_pairing(games)
+        doc = await app_state.db.tournament_pairing.find_one({"_id": games[0].id})
+        self.assertEqual(doc["r"], "a")
+        self.assertEqual(doc["p"], 18)
+        other_doc = await app_state.db.tournament_pairing.find_one({"_id": games[1].id})
+        self.assertIsNotNone(other_doc)
+        self.assertEqual(other_doc["r"], "d")
+        self.assertTrue(any("ARENA_PAIRING_PHASES" in line for line in logs.output))
+
+    async def test_arena_pending_pairings_retry_without_creating_more_games(self):
+        app_state = get_app_state(self.app)
+        tid = id8()
+        self.tournament = ArenaTestTournament(
+            app_state, tid, variant="chess", before_start=0, minutes=10, with_clock=False
+        )
+        app_state.tournaments[tid] = self.tournament
+        await upsert_tournament_to_db(self.tournament, app_state)
+        await self.tournament.join_players(2)
+        await self.tournament.start(datetime.now(UTC))
+
+        original_insert = self.tournament.db_insert_pairing
+        attempts = 0
+
+        async def transient_insert_failure(games):
+            nonlocal attempts
+            attempts += 1
+            if attempts == 1:
+                raise ConnectionError("temporary pairing-table failure")
+            await original_insert(games)
+
+        with patch.object(
+            self.tournament, "db_insert_pairing", side_effect=transient_insert_failure
+        ):
+            with self.assertRaises(ConnectionError):
+                await self.tournament.create_new_pairings(list(self.tournament.waiting_players()))
+            pending = self.tournament._pending_arena_games
+            self.assertIsNotNone(pending)
+            assert pending is not None
+            self.assertEqual(len(pending), 1)
+            game_id = pending[0].id
+
+            await self.tournament.retry_pending_arena_pairings()
+            self.assertIsNone(self.tournament._pending_arena_games)
+            await self.tournament.retry_pending_arena_pairings()  # No-op after success
+
+        self.assertEqual(attempts, 2)
+        self.assertEqual(len(self.tournament.ongoing_games), 1)
+        self.assertEqual(
+            await app_state.db.tournament_pairing.count_documents({"_id": game_id}), 1
+        )
+
+    async def test_arena_clock_survives_failed_pairing_persistence(self):
+        app_state = get_app_state(self.app)
+        tid = id8()
+        self.tournament = ArenaTestTournament(
+            app_state, tid, variant="chess", before_start=0, minutes=10, with_clock=False
+        )
+        app_state.tournaments[tid] = self.tournament
+        await upsert_tournament_to_db(self.tournament, app_state)
+        await self.tournament.join_players(2)
+        await self.tournament.start(datetime.now(UTC))
+        self.tournament.clock_interval = 0.01
+        self.tournament.arena_pairing_retry_delay = 0.01
+        self.tournament.wave = timedelta(0)
+        self.tournament.wave_delta = timedelta(0)
+
+        original_insert = self.tournament.db_insert_pairing
+        attempts = 0
+
+        async def transient_insert_failure(games):
+            nonlocal attempts
+            attempts += 1
+            if attempts == 1:
+                raise ConnectionError("temporary pairing-table failure")
+            await original_insert(games)
+
+        async def publish_then_stop(games):
+            self.assertEqual(len(games), 1)
+            self.tournament.status = T_FINISHED
+
+        with (
+            patch.object(
+                self.tournament, "db_insert_pairing", side_effect=transient_insert_failure
+            ),
+            patch.object(
+                self.tournament, "publish_pairings", side_effect=publish_then_stop
+            ) as publish,
+        ):
+            await asyncio.wait_for(self.tournament.clock(), timeout=2)
+
+        self.assertEqual(attempts, 2)
+        publish.assert_awaited_once()
+        self.assertEqual(len(self.tournament.ongoing_games), 1)
+        self.assertIsNone(self.tournament._pending_arena_games)
+
     async def test_ongoing_arena_lifecycle_persisted_across_restart(self):
         app_state = get_app_state(self.app)
         tid = id8()
