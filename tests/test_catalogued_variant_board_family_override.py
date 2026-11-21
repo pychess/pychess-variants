@@ -1,7 +1,7 @@
 import unittest
 
 from aiohttp import web
-from catalogued_variants import (
+from catalogued.validation import (
     _clean_board_family_override,
     _ensure_board_family_dimensions,
     _read_board_family_override,
@@ -40,3 +40,5 @@ class CataloguedVariantBoardFamilyOverrideTestCase(unittest.TestCase):
         _ensure_board_family_dimensions("makruk8x8", 8, 8)
         _ensure_board_family_dimensions("shogi7x9", 7, 9)
         _ensure_board_family_dimensions("shogi6x6", 6, 6)
+        _ensure_board_family_dimensions("shogi4x5", 4, 5)
+        _ensure_board_family_dimensions("shogi10x10", 10, 10)

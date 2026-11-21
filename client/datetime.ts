@@ -59,10 +59,14 @@ export function timeago(date: string) {
     return '';
 }
 
-export function renderTimeago() {
+export function updateTimeago() {
     const els = document.getElementsByTagName('info-date');
     Array.from(els).forEach(el => {
         el.textContent = timeago(el.getAttribute('timestamp') ?? 'unknown when');
     });
+}
+
+export function renderTimeago() {
+    updateTimeago();
     setTimeout(renderTimeago, 1200);
 }

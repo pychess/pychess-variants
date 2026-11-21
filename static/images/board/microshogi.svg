@@ -1,0 +1,1 @@
+<svg viewBox="0 0 208 300" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="52" height="60" patternUnits="userSpaceOnUse"><path d="M0 0h52v60H0z" fill="#fdd775" stroke="#000" stroke-width="2"/></pattern></defs><path d="M0 0h208v300H0z" fill="url(#grid)"/></svg>

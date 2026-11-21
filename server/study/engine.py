@@ -42,7 +42,7 @@ def validated_study_position(
         raise ValueError("Invalid stored Study FEN geometry")
     if (
         "[" in start_placement or "[" in placement or len(ranks) > len(start_ranks)
-    ) and not pocket_variant_material_fits_engine(board.fen, start_fen):
+    ) and not pocket_variant_material_fits_engine(board.fen, start_fen, board.variant):
         raise ValueError("Stored Study FEN exceeds engine material limits")
     status = board.sf.validate_fen(board.fen, board.variant, chess960)
     if status != FEN_OK and not chess960 and board.variant in ("seirawan", "shouse"):

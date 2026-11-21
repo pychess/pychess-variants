@@ -27,6 +27,9 @@ class RoundChatBotQueueTestCase(unittest.IsolatedAsyncioTestCase):
             wplayer = bot
             bplayer = human
 
+            def is_player(self, user) -> bool:
+                return user.username == "white"
+
             def __init__(self) -> None:
                 self.messages: list[dict[str, object]] = []
 
@@ -94,6 +97,9 @@ class RoundChatBotQueueTestCase(unittest.IsolatedAsyncioTestCase):
             wplayer = bot
             bplayer = human
 
+            def is_player(self, user) -> bool:
+                return user.username == "white"
+
             def __init__(self) -> None:
                 self.messages: list[dict[str, object]] = []
 
@@ -135,6 +141,9 @@ class RoundChatBotQueueTestCase(unittest.IsolatedAsyncioTestCase):
             id = "g1"
             wplayer = bot
             bplayer = human
+
+            def is_player(self, user) -> bool:
+                return user.username == "white"
 
             def __init__(self) -> None:
                 self.messages: list[dict[str, object]] = []
@@ -183,6 +192,9 @@ class RoundChatBotQueueTestCase(unittest.IsolatedAsyncioTestCase):
             wplayer = bot
             bplayer = human
 
+            def is_player(self, user) -> bool:
+                return user.username == "white"
+
             def __init__(self) -> None:
                 self.messages: list[dict[str, object]] = []
 
@@ -228,6 +240,9 @@ class RoundChatBotQueueTestCase(unittest.IsolatedAsyncioTestCase):
             wplayerB = SimpleNamespace(username="whiteB")
             bplayerB = SimpleNamespace(username="blackB")
             gameClocks = SimpleNamespace(elapsed_since_last_move=lambda: 17)
+
+            def is_player(self, user) -> bool:
+                return user.username == "whiteA"
 
             def __init__(self) -> None:
                 self.chat_calls: list[tuple[str, str]] = []

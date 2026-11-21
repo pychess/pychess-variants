@@ -1,6 +1,6 @@
 import aiohttp_jinja2
 from aiohttp import web
-from catalogued_variants import public_catalogued_variants_for_forms
+from catalogued.variants import public_catalogued_variants_for_forms
 from const import ARENA, T_CREATED, T_STARTED
 from pychess_global_app_state import PychessGlobalAppState
 from settings import ADMINS
@@ -20,7 +20,7 @@ from views import get_user_context
 
 @aiohttp_jinja2.template("arena-new.html")
 async def arena_new(request: web.Request) -> ViewContext:
-    user, context = await get_user_context(request)
+    user, context = await get_user_context(request, include_catalogued_variants=True)
     app_state: PychessGlobalAppState = request.app[app_state_key]
 
     tournamentId = request.match_info.get("tournamentId")

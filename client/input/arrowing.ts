@@ -21,7 +21,7 @@ export class ArrowingInput extends ExtraInput {
     }
 
     private setPlacementActive(active: boolean): void {
-        // An Amazons turn is sent as one compound move, but is entered in two
+        // A walling turn is sent as one compound move, but is entered in two
         // stages. While active, the Amazon move exists only on the client and
         // undo() cancels that partial input by restoring the current server ply.
         this.inputState = active ? 'move' : undefined;
@@ -45,6 +45,9 @@ export class ArrowingInput extends ExtraInput {
     }
 
     cancel(): void {
+        // Chessground preserves a0 across FEN resets for pocket dragging, so
+        // explicitly discard our temporary blocker when cancelling a partial turn.
+        if (this.inputState === 'move') this.ctrl.chessground.state.boardState.pieces.delete(ARROW_KEY);
         this.setPlacementActive(false);
         this.data = undefined;
         this.arrowDests = [];
@@ -91,7 +94,7 @@ export class ArrowingInput extends ExtraInput {
         });
         this.ctrl.chessground.selectSquare(ARROW_KEY, false);
 
-        if (firstArrow) chatMessage('', _('Place the arrow on an empty square.'), 'roundchat');
+        if (firstArrow) chatMessage('', _('Place a wall on an empty square.'), 'roundchat');
     }
 
     onSelect(key: cg.Key): void {

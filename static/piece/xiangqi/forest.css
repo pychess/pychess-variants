@@ -1,0 +1,63 @@
+.xiangqi piece.p-piece.white {
+    background-image: url('../../images/pieces/xiangqi/forest/red_pawn.svg');
+}
+.xiangqi piece.b-piece.white {
+    background-image: url('../../images/pieces/xiangqi/forest/red_elephant.svg');
+}
+.xiangqi piece.n-piece.white {
+    background-image: url('../../images/pieces/xiangqi/forest/red_horse.svg');
+}
+.xiangqi piece.r-piece.white {
+    background-image: url('../../images/pieces/xiangqi/forest/red_chariot.svg');
+}
+.xiangqi piece.a-piece.white {
+    background-image: url('../../images/pieces/xiangqi/forest/red_advisor.svg');
+}
+.xiangqi piece.c-piece.white {
+    background-image: url('../../images/pieces/xiangqi/forest/red_cannon.svg');
+}
+.xiangqi piece.k-piece.white {
+    background-image: url('../../images/pieces/xiangqi/forest/red_king.svg');
+}
+.xiangqi piece.m-piece.white {
+    background-image: url('../../images/pieces/xiangqi/forest/red_chariot.svg');
+}
+
+.xiangqi piece.p-piece.black {
+    background-image: url('../../images/pieces/xiangqi/forest/black_pawn.svg');
+}
+.xiangqi piece.b-piece.black {
+    background-image: url('../../images/pieces/xiangqi/forest/black_elephant.svg');
+}
+.xiangqi piece.n-piece.black {
+    background-image: url('../../images/pieces/xiangqi/forest/black_horse.svg');
+}
+.xiangqi piece.r-piece.black {
+    background-image: url('../../images/pieces/xiangqi/forest/black_chariot.svg');
+}
+.xiangqi piece.a-piece.black {
+    background-image: url('../../images/pieces/xiangqi/forest/black_advisor.svg');
+}
+.xiangqi piece.c-piece.black {
+    background-image: url('../../images/pieces/xiangqi/forest/black_cannon.svg');
+}
+.xiangqi piece.k-piece.black {
+    background-image: url('../../images/pieces/xiangqi/forest/black_king.svg');
+}
+.xiangqi piece.m-piece.black {
+    background-image: url('../../images/pieces/xiangqi/forest/black_chariot.svg');
+}
+
+.xiangqi piece.promoted.white {
+    background-image: url('../../images/pieces/xiangqi/forest/red_covered.svg');
+}
+.xiangqi piece.promoted.black {
+    background-image: url('../../images/pieces/xiangqi/forest/black_covered.svg');
+}
+
+.material.jieqi-captures.xiangqi piece.jieqi-covered-hidden.white {
+    background-image: url('../../images/pieces/xiangqi/forest/red_covered.svg');
+}
+.material.jieqi-captures.xiangqi piece.jieqi-covered-hidden.black {
+    background-image: url('../../images/pieces/xiangqi/forest/black_covered.svg');
+}

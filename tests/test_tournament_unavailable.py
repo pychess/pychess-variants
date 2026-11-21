@@ -14,7 +14,8 @@ class UnavailableTournamentTestCase(TournamentTestCase):
 
         self.assertEqual(response.status, 404)
         html = await response.text()
-        self.assertIn('class="not-found"', html)
+        self.assertIn("<h1>404</h1>", html)
+        self.assertIn("Page not found.", html)
         self.assertNotIn('id="placeholder"', html)
 
     async def test_deleted_variant_without_snapshot_returns_404(self):
@@ -27,7 +28,8 @@ class UnavailableTournamentTestCase(TournamentTestCase):
 
         self.assertEqual(response.status, 404)
         html = await response.text()
-        self.assertIn('class="not-found"', html)
+        self.assertIn("<h1>404</h1>", html)
+        self.assertIn("Page not found.", html)
         self.assertNotIn('id="placeholder"', html)
 
     async def test_deletion_removes_only_the_deleted_tournaments_calendar_link(self):

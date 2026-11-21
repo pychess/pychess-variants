@@ -7,7 +7,7 @@ from functools import lru_cache
 from typing import TYPE_CHECKING
 
 from const import CATEGORIES
-from variants import catalogued_variant_random_start, is_catalogued_variant
+from variants import JANGGI_VARIANTS, catalogued_variant_random_start, is_catalogued_variant
 
 # -*- coding: utf-8 -*-
 from fairy.ataxx import ATAXX_FENS
@@ -141,7 +141,10 @@ class FairyBoard:
             "supply",
             "makbug",
         )
-        self.legal_moves_need_history = legal_moves_need_history or variant in ("janggi", "ataxx")
+        self.legal_moves_need_history = (
+            legal_moves_need_history or variant in JANGGI_VARIANTS or variant == "ataxx"
+        )
+        self._legal_moves_cache: tuple[tuple[object, ...], tuple[str, ...]] | None = None
         self.nnue = initial_fen == ""
 
         self.movelist_supported = self.variant != "jieqi"
@@ -173,7 +176,7 @@ class FairyBoard:
         self.manual_count = count_started != 0
         self.count_started = count_started
 
-        if self.variant == "janggi":
+        if self.variant in JANGGI_VARIANTS:
             self.notation = NOTATION_JANGGI
         elif self.variant in CATEGORIES["shogi"]:
             self.notation = NOTATION_SHOGI_HODGES_NUMBER
@@ -192,6 +195,11 @@ class FairyBoard:
     @staticmethod
     def start_fen(variant: str | None, chess960=False, disabled_fen=""):
         normalized_variant, normalized_chess960 = _normalize_variant_and_chess960(variant, chess960)
+
+        if normalized_variant in ("checkshogi", "karouk"):
+            # Their inherited FENs have an implicit one-check limit.
+            # Expose the engine's 1+1 counter at ply 0, including catalogue games.
+            return sf.get_fen(normalized_variant, sf.start_fen(normalized_variant), [])
 
         if is_catalogued_variant(normalized_variant):
             default_fen = sf.start_fen(normalized_variant)
@@ -377,6 +385,22 @@ class FairyBoard:
                 return moves
             else:
                 return self.sf.legal_moves(self.variant, self.fen, [], self.chess960)
+
+    def cached_legal_moves(self) -> tuple[str, ...]:
+        # Setup and reload can update the board directly. Snapshot the inputs
+        # to move generation so those paths also miss the cache when needed.
+        history = (
+            (self.initial_fen, tuple(self.move_stack)) if self.legal_moves_need_history else None
+        )
+        # Jieqi's advisor filter only inspects the turn and covered squares.
+        covered = (
+            (self.color, tuple(self.jieqi_covered_pieces)) if self.jieqi_covered_pieces else None
+        )
+        key = self.sf, self.variant, self.chess960, self.fen, history, covered
+        cached = self._legal_moves_cache
+        if cached is None or cached[0] != key:
+            cached = self._legal_moves_cache = (key, tuple(self.legal_moves()))
+        return cached[1]
 
     def legal_moves_no_history(self):
         # move legality can depend on history, but for bughouse we can't recreate history so we need this version

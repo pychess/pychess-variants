@@ -1,0 +1,6 @@
+.microshogi piece.ally {
+    background-image: url('../../images/pieces/disguised/shogi-ally.svg');
+}
+.microshogi piece.enemy {
+    background-image: url('../../images/pieces/disguised/shogi-enemy.svg');
+}

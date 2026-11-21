@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import collections
 import hashlib
 import re
@@ -9,6 +10,7 @@ from admin import resolve_existing_username
 from admin_api import record_mod_action
 from aiohttp import web
 from broadcast import broadcast_streams
+from event_loop_lag import loop_lag_monitor_key
 from generate_crosstable import generate_crosstable
 from generate_highscore import generate_highscore
 from json_utils import json_response
@@ -33,6 +35,9 @@ OPERATION_LOG_ACTIONS = frozenset(
         "crosstable_regenerated",
         "fishnet_key_created",
         "fishnet_key_removed",
+        "logging_level_changed",
+        "event_loop_lag_enabled",
+        "event_loop_lag_disabled",
     }
 )
 
@@ -47,6 +52,9 @@ API_ACTIONS = frozenset(
         "crosstable",
         "fishnet-create",
         "fishnet-remove",
+        "logging-level",
+        "loop-lag-enable",
+        "loop-lag-disable",
     }
 )
 
@@ -99,6 +107,38 @@ async def admin_operation(request: web.Request) -> web.Response:
 
     data = await read_post_data(request)
     form = data if data is not None else {}
+
+    if action in {"loop-lag-enable", "loop-lag-disable"}:
+        enabled = action == "loop-lag-enable"
+        monitor = request.app[loop_lag_monitor_key]
+        if not monitor.set_enabled(enabled, asyncio.get_running_loop()):
+            state = "enabled" if enabled else "disabled"
+            return _error(f"Event-loop lag monitoring is already {state}", 409)
+
+        log_action = "event_loop_lag_enabled" if enabled else "event_loop_lag_disabled"
+        await record_mod_action(app_state, moderator, SITE_LOG_TARGET, log_action)
+        state = "enabled" if enabled else "disabled"
+        return _success(log_action, f"Event-loop lag monitoring {state} without a restart.")
+
+    if action == "logging-level":
+        level = form.get("level")
+        if not isinstance(level, str) or level not in {"DEBUG", "INFO", "WARNING", "ERROR"}:
+            return _error("Choose a valid logging level", 400)
+
+        # Update only the persisted console handler level; retain module-specific settings.
+        result = await app_state.db.config.update_one(
+            {"name": "logging.config"},
+            {"$set": {"value.handlers.default.level": level}},
+        )
+        if not result.matched_count:
+            return _error("Logging configuration is not initialized", 503)
+        await record_mod_action(
+            app_state, moderator, SITE_LOG_TARGET, "logging_level_changed", level
+        )
+        return _success(
+            "logging_level_changed",
+            f"Console logging set to {level}. Running servers refresh within 60 seconds.",
+        )
 
     if action in {"disable-anons", "enable-anons"}:
         disabled = action == "disable-anons"

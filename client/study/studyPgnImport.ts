@@ -72,6 +72,7 @@ export interface StudyPgnImportResponse {
 
 export interface StudyPgnNewStudySettings {
     name: string;
+    flair?: string;
     visibility: string;
     computer: string;
     explorer: string;

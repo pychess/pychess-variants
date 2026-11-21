@@ -8,9 +8,7 @@ import os
 from urllib.parse import urlparse
 
 import aiohttp_cors
-import aiohttp_jinja2
 import aiohttp_session
-import jinja2
 import logger
 from aiohttp import web
 from aiohttp.web_app import Application
@@ -20,6 +18,7 @@ from aiohttp_swagger3 import SwaggerDocs, SwaggerInfo
 from client_ip import client_ip_middleware
 from csrf import ALLOW_ORIGINLESS_LOOPBACK_KEY, csrf_protection_middleware
 from db_wrapper import AsyncDBWrapper
+from event_loop_lag import EventLoopLagMonitor, loop_lag_context, loop_lag_monitor_key
 from middlewares import (
     cross_origin_policy_middleware,
     handle_404,
@@ -49,6 +48,7 @@ from typedefs import (
     pychess_global_app_state_key,
     request_protection_state_key,
 )
+from views.templating import setup_templates
 
 log = logging.getLogger(__name__)
 
@@ -108,19 +108,19 @@ def make_app(
         app.middlewares.append(session_security_middleware)
         app.middlewares.append(csrf_protection_middleware)
 
+        # Opt-in diagnostics only. Leave production and tests quiet by default.
+        # For local profiling, set PYCHESS_LOOP_LAG_ENABLED=1 explicitly.
+        loop_lag_enabled = os.getenv("PYCHESS_LOOP_LAG_ENABLED", "") == "1"
+        app[loop_lag_monitor_key] = EventLoopLagMonitor(enabled=loop_lag_enabled)
+        app.cleanup_ctx.append(loop_lag_context)
+
         app[request_protection_state_key] = RequestProtectionState()
         app.middlewares.append(request_protection_middleware)
         app.middlewares.append(request_timing_middleware)
         app.middlewares.append(cross_origin_policy_middleware)
         app.middlewares.append(set_user_locale)
 
-        aiohttp_jinja2.setup(
-            app,
-            enable_async=True,
-            extensions=["jinja2.ext.i18n"],
-            loader=jinja2.FileSystemLoader("templates"),
-            autoescape=jinja2.select_autoescape(["html"]),
-        )
+        setup_templates(app)
 
     with startup.phase("attach database wrapper"):
         if db_client is not None:

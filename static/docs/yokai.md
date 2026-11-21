@@ -47,7 +47,7 @@ Kappas are aquatic demons; in this game, there are two of them that have mirror 
 
 ![Yurei](https://github.com/pychess/pychess-variants/blob/master/static/images/YokaiShogiGuide/Yurei.png)
 
-Yurei are ghosts; they can move up to two squares forward or sideways. If a piece is blocking them, then they still move past that piece (like a ghost) but cannot capture on that second square. Upon promotion, they become a Vengeful Spirit that gains the ability to also move two squares backward. On top of that, they gain the ability to jump anywhere within 2 squares (including a knight jump away) without capturing. 
+Yurei are ghosts; they can move up to two squares orthogonally. If a piece is blocking them, then they still move past that piece (like a ghost) but cannot capture on that second square. Upon promotion, they become a Vengeful Spirit that gains the ability to also move two squares backward. On top of that, they gain the ability to jump anywhere within 2 squares (including a knight jump away) without capturing. 
 
 ### Tengu (G) and Dai-tengu
 
@@ -70,7 +70,7 @@ Upon promotion, they become the more powerful Nine-tailed fox. They gain King mo
 
 Tanuki are supernatural versions of their real life versions (tanuki/raccoon dog). They can move but not capture as a Bishop (any number of squares diagonally), but can capture as a Rook (any number of squares orthogonally).
 
-Upon promotion, they become the more powerful a more powerful Tanuki (bake-danuki is just a Youkai name for a shapeshifting tanuki). They gain King movement (can move or capture any square adjacent to them) on top of their original movement.
+Upon promotion, they become a more powerful Tanuki (bake-danuki is just a Youkai name for a shapeshifting tanuki). They gain King movement (can move or capture any square adjacent to them) on top of their original movement.
 
 ### Nurikabe (N)
 
@@ -84,7 +84,7 @@ Nurikabe are barrier monsters. They start in each player's hand and can only mov
 *Drops* - The main exceptions to dropping a piece anywhere are with pawns. 
 1) Pawns cannot be dropped in the same file as another one of your unpromoted pawns (promoted are okay). 
 2) A pawn drop cannot checkmate, but checks are okay. 
-3) The final exception applies to all minor pieces. You cannot drop a piece so that it can’t move, which usually means the last rank… or the last two ranks in the case of a knight.
+3) The final exception applies to a pawn or tengu. You cannot drop either in the last rank as they would have no valid moves.
 
 *Perpetual check* - Repeating check resulting in the same position four times in a row is a loss to the player causing perpetual check. In chess, this results in a draw.
 

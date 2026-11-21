@@ -9,7 +9,7 @@ import { _ } from './i18n';
 import { patch } from './document';
 import { alertDialog } from './alertDialog';
 import { Step, MsgChat, MsgFullChat, MsgSpectators, MsgShutdown, MsgGameNotFound } from './messages';
-import { adjacent, uci2LastMove, moveDests, cg2uci, unpromotedRole, UCIMove } from './chess';
+import { adjacent, uci2LastMove, moveDests, cg2uci, capturedRole, UCIMove } from './chess';
 import { InputType } from '@/input/input';
 import { GatingInput } from './input/gating';
 import { PromotionInput } from './input/promotion';
@@ -409,6 +409,10 @@ export abstract class GameController extends ChessgroundController implements Ch
     }
 
     setDests() {
+        if (this.variant.replayOnly) {
+            this.chessground.set({ movable: { color: undefined, dests: new Map() } });
+            return;
+        }
         // console.log("gameCtrl.setDests()");
         const legalMoves = this.ffishBoard
             .legalMoves()
@@ -770,7 +774,7 @@ export abstract class GameController extends ChessgroundController implements Ch
         // chessground doesn't know what piece to revert a captured promoted piece into, so it needs to be handled here
         if (this.variant.pocket?.captureToHand && meta.captured) {
             const piece = {
-                role: unpromotedRole(this.variant, meta.captured),
+                role: capturedRole(this.variant, meta.captured),
                 color: util.opposite(meta.captured.color),
             };
             this.chessground.changePocket(piece, 1);

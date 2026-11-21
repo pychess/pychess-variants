@@ -6,22 +6,25 @@ from unittest.mock import AsyncMock, patch
 
 import test_logger
 from aiohttp import web
-from catalogued_variants import (
+from catalogued.assets import (
     _canonical_piece_set_filename,
     _catalogued_board_svg_css,
     _catalogued_disguised_piece_css,
     _catalogued_piece_set_css,
     _catalogued_piece_set_is_directional,
     _catalogued_piece_set_required_filenames,
-    _check_ini_with_pyffish_child,
     _copy_catalogued_uploaded_assets,
     _has_complete_piece_set,
-    _read_bool_metadata,
+    _piece_set_revision,
     _sanitize_catalogued_board_svg,
     _sanitize_catalogued_piece_svg,
-    register_catalogued_variant_doc,
+)
+from catalogued.validation import (
+    _check_ini_with_pyffish_child,
+    _read_bool_metadata,
     validate_catalogued_ini,
 )
+from catalogued.variants import register_catalogued_variant_doc
 
 test_logger.init_test_logger()
 
@@ -265,6 +268,35 @@ class CataloguedVariantPieceSvgSanitizerTestCase(unittest.TestCase):
 
         self.assertNotIn("rotate:", css)
 
+    def test_piece_shadows_are_opt_in_and_work_with_directional_sets(self) -> None:
+        piece_set = {"wP": {"svg": '<svg xmlns="http://www.w3.org/2000/svg" />'}}
+        for directional in (False, True):
+            with self.subTest(directional=directional):
+                self.assertNotIn(
+                    "drop-shadow",
+                    _catalogued_piece_set_css("shadowtest", piece_set, directional=directional),
+                )
+                css = _catalogued_piece_set_css(
+                    "shadowtest", piece_set, directional=directional, shadow=True
+                )
+                self.assertIn(".piece-style-catalogued-shadowtest-custom piece {", css)
+                self.assertIn(
+                    "label.piece.catalogued-custom-preview.piece-style-catalogued-shadowtest-custom {filter:drop-shadow",
+                    css,
+                )
+                self.assertIn("var(--cg-board-files, var(--files))", css)
+                self.assertIn("var(--cg-board-ranks, var(--ranks))", css)
+                self.assertIn("filter:drop-shadow", css)
+                if directional:
+                    self.assertIn("piece.enemy::before {transform:rotate(180deg);}", css)
+
+    def test_shadow_toggle_changes_stylesheet_revision_without_reupload(self) -> None:
+        doc = {"pieceSetUpdatedAt": datetime.now(UTC)}
+        original = _piece_set_revision(doc)
+        shadowed = _piece_set_revision({**doc, "pieceSetShadow": True})
+        self.assertNotEqual(original, shadowed)
+        self.assertEqual(original, _piece_set_revision({**doc, "pieceSetShadow": False}))
+
     def test_shogi_base_marks_custom_piece_set_as_directional(self) -> None:
         self.assertTrue(_catalogued_piece_set_is_directional({"baseVariant": "shogi"}))
         self.assertTrue(_catalogued_piece_set_is_directional({"baseVariant": "minishogi"}))
@@ -362,9 +394,10 @@ class CataloguedVariantBoardSvgTestCase(unittest.TestCase):
             {"svg": ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 1200" />')},
         )
 
-        self.assertIn('[data-board-variant="shosushogi"] cg-board', css)
-        self.assertIn('[data-board-variant="shosushogi"].cg-wrap', css)
-        self.assertIn('[data-board-variant="shosushogi"] .cg-wrap', css)
+        scope = '[data-board-variant="shosushogi"]:not(.board-style-builtin)'
+        self.assertIn(f"{scope} cg-board", css)
+        self.assertIn(f"{scope}.cg-wrap", css)
+        self.assertIn(f"{scope} .cg-wrap", css)
         self.assertIn("padding-bottom: 109.09090909% !important", css)
         self.assertIn('[data-board-variant="shosushogi"].catalogued-board-preview-surface', css)
         self.assertIn(
@@ -381,7 +414,7 @@ class CataloguedVariantStartFenValidationTestCase(unittest.IsolatedAsyncioTestCa
 
         with (
             patch(
-                "catalogued_variants._run_process",
+                "catalogued.validation._run_process",
                 new=AsyncMock(return_value=(0, output)),
             ),
             self.assertRaises(web.HTTPBadRequest) as exc,
@@ -516,9 +549,9 @@ class CataloguedVariantPieceMetadataTestCase(unittest.TestCase):
 """
 
         with (
-            patch("catalogued_variants.sf.load_variant_config"),
+            patch("catalogued.validation.sf.load_variant_config"),
             patch(
-                "catalogued_variants.sf.start_fen",
+                "catalogued.validation.sf.start_fen",
                 return_value="r3k2r/8/8/8/8/8/8/4K2P w - - 0 1",
             ),
         ):
@@ -546,9 +579,9 @@ startFen = 8/8/8/8/8/8/8/8
 """
 
         with (
-            patch("catalogued_variants.sf.load_variant_config"),
+            patch("catalogued.validation.sf.load_variant_config"),
             patch(
-                "catalogued_variants.sf.start_fen",
+                "catalogued.validation.sf.start_fen",
                 return_value="8/8/8/8/8/8/8/8",
             ),
             self.assertRaises(web.HTTPBadRequest) as exc,

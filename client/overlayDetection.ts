@@ -1,4 +1,4 @@
-export function startOverlayObservation(board: Element, onCandidate: () => void): () => void {
+export function startOverlayObservation(board: Element, onCandidate: (svg: string) => void): () => void {
     let reported = false;
     const isCandidate = (node: Node): boolean => {
         if (!(node instanceof SVGSVGElement) || node.parentElement !== document.body) return false;
@@ -16,7 +16,8 @@ export function startOverlayObservation(board: Element, onCandidate: () => void)
         if (!reported && isCandidate(node)) {
             reported = true;
             observer.disconnect();
-            onCandidate();
+            // Capture the exact DOM snapshot while the candidate is still attached.
+            onCandidate(new XMLSerializer().serializeToString(node));
         }
     };
     const observer = new MutationObserver(records => {

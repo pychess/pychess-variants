@@ -5,12 +5,14 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any
 
-from catalogued_rules import catalogued_random_start
-from catalogued_variants import (
+from catalogued.models import (
     CATALOGUED_SOURCE_USER,
     CATALOGUED_VARIANT_COLLECTION,
     CATALOGUED_VISIBILITY_PRIVATE,
     CataloguedVariantValidation,
+)
+from catalogued.rules import catalogued_random_start
+from catalogued.validation import (
     catalogued_legal_moves_need_history,
     check_catalogued_ini_tree_without_mutating_server,
     extract_variant_name,
@@ -288,6 +290,7 @@ def study_variant_client_doc(
         "enabled": True,
         "hasPieceSet": bool(meta.get("pieceSet")),
         "pieceSetDirectional": bool(meta.get("pieceSetDirectional", False)),
+        "pieceSetShadow": bool(meta.get("pieceSetShadow", False)),
         "directionalPieceSet": bool(meta.get("pieceSetDirectional", False)),
         "hasBoard": bool(meta.get("boardSvg")),
     }

@@ -1,0 +1,101 @@
+.decimalshogi piece {
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+.decimalshogi piece.p-piece.white {
+    background-image: url('../../images/pieces/firi/bp.svg');
+}
+.decimalshogi piece.pp-piece.white {
+    background-image: url('../../images/pieces/firi/bpp.svg');
+}
+.decimalshogi piece.b-piece.white {
+    background-image: url('../../images/pieces/firi/bb.svg');
+}
+.decimalshogi piece.pb-piece.white {
+    background-image: url('../../images/pieces/firi/bpb.svg');
+}
+.decimalshogi piece.n-piece.white {
+    background-image: url('../../images/pieces/firi/bn.svg');
+}
+.decimalshogi piece.pn-piece.white {
+    background-image: url('../../images/pieces/firi/bpn.svg');
+}
+.decimalshogi piece.r-piece.white {
+    background-image: url('../../images/pieces/firi/br.svg');
+}
+.decimalshogi piece.pr-piece.white {
+    background-image: url('../../images/pieces/firi/bpr.svg');
+}
+.decimalshogi piece.l-piece.white {
+    background-image: url('../../images/pieces/firi/bl.svg');
+}
+.decimalshogi piece.pl-piece.white {
+    background-image: url('../../images/pieces/firi/0_VERTICALMOVER.svg');
+}
+.decimalshogi piece.s-piece.white {
+    background-image: url('../../images/pieces/firi/bs.svg');
+}
+.decimalshogi piece.ps-piece.white {
+    background-image: url('../../images/pieces/firi/bps.svg');
+}
+.decimalshogi piece.g-piece.white {
+    background-image: url('../../images/pieces/firi/bg.svg');
+}
+.decimalshogi piece.k-piece.white {
+    background-image: url('../../images/pieces/firi/bk.svg');
+}
+.decimalshogi piece.q-piece.white {
+    background-image: url('../../images/pieces/firi/bq.svg');
+}
+.decimalshogi piece.pg-piece.white {
+    background-image: url('../../images/pieces/firi/0_ELEPHANT.svg');
+}
+.decimalshogi piece.p-piece.black {
+    background-image: url('../../images/pieces/firi/wp.svg');
+}
+.decimalshogi piece.pp-piece.black {
+    background-image: url('../../images/pieces/firi/wpp.svg');
+}
+.decimalshogi piece.b-piece.black {
+    background-image: url('../../images/pieces/firi/wb.svg');
+}
+.decimalshogi piece.pb-piece.black {
+    background-image: url('../../images/pieces/firi/wpb.svg');
+}
+.decimalshogi piece.n-piece.black {
+    background-image: url('../../images/pieces/firi/wn.svg');
+}
+.decimalshogi piece.pn-piece.black {
+    background-image: url('../../images/pieces/firi/wpn.svg');
+}
+.decimalshogi piece.r-piece.black {
+    background-image: url('../../images/pieces/firi/wr.svg');
+}
+.decimalshogi piece.pr-piece.black {
+    background-image: url('../../images/pieces/firi/wpr.svg');
+}
+.decimalshogi piece.l-piece.black {
+    background-image: url('../../images/pieces/firi/wl.svg');
+}
+.decimalshogi piece.pl-piece.black {
+    background-image: url('../../images/pieces/firi/1_VERTICALMOVER.svg');
+}
+.decimalshogi piece.s-piece.black {
+    background-image: url('../../images/pieces/firi/ws.svg');
+}
+.decimalshogi piece.ps-piece.black {
+    background-image: url('../../images/pieces/firi/wps.svg');
+}
+.decimalshogi piece.g-piece.black {
+    background-image: url('../../images/pieces/firi/wg.svg');
+}
+.decimalshogi piece.k-piece.black {
+    background-image: url('../../images/pieces/firi/wk.svg');
+}
+.decimalshogi piece.q-piece.black {
+    background-image: url('../../images/pieces/firi/wq.svg');
+}
+.decimalshogi piece.pg-piece.black {
+    background-image: url('../../images/pieces/firi/1_ELEPHANT.svg');
+}

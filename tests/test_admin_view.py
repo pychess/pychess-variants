@@ -95,6 +95,35 @@ class AdminViewTestCase(AioHTTPTestCase):
         self.assertNotIn('href="/ijklmnop"', body)
         self.assertNotIn('href="/qrstuvwx"', body)
 
+    async def test_overlay_download_is_attachment_and_requires_admin(self):
+        app_state = get_app_state(self.app)
+        app_state.users["mod"] = User(app_state, username="mod")
+        app_state.users["alice"] = User(app_state, username="alice")
+        svg = '<svg xmlns="http://www.w3.org/2000/svg"><polygon points="1,1"/></svg>'
+        result = await app_state.db.cheat_report.insert_one(
+            {"kind": "external_overlay", "gameId": "abcdefgh", "overlaySvg": svg}
+        )
+        url = f"/admin/fair-play/overlay/{result.inserted_id}"
+        self.set_session_user("alice")
+        with patch("views.admin.ADMINS", ["mod"]):
+            denied = await self.client.get(url)
+        self.assertEqual(denied.status, 403)
+
+        # The previous request updates the session cookie for alice. Clear it
+        # before switching identities to avoid duplicate scoped cookies.
+        self.client.session.cookie_jar.clear()
+        self.set_session_user("mod")
+        with patch("views.admin.ADMINS", ["mod"]):
+            page = await self.client.get("/admin/fair-play")
+            response = await self.client.get(url)
+        self.assertIn(url, await page.text())
+        self.assertEqual(response.status, 200)
+        self.assertEqual(await response.read(), svg.encode())
+        self.assertEqual(response.content_type, "application/octet-stream")
+        self.assertIn("attachment;", response.headers["Content-Disposition"])
+        self.assertEqual(response.headers["X-Content-Type-Options"], "nosniff")
+        self.assertEqual(response.headers["Content-Security-Policy"], "sandbox")
+
     async def test_user_search_is_case_insensitive_and_renders_status(self):
         app_state = get_app_state(self.app)
         app_state.users["mod"] = User(app_state, username="mod")

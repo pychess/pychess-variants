@@ -1,0 +1,75 @@
+.okisakishogi piece {
+    --ctk-shadow-size: max(
+        calc(var(--cg-width) / var(--cg-board-files, var(--files)) * 0.0385),
+        calc(var(--cg-height) / var(--cg-board-ranks, var(--ranks)) * 0.03333)
+    );
+    filter: drop-shadow(2px 2px 2px #000);
+    filter: drop-shadow(
+        var(--ctk-shadow-size)
+        var(--ctk-shadow-size)
+        var(--ctk-shadow-size)
+        #000
+    );
+}
+.okisakishogi piece::before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+.okisakishogi piece.enemy::before {
+    transform: rotate(180deg);
+}
+.okisakishogi piece.p-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0FU.svg');
+}
+.okisakishogi piece.pp-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0TO.svg');
+}
+.okisakishogi piece.b-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0KA.svg');
+}
+.okisakishogi piece.pb-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0UM.svg');
+}
+.okisakishogi piece.n-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0_JUMPING_HORSE_BLACK.svg');
+}
+.okisakishogi piece.pn-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0NK.svg');
+}
+.okisakishogi piece.r-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0HI.svg');
+}
+.okisakishogi piece.pr-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0RY.svg');
+}
+.okisakishogi piece.l-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0_REVERSE_CHARIOT.svg');
+}
+.okisakishogi piece.pl-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0NY.svg');
+}
+.okisakishogi piece.s-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0GI.svg');
+}
+.okisakishogi piece.ps-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0NG.svg');
+}
+.okisakishogi piece.g-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0KI.svg');
+}
+.okisakishogi piece.k-piece.white::before {
+    background-image: url('../../images/pieces/shogi/ctk/0GY.svg');
+}
+.okisakishogi piece.k-piece.black::before {
+    background-image: url('../../images/pieces/shogi/ctk/0OU.svg');
+}
+
+/* Okisaki queen (妃). */
+.okisakishogi piece.q-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0_OKISAKI_QUEEN.svg');
+}

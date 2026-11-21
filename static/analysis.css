@@ -34,6 +34,8 @@
         --main-max-width: 100%;
     }
     .analysis-app {
+        /* Long FENs and variant selectors must not widen the mobile board. */
+        grid-template-columns: minmax(0, 1fr);
         grid-template-rows: auto;
         grid-template-areas: 'pocket-top' 'board' 'pocket-bot' 'move-controls' 'ceval' 'pv' 'misc-info' 'vari' 'tools' 'uboard' 'side';
     }

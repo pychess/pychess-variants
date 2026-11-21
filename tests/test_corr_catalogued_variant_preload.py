@@ -6,7 +6,11 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import ANY, AsyncMock, patch
 
-from views import add_corr_games_context
+from views import (
+    add_catalogued_client_docs_context,
+    add_catalogued_variant_context,
+    add_corr_games_context,
+)
 
 
 class FakeCursor:
@@ -156,3 +160,54 @@ class CorrespondenceCataloguedVariantPreloadTest(unittest.IsolatedAsyncioTestCas
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class OnDemandGameVariantMetadataTestCase(unittest.IsolatedAsyncioTestCase):
+    def test_replacing_a_favorite_with_snapshot_metadata_preserves_its_favorite_marker(self):
+        user = SimpleNamespace(
+            username="participant", anon=False, catalogued_variant_favorites={"custom"}
+        )
+        context = {"catalogued_variants": '[{"name":"custom","favorite":true,"ini":"live"}]'}
+        add_catalogued_client_docs_context(
+            SimpleNamespace(), user, context, [{"name": "custom", "ini": "snapshot"}]
+        )
+        self.assertEqual(
+            json.loads(context["catalogued_variants"]),
+            [{"name": "custom", "ini": "snapshot", "favorite": True}],
+        )
+
+    async def test_spectators_can_load_public_game_variant(self):
+        user = SimpleNamespace(username="spectator", anon=False)
+        game = SimpleNamespace(variant="custom")
+        context = {"catalogued_variants": "[]"}
+        with (
+            patch("views.is_catalogued_variant", return_value=True),
+            patch("views.catalogued_variant_client_doc_for_name", return_value={"name": "custom"}),
+            patch(
+                "views.catalogued_variant_client_doc_for_game", new_callable=AsyncMock
+            ) as private_lookup,
+        ):
+            await add_catalogued_variant_context(
+                SimpleNamespace(), user, context, "custom", game=game
+            )
+            self.assertEqual(json.loads(context["catalogued_variants"]), [{"name": "custom"}])
+            private_lookup.assert_not_awaited()
+
+    async def test_participants_can_load_archived_game_variant(self):
+        user = SimpleNamespace(username="participant", anon=False)
+        game = SimpleNamespace(variant="archived")
+        context = {"catalogued_variants": "[]"}
+        with (
+            patch("views.is_catalogued_variant", return_value=True),
+            patch("views.catalogued_variant_client_doc_for_name", return_value=None),
+            patch(
+                "views.catalogued_variant_client_doc_for_game",
+                new_callable=AsyncMock,
+                return_value={"name": "archived"},
+            ) as private_lookup,
+        ):
+            await add_catalogued_variant_context(
+                SimpleNamespace(), user, context, "archived", game=game
+            )
+            self.assertEqual(json.loads(context["catalogued_variants"]), [{"name": "archived"}])
+            private_lookup.assert_awaited_once_with(ANY, game, "participant")

@@ -415,6 +415,12 @@ export class AnalysisTreeController {
             extendsMainlineTail ? this.ctrl.steps.length : undefined,
         );
 
+        // A move played by the user owns the reused variation, even if it was
+        // originally introduced by server advice. Keep its existing descendants
+        // and annotations, but do not hide this move with server analysis.
+        const playedNode = nodeAtPath(tree, childPath);
+        if (playedNode) playedNode.serverAnalysis = false;
+
         if (extendedMainline) {
             this.ctrl.steps.push(step);
             this.ctrl.recordedMainlinePly = this.ctrl.steps.length - 1;

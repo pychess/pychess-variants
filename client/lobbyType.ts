@@ -5,6 +5,7 @@ export interface Post {
     post_id?: string;
     date: string;
     image: string;
+    image_src: string;
     alt: string;
     imageAlt?: string;
     title: string;

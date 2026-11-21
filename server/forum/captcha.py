@@ -48,7 +48,7 @@ def _captcha_lock(game_category: str) -> asyncio.Lock:
     return lock
 
 
-def _captcha_from_fen(*, game_id: str, fen: str, variant: str) -> dict[str, object] | None:
+async def _captcha_from_fen(*, game_id: str, fen: str, variant: str) -> dict[str, object] | None:
     """Build a mate-in-1 captcha from a FEN using pyffish move legality."""
     board_variant = variant.removesuffix("960")
     try:
@@ -60,15 +60,29 @@ def _captcha_from_fen(*, game_id: str, fen: str, variant: str) -> dict[str, obje
         return None
 
     solutions: list[str] = []
-    for move in legal_moves:
+    for index, move in enumerate(legal_moves):
+        # A CAPTCHA is generated in a background coroutine, but the native
+        # queries still hold the GIL. Yield between small batches so other
+        # requests and game clocks can run during a refresh.
+        if index and index % 4 == 0:
+            await asyncio.sleep(0)
+
         orig_dest = uci_orig_dest(move)
         if orig_dest is None:
             continue
-        if not board.push(move, append=True, raise_on_error=False):
+        # Ask the native engine about the candidate move directly. The old
+        # push/check/legal-moves/pop sequence reconstructed the position several
+        # times per candidate, including a redundant reconstruction on pop().
+        # Only check evasions for checking moves; most legal moves are not checks.
+        candidate = [move]
+        try:
+            if not board.sf.gives_check(board.variant, fen, candidate, board.chess960):
+                continue
+            is_mate = not board.sf.legal_moves(board.variant, fen, candidate, board.chess960)
+        except Exception:
+            # Ignore malformed candidates, as the old push() did.
+            log.debug("Skipping invalid forum CAPTCHA move %s in %s", move, variant, exc_info=True)
             continue
-        # After our move it is the opponent to move.
-        is_mate = board.is_checked() and len(board.legal_moves()) == 0
-        board.pop(remove=True)
         if is_mate:
             orig, dest = orig_dest
             solutions.append(f"{orig} {dest}")
@@ -160,7 +174,7 @@ def _decoded_game_moves_and_fen(
     return moves, initial_fen
 
 
-def _captcha_from_game_doc(doc: dict[str, object]) -> dict[str, object] | None:
+async def _captcha_from_game_doc(doc: dict[str, object]) -> dict[str, object] | None:
     """Convert one checkmated game document to a pre-mate mate-in-1 captcha."""
     game_id = str(doc.get("_id") or "").strip()
     code = str(doc.get("v") or "").strip()
@@ -181,11 +195,22 @@ def _captcha_from_game_doc(doc: dict[str, object]) -> dict[str, object] | None:
     except Exception:
         return None
 
-    for move in moves[:-1]:
-        if not board.push(move, append=True, raise_on_error=False):
-            return None
+    try:
+        # Replay the game history in one native call instead of reconstructing a
+        # new C++ position for each move. Keep FairyBoard's variant/FEN flags.
+        pre_mate_fen = board.sf.get_fen(
+            board.variant,
+            board.initial_fen,
+            moves[:-1],
+            board.chess960,
+            board.sfen,
+            board.show_promoted,
+            board.count_started,
+        )
+    except Exception:
+        return None
 
-    challenge = _captcha_from_fen(game_id=game_id, fen=board.fen, variant=variant)
+    challenge = await _captcha_from_fen(game_id=game_id, fen=pre_mate_fen, variant=variant)
     if challenge is None:
         return None
 
@@ -214,7 +239,7 @@ async def _refresh_forum_captcha_pool(app_state, game_category: str) -> None:
     processed = 0
     async for doc in cursor:
         processed += 1
-        challenge = _captcha_from_game_doc(doc)
+        challenge = await _captcha_from_game_doc(doc)
         if challenge is None:
             if processed % 8 == 0:
                 await asyncio.sleep(0)

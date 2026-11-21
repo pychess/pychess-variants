@@ -540,8 +540,8 @@ class TestStudyGUI:
                     anon_page.get_by_role("heading", name="404", exact=True)
                 ).to_be_visible()
                 await expect(
-                    anon_page.get_by_role("button", name=re.compile(r"Login"))
-                ).to_be_visible()
+                    anon_page.get_by_role("link", name="Return to PyChess")
+                ).to_have_attribute("href", "/")
             finally:
                 await owner_context.close()
                 await intruder_context.close()

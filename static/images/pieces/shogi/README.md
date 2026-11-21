@@ -23,3 +23,27 @@ $ ./build.sh
 * SVG files in the `original` directory are created by [Hari Seldon](https://commons.wikimedia.org/wiki/User:Hari_Seldon), licensed under [Creative Commons Attribution-Share Alike 3.0 Unported](https://creativecommons.org/licenses/by-sa/3.0/deed.en). See `original/LICENSE`.
 * Other SVG files in the `intermediate` and `dist` directory are created by Hari Seldon and modified by orangain, licensed under [Creative Commons Attribution-Share Alike 3.0 Unported](https://creativecommons.org/licenses/by-sa/3.0/deed.en).
 * Source code is licensed under MIT License. See `LICENSE`.
+
+## Additional one-kanji pieces
+
+The Okisaki Shogi style shares the standard piece bodies and artwork in `ctk/`.
+Its additional pieces use the empty base from `ctk/0_QUEEN.svg`:
+
+- `ctk/0_JUMPING_HORSE_BLACK.svg` uses the 跳 glyph from
+  `ctk/0_JUMPING_HORSE.svg`, recolored black for an unpromoted jumping horse.
+- `ctk/0_OKISAKI_QUEEN.svg` uses the 妃 queen glyph from the
+  [Okisaki Shogi piece table](https://en.wikipedia.org/wiki/Okisaki_shogi#Table_of_pieces),
+  outlined from Noto Serif CJK JP Bold.
+- `ctk/0_REVERSE_CHARIOT.svg` uses the 反 glyph from
+  [Lishogi's Chu Shogi Ryoko one-kanji reverse chariot](https://github.com/WandererXII/lishogi/blob/bb2a645ef3/ui/%40build/pieces/assets/chushogi/ryoko_1kanji/0_CHARIOT.svg),
+  by [nexxogen](https://github.com/nexxogen), licensed under
+  [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) as listed in
+  [Lishogi's COPYING.md](https://github.com/WandererXII/lishogi/blob/bb2a645ef3/COPYING.md).
+  The glyph is scaled and repositioned onto the existing CC BY-SA 3.0 piece
+  body, replacing Lishogi's wood-grain body. This artwork represents Okisaki's
+  unpromoted two-way lance; its promoted form keeps the standard promoted lance.
+
+[Noto CJK](https://github.com/notofonts/noto-cjk) is distributed under the SIL
+Open Font License 1.1. The queen is stored as an SVG path and needs no font at
+runtime. All three pieces face the player in their canonical orientation; the piece
+stylesheet rotates the image layer for enemy pieces.

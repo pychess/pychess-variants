@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-from const import GAME_CATEGORIES
+from const import GAME_CATEGORIES, NOTIFY_EXPIRE_WEEKS
 
 IndexKey = tuple[tuple[str, int | str], ...]
 CreateOption = tuple[str, Any]
@@ -315,7 +315,12 @@ INDEXES = (
     _index("study_chapter", ("studyId", 1), ("order", 1), name="studyId_order"),
     # Notifications, inboxes, teams, forums, and moderation.
     _index("notify", ("notifies", 1)),
-    _index("notify", ("expireAt", 1), expire_after_seconds=0),
+    # createdAt is a BSON date even in legacy documents, unlike expireAt strings.
+    _index(
+        "notify",
+        ("createdAt", 1),
+        expire_after_seconds=int(NOTIFY_EXPIRE_WEEKS.total_seconds()),
+    ),
     _index("notify", ("content.arr", 1), sparse=True),
     _index("push_subscription", ("user", 1)),
     _index(
@@ -440,9 +445,11 @@ INDEXES = (
 LEGACY_OPTIONAL_INDEXES = (_index("lobbychat", ("user", 1)),)
 
 # Exact historical definitions that can be removed safely before auditing the
-# current schema. Study search now uses one full index for both public and
-# member-visible searches, so the former public-only partial index is obsolete.
+# current schema.
 OBSOLETE_INDEXES = (
+    # Notifications now expire by their BSON createdAt date, not expireAt strings.
+    _index("notify", ("expireAt", 1), expire_after_seconds=0),
+    # Study search uses one full index for both public and member-visible searches.
     _index(
         "study",
         ("searchTokens", 1),

@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 import aiohttp_jinja2
 from admin_api import record_mod_action
 from aiohttp import web
-from catalogued_variants import is_public_catalogued_variant, public_catalogued_variants_for_forms
+from catalogued.variants import is_public_catalogued_variant, public_catalogued_variants_for_forms
 from const import T_CREATED
 from fairy import FairyBoard
 from misc import time_control_str
@@ -25,7 +25,7 @@ from typing_defs import ViewContext
 from utils import NO_LEGAL_MOVES_START_FEN_MESSAGE, sanitize_fen
 from variants import VARIANT_ICONS, VARIANTS, get_server_variant, is_catalogued_variant
 
-from views import get_user_context
+from views import add_catalogued_variant_context, get_user_context
 
 
 # Deferred translations for select labels rendered through Jinja gettext.
@@ -550,7 +550,7 @@ async def simul_new(request: web.Request) -> ViewContext:
     if not SIMULING:
         raise web.HTTPForbidden()
 
-    user, context = await get_user_context(request)
+    user, context = await get_user_context(request, include_catalogued_variants=True)
     if user.anon or user.bot:
         raise web.HTTPForbidden()
 
@@ -574,7 +574,7 @@ async def simul_edit(request: web.Request) -> ViewContext:
     if not SIMULING:
         raise web.HTTPForbidden()
 
-    user, context = await get_user_context(request)
+    user, context = await get_user_context(request, include_catalogued_variants=True)
     simul = await get_simul_for_request(request)
 
     if not _can_manage_simul(user, simul):
@@ -602,7 +602,7 @@ async def simul(request: web.Request) -> ViewContext:
     if not SIMULING:
         raise web.HTTPForbidden()
 
-    _user, context = await get_user_context(request)
+    _user, context = await get_user_context(request, include_catalogued_variants=True)
     app_state = get_app_state(request.app)
 
     simul_id = request.match_info["simulId"]
@@ -615,6 +615,9 @@ async def simul(request: web.Request) -> ViewContext:
     context["simulid"] = simul.id
     context["name"] = simul.name
     context["variant"] = simul.primary_variant_key
+    for variant_key in simul.variants:
+        variant_name, _chess960 = split_simul_variant_key(variant_key)
+        await add_catalogued_variant_context(app_state, _user, context, variant_name)
     context["base"] = simul.base
     context["inc"] = simul.inc
     context["rated"] = False

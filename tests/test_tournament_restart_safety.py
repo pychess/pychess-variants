@@ -428,7 +428,7 @@ class TournamentRestartSafetyTestCase(TournamentTestCase):
             patch.object(game, "save_berserk", side_effect=save_berserk),
             patch("wsr.round_broadcast", side_effect=broadcast),
         ):
-            await handle_berserk({"type": "berserk", "color": "white"}, game)
+            await handle_berserk(game.wplayer, {"type": "berserk", "color": "white"}, game)
 
         self.assertEqual(order, ["persist", "broadcast"])
         doc = await app_state.db.game.find_one({"_id": game.id})
@@ -443,7 +443,7 @@ class TournamentRestartSafetyTestCase(TournamentTestCase):
         broadcast = AsyncMock()
 
         with patch("wsr.round_broadcast", broadcast):
-            await handle_berserk({"type": "berserk", "color": "white"}, game)
+            await handle_berserk(game.wplayer, {"type": "berserk", "color": "white"}, game)
 
         self.assertFalse(game.wberserk)
         doc = await app_state.db.game.find_one({"_id": game.id})

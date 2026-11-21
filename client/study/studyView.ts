@@ -50,6 +50,7 @@ import {
 } from './studyChapterForm';
 import { studySessionPolicy, type StudySessionPolicy } from './studyMode';
 import { isConcealPlayback } from './studyConceal';
+import { studyFlairIcon, studyFlairPicker } from './studyFlair';
 
 function dialogField(label: string, control: VNode): VNode {
     return h('label.study-dialog__field', [h('span', label), control]);
@@ -97,18 +98,21 @@ function studyPermissionField(
 
 function studySettingsForm(study: StudyPageModel, formId: string): VNode {
     return h(`form#${formId}.study-dialog__form`, { attrs: { method: 'post', action: `/study/${study.id}/edit` } }, [
-        dialogField(
-            _('Name'),
-            h('input', {
-                attrs: {
-                    type: 'text',
-                    name: 'name',
-                    value: study.name,
-                    maxlength: '100',
-                    autocomplete: 'off',
-                },
-            }),
-        ),
+        h('div.study-flair-and-name', [
+            studyFlairPicker(study.flair),
+            dialogField(
+                _('Name'),
+                h('input', {
+                    attrs: {
+                        type: 'text',
+                        name: 'name',
+                        value: study.name,
+                        maxlength: '100',
+                        autocomplete: 'off',
+                    },
+                }),
+            ),
+        ]),
         dialogField(
             _('Visibility'),
             h(
@@ -261,6 +265,7 @@ function studyLikeControl(study: StudyPageModel): VNode {
 function studyMetadataTitle(study: StudyPageModel): VNode {
     return h('h2.study-underboard__title', [
         h('span.study-underboard__name', [
+            ...(study.flair ? [studyFlairIcon(study.flair)] : []),
             `${study.name}: ${study.chapter.name}`,
             ...((study.chapter.mode ?? 'normal') === 'normal'
                 ? []

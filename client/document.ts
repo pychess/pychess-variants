@@ -132,6 +132,14 @@ export function ensurePieceCSS(assetUrl: string, family: string, cssFile: string
     if (cssFile === 'letters') newUrl = sanitizeURL(`${assetUrl}/piece-css/letters.css`);
     if (cssFile === 'invisible') newUrl = sanitizeURL(`${assetUrl}/piece-css/invisible.css`);
 
+    if (family.startsWith('catalogued-') && cssFile.startsWith('custom')) {
+        const customId = `piece-set-${family}-custom`;
+        document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]').forEach(link => {
+            if (link.id !== cssId && (link.id === customId || link.id.startsWith(`${customId}-`))) {
+                link.remove();
+            }
+        });
+    }
     if (document.getElementById(cssId)) return;
 
     const link = document.createElement('link');

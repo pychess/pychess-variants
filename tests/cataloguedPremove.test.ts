@@ -5,11 +5,7 @@ import { premove } from 'chessgroundx/premove';
 import * as cg from 'chessgroundx/types';
 import * as util from 'chessgroundx/util';
 
-import {
-    premoveForVariant,
-    registerCataloguedPremove,
-    unregisterCataloguedPremove,
-} from '../client/cataloguedPremove';
+import { premoveForVariant, registerCataloguedPremove, unregisterCataloguedPremove } from '../client/premove';
 
 const dimensions: cg.BoardDimensions = { width: 8, height: 8 };
 
@@ -59,6 +55,20 @@ describe('catalogued variant premoves', () => {
         expect(new Set(destinations)).toEqual(new Set(expected));
     });
 
+    test('Fox and Hounds uses diagonal fox steps and forward-only hound steps', () => {
+        registerCataloguedPremove({
+            name: 'betza-test',
+            source: 'fairy-stockfish-builtin',
+            baseVariant: '',
+            clientVariant: 'chess',
+            ini: '',
+            betzaPieces: { f: 'mF', h: 'mfF' },
+        });
+        const moves = premoveForVariant('betza-test', false, dimensions);
+        expect(new Set(moves(board(['d4', 'f', 'white']), 'd4', false))).toEqual(new Set(['c3', 'e3', 'c5', 'e5']));
+        expect(new Set(moves(board(['d4', 'h', 'black']), 'd4', false))).toEqual(new Set(['c3', 'e3']));
+    });
+
     test('clientVariant controls fallback without changing engine baseVariant', () => {
         registerCataloguedPremove({
             name: 'betza-test',
@@ -79,6 +89,23 @@ describe('catalogued variant premoves', () => {
             position => util.pos2key([position[0], position[1]]),
         );
         expect(new Set(bishopDestinations)).toEqual(new Set(expectedBishop));
+    });
+
+    test('Okisaki Shogi overrides Shogi knight and lance premoves on a 10x10 board', () => {
+        const largeBoard: cg.BoardDimensions = { width: 10, height: 10 };
+        registerCataloguedPremove({
+            name: 'betza-test',
+            source: 'fairy-stockfish-builtin',
+            baseVariant: '',
+            clientVariant: 'shogi',
+            ini: '',
+            betzaPieces: { l: 'vR', n: 'N' },
+        });
+        const moves = premoveForVariant('betza-test', false, largeBoard);
+        const knight = moves(board(['e5', 'n', 'white']), 'e5', false);
+        expect(new Set(knight)).toEqual(new Set(['c4', 'c6', 'd3', 'd7', 'f3', 'f7', 'g4', 'g6']));
+        const lance = moves(board(['e5', 'l', 'white']), 'e5', false);
+        expect(new Set(lance)).toEqual(new Set(['e1', 'e2', 'e3', 'e4', 'e6', 'e7', 'e8', 'e9', 'e:']));
     });
 
     test('premoveVariant can refine the general client fallback', () => {

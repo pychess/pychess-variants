@@ -42,6 +42,10 @@ BETZA_DIAGRAM_RENDERER_VERSION = 3
 # bishop/queen letters), so the same letter must not be interpreted outside
 # the variant where Fairy-Stockfish assigns that built-in piece name.
 FSF_BUILTIN_PIECE_DIAGRAMS_BY_VARIANT: Mapping[str, tuple[_FsfBuiltinPieceDefinition, ...]] = {
+    "ai-wok": (
+        _FsfBuiltinPieceDefinition("a", "Ai-Wok", "RNF"),
+        _FsfBuiltinPieceDefinition("s", "Khon", "FfW"),
+    ),
     "almost": (_FsfBuiltinPieceDefinition("c", "Chancellor", "RN"),),
     "amazon": (_FsfBuiltinPieceDefinition("a", "Amazon", "QN"),),
     "berolina": (_FsfBuiltinPieceDefinition("p", "Berolina pawn", "mfFcfeWimfnA"),),
@@ -109,6 +113,7 @@ FSF_BUILTIN_PIECE_DIAGRAMS_BY_VARIANT: Mapping[str, tuple[_FsfBuiltinPieceDefini
         _FsfBuiltinPieceDefinition("b", "Alfil", "A"),
         _FsfBuiltinPieceDefinition("q", "Fers", "F"),
     ),
+    "sortofalmost": (_FsfBuiltinPieceDefinition("c", "Chancellor", "RN"),),
     "tencubed": (
         _FsfBuiltinPieceDefinition("a", "Archbishop", "BN"),
         _FsfBuiltinPieceDefinition("m", "Chancellor", "RN"),
@@ -116,17 +121,35 @@ FSF_BUILTIN_PIECE_DIAGRAMS_BY_VARIANT: Mapping[str, tuple[_FsfBuiltinPieceDefini
         _FsfBuiltinPieceDefinition("w", "Wizard", "CF"),
     ),
     "threekings": (_FsfBuiltinPieceDefinition("k", "Commoner", "K"),),
+    "wolf": (
+        _FsfBuiltinPieceDefinition("w", "Wolf", "RN"),
+        _FsfBuiltinPieceDefinition("f", "Fox", "BN"),
+        _FsfBuiltinPieceDefinition("s", "Sergeant", "fKifmnD"),
+        _FsfBuiltinPieceDefinition("n", "Nightrider", "NN"),
+    ),
     "chigorin": (_FsfBuiltinPieceDefinition("c", "Chancellor", "RN"),),
 }
 
 # Betza definitions sent to the client for premove calculation but intentionally
-# not rendered as rule-page diagrams. These are standard-looking pieces whose
-# role letter differs from the chosen ``clientVariant`` compatibility profile.
+# not rendered as rule-page diagrams. These correct role movements inherited
+# from the chosen ``clientVariant`` compatibility profile.
 # Keeping them separate avoids misleading diagrams (the Shatar/Courier bishop
 # regression) while still overriding chessground's approximate fallback where
 # required.
 FSF_BUILTIN_PREMOVE_BETZA_OVERRIDES_BY_VARIANT: Mapping[str, Mapping[str, str]] = {
+    "breakthrough": {"p": "fmWfF"},
+    "wolf": {"p": "fmWfceFifmnD", "+p": "NNQ"},
+    "clobber": {"p": "cW"},
+    "clobber10": {"p": "cW"},
     "courier": {"b": "B"},
+    # Reversi discs are placed from reserve and never move on the board.
+    "flipello": {"p": ""},
+    "flipello10": {"p": ""},
+    "flipersi": {"p": ""},
+    # Micro's reverse faces differ from both Shogi and Kyoto Shogi.
+    "micro": {"+p": "fN", "+l": "FfW", "+b": "WfF", "+r": "WfF"},
+    # Okisaki's jumping horse is a chess knight, unlike the Shogi fallback.
+    "okisakishogi": {"n": "N"},
     # Raazuvaa disables the normal chess pawn double-step.
     "raazuvaa": {"p": "fmWfceF"},
     "shatar": {"b": "B"},

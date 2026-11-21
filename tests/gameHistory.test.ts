@@ -84,6 +84,35 @@ test('active and already materialized board messages do not replay', () => {
     expect(materializeGameHistory(plain, ffish, ffish.Notation.SAN)).toBe(plain);
 });
 
+test('historical promotion chains replay forward through every stage and preserve the saved result', () => {
+    ffish.loadVariantConfig(
+        '[chainhistory:chess]\ncustomPiece1=c:mfW\ncustomPiece2=d:mfW\ncustomPiece3=e:mfW\n' +
+            'promotedPieceType=p:c c:d d:e e:q\npromotionPieceTypes=-\nmandatoryPawnPromotion=false\n' +
+            'promotionRegionWhite=*1 *2 *3 *4 *5 *6 *7 *8\npromotionRegionBlack=*1 *2 *3 *4 *5 *6 *7 *8',
+    );
+    const source = fixtures[0].message;
+    const finalFen = '1+E2k3/8/8/8/8/8/8/7K b - - 4 6';
+    const msg: MsgBoard = {
+        ...source,
+        fen: finalFen,
+        result: '1-0',
+        steps: [{ fen: '7k/8/8/8/8/8/P7/7K w - - 0 1', turnColor: 'white', check: false }],
+        history: {
+            variant: 'chainhistory',
+            chess960: false,
+            showPromoted: true,
+            countStarted: 0,
+            usi: false,
+            moves: 'a2a3+ h8g7 a3a4+ g7h6 a4a5+ h6g6 a5a6+ g6f7 a6b6 f7e8 b6b8'.split(' '),
+        },
+    };
+    const result = materializeGameHistory(msg, ffish, ffish.Notation.SAN);
+    expect(result.steps).toHaveLength(12);
+    expect([1, 3, 5, 7].map(ply => result.steps[ply].san)).toEqual(['a3=C', 'Ca4=D', 'Da5=E', 'Ea6=Q+']);
+    expect(result.steps[11].fen).toBe(finalFen);
+    expect(result.result).toBe('1-0');
+});
+
 test('Jieqi reveals movers and captured covered identities independently', () => {
     const msg = fixtures.find(fixture => fixture.name === 'jieqi')!.message;
     const result = materializeGameHistory(msg, ffish, ffish.Notation.XIANGQI_WXF);

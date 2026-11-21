@@ -151,7 +151,9 @@ class EmbassyCastlingPgnTestCase(unittest.TestCase):
 
     def test_export_pgn_fallback_accepts_modern_embassy_castling(self) -> None:
         # In current games the move can be embassy-style (e8b8) even if stored variant is capablanca.
-        pgn_text = export_pgn(make_export_doc("e8b8"))
+        with patch("utils.log.error") as error:
+            pgn_text = export_pgn(make_export_doc("e8b8"))
+        error.assert_not_called()
         self.assertIsNotNone(pgn_text)
         assert pgn_text is not None
         self.assertIn("O-O-O", pgn_text)

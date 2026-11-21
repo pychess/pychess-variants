@@ -59,7 +59,7 @@ import logging
 
 import logger
 from bug.utils_bug import handle_accept_seek_bughouse, handle_leave_seek_bughouse
-from catalogued_variants import can_create_catalogued_seek, catalogued_variant_games_are_persisted
+from catalogued.variants import can_create_catalogued_seek, catalogued_variant_games_are_persisted
 from lobby_spotlights import lobby_spotlights
 from pychess_global_app_state_utils import get_app_state
 from seek import (
@@ -303,6 +303,9 @@ async def handle_create_ai_challenge(
     if await _reject_bot_lobby_action(ws, user):
         return
 
+    if await _reject_inaccessible_catalogued_variant(app_state, ws, user, data["variant"]):
+        return
+
     if data.get("day", 0) == 0:
         no = await send_game_in_progress_if_any(app_state, user, ws)
         if no:
@@ -421,14 +424,17 @@ async def handle_create_seek(
         auto_paired = await auto_pair(app_state, matching_user, variant_tc, user, seek_value)
 
     if not auto_paired:
-        await app_state.lobby.lobby_broadcast_seeks()
-        if getattr(seek_value, "is_direct_challenge", False):
+        if seek_value.is_direct_challenge:
+            participants = challenge_participants(seek_value)
+            await app_state.lobby.lobby_broadcast_seeks(participants)
             response: DirectChallengeCreatedMessage = {
                 "type": "direct_challenge_created",
                 "seekId": seek_value.id,
             }
             await ws_send_json(ws, response)
-            await broadcast_challenge_state(app_state, challenge_participants(seek_value))
+            await broadcast_challenge_state(app_state, participants)
+        else:
+            await app_state.lobby.lobby_broadcast_seeks()
         if (seek is not None) and seek_value.target == "":
             try:
                 await app_state.discord.send_to_discord("create_seek", seek_value.discord_msg)
@@ -589,24 +595,19 @@ async def handle_delete_seek(
         await app_state.lobby.lobby_broadcast_seeks()
         return
 
+    challenge_users = ()
     if getattr(seek, "is_direct_challenge", False):
-        if getattr(seek, "challenge_status", None) in ACTIVE_DIRECT_CHALLENGE_STATUSES:
-            challenge_users = challenge_participants(seek)
+        # A private challenge may only be canceled/deleted by its creator.
+        if seek.creator.username != user.username:
+            return
+        challenge_users = challenge_participants(seek)
+        if seek.challenge_status in ACTIVE_DIRECT_CHALLENGE_STATUSES:
             set_direct_challenge_status(seek, DIRECT_CHALLENGE_CANCELED)
-            await app_state.lobby.lobby_broadcast_seeks()
+            await app_state.lobby.lobby_broadcast_seeks(challenge_users)
             await broadcast_challenge_state(app_state, challenge_users)
             return
-        app_state.seeks.pop(seek_id, None)
-    else:
-        seek = app_state.seeks.pop(seek_id, None)
-        if seek is None:
-            log.debug("handle_delete_seek() ignored duplicate delete for seek %s", seek_id)
-            await app_state.lobby.lobby_broadcast_seeks()
-            return
 
-    challenge_users = (
-        challenge_participants(seek) if getattr(seek, "is_direct_challenge", False) else ()
-    )
+    app_state.seeks.pop(seek_id, None)
 
     if seek.game_id is not None:
         # Delete the invite if it still exists; duplicate cleanup is expected.
@@ -616,7 +617,7 @@ async def handle_delete_seek(
     if user is not seek.creator:
         user.seeks.pop(seek_id, None)
     log.debug("handle_delete_seek() deleted seek %s", seek_id)
-    await app_state.lobby.lobby_broadcast_seeks()
+    await app_state.lobby.lobby_broadcast_seeks(challenge_users if challenge_users else None)
     if challenge_users:
         await broadcast_challenge_state(app_state, challenge_users)
 
@@ -644,15 +645,22 @@ async def handle_accept_seek(
         return
 
     seek = app_state.seeks[data["seekID"]]
-    if (
-        getattr(seek, "is_direct_challenge", False)
-        and getattr(seek, "challenge_status", None) not in ACTIVE_DIRECT_CHALLENGE_STATUSES
-    ):
-        return
+    is_direct_challenge = getattr(seek, "is_direct_challenge", False)
+    if is_direct_challenge:
+        if seek.target != user.username:
+            await ws_send_json(ws, {"type": "error", "message": "Challenge not available"})
+            return
+        if seek.challenge_status not in ACTIVE_DIRECT_CHALLENGE_STATUSES:
+            return
 
     if getattr(seek, "day", 0) == 0:
         no = await send_game_in_progress_if_any(app_state, user, ws)
         if no:
+            return
+        if is_direct_challenge and (
+            app_state.seeks.get(seek.id) is not seek
+            or seek.challenge_status not in ACTIVE_DIRECT_CHALLENGE_STATUSES
+        ):
             return
 
     # print("accept_seek", seek.seek_json)
@@ -673,21 +681,21 @@ async def handle_accept_seek(
         else:
             ws_set = tuple(seek.creator.lobby_sockets)
             if len(ws_set) == 0:
-                if not getattr(seek, "is_direct_challenge", False):
+                if not is_direct_challenge:
                     remove_seek(app_state.seeks, seek)
                     await app_state.lobby.lobby_broadcast_seeks()
             else:
                 await ws_send_json_many(ws_set, response)
 
-        # Inform others about the accepted challenge / seek removal.
-        await app_state.lobby.lobby_broadcast_seeks()
-        if getattr(seek, "is_direct_challenge", False):
+        if is_direct_challenge:
+            participants = challenge_participants(seek)
+            await app_state.lobby.lobby_broadcast_seeks(participants)
             game_ids = None
             if response["type"] == "new_game" and len(seek.creator.lobby_sockets) == 0:
                 game_ids = {seek.creator.username: response["gameId"]}
-            await broadcast_challenge_state(
-                app_state, challenge_participants(seek), game_ids=game_ids
-            )
+            await broadcast_challenge_state(app_state, participants, game_ids=game_ids)
+        else:
+            await app_state.lobby.lobby_broadcast_seeks()
 
     if (seek is not None) and seek.target == "":
         msg = "%s accepted by %s" % (seek.discord_msg, user.username)

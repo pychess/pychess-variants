@@ -162,10 +162,8 @@ class TestTournament(Tournament):
                 continue
             self.app_state.games[game.id] = game
             await self._auto_complete_janggi_setup(game)
-            game.random_mover = True
             if self.id == AUTO_PLAY_TOURNAMENT_ID:
                 # Keep the optional developer autoplay tournament realistic.
-                game.legal_moves = game.board.legal_moves()
                 self.game_tasks.add(asyncio.create_task(self.play_random(game)))
             elif self.with_clock and game.wplayer.title == "TEST" and game.bplayer.title == "TEST":
                 self.game_tasks.add(asyncio.create_task(self.finish_test_game(game)))

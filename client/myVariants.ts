@@ -62,6 +62,7 @@ type State = {
     draftDescription: string;
     draftPieceNames: string;
     draftPieceSetDirectional: boolean;
+    draftPieceSetShadow: boolean;
     draftPieceFamilyOverride: string;
     draftBoardFamilyOverride: string;
     draftVisibility: VariantVisibility;
@@ -93,6 +94,7 @@ const state: State = {
     draftDescription: '',
     draftPieceNames: '',
     draftPieceSetDirectional: false,
+    draftPieceSetShadow: false,
     draftPieceFamilyOverride: '',
     draftBoardFamilyOverride: '',
     draftVisibility: 'private',
@@ -232,6 +234,7 @@ type VariantFormBody = {
     description: string;
     pieceNames: string;
     pieceSetDirectional: boolean;
+    pieceSetShadow: boolean;
     pieceFamilyOverride: string;
     boardFamilyOverride: string;
     visibility: VariantVisibility;
@@ -278,6 +281,9 @@ function readForm(): VariantFormBody {
         pieceSetDirectional:
             (document.getElementById('catalogued-piece-set-directional') as HTMLInputElement | null)?.checked ??
             state.draftPieceSetDirectional,
+        pieceSetShadow:
+            (document.getElementById('catalogued-piece-set-shadow') as HTMLInputElement | null)?.checked ??
+            state.draftPieceSetShadow,
         pieceFamilyOverride: cleanPieceFamilyOverrideDraft(
             (document.getElementById('catalogued-piece-family-override') as HTMLSelectElement | null)?.value ??
                 state.draftPieceFamilyOverride,
@@ -320,6 +326,7 @@ function clearDraft(): void {
     state.draftDescription = '';
     state.draftPieceNames = '';
     state.draftPieceSetDirectional = false;
+    state.draftPieceSetShadow = false;
     state.draftPieceFamilyOverride = '';
     state.draftBoardFamilyOverride = '';
     state.draftVisibility = 'private';
@@ -339,6 +346,7 @@ function setDraftFromVariant(variant: ManagedVariant): void {
     state.draftDescription = variant.tooltip === 'Catalogued variant' ? '' : (variant.tooltip ?? '');
     state.draftPieceNames = formatPieceNames(variant.pieceNames);
     state.draftPieceSetDirectional = variant.pieceSetDirectional ?? false;
+    state.draftPieceSetShadow = variant.pieceSetShadow ?? false;
     state.draftPieceFamilyOverride = cleanPieceFamilyOverrideDraft(variant.pieceFamilyOverride);
     state.draftBoardFamilyOverride = cleanBoardFamilyOverrideDraft(variant.boardFamilyOverride);
     state.draftVisibility = variant.visibility ?? 'private';
@@ -509,6 +517,7 @@ async function saveVariant(model: PyChessModel): Promise<void> {
                           description: body.description,
                           pieceNames: body.pieceNames,
                           pieceSetDirectional: body.pieceSetDirectional,
+                          pieceSetShadow: body.pieceSetShadow,
                           pieceFamilyOverride: body.pieceFamilyOverride,
                           boardFamilyOverride: body.boardFamilyOverride,
                           visibility: body.visibility,
@@ -751,19 +760,19 @@ async function deleteBoard(model: PyChessModel, variant: ManagedVariant): Promis
 }
 
 function playVariant(model: PyChessModel, variant: ManagedVariant): void {
-    if (variant.archived || variant.enabled === false) return;
+    if (variant.archived || variant.enabled === false || variant.replayOnly) return;
     localStorage.seek_variant = variant.name;
     window.location.assign(`${model.home}/?any&variant=${encodeURIComponent(variant.name)}`);
 }
 
 function playVariantWithAI(model: PyChessModel, variant: ManagedVariant): void {
-    if (variant.archived || variant.enabled === false) return;
+    if (variant.archived || variant.enabled === false || variant.replayOnly) return;
     localStorage.seek_variant = variant.name;
     window.location.assign(`${model.home}/?ai&variant=${encodeURIComponent(variant.name)}`);
 }
 
 function openAnalysisBoard(model: PyChessModel, variant: ManagedVariant): void {
-    if (variant.archived || variant.enabled === false) return;
+    if (variant.archived || variant.enabled === false || variant.replayOnly) return;
     window.location.assign(`${model.home}/analysis/${encodeURIComponent(variant.name)}`);
 }
 
@@ -1016,6 +1025,32 @@ function renderForm(model: PyChessModel): VNode {
                         _(
                             'Enable for standalone variants whose piece direction shows ownership. One complete white or black SVG set can then serve both players. Shogi-derived variants are detected automatically.',
                         ),
+                    ),
+                ]),
+                h('label.catalogued-field.catalogued-field-half.catalogued-checkbox-field', [
+                    h('span.catalogued-checkbox-row', [
+                        h('span', _('Custom piece shadows')),
+                        h('input#catalogued-piece-set-shadow', {
+                            props: {
+                                type: 'checkbox',
+                                checked: state.draftPieceSetShadow,
+                                disabled: state.saving,
+                            },
+                            attrs: {
+                                'aria-describedby': 'catalogued-piece-set-shadow-help',
+                            },
+                            on: {
+                                change: (event: Event) => {
+                                    state.draftPieceSetShadow = (event.target as HTMLInputElement).checked;
+                                    state.formMessage = '';
+                                    state.formMessageTone = 'neutral';
+                                },
+                            },
+                        }),
+                    ]),
+                    h(
+                        'span#catalogued-piece-set-shadow-help.catalogued-help',
+                        _('Add drop shadows to uploaded SVG pieces, including previews and pieces in hand.'),
                     ),
                 ]),
                 h('label.catalogued-field.catalogued-field-half', [
@@ -1614,6 +1649,7 @@ function renderRows(model: PyChessModel): VNode {
                 state.variants.map(variant => {
                     const locked = !!variant.locked;
                     const archived = !!variant.archived || variant.enabled === false;
+                    const playDisabled = archived || !!variant.replayOnly;
                     const systemManaged = isSystemManagedVariant(variant);
                     const lockTitle = locked
                         ? _('This variant already has saved public games. Clone it to change the rules.')
@@ -1637,11 +1673,13 @@ function renderRows(model: PyChessModel): VNode {
                             { attrs: { 'data-label': _('Status') } },
                             archived
                                 ? _('Archived')
-                                : systemManaged
-                                  ? _('System')
-                                  : locked
-                                    ? _('Locked')
-                                    : _('Editable'),
+                                : variant.replayOnly
+                                  ? _('Replay only')
+                                  : systemManaged
+                                    ? _('System')
+                                    : locked
+                                      ? _('Locked')
+                                      : _('Editable'),
                         ),
                         h('td', { attrs: { 'data-label': _('Visibility') } }, visibilityLabel(variant.visibility)),
                         h('td', { attrs: { 'data-label': _('Games') } }, String(variant.gameCount ?? 0)),
@@ -1652,7 +1690,7 @@ function renderRows(model: PyChessModel): VNode {
                             h(
                                 'button.button-primary.catalogued-row-button',
                                 {
-                                    props: { type: 'button', disabled: archived },
+                                    props: { type: 'button', disabled: playDisabled },
                                     on: { click: () => playVariant(model, variant) },
                                 },
                                 _('Play'),
@@ -1660,7 +1698,7 @@ function renderRows(model: PyChessModel): VNode {
                             h(
                                 'button.catalogued-row-button.catalogued-secondary-action.catalogued-ai-action',
                                 {
-                                    props: { type: 'button', disabled: archived },
+                                    props: { type: 'button', disabled: playDisabled },
                                     attrs: { title: aiTitle },
                                     on: { click: () => playVariantWithAI(model, variant) },
                                 },
@@ -1669,7 +1707,7 @@ function renderRows(model: PyChessModel): VNode {
                             h(
                                 'button.catalogued-row-button.catalogued-secondary-action.catalogued-analysis-action',
                                 {
-                                    props: { type: 'button', disabled: archived },
+                                    props: { type: 'button', disabled: playDisabled },
                                     on: { click: () => openAnalysisBoard(model, variant) },
                                 },
                                 _('Analysis'),

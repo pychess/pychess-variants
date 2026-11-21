@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, patch
 
 from admin_ops_api import fishnet_key_id
 from aiohttp.test_utils import AioHTTPTestCase
+from event_loop_lag import loop_lag_monitor_key
 from mongomock_motor import AsyncMongoMockClient
 from pychess_global_app_state_utils import get_app_state
 from settings import FISHNET_KEYS
@@ -77,6 +78,90 @@ class AdminOperationsTestCase(AioHTTPTestCase):
         self.assertNotIn("private-fishnet-key", body)
         self.assertIn("Add YouTube stream completed.", body)
         self.assertIn("Recent site operations", body)
+
+    async def test_event_loop_lag_toggle_is_admin_only_immediate_and_audited(self):
+        monitor = self.app[loop_lag_monitor_key]
+        self.assertFalse(monitor.enabled)
+        self.add_live_user("alice")
+        self.add_live_user("mod")
+        self.set_session_user("alice")
+        with patch("admin_ops_api.ADMINS", ["mod"]):
+            forbidden = await self.client.post("/api/admin/operations/loop-lag-enable")
+        self.assertEqual(forbidden.status, 403)
+        self.assertFalse(monitor.enabled)
+
+        self.client.session.cookie_jar.clear()
+        self.set_session_user("mod")
+        with (
+            patch("admin_ops_api.ADMINS", ["mod"]),
+            patch("views.admin.ADMINS", ["mod"]),
+        ):
+            enabled = await self.client.post("/api/admin/operations/loop-lag-enable")
+            duplicate = await self.client.post("/api/admin/operations/loop-lag-enable")
+            self.assertTrue(monitor.enabled)
+            self.assertIsNotNone(monitor._handle)
+            page = await self.client.get("/admin/operations")
+            body = await page.text()
+            self.assertIn("Disable monitoring", body)
+            self.assertIn("Peak scheduling delay", body)
+            disabled = await self.client.post("/api/admin/operations/loop-lag-disable")
+            self.assertFalse(monitor.enabled)
+            self.assertIsNone(monitor._handle)
+            disabled_again = await self.client.post("/api/admin/operations/loop-lag-disable")
+            page_after = await self.client.get("/admin/operations")
+            self.assertIn("Enable monitoring", await page_after.text())
+
+        self.assertEqual(enabled.status, 200)
+        self.assertEqual(duplicate.status, 409)
+        self.assertEqual(page.status, 200)
+        self.assertEqual(disabled.status, 200)
+        self.assertEqual(disabled_again.status, 409)
+        logs = await get_app_state(self.app).db.mod_log.find({"user": "site"}).to_list(None)
+        self.assertEqual(
+            ["event_loop_lag_enabled", "event_loop_lag_disabled"],
+            [entry["action"] for entry in logs],
+        )
+        self.assertTrue(all(entry["mod"] == "mod" for entry in logs))
+
+    async def test_logging_level_update_is_admin_only_validated_and_audited(self):
+        app_state = get_app_state(self.app)
+        await app_state.db.config.insert_one(
+            {
+                "name": "logging.config",
+                "value": {
+                    "handlers": {"default": {"level": "DEBUG", "formatter": "standard"}},
+                    "loggers": {"wsr": {"level": "DEBUG"}},
+                },
+            }
+        )
+        self.add_live_user("alice")
+        self.add_live_user("mod")
+        self.set_session_user("alice")
+        with patch("admin_ops_api.ADMINS", ["mod"]):
+            forbidden = await self.client.post(
+                "/api/admin/operations/logging-level", data={"level": "INFO"}
+            )
+        self.assertEqual(forbidden.status, 403)
+
+        self.client.session.cookie_jar.clear()
+        self.set_session_user("mod")
+        with patch("admin_ops_api.ADMINS", ["mod"]):
+            invalid = await self.client.post(
+                "/api/admin/operations/logging-level", data={"level": "OFF"}
+            )
+            updated = await self.client.post(
+                "/api/admin/operations/logging-level", data={"level": "INFO"}
+            )
+        self.assertEqual(invalid.status, 400)
+        self.assertEqual(updated.status, 200)
+        config = await app_state.db.config.find_one({"name": "logging.config"})
+        self.assertEqual(config["value"]["handlers"]["default"]["level"], "INFO")
+        self.assertEqual(config["value"]["handlers"]["default"]["formatter"], "standard")
+        self.assertEqual(config["value"]["loggers"]["wsr"]["level"], "DEBUG")
+        logs = await app_state.db.mod_log.find({"action": "logging_level_changed"}).to_list(None)
+        self.assertEqual(len(logs), 1)
+        self.assertEqual(logs[0]["mod"], "mod")
+        self.assertEqual(logs[0]["details"], "INFO")
 
     async def test_anonymous_session_toggle_is_idempotent_and_audited(self):
         app_state = get_app_state(self.app)

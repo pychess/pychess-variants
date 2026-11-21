@@ -10,6 +10,7 @@ import { volumeSettings, soundThemeSettings } from './sound';
 import { zenModeSettings } from './zen';
 import { confirmDialog } from './confirmDialog';
 import { disablePushSubscription, initPushSubscription } from './push';
+import { setCorrBrowserEnabled } from './notification';
 import { setHeaderPanelExpanded } from './headerPanel';
 
 export function settingsView(modelVariant: string) {
@@ -26,6 +27,7 @@ export function settingsView(modelVariant: string) {
                 boardSettingsView(modelVariant),
                 zenModeSettingsView(),
                 privacySettingsView(),
+                notificationSettingsView(),
             ]),
         ]),
     ]);
@@ -72,6 +74,7 @@ function mainMenu(anon: boolean) {
             h('div.settings-menu-separator', { attrs: { role: 'separator' } }),
             h('button#btn-inbox-menu', { on: { click: gotoInbox } }, _('Inbox')),
             h('button#btn-privacy', { on: { click: showSubsettings } }, _('Privacy')),
+            h('button#btn-notifications', { on: { click: showSubsettings } }, _('Notifications')),
             h('button#btn-account', { on: { click: gotoAccount } }, _('Account')),
             h('button#btn-logout', { on: { click: logoutDialog } }, _('Log out')),
         );
@@ -142,8 +145,6 @@ function zenModeSettingsView() {
 
 function privacySettingsView() {
     const pmFriendsOnly = getDocumentData('pm-friends-only') === 'True';
-    const corrPushEnabled = getDocumentData('corr-push-enabled') !== 'False';
-    const rrPushEnabled = getDocumentData('rr-push-enabled') === 'True';
     return h('div#settings-privacy', [
         backButton(_('Privacy')),
         h('div', [
@@ -159,32 +160,89 @@ function privacySettingsView() {
                 }),
                 h('label', { attrs: { for: 'pm-friends-only' } }, _('Only friends can message me')),
             ]),
-            h('div.privacy-toggle', [
-                h('input#corr-push-enabled', {
-                    attrs: { type: 'checkbox', checked: corrPushEnabled },
-                    on: {
-                        change: (evt: Event) => {
-                            const next = (evt.target as HTMLInputElement).checked;
-                            setCorrPushEnabled(next);
-                        },
-                    },
-                }),
-                h('label', { attrs: { for: 'corr-push-enabled' } }, _('Correspondence move push notifications')),
-            ]),
-            h('div.privacy-toggle', [
-                h('input#rr-push-enabled', {
-                    attrs: { type: 'checkbox', checked: rrPushEnabled },
-                    on: {
-                        change: (evt: Event) => {
-                            const next = (evt.target as HTMLInputElement).checked;
-                            setRrPushEnabled(next);
-                        },
-                    },
-                }),
-                h('label', { attrs: { for: 'rr-push-enabled' } }, _('Round-robin appointment push notifications')),
-            ]),
         ]),
     ]);
+}
+
+function notificationSettingsView() {
+    return h('div#settings-notifications', [
+        backButton(_('Notifications')),
+        h('div', [
+            notificationToggle(
+                'corr-browser-enabled',
+                getDocumentData('corr-browser-enabled') !== 'False',
+                _('Correspondence move browser notifications'),
+                _('Show a device notification when a game tab is open in the background.'),
+                input => void saveCorrBrowserEnabled(input),
+            ),
+            notificationToggle(
+                'corr-push-enabled',
+                getDocumentData('corr-push-enabled') !== 'False',
+                _('Correspondence move push notifications'),
+                _('Receive background notifications even when no Pychess tab is open.'),
+                input => setCorrPushEnabled(input.checked),
+            ),
+            notificationToggle(
+                'rr-push-enabled',
+                getDocumentData('rr-push-enabled') === 'True',
+                _('Round-robin appointment push notifications'),
+                _('Receive background notifications about round-robin game appointments.'),
+                input => setRrPushEnabled(input.checked),
+            ),
+            h('p#notification-setting-error', { attrs: { role: 'alert', hidden: true } }, _('Failed to save notification setting. Please try again.')),
+        ]),
+    ]);
+}
+
+function notificationToggle(
+    id: string,
+    enabled: boolean,
+    label: string,
+    description: string,
+    change: (input: HTMLInputElement) => void,
+) {
+    return h('div.notification-toggle', [
+        h(`input#${id}`, {
+            attrs: { type: 'checkbox', checked: enabled, 'aria-describedby': `${id}-description` },
+            on: { change: (evt: Event) => change(evt.target as HTMLInputElement) },
+        }),
+        h('div', [
+            h('label', { attrs: { for: id } }, label),
+            h(`small#${id}-description`, description),
+        ]),
+    ]);
+}
+
+async function saveCorrBrowserEnabled(input: HTMLInputElement): Promise<void> {
+    const value = input.checked;
+    const previous = getDocumentData('corr-browser-enabled') !== 'False';
+    const errorMessage = document.getElementById('notification-setting-error');
+    input.disabled = true;
+    if (errorMessage) errorMessage.hidden = true;
+    // Request permission during the user's gesture; browser alerts need no push subscription.
+    if (value && 'Notification' in window && Notification.permission === 'default') {
+        try {
+            void Notification.requestPermission().catch(() => {});
+        } catch {
+            // The account preference can still be saved when permission requests are unavailable.
+        }
+    }
+    try {
+        const payload = new URLSearchParams({ corr_browser: value ? 'true' : 'false' });
+        const response = await fetch('/pref/corr-browser', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+            body: payload.toString(),
+        });
+        if (!response.ok) throw new Error(`notification pref failed: ${response.status}`);
+        setCorrBrowserEnabled(value);
+    } catch (error) {
+        input.checked = previous;
+        if (errorMessage) errorMessage.hidden = false;
+        console.warn('Failed to update browser notification setting.', error);
+    } finally {
+        input.disabled = false;
+    }
 }
 
 function setPmFriendsOnly(value: boolean) {

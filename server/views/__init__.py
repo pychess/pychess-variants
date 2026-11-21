@@ -9,8 +9,11 @@ from typing import TYPE_CHECKING, Any
 
 import aiohttp_session
 from aiohttp import web
-from catalogued_variants import (
+from catalogued.models import CataloguedVariantClientDocument
+from catalogued.variants import (
     catalogued_variant_client_doc_for_game,
+    catalogued_variant_client_doc_for_name,
+    catalogued_variant_client_docs_with_dependencies,
     catalogued_variants_for_client,
 )
 from const import (
@@ -46,7 +49,7 @@ from settings import ADMINS, SIMULING
 from typing_defs import UserDocument, ViewContext
 from user import User, mint_guest_user
 from utils import corr_games, load_game_from_doc
-from variants import ALL_VARIANTS
+from variants import ALL_VARIANTS, CataloguedServerVariant, is_catalogued_variant
 
 from lang import LOCALE
 
@@ -110,7 +113,9 @@ piece_sets: list[str] = [
 ]
 
 
-async def get_user_context(request: web.Request) -> tuple[User, ViewContext]:
+async def get_user_context(
+    request: web.Request, *, include_catalogued_variants: bool = False
+) -> tuple[User, ViewContext]:
     app_state = get_app_state(request.app)
 
     # Who made the request?
@@ -219,17 +224,9 @@ async def get_user_context(request: web.Request) -> tuple[User, ViewContext]:
         "category_variant_list": category_variant_list,
         "category_variant_set": category_variant_set,
         "game_category_intro": (not user.anon) and (not getattr(user, "game_category_set", False)),
-        "catalogued_variants": json_dumps(
-            catalogued_variants_for_client(
-                app_state,
-                user.username if not user.anon else None,
-                favorite_names=(
-                    user.catalogued_variant_favorites if not user.anon and not user.bot else None
-                ),
-            )
-        ),
         "pm_friends_only": user.pm_friends_only,
         "corr_push_enabled": user.corr_push_enabled,
+        "corr_browser_enabled": user.corr_browser_enabled,
         "rr_push_enabled": user.rr_push_enabled,
         "menu_variant": menu_variant,
         "title": "%s • PyChess" % view.capitalize(),
@@ -246,7 +243,68 @@ async def get_user_context(request: web.Request) -> tuple[User, ViewContext]:
         if app_state.push_notifier.enabled
         else "",
     }
+    if include_catalogued_variants:
+        # The variant selector lists favorites, not the entire public catalogue.
+        # Routes that display a particular variant add that definition separately.
+        favorites = user.catalogued_variant_favorites if not user.anon and not user.bot else set()
+        context["catalogued_variants"] = json_dumps(
+            catalogued_variants_for_client(
+                app_state,
+                None if user.anon else user.username,
+                favorite_names=favorites,
+                names=favorites,
+            )
+        )
     return (user, context)
+
+
+def add_catalogued_client_docs_context(
+    app_state: Any,
+    user: User,
+    context: ViewContext,
+    client_docs: list[CataloguedVariantClientDocument],
+) -> None:
+    existing = json.loads(str(context.get("catalogued_variants") or "[]"))
+    favorites = getattr(user, "catalogued_variant_favorites", set())
+    client_docs = [
+        {**doc, "favorite": True} if doc["name"] in favorites else doc for doc in client_docs
+    ]
+    context["catalogued_variants"] = json_dumps(
+        catalogued_variant_client_docs_with_dependencies(
+            app_state,
+            existing + client_docs,
+            None if getattr(user, "anon", False) else user.username,
+            favorite_names=favorites,
+        )
+    )
+
+
+async def add_catalogued_variant_context(
+    app_state: Any,
+    user: User,
+    context: ViewContext,
+    name: str,
+    *,
+    game: Game | GameBug | None = None,
+) -> None:
+    """Include only the variant needed by this view, including a player's old game."""
+    if not is_catalogued_variant(name) and not (
+        game is not None
+        and isinstance(getattr(game, "server_variant", None), CataloguedServerVariant)
+    ):
+        return
+
+    existing = json.loads(str(context.get("catalogued_variants") or "[]"))
+    if any(item.get("name") == name for item in existing):
+        return
+
+    doc = catalogued_variant_client_doc_for_name(
+        app_state, name, None if user.anon else user.username
+    )
+    if doc is None and game is not None:
+        doc = await catalogued_variant_client_doc_for_game(app_state, game, user.username)
+    if doc is not None:
+        add_catalogued_client_docs_context(app_state, user, context, [doc])
 
 
 async def _ensure_user_correspondence_games_loaded(app_state: Any, user: User) -> None:
@@ -319,7 +377,7 @@ async def add_corr_games_context(
         if catalogued_doc is not None:
             catalogued_variants.append(catalogued_doc)
 
-    context["catalogued_variants"] = json_dumps(catalogued_variants)
+    add_catalogued_client_docs_context(app_state, user, context, catalogued_variants)
 
 
 def add_game_context(

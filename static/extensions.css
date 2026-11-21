@@ -76,7 +76,7 @@
   width: 14.2857%;
   height: 11.1111%;
 }
-.cg-640-640 #extension_choice square {
+.cg-640-640 #extension_choice square, .cg-shogi10x10 #extension_choice square {
   height: 10%;
   width: 10%;
 }
@@ -87,6 +87,10 @@
 .cg-260 #extension_choice square {
   height: 20%;
   width: 20%;
+}
+.cg-shogi4x5 #extension_choice square {
+  height: 20%;
+  width: 25%;
 }
 .cg-312 #extension_choice square {
   height: calc(100% / 6);
@@ -199,7 +203,7 @@
 .mini .pocket piece::after {
   font-size: 0.4em;
 }
-.shogi3x4 .mini .pocket piece::after, .shogi5x5 .mini .pocket piece::after, .shogi5x6 .mini .pocket piece::after, .shogi6x6 .mini .pocket piece::after {
+.shogi3x4 .mini .pocket piece::after, .shogi4x5 .mini .pocket piece::after, .shogi5x5 .mini .pocket piece::after, .shogi5x6 .mini .pocket piece::after, .shogi6x6 .mini .pocket piece::after {
   font-size: 0.3em;
 }
 .pocket piece[data-nb='0']::after {
@@ -278,6 +282,20 @@
   top: 37.5%;
   left: 37.5%;
   z-index: 1;
+  pointer-events: none;
+}
+
+/* Jeson Mor's central flag square, e5, on its 9x9 board. */
+.jesonmor .cg-540 cg-board::before {
+  width: calc(100% / 9);
+  height: calc(100% / 9);
+  top: calc(400% / 9);
+  left: calc(400% / 9);
+  background: rgba(230, 230, 230, 0.2);
+  box-shadow: 0 0 10px rgb(0 0 0 / 70%);
+  content: '';
+  z-index: 1;
+  position: absolute;
   pointer-events: none;
 }
 

@@ -123,6 +123,29 @@ test('active-line ply navigation preserves a selected variation', () => {
     expect(tree.getTreeCurrentNode()?.step.san).toBe('c5');
 });
 
+test('playing a saved server-analysis variation makes it visible with server analysis disabled', () => {
+    const ctrl = { ...stubCtrl(steps4()), showServerAnalysis: false };
+    const tree = new AnalysisTreeController(ctrl as any);
+    tree.initAnalysisTreeAtPly(1);
+    const parent = tree.getTreeActivePath();
+    const serverStep = makeStep('v1 w - - 0 1', 'c7c5', 'white', 'c5');
+    const first = tree.recordMove(serverStep)!;
+    const serverNode = tree.getTreeNodeAtPath(first.childPath)!;
+    serverNode.serverAnalysis = true;
+    expect(tree.getTreeMainChildPath()).not.toBe(first.childPath);
+
+    const played = tree.recordMove(serverStep)!;
+    expect(played.childPath).toBe(first.childPath);
+    expect(serverNode.serverAnalysis).toBe(false);
+    expect(tree.getTreeNodeAtPath(parent)!.children.filter(node => node.path === played.childPath)).toHaveLength(1);
+    expect(tree.getTreeMainChildPath()).toBe(tree.getTreeNodeAtPath(parent)!.children[0].path);
+
+    // Navigating to the saved advice alone must not count as playing it.
+    serverNode.serverAnalysis = true;
+    tree.activateTreePath(first.childPath);
+    expect(serverNode.serverAnalysis).toBe(true);
+});
+
 test('records nested variations without extending persisted steps', () => {
     const ctrl = stubCtrl(steps4());
     const tree = new AnalysisTreeController(ctrl as any);

@@ -4,7 +4,7 @@ import * as cg from 'chessgroundx/types';
 import * as util from 'chessgroundx/util';
 import { read as readFen } from 'chessgroundx/fen';
 
-import { registerCataloguedPremove, unregisterCataloguedPremove } from './cataloguedPremove';
+import { registerCataloguedPremove, unregisterCataloguedPremove } from './premove';
 
 import {
     BoardMarkType,
@@ -108,6 +108,11 @@ export const BOARD_FAMILIES: Record<string, BoardFamily> = {
             'sittuyinWood.png',
         ],
     },
+    shogi10x10: {
+        dimensions: { width: 10, height: 10 },
+        cg: 'cg-shogi10x10',
+        boardCSS: ['shogi10x10.svg', 'Shogi10x10Wood.svg', 'Shogi10x10Kaya.svg'],
+    },
     shogi9x9: {
         dimensions: { width: 9, height: 9 },
         cg: 'cg-576',
@@ -149,6 +154,11 @@ export const BOARD_FAMILIES: Record<string, BoardFamily> = {
             'MinishogiDobutsu.svg',
             'MinishogiDobutsu2.svg',
         ],
+    },
+    shogi4x5: {
+        dimensions: { width: 4, height: 5 },
+        cg: 'cg-shogi4x5',
+        boardCSS: ['microshogi.svg'],
     },
     shogi5x6: {
         dimensions: { width: 5, height: 6 },
@@ -295,7 +305,12 @@ const ORDA_NAMES: PieceNameTable = {
 };
 
 export const PIECE_FAMILIES: Record<string, PieceFamily> = {
+    aiwok: { pieceCSS: ['alfaerie', 'disguised'] },
+    foxandhounds: { pieceCSS: ['classic', 'disguised'] },
     amazons: { pieceCSS: ['classic', 'arrow', 'disguised'], wallCSS: ['classic', 'arrow'] },
+    snailtrail: { pieceCSS: ['classic', 'disguised'] },
+    isolation: { pieceCSS: ['classic', 'disguised'] },
+    wolf: { pieceCSS: ['alfaerie'], pieceNames: { ...CHESS_NAMES, '+p': _('elephant') } },
     paradigm: { pieceCSS: ['paradigm0', 'paradigm1', 'paradigm2', 'paradigm3', 'disguised'] },
     ataxx: { pieceCSS: ['disguised', 'virus', 'zombie', 'cat-dog'] },
     standard: {
@@ -311,6 +326,7 @@ export const PIECE_FAMILIES: Record<string, PieceFamily> = {
             'atopdown',
             'luffy',
             'firi',
+            'forest',
             'disguised',
         ],
     },
@@ -359,6 +375,17 @@ export const PIECE_FAMILIES: Record<string, PieceFamily> = {
         pieceCSS: ['kyoto', 'kyotok', 'kyotoks', 'kyotoi', 'kyotod', 'disguised'],
         imageLayerCSS: ['kyoto', 'kyotok', 'kyotoks'],
     },
+    microshogi: {
+        pieceCSS: ['kanji', 'firi', 'disguised'],
+        imageLayerCSS: ['kanji'],
+        pieceNames: {
+            ...SHOGI_NAMES,
+            '+p': SHOGI_NAMES.n,
+            '+l': SHOGI_NAMES.s,
+            '+b': SHOGI_NAMES['+p'],
+            '+r': SHOGI_NAMES.g,
+        },
+    },
     dobutsu: { pieceCSS: ['dobutsu', 'disguised'] },
     tori: {
         pieceCSS: ['torii', 'torik', 'torim', 'porti', 'cz', 'disguised'],
@@ -389,6 +416,7 @@ export const PIECE_FAMILIES: Record<string, PieceFamily> = {
             'eventhanziguided',
             'eventintl',
             'euro',
+            'forest',
             'disguised',
         ],
     },
@@ -436,8 +464,13 @@ export const PIECE_FAMILIES: Record<string, PieceFamily> = {
     yokai: { pieceCSS: ['yokai', 'disguised'] },
     perfect: { pieceCSS: ['perfect0', 'disguised'] },
     decimalshogi: {
-        pieceCSS: ['shogik', 'disguised'],
+        pieceCSS: ['shogik', 'firi', 'disguised'],
         imageLayerCSS: ['shogik'],
+    },
+    okisakishogi: {
+        pieceCSS: ['kanji', 'firi', 'disguised'],
+        imageLayerCSS: ['kanji'],
+        pieceNames: { ...SHOGI_NAMES, q: _('queen') },
     },
     cwda: { pieceCSS: ['cwda', 'couchtomato'] },
     letter: { pieceCSS: ['disguised'] },
@@ -492,6 +525,7 @@ export interface Variant {
     readonly chess960: boolean;
     readonly randomStart: boolean;
     readonly aiDisabled: boolean;
+    readonly replayOnly: boolean;
     readonly twoBoards: boolean;
     readonly ratingEnabled: boolean;
     readonly hiddenInfo: boolean;
@@ -519,10 +553,12 @@ export interface Variant {
     readonly pocket?: {
         readonly roles: Record<cg.Color, cg.Role[]>;
         readonly captureToHand: boolean;
+        readonly dropLoop?: boolean;
     };
     readonly promotion: {
         readonly type: PromotionType;
         readonly order: PromotionSuffix[];
+        readonly orderByColor?: Partial<Record<cg.Color, PromotionSuffix[]>>;
         readonly roles: cg.Role[];
         readonly strict?: {
             readonly isPromoted: (piece: cg.Piece, pos: cg.Pos) => boolean;
@@ -604,6 +640,7 @@ export function variant(config: VariantConfig): Variant {
         chess960: !!config.chess960,
         randomStart: !!config.randomStart,
         aiDisabled: !!config.aiDisabled,
+        replayOnly: !!config.replayOnly,
         twoBoards: !!config.twoBoards,
         ratingEnabled: config.ratingEnabled ?? true,
         hiddenInfo: !!config.hiddenInfo,
@@ -647,10 +684,12 @@ export function variant(config: VariantConfig): Variant {
                             black: config.pocket.roles.black.map(util.roleOf),
                         },
                   captureToHand: config.pocket.captureToHand,
+                  dropLoop: !!config.pocket.dropLoop,
               }
             : undefined,
         promotion: {
             type: config.promotion?.type ?? 'regular',
+            orderByColor: config.promotion?.orderByColor,
             order:
                 config.promotion?.order ??
                 (config.promotion?.type === 'shogi' ? ['+', ''] : ['q', 'c', 'e', 'a', 'h', 'n', 'r', 'b', 'p']),
@@ -718,6 +757,8 @@ interface VariantConfig {
     randomStart?: boolean;
     // Whether Fairy-Stockfish AI is temporarily disabled for this catalogued variant
     aiDisabled?: boolean;
+    // Historical rules may be loaded for display while play and search remain blocked.
+    replayOnly?: boolean;
     // Identity metadata used to gate automatic NNUE for user-defined variants.
     cataloguedSource?: 'user' | 'fairy-stockfish-builtin';
     nnueFingerprint?: string;
@@ -766,6 +807,8 @@ interface VariantConfig {
         roles: cg.Letter[] | Record<cg.Color, cg.Letter[]>;
         // Whether captured pieces go to the pocket (Fairy's terminology)
         captureToHand: boolean;
+        // Keep a captured pawn's promoted type, as in Loop Chess.
+        dropLoop?: boolean;
     };
     promotion?: {
         // Promotion style
@@ -776,6 +819,8 @@ interface VariantConfig {
         // (default: ["q", "c", "e", "a", "h", "n", "r", "b", "p"] for regular)
         // (default: ["+", ""] for shogi)
         order?: PromotionSuffix[];
+        // Side-specific ordering and default target for asymmetric variants.
+        orderByColor?: Partial<Record<cg.Color, PromotionSuffix[]>>;
         // Pieces that can promote (default: ['p'])
         roles?: cg.Letter[];
         // Whether a piece's promotion state strictly depends on its square (default: undefined)
@@ -2149,7 +2194,7 @@ export const noPuzzleVariants = [
 export const twoBoarsVariants = variants.filter(v => VARIANTS[v].twoBoards);
 export const unsupportedAiVariants = ['fogofwar', 'jieqi'];
 
-export const devVariants = ['borderlands', 'cwda', 'makbug', 'supply', 'yokai'];
+export const devVariants = ['borderlands', 'cwda', 'makbug', 'supply'];
 export const CATALOGUED_VARIANT_ICON = '☐';
 
 export interface CataloguedVariantClientDocument {
@@ -2178,9 +2223,11 @@ export interface CataloguedVariantClientDocument {
     readonly kingRoles?: cg.Letter[];
     readonly pocketRoles?: cg.Letter[];
     readonly captureToHand?: boolean;
+    readonly dropLoop?: boolean;
     readonly promotionType?: PromotionType;
     readonly promotionRoles?: cg.Letter[];
     readonly promotionOrder?: PromotionSuffix[];
+    readonly promotionOrderByColor?: Partial<Record<cg.Color, PromotionSuffix[]>>;
     readonly showPromoted?: boolean;
     readonly rulesGate?: boolean;
     readonly rulesPass?: boolean;
@@ -2201,10 +2248,12 @@ export interface CataloguedVariantClientDocument {
     readonly locked?: boolean;
     readonly visibility?: 'private' | 'unlisted' | 'public';
     readonly aiDisabled?: boolean;
+    readonly replayOnly?: boolean;
     readonly aiDisabledReason?: string;
     readonly aiDisabledUntil?: string;
     readonly favorite?: boolean;
     readonly pieceSetDirectional?: boolean;
+    readonly pieceSetShadow?: boolean;
     readonly directionalPieceSet?: boolean;
     readonly hasPieceSet?: boolean;
     readonly pieceSetRevision?: string;
@@ -2534,7 +2583,7 @@ function cataloguedPieceInfo(meta: CataloguedVariantClientDocument): CataloguedP
         ? (meta.promotionType ?? 'regular')
         : (clientVariant?.promotion.type ?? meta.promotionType ?? 'regular');
     const promotionRoles = (
-        hasPromotionOverride || meta.promotionRoles?.length
+        hasPromotionOverride || meta.promotionRoles !== undefined
             ? (meta.promotionRoles ?? [])
             : (clientVariant?.promotion.roles.map(role => util.letterOf(role)) ?? [])
     ) as cg.Letter[];
@@ -2586,9 +2635,11 @@ type CataloguedPieceIdentityMap = Record<string, string>;
 // example c can be Chancellor, Centaur or Champion; n can be Knight,
 // Nightrider or Kniroo), so keep the known identities variant-scoped.
 const CATALOGUED_PIECE_IDENTITIES_BY_CONTEXT: Record<string, CataloguedPieceIdentityMap> = {
+    'pieceFamily:aiwok': { a: 'ai-wok', s: 'khon' },
     'pieceFamily:capa': { a: 'archbishop', c: 'chancellor' },
     'pieceFamily:centaur': { a: 'archbishop', c: 'chancellor', g: 'centaur' },
     'pieceFamily:shatranj': { b: 'alfil', q: 'fers' },
+    'ai-wok': { a: 'ai-wok', s: 'khon' },
     almost: { c: 'chancellor' },
     amazon: { a: 'amazon' },
     berolina: { p: 'berolina-pawn' },
@@ -2597,6 +2648,7 @@ const CATALOGUED_PIECE_IDENTITIES_BY_CONTEXT: Record<string, CataloguedPieceIden
     chancellor: { c: 'chancellor' },
     chaturanga: { b: 'alfil', q: 'fers' },
     chigorin: { c: 'chancellor' },
+    sortofalmost: { c: 'chancellor' },
     courier: { e: 'alfil', f: 'fers', m: 'commoner', w: 'wazir' },
     extinction: { k: 'commoner' },
     georgian: { a: 'amazon' },
@@ -2625,6 +2677,7 @@ const CATALOGUED_PIECE_IDENTITIES_BY_CONTEXT: Record<string, CataloguedPieceIden
 };
 
 const CATALOGUED_FSF_PIECE_OPTION_IDENTITIES: Record<string, string> = {
+    aiwok: 'ai-wok',
     king: 'king',
     commoner: 'commoner',
     queen: 'queen',
@@ -2880,6 +2933,12 @@ export function cataloguedCompatibleBoardFamily(
     if (clientVariant && boardFamilyMatchesDimensions(clientVariant.boardFamily, meta.width, meta.height)) {
         return clientVariant.boardFamily;
     }
+    if (
+        clientVariant?.boardFamily.startsWith('shogi') &&
+        boardFamilyMatchesDimensions('shogi10x10', meta.width, meta.height)
+    ) {
+        return 'shogi10x10';
+    }
     return undefined;
 }
 
@@ -2890,7 +2949,23 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
     const info = cataloguedPieceInfo(meta);
     const { pieces, kingRoles, pocketRoles, promotionType, promotionRoles, promotionOrder, clientVariant } = info;
     const captureToHand = cataloguedCaptureToHand(meta, clientVariant);
+    const isBreakthrough = meta.source === 'fairy-stockfish-builtin' && meta.name === 'breakthrough';
+    const usesNonCapturingTokens =
+        meta.source === 'fairy-stockfish-builtin' &&
+        ['isolation', 'isolation7x7', 'snailtrail', 'fox-and-hounds'].includes(meta.fsfBuiltinVariant || meta.name);
+    const isJanggi =
+        meta.source === 'fairy-stockfish-builtin' &&
+        ['janggicasual', 'janggimodern', 'janggitraditional'].includes(meta.name);
+    const countsDiscs =
+        meta.source === 'fairy-stockfish-builtin' && ['flipello', 'flipello10', 'flipersi'].includes(meta.name);
+    const usesAtaxxColors =
+        countsDiscs || (meta.source === 'fairy-stockfish-builtin' && ['clobber', 'clobber10'].includes(meta.name));
     const boardFamily = cataloguedCompatibleBoardFamily(meta) ?? ensureCataloguedBoardFamily(meta.width, meta.height);
+    const dropLoopOption = cataloguedIniOption(meta.ini, 'dropLoop');
+    const dropLoop =
+        dropLoopOption === undefined
+            ? (meta.dropLoop ?? clientVariant?.pocket?.dropLoop ?? false)
+            : /^(true|yes|1|on)$/i.test(dropLoopOption);
     const cataloguedPieceFamily = `catalogued-${meta.name}`;
     delete PIECE_FAMILIES[cataloguedPieceFamily];
     const compatiblePieceSource = meta.hasPieceSet
@@ -2910,7 +2985,10 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
         randomStart: !!meta.randomStart,
         tooltip: meta.tooltip || 'Catalogued variant',
         aiDisabled: !!meta.aiDisabled,
+        replayOnly: !!meta.replayOnly,
         cataloguedSource: meta.source,
+        colors: usesAtaxxColors ? VARIANTS.ataxx.colors : isJanggi ? VARIANTS.janggi.colors : undefined,
+        notation: isJanggi ? VARIANTS.janggi.notation : undefined,
         nnueFingerprint: meta.nnueFingerprint,
         ratingEnabled: false,
         startFen: meta.startFen,
@@ -2923,11 +3001,17 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
         pieceRow: pieces,
         kingRoles,
         pieceNames: meta.pieceNames,
-        pocket: pocketRoles.length ? { roles: pocketRoles, captureToHand } : undefined,
-        promotion: { type: promotionType, roles: promotionRoles, order: promotionOrder },
+        pocket: pocketRoles.length ? { roles: pocketRoles, captureToHand, dropLoop } : undefined,
+        promotion: {
+            type: promotionType,
+            roles: promotionRoles,
+            order: promotionOrder,
+            orderByColor: meta.promotionOrderByColor,
+        },
         rules: {
             defaultTimeControl: clientVariant?.rules.defaultTimeControl ?? 'incremental',
-            enPassant: !!clientVariant?.rules.enPassant,
+            // Breakthrough has no en passant; non-capturing token games do not use chess pawns.
+            enPassant: !!clientVariant?.rules.enPassant && !isBreakthrough && !usesNonCapturingTokens,
             gate: !!meta.rulesGate || !!clientVariant?.rules.gate,
             duck: !!clientVariant?.rules.duck,
             arrowing: !!meta.rulesArrowing || !!clientVariant?.rules.arrowing,
@@ -2938,10 +3022,23 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
         ui: {
             showPromoted: !!meta.showPromoted || !!clientVariant?.ui.showPromoted,
             showCheckCounters: !!meta.showCheckCounters || !!clientVariant?.ui.showCheckCounters,
-            counting: clientVariant?.ui.counting,
-            materialPoint: clientVariant?.ui.materialPoint,
+            counting:
+                meta.source === 'fairy-stockfish-builtin' &&
+                ['ai-wok', 'karouk'].includes(meta.fsfBuiltinVariant || meta.name)
+                    ? 'automatic'
+                    : clientVariant?.ui.counting,
+            materialPoint:
+                isJanggi && meta.name !== 'janggimodern'
+                    ? undefined
+                    : countsDiscs
+                      ? 'ataxx'
+                      : clientVariant?.ui.materialPoint,
             pieceSound: clientVariant?.ui.pieceSound,
-            boardMark: clientVariant?.ui.boardMark || undefined,
+            boardMark: isBreakthrough
+                ? 'campmate'
+                : meta.source === 'fairy-stockfish-builtin' && meta.name === 'jesonmor'
+                  ? 'jesonmor'
+                  : clientVariant?.ui.boardMark || undefined,
         },
     });
     cataloguedVariantNames.add(meta.name);
@@ -2973,6 +3070,41 @@ export function loadCataloguedVariantsFromJson(raw: string | null): void {
     } catch (error) {
         console.error('Failed to load catalogued variants', error);
     }
+}
+
+// Lazy, per-name metadata loads for shared widgets. Never fetch the whole
+// catalogue just to render one challenge or a user's current casual game.
+const pendingCataloguedVariants = new Map<string, Promise<void>>();
+
+export function ensureCataloguedVariantsLoaded(names: readonly string[]): Promise<void> {
+    const requested = [...new Set(names)].filter(Boolean);
+    const missing = requested.filter(name => !VARIANTS[name] && !pendingCataloguedVariants.has(name));
+    for (let i = 0; i < missing.length; i += 32) {
+        const batch = missing.slice(i, i + 32);
+        const query = new URLSearchParams();
+        batch.forEach(name => query.append('name', name));
+        const task = fetch(`/api/catalogued-variants?${query}`)
+            .then(async response => {
+                if (!response.ok) throw new Error(`Catalogue request failed: ${response.status}`);
+                const payload = (await response.json()) as { variants: CataloguedVariantClientDocument[] };
+                payload.variants.forEach(registerCataloguedVariant);
+            })
+            .catch(error => {
+                batch.forEach(name => pendingCataloguedVariants.delete(name));
+                throw error;
+            });
+        batch.forEach(name => pendingCataloguedVariants.set(name, task));
+    }
+    return Promise.all(requested.map(name => pendingCataloguedVariants.get(name))).then(() => undefined);
+}
+
+// An unknown key ending in 960 may be a literal catalogue name. Resolve that
+// exact name before treating the suffix as a shuffle flag.
+export async function ensureCataloguedVariantKeysLoaded(keys: readonly string[]): Promise<void> {
+    const unknown = [...new Set(keys)].filter(key => key && !VARIANTS[key]);
+    await ensureCataloguedVariantsLoaded(unknown);
+    const bases = unknown.filter(key => !VARIANTS[key]).map(key => splitVariantKey(key).base);
+    await ensureCataloguedVariantsLoaded(bases);
 }
 
 export function disabledVariantsForCreateMode(

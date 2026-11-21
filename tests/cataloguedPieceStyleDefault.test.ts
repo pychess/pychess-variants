@@ -8,6 +8,7 @@ import {
     registerCataloguedVariant,
     unregisterCataloguedVariant,
     VARIANTS,
+    BOARD_FAMILIES,
 } from '../client/variants';
 
 const variantNames = [
@@ -29,6 +30,13 @@ const variantNames = [
     'testdecimalshogiimagelayer',
     'testamazonspieces',
     'testopulentpieces',
+    'testokisakipieces',
+    'testfiristyles',
+    'testisolation',
+    'testisolation7x7',
+    'testsnailtrail',
+    'testaiwok',
+    'testfoxandhounds',
 ];
 
 function register(meta: CataloguedVariantClientDocument) {
@@ -44,12 +52,178 @@ afterEach(() => {
     });
 });
 
+test('Fox and Hounds uses its artwork without royal pieces or chess pawn rules', () => {
+    const variant = register({
+        name: 'testfoxandhounds',
+        displayName: 'Fox and Hounds',
+        source: 'fairy-stockfish-builtin',
+        fsfBuiltinVariant: 'fox-and-hounds',
+        baseVariant: '',
+        clientVariant: 'chess',
+        ini: '',
+        startFen: '1h1h1h1h/8/8/8/8/8/8/4F3 w - - 0 1',
+        width: 8,
+        height: 8,
+        pieces: ['f', 'h'],
+        kingRoles: [],
+        promotionRoles: [],
+        pocketRoles: [],
+        pieceFamilyOverride: 'foxandhounds',
+        pieceNames: { f: 'Fox', h: 'Hound' },
+        betzaPieces: { f: 'mF', h: 'mfF' },
+    });
+    expect(variant.pieceFamily).toBe('foxandhounds');
+    expect(boardSettings.pieceCSS(variant.pieceFamily, variant)).toBe('classic');
+    expect(variant.kingRoles).toEqual([]);
+    expect(variant.promotion.roles).toEqual([]);
+    expect(variant.pocket).toBeUndefined();
+    expect(variant.rules.enPassant).toBe(false);
+    expect(variant.pieceNames.f).toBe('Fox');
+    expect(variant.pieceNames.h).toBe('Hound');
+    expect(variant.ratingEnabled).toBe(false);
+});
+
+test('Ai-Wok uses Alfaerie compound pieces with Makruk defaults and automatic counting', () => {
+    const meta: CataloguedVariantClientDocument = {
+        name: 'testaiwok',
+        displayName: 'Ai-Wok',
+        source: 'fairy-stockfish-builtin',
+        fsfBuiltinVariant: 'ai-wok',
+        baseVariant: 'makruk',
+        clientVariant: 'makruk',
+        ini: '',
+        pieceFamilyOverride: 'aiwok',
+        width: 8,
+        height: 8,
+        startFen: 'rnsaksnr/8/pppppppp/8/8/PPPPPPPP/8/RNSKASNR w - - 0 1',
+        pieces: ['p', 'n', 'r', 's', 'a', 'k'],
+        promotionType: 'regular',
+        promotionRoles: ['p'],
+        promotionOrder: ['a'],
+        showPromoted: true,
+        betzaPieces: { a: 'RNF', s: 'FfW' },
+    };
+    const variant = register(meta);
+    expect(cataloguedCompatiblePieceFamily(meta)).toBe('aiwok');
+    expect(variant.boardFamily).toBe('makruk8x8');
+    expect(boardSettings.pieceCSS(variant.pieceFamily, variant)).toBe('alfaerie');
+    expect(variant.promotion.order).toEqual(['a']);
+    expect(variant.promotion.roles).toEqual(['p-piece']);
+    expect(variant.ui.counting).toBe('automatic');
+    expect(variant.ui.showPromoted).toBe(true);
+    expect(variant.rules.enPassant).toBe(false);
+    expect(variant.ratingEnabled).toBe(false);
+});
+
+test.each([
+    ['testisolation', 'isolation', 6, 8, '3p2/6/6/6/6/6/6/2P3 w - - 0 1'],
+    ['testisolation7x7', 'isolation7x7', 7, 7, '3p3/7/7/7/7/7/3P3 w - - 0 1'],
+    ['testsnailtrail', 'snailtrail', 7, 7, '6p/7/7/7/7/7/P6 w - - 0 1'],
+] as const)('%s uses nonroyal tokens and compound wall input', (name, builtin, width, height, startFen) => {
+    const pieceFamily = builtin === 'snailtrail' ? 'snailtrail' : 'isolation';
+    const variant = register({
+        name,
+        displayName: name,
+        ini: '',
+        source: 'fairy-stockfish-builtin',
+        fsfBuiltinVariant: builtin,
+        baseVariant: builtin === 'isolation7x7' ? 'isolation' : '',
+        clientVariant: 'chess',
+        pieceFamilyOverride: pieceFamily,
+        boardFamilyOverride: builtin === 'isolation' ? undefined : 'ataxx7x7',
+        pieceNames: { p: 'Token' },
+        width,
+        height,
+        startFen,
+        pieces: ['p'],
+        kingRoles: [],
+        pocketRoles: [],
+        promotionRoles: [],
+        betzaPieces: { p: 'mK' },
+        rulesArrowing: true,
+    });
+    expect(variant.pieceFamily).toBe(pieceFamily);
+    expect(boardSettings.pieceCSS(variant.pieceFamily, variant)).toBe('classic');
+    expect(BOARD_FAMILIES[variant.boardFamily].dimensions).toEqual({ width, height });
+    expect(variant.rules.arrowing).toBe(true);
+    expect(variant.rules.enPassant).toBe(false);
+    expect(variant.kingRoles).toEqual([]);
+    expect(variant.promotion.roles).toEqual([]);
+    expect(variant.pocket).toBeUndefined();
+    expect(variant.ratingEnabled).toBe(false);
+});
+
+test('Okisaki Shogi uses its complete directional piece style', () => {
+    const meta: CataloguedVariantClientDocument = {
+        name: 'testokisakipieces',
+        displayName: 'Test Okisaki Shogi',
+        ini: '',
+        source: 'fairy-stockfish-builtin',
+        fsfBuiltinVariant: 'okisakishogi',
+        baseVariant: '',
+        clientVariant: 'shogi',
+        pieceFamilyOverride: 'okisakishogi',
+        width: 10,
+        height: 10,
+        startFen: 'lnsgkqgsnl/1r6b1/pppppppppp/10/10/10/10/PPPPPPPPPP/1B6R1/LNSGQKGSNL[-] w 0 1',
+        pieces: ['p', 'l', 'n', 's', 'g', 'b', 'r', 'q', 'k'],
+        kingRoles: ['k'],
+        promotionType: 'shogi',
+        promotionRoles: ['p', 'l', 'n', 's', 'b', 'r'],
+        promotionOrder: ['+', ''],
+        captureToHand: true,
+    };
+    const variant = register(meta);
+    expect(cataloguedCompatiblePieceFamily(meta)).toBe('okisakishogi');
+    expect(variant.pieceFamily).toBe('okisakishogi');
+    expect(variant.promotion.roles).toHaveLength(6);
+    expect(boardSettings.pieceCSS(variant.pieceFamily, variant)).toBe('kanji');
+    expect(PIECE_FAMILIES.okisakishogi.imageLayerCSS).toContain('kanji');
+});
+
+test.each(['decimalshogi', 'okisakishogi'])(
+    '%s offers Firi before disguised and switches styles cleanly',
+    family => {
+        const variant = register({
+            name: 'testfiristyles',
+            displayName: 'Test Firi Styles',
+            ini: '[testfiristyles:shogi]',
+            baseVariant: 'shogi',
+            pieceFamilyOverride: family,
+            width: 10,
+            height: 10,
+            startFen: '9k/10/10/10/10/10/10/10/10/K9[] w - - 0 1',
+            pieces: ['k', 'q', 'r', 'b', 'n', 'p', 'l', 's', 'g'],
+            kingRoles: ['k'],
+        });
+        const board = document.createElement('div');
+        board.className = family;
+        document.body.appendChild(board);
+        try {
+            boardSettings.updateScopedPieceStyle(variant, board);
+            const setting = boardSettings.getSettings('PieceStyle', family, '', variant);
+            setting.value = 2;
+            expect(boardSettings.pieceCSS(family, variant)).toBe('disguised');
+
+            setting.value = 1;
+            expect(boardSettings.pieceCSS(family, variant)).toBe('firi');
+            expect(board.classList.contains(`piece-style-${family}-firi`)).toBe(true);
+            expect(board.classList.contains(`piece-style-${family}-disguised`)).toBe(false);
+            expect(board.classList.contains('catalogued-missing-piece-fallback')).toBe(true);
+            expect(document.getElementById(`piece-set-${family}-firi`)).not.toBeNull();
+        } finally {
+            board.remove();
+        }
+    },
+);
+
 test('catalogued variants with a compatible built-in piece family default to that family', () => {
     const meta: CataloguedVariantClientDocument = {
         name: 'testbuiltindefault',
         displayName: 'Test Built-in Default',
         tooltip: 'Catalogued variant',
         ini: '[testbuiltindefault:chess]',
+        baseVariant: 'chess',
         startFen: '8/8/8/8/8/8/8/K6k w - - 0 1',
         width: 8,
         height: 8,
@@ -60,6 +234,7 @@ test('catalogued variants with a compatible built-in piece family default to tha
 
     expect(variant.pieceFamily).toBe(cataloguedCompatiblePieceFamily(meta, { ignoreCustomPieceSet: true }));
     expect(boardSettings.pieceCSS(variant.pieceFamily, variant)).toBe(PIECE_FAMILIES[variant.pieceFamily].pieceCSS[0]);
+    expect(variant.rules.enPassant).toBe(true);
 });
 
 test('catalogued wall pieces are marked when both board and piece families are built in', () => {
@@ -520,4 +695,29 @@ test('catalogued piece family override bypasses conservative identity detection'
 
     expect(cataloguedCompatiblePieceFamily(meta, { ignoreCustomPieceSet: true })).toBe('standard');
     expect(variant.pieceFamily).toBe('standard');
+});
+
+test('custom piece stylesheet revisions replace each other when shadows toggle repeatedly', async () => {
+    const { ensurePieceCSS } = await import('../client/document');
+    const family = 'catalogued-shadowtoggle';
+    const otherFamily = 'catalogued-shadowtoggle-other';
+    const sheets = () =>
+        Array.from(document.querySelectorAll<HTMLLinkElement>('link[id^="piece-set-catalogued-shadowtoggle-"]'));
+    try {
+        ensurePieceCSS('/static', otherFamily, 'custom-r1');
+        for (const revision of ['custom-r1', 'custom-r1-shadow', 'custom-r1', 'custom-r1-shadow']) {
+            ensurePieceCSS('/static', family, revision);
+            expect(
+                sheets()
+                    .map(link => link.id)
+                    .sort(),
+            ).toEqual([`piece-set-${family}-${revision}`, `piece-set-${otherFamily}-custom-r1`].sort());
+            const sheet = document.getElementById(`piece-set-${family}-${revision}`) as HTMLLinkElement;
+            expect(sheet.getAttribute('href')).toBe(
+                `/api/catalogued-variants/shadowtoggle/piece-css.css?v=${revision.slice('custom-'.length)}`,
+            );
+        }
+    } finally {
+        sheets().forEach(link => link.remove());
+    }
 });

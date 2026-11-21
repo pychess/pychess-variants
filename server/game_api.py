@@ -10,10 +10,8 @@ import pymongo
 from aiohttp import web
 from aiohttp.client_exceptions import ClientConnectionResetError
 from aiohttp_swagger3 import swagger_doc
-from catalogued_variants import (
-    CATALOGUED_VARIANT_COLLECTION,
-    register_historical_catalogued_variant_doc,
-)
+from catalogued.models import CATALOGUED_VARIANT_COLLECTION
+from catalogued.variants import register_historical_catalogued_variant_doc
 from compress import C2R, decode_move_standard
 from const import (
     CATEGORY_VARIANT_SETS,
@@ -769,6 +767,8 @@ async def _stream_pgn_cursor(
         async for doc in cursor:
             game_counter += 1
             try:
+                if doc["v"] not in C2V and not doc.get("vini"):
+                    await _resolve_user_game_variant(get_app_state(request.app), doc)
                 pgn_text = pgn(doc)
                 if pgn_text is not None:
                     await response.write(pgn_text.encode())

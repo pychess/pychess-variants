@@ -21,18 +21,25 @@ import argparse
 import asyncio
 import cProfile
 import json
+import math
+import os
 import pstats
 import random
 import re
+import secrets
 from collections import Counter, defaultdict, deque
+from contextlib import asynccontextmanager
+from dataclasses import dataclass, field, replace
 from itertools import cycle
+from pathlib import Path
 from time import monotonic
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import quote, urlsplit, urlunsplit
 
 import aiohttp
 import pyffish as sf
 import test_logger
-from settings import URI
+from const import ARENA, T_STARTED, TEST_PREFIX
+from settings import PROD, URI
 from websocket_utils import ws_send_json
 
 test_logger.init_test_logger()
@@ -47,6 +54,7 @@ def http_to_ws_url(base_url: str, path: str) -> str:
 
 
 LOBBY_URL = http_to_ws_url(URI, "/wsl")
+TOURNAMENT_URL = http_to_ws_url(URI, "/wst")
 ROUND_URL = http_to_ws_url(URI, "/wsr/")
 URLS = ("about", "players", "games", "tv", "variants")
 TEST_VARIANTS = (
@@ -81,6 +89,252 @@ DEFAULT_ROUND_MAX_IDLE_CYCLES = 3
 DEFAULT_PENDING_CHALLENGE_MAX_WAIT_SECS = 300.0
 DEFAULT_ROUND_RECONNECT_BACKOFF_MIN_SECS = 0.3
 DEFAULT_ROUND_RECONNECT_BACKOFF_MAX_SECS = 1.0
+DEFAULT_MOVE_ACK_TIMEOUT_SECS = 10.0
+DEFAULT_POSTGAME_LINGER_MAX_SECS = 15.0
+DEFAULT_POSTGAME_LINGER_PROBABILITY = 0.5
+
+
+@asynccontextmanager
+async def browser_heartbeat(ws, interval_secs: float):
+    """Send the browser's `/n` keepalive independently of thinking time.
+
+    Without this the load client doesn't match production's heartbeat traffic,
+    and a game WebSocket may hit aiohttp's 30-second receive timeout.
+    Disabled by default to preserve historical stress-test comparisons.
+    """
+
+    async def heartbeat_loop():
+        while not ws.closed:
+            await asyncio.sleep(interval_secs)
+            if ws.closed:
+                break
+            try:
+                await ws.send_str("/n")
+            except (aiohttp.ClientError, OSError, RuntimeError):
+                break
+
+    task = asyncio.create_task(heartbeat_loop()) if interval_secs > 0 else None
+    try:
+        yield
+    finally:
+        if task is not None:
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+
+
+class PendingHumanMove:
+    """Keep the round receive loop free while a simulated player thinks.
+
+    Only one action is scheduled per position. A new position invalidates a
+    pending move, and closing the socket always cancels the task.
+    """
+
+    def __init__(self):
+        self.ply: int | None = None
+        self.task: asyncio.Task[None] | None = None
+
+    def position_changed(self, ply: int) -> None:
+        if self.ply is not None and ply != self.ply:
+            if self.task is not None:
+                self.task.cancel()
+            self.task = None
+            self.ply = None
+
+    def schedule(self, ply: int, coroutine_factory) -> bool:
+        if self.ply == ply:
+            return False
+        self.position_changed(ply)
+        self.ply = ply
+        self.task = asyncio.create_task(coroutine_factory())
+        return True
+
+    async def close(self) -> None:
+        if self.task is not None:
+            self.task.cancel()
+            await asyncio.gather(self.task, return_exceptions=True)
+            self.task = None
+
+
+@asynccontextmanager
+async def independent_human_moves():
+    pending = PendingHumanMove()
+    try:
+        yield pending
+    finally:
+        await pending.close()
+
+
+@dataclass(frozen=True)
+class TimeControlProfile:
+    name: str
+    minutes: int
+    min_move_delay_secs: float
+    max_move_delay_secs: float
+    weight: int
+
+
+@dataclass(frozen=True)
+class ArenaSpec:
+    tournament_id: str
+    players: int
+    profile: TimeControlProfile
+    variant: str
+
+
+def parse_arena_spec(raw: str) -> ArenaSpec:
+    """--arena ID|auto:PLAYERS:bullet|blitz|rapid[:VARIANT]."""
+    fields = raw.split(":")
+    if len(fields) not in (3, 4):
+        raise argparse.ArgumentTypeError("Expected ID:PLAYERS:PROFILE[:VARIANT]")
+    tournament_id, players_raw, profile_name = fields[:3]
+    variant = fields[3] if len(fields) == 4 else "chess"
+    if tournament_id != "auto" and re.fullmatch(r"\w{8}", tournament_id, flags=re.ASCII) is None:
+        raise argparse.ArgumentTypeError(
+            "Arena ID must be eight ASCII letters/digits/underscores, or auto"
+        )
+    try:
+        players = int(players_raw)
+    except ValueError:
+        raise argparse.ArgumentTypeError("Arena players must be a positive integer") from None
+    if players < 2:
+        raise argparse.ArgumentTypeError("Each arena needs at least two players")
+    profiles = {profile.name: profile for profile in MIXED_TIME_CONTROLS}
+    if profile_name not in profiles:
+        raise argparse.ArgumentTypeError("Arena profile must be bullet, blitz, or rapid")
+    if not variant or not re.fullmatch(r"[A-Za-z0-9_+.-]+", variant):
+        raise argparse.ArgumentTypeError("Invalid variant name")
+    return ArenaSpec(tournament_id, players, profiles[profile_name], variant)
+
+
+async def create_local_arenas(arenas: list[ArenaSpec], run_duration_secs: float) -> list[ArenaSpec]:
+    """Create auto arenas through the normal tournament form on the local -a server.
+
+    The server generates and checks the real tournament IDs. No test-only route,
+    artificial pairing, or direct database manipulation is required. The local
+    -a test user is an authorized tournament director and can start immediately.
+    """
+    if not any(spec.tournament_id == "auto" for spec in arenas):
+        return arenas
+
+    duration_minutes = max(20, math.ceil(run_duration_secs / 60) + 10)
+    resolved: list[ArenaSpec] = []
+    async with aiohttp.ClientSession(cookie_jar=make_cookie_jar()) as session:
+        async with session.get(URI) as response:
+            if response.status != 200:
+                raise RuntimeError(f"Cannot create arenas: home page HTTP {response.status}")
+            username = extract_username(await response.text())
+            if not username.startswith(TEST_PREFIX):
+                raise RuntimeError("Automatic arena creation requires local server -a")
+
+        for spec in arenas:
+            if spec.tournament_id != "auto":
+                resolved.append(spec)
+                continue
+            name = f"Stress {spec.profile.name} {secrets.token_hex(4)}"
+            form = {
+                "name": name,
+                "system": str(ARENA),
+                "variant": spec.variant,
+                "rated": "0",
+                "clockTime": str(spec.profile.minutes),
+                "clockIncrement": "0",
+                "byoyomiPeriod": "0",
+                "minutes": str(duration_minutes),
+                "waitMinutes": "0",
+                "position": "",
+                "description": "Local automated arena stress test",
+            }
+            async with session.post(
+                f"{URI}/tournaments/new",
+                data=form,
+                headers={"Origin": URI, "Accept": "application/json"},
+            ) as response:
+                if response.status != 200:
+                    error = (await response.text())[:500]
+                    raise RuntimeError(
+                        f"Arena creation failed ({spec.profile.name}): "
+                        f"HTTP {response.status}: {error}"
+                    )
+                body = await response.json()
+            tournament_id = body.get("tournamentId")
+            if (
+                not isinstance(tournament_id, str)
+                or re.fullmatch(r"[A-Za-z0-9]{8}", tournament_id) is None
+            ):
+                raise RuntimeError(f"Invalid tournament creation response: {body!r}")
+            resolved.append(replace(spec, tournament_id=tournament_id))
+            print(
+                f"Created local arena {tournament_id}: {name} "
+                f"({spec.players} players, {spec.profile.name}, {spec.variant})"
+            )
+    return resolved
+
+
+# Workload assumptions, not measured production usage proportions.
+MIXED_TIME_CONTROLS = (
+    TimeControlProfile("bullet", 1, 0.2, 2.0, 50),
+    TimeControlProfile("blitz", 5, 1.0, 5.0, 40),
+    TimeControlProfile("rapid", 10, 3.0, 15.0, 10),
+)
+
+
+def simulated_human_clocks(
+    clocks: list[int | float], turn_color: str, elapsed_secs: float, board_ply: int
+) -> list[int | float]:
+    """Charge simulated thinking time to the mover's reported chess clock.
+
+    Casual human games have free opening moves (ply < 2). Afterwards the
+    browser normally sends a locally ticking clock; reusing the raw server
+    board clocks would effectively give test players free time each move.
+    """
+    updated = list(clocks)
+    if board_ply < 2:
+        return updated
+    if turn_color not in {"w", "b"} or len(updated) != 2:
+        raise ValueError("Expected a chess turn and two clock values")
+    mover_index = 0 if turn_color == "w" else 1
+    updated[mover_index] = max(0, int(updated[mover_index] - max(0.0, elapsed_secs) * 1000))
+    return updated
+
+
+def distribute_time_controls(game_count: int, seed: int) -> list[TimeControlProfile]:
+    """Exact weighted quotas (largest remainders), shuffled deterministically."""
+    if game_count < 0:
+        raise ValueError("game_count must be >= 0")
+    weight_total = sum(profile.weight for profile in MIXED_TIME_CONTROLS)
+    quotas = [game_count * profile.weight // weight_total for profile in MIXED_TIME_CONTROLS]
+    remaining = game_count - sum(quotas)
+    by_remainder = sorted(
+        range(len(quotas)),
+        key=lambda i: (-(game_count * MIXED_TIME_CONTROLS[i].weight % weight_total), i),
+    )
+    for index in by_remainder[:remaining]:
+        quotas[index] += 1
+    assigned = [
+        profile for profile, quota in zip(MIXED_TIME_CONTROLS, quotas) for _ in range(quota)
+    ]
+    random.Random(seed).shuffle(assigned)
+    return assigned
+
+
+# Read-only requests that cover distinct page/API handlers and DB queries.
+# Keep HTML rates below anonymous browsing admission budgets in local DEV.
+PROFILE_HTTP_PATHS = (
+    ("games", "/games"),
+    ("calendar", "/api/calendar"),
+    ("community", "/variants/community"),
+    ("stats", "/api/stats"),
+    ("players", "/players"),
+    ("forum_categories", "/api/forum/categs"),
+    ("tournaments", "/tournaments"),
+    ("catalogue", "/api/catalogued-variants"),
+    ("studies", "/study/all"),
+    ("forum", "/forum"),
+    ("profile", "/@/gbtami"),
+    ("tv", "/tv"),
+    ("search_page", "/games/search"),
+    ("profile_tournaments", "/@/gbtami/tournaments"),
+)
 
 
 def profile_me(fn):
@@ -135,6 +389,13 @@ def non_negative_float(value: str) -> float:
     parsed = float(value)
     if parsed < 0:
         raise argparse.ArgumentTypeError("value must be >= 0")
+    return parsed
+
+
+def positive_float(value: str) -> float:
+    parsed = float(value)
+    if not math.isfinite(parsed) or parsed <= 0:
+        raise argparse.ArgumentTypeError("value must be positive and finite")
     return parsed
 
 
@@ -229,10 +490,432 @@ def parse_args() -> argparse.Namespace:
             f"(default: {DEFAULT_SPECTATORS_REGULAR_PER_GAME})."
         ),
     )
+    parser.add_argument(
+        "--http-rps",
+        type=non_negative_float,
+        default=0.0,
+        help="Additional read-only HTTP requests per second (off by default).",
+    )
+    parser.add_argument(
+        "--http-duration-secs",
+        type=non_negative_float,
+        default=0.0,
+        help="How long to keep read-only HTTP requests running (off by default).",
+    )
+    parser.add_argument(
+        "--http-concurrency",
+        type=positive_int,
+        default=4,
+        help="Maximum in-flight background HTTP requests (default: 4).",
+    )
+    parser.add_argument(
+        "--test-user-pgn",
+        action="store_true",
+        help="Export one completed Test-* user's own games using its existing -a test session.",
+    )
+    parser.add_argument(
+        "--pgn-cookie-file",
+        type=Path,
+        help="Private local file containing your AIOHTTP_SESSION cookie value; enables gbtami PGN export.",
+    )
+    parser.add_argument(
+        "--pgn-max-games",
+        type=positive_int,
+        default=100,
+        help="Limit the number of games exported per PGN request (default: 100).",
+    )
+    parser.add_argument(
+        "--run-duration-secs",
+        type=non_negative_float,
+        default=0.0,
+        help="Stop generating game load after this many seconds (0: wait for all games).",
+    )
+    parser.add_argument(
+        "--human-vs-human",
+        action="store_true",
+        help=(
+            "Pair simulated anonymous users into real casual games. "
+            "--users counts players (two per game); localhost -a only."
+        ),
+    )
+    parser.add_argument(
+        "--arena",
+        type=parse_arena_spec,
+        action="append",
+        default=[],
+        metavar="ID|auto:PLAYERS:PROFILE[:VARIANT]",
+        help=(
+            "Join an existing arena or automatically create one using auto. "
+            "Repeat for simultaneous arenas, e.g. --arena auto:250:bullet. "
+            "No direct challenges are sent. Requires localhost server -a."
+        ),
+    )
+    parser.add_argument(
+        "--maintain-human-games",
+        action="store_true",
+        help=(
+            "Human-vs-human only: replace completed games with new games between "
+            "the same two clients for the duration of the run."
+        ),
+    )
+    parser.add_argument(
+        "--postgame-linger-max-secs",
+        type=non_negative_float,
+        default=DEFAULT_POSTGAME_LINGER_MAX_SECS,
+        help="Steady-state mode: maximum post-game round WebSocket linger (default: 15s).",
+    )
+    parser.add_argument(
+        "--postgame-linger-probability",
+        type=non_negative_float,
+        default=DEFAULT_POSTGAME_LINGER_PROBABILITY,
+        help="Steady-state mode: chance a player stays after game end (default: 0.5).",
+    )
+    parser.add_argument(
+        "--mixed-time-controls",
+        action="store_true",
+        help=(
+            "Human-vs-human only: 50%% bullet (1+0, 0.2-2s moves), "
+            "40%% blitz (5+0, 1-5s), 10%% rapid (10+0, 3-15s)."
+        ),
+    )
+    parser.add_argument(
+        "--mix-seed",
+        type=int,
+        default=42,
+        help="Seed for reproducible mixed time-control assignment (default: 42).",
+    )
+    parser.add_argument(
+        "--client-heartbeat-secs",
+        type=non_negative_float,
+        default=0.0,
+        help=(
+            "Send browser-style /n pings on lobby and round WebSockets at this "
+            "interval (0: disabled, 2.5: production-like)."
+        ),
+    )
+    parser.add_argument(
+        "--move-ack-timeout-secs",
+        type=positive_float,
+        default=DEFAULT_MOVE_ACK_TIMEOUT_SECS,
+        help=f"Threshold for an unconfirmed move (default: {DEFAULT_MOVE_ACK_TIMEOUT_SECS:g}s).",
+    )
+    parser.add_argument(
+        "--game-minutes",
+        type=positive_int,
+        default=1,
+        help="Initial clock minutes for each game (default: 1).",
+    )
+    parser.add_argument(
+        "--move-delay-secs",
+        type=non_negative_float,
+        default=0.0,
+        help="Extra delay before each test user's move (default: 0).",
+    )
+    parser.add_argument(
+        "--move-delay-min-secs",
+        type=non_negative_float,
+        default=None,
+        help="Minimum random delay before each move (requires --move-delay-max-secs).",
+    )
+    parser.add_argument(
+        "--move-delay-max-secs",
+        type=non_negative_float,
+        default=None,
+        help="Maximum random delay before each move (requires --move-delay-min-secs).",
+    )
+    parser.add_argument(
+        "--report-interval-secs",
+        type=non_negative_float,
+        default=0.0,
+        help="Print observed concurrent unfinished games every N seconds (0: off).",
+    )
     args = parser.parse_args()
+    if args.arena:
+        if PROD or urlsplit(URI).hostname not in {"localhost", "127.0.0.1", "::1"}:
+            parser.error("--arena may only run against a localhost -a server")
+        if args.human_vs_human or args.maintain_human_games or args.mixed_time_controls:
+            parser.error("--arena cannot be combined with direct-challenge modes")
+        existing_ids = [spec.tournament_id for spec in args.arena if spec.tournament_id != "auto"]
+        if len(set(existing_ids)) != len(existing_ids):
+            parser.error("--arena existing tournament IDs must be unique")
+        if args.run_duration_secs <= 0:
+            parser.error("--arena requires --run-duration-secs > 0")
+        if args.games_per_user != 1:
+            parser.error("--arena manages game turnover; leave --games-per-user at 1")
+        if args.client_heartbeat_secs <= 0:
+            parser.error("--arena requires --client-heartbeat-secs (2.5 recommended)")
+        if (
+            args.move_delay_secs != 0
+            or args.move_delay_min_secs is not None
+            or args.move_delay_max_secs is not None
+            or args.game_minutes != 1
+        ):
+            parser.error("--arena sets clocks and thinking delays from the PROFILE")
+        args.users = sum(spec.players for spec in args.arena)
+    if any(
+        not math.isfinite(value)
+        for value in (
+            args.http_rps,
+            args.http_duration_secs,
+            args.run_duration_secs,
+            args.move_delay_secs,
+            args.report_interval_secs,
+            args.client_heartbeat_secs,
+            args.postgame_linger_max_secs,
+            args.postgame_linger_probability,
+            *(
+                value
+                for value in (args.move_delay_min_secs, args.move_delay_max_secs)
+                if value is not None
+            ),
+        )
+    ):
+        parser.error("HTTP rates and durations must be finite")
+    if args.test_user_pgn and (
+        PROD or urlsplit(URI).hostname not in {"localhost", "127.0.0.1", "::1"}
+    ):
+        parser.error("Test-user PGN profiling only supports localhost, never production")
+    if args.http_rps > 0:
+        if args.http_duration_secs <= 0:
+            parser.error("--http-duration-secs must be > 0 when --http-rps is set")
+        if PROD or urlsplit(URI).hostname not in {"localhost", "127.0.0.1", "::1"}:
+            parser.error("Background HTTP profiling only supports localhost, never production")
+    elif args.pgn_cookie_file is not None:
+        parser.error("--pgn-cookie-file requires --http-rps")
+    if args.postgame_linger_probability > 1:
+        parser.error("--postgame-linger-probability must be between 0 and 1")
+    if args.maintain_human_games:
+        if not args.human_vs_human:
+            parser.error("--maintain-human-games requires --human-vs-human")
+        if args.run_duration_secs <= 0:
+            parser.error("--maintain-human-games requires --run-duration-secs > 0")
+    if args.human_vs_human:
+        if PROD or urlsplit(URI).hostname not in {"localhost", "127.0.0.1", "::1"}:
+            parser.error("--human-vs-human may only be run against a localhost server")
+        if args.users < 2 or args.users % 2:
+            parser.error("--human-vs-human requires an even --users count >= 2")
+        if args.games_per_user != 1:
+            parser.error("--human-vs-human currently requires --games-per-user 1")
+    if args.mixed_time_controls:
+        if not args.human_vs_human:
+            parser.error("--mixed-time-controls requires --human-vs-human")
+        if (
+            args.game_minutes != 1
+            or args.move_delay_secs != 0
+            or args.move_delay_min_secs is not None
+            or args.move_delay_max_secs is not None
+        ):
+            parser.error(
+                "--mixed-time-controls sets clocks and delays automatically; "
+                "do not also pass --game-minutes or --move-delay-*"
+            )
+    if (args.move_delay_min_secs is None) != (args.move_delay_max_secs is None):
+        parser.error("--move-delay-min-secs and --move-delay-max-secs must be used together")
+    if args.move_delay_min_secs is not None:
+        if args.move_delay_max_secs < args.move_delay_min_secs:
+            parser.error("--move-delay-max-secs must be >= --move-delay-min-secs")
+        if args.move_delay_secs != 0:
+            parser.error("--move-delay-secs cannot be combined with a random delay range")
     if args.challenge_delay_max_secs < args.challenge_delay_min_secs:
         parser.error("--challenge-delay-max-secs must be >= --challenge-delay-min-secs")
     return args
+
+
+def read_session_cookie(path: Path) -> str:
+    """Read a pre-existing LOCAL browser session, never a username/password.
+
+    Accept only the cookie value, or one `AIOHTTP_SESSION=value` entry.
+    Do not print it or attach it to anonymous spectator/game clients.
+    """
+    if path.stat().st_mode & 0o077:
+        raise ValueError(f"Cookie file {path} must be private (chmod 600).")
+    value = path.read_text(encoding="utf-8").strip()
+    if value.startswith("AIOHTTP_SESSION="):
+        value = value.partition("=")[2]
+    if not value or any(ch.isspace() or ch in ";\r\n" for ch in value):
+        raise ValueError(f"Cookie file {path} must contain only an AIOHTTP_SESSION value.")
+    return value
+
+
+@dataclass
+class HttpRequestStats:
+    counts: Counter[str] = field(default_factory=Counter)
+    statuses: Counter[str] = field(default_factory=Counter)
+    elapsed_ms: list[float] = field(default_factory=list)
+    bytes_received: int = 0
+    dropped: int = 0
+    pgn_ok: int = 0
+    pgn_empty: int = 0
+
+    def record(self, label: str, status: int | str, elapsed_ms: float, received: int) -> None:
+        self.counts[label] += 1
+        self.statuses[f"{label}:{status}"] += 1
+        self.elapsed_ms.append(elapsed_ms)
+        self.bytes_received += received
+        if label == "pgn":
+            if status == 200 and received > 0:
+                self.pgn_ok += 1
+            else:
+                self.pgn_empty += 1
+
+    def report(self) -> None:
+        latencies = sorted(self.elapsed_ms)
+        p95 = latencies[math.ceil(0.95 * len(latencies)) - 1] if latencies else 0.0
+        print("=== BACKGROUND HTTP SUMMARY ===")
+        print(f"requests_by_path={dict(sorted(self.counts.items()))}")
+        print(f"statuses_by_path={dict(sorted(self.statuses.items()))}")
+        print(f"http_p95_ms={p95:.1f} http_max_ms={max(latencies, default=0.0):.1f}")
+        print(
+            f"http_bytes_received={self.bytes_received} http_dropped_at_concurrency_cap={self.dropped}"
+        )
+        print(f"pgn_nonempty_exports={self.pgn_ok} pgn_empty_or_failed={self.pgn_empty}")
+        if self.pgn_empty:
+            print("PGN warning: empty/failed responses may mean expired or unauthorized cookie.")
+
+
+async def run_http_workload(
+    *,
+    rps: float,
+    duration: float,
+    concurrency: int,
+    pgn_cookie: str | None,
+    pgn_max_games: int,
+) -> HttpRequestStats:
+    """Independent traffic during gameplay, with one shared concurrency limit.
+
+    PGN requires the authenticated gbtami session and is sent at most once per
+    120 seconds, below the server's explicit export admission budget.
+    """
+    stats = HttpRequestStats()
+    throttle = asyncio.Semaphore(concurrency)
+    timeout = aiohttp.ClientTimeout(total=30)
+    pending: set[asyncio.Task[None]] = set()
+    start = monotonic()
+    stop = start + duration
+    next_pgn = start + min(10, duration / 3)
+    paths = cycle(PROFILE_HTTP_PATHS)
+
+    async with aiohttp.ClientSession(cookie_jar=make_cookie_jar(), timeout=timeout) as public:
+        # The authentication cookie must NOT be attached to spectator/game users.
+        if pgn_cookie is not None:
+            authenticated = aiohttp.ClientSession(
+                cookie_jar=make_cookie_jar(),
+                cookies={"AIOHTTP_SESSION": pgn_cookie},
+                timeout=timeout,
+            )
+        else:
+            authenticated = None
+        try:
+
+            async def fetch(label: str, path: str, session: aiohttp.ClientSession) -> None:
+                async with throttle:
+                    began = monotonic()
+                    status: int | str = "connection_error"
+                    received = 0
+                    try:
+                        async with session.get(URI.rstrip("/") + path) as resp:
+                            status = resp.status
+                            async for chunk in resp.content.iter_chunked(65536):
+                                received += len(chunk)
+                            # Some authorization failures return HTTP 200 + an
+                            # empty body. Classify these separately in the report.
+                            if label == "pgn" and resp.content_type != "text/pgn":
+                                status = f"{resp.status}:{resp.content_type}"
+                    except (aiohttp.ClientError, TimeoutError, OSError) as exc:
+                        status = type(exc).__name__
+                    stats.record(label, status, (monotonic() - began) * 1000, received)
+
+            interval = 1.0 / rps
+            next_http = start
+            while monotonic() < stop:
+                now = monotonic()
+                if authenticated is not None and now >= next_pgn:
+                    if len(pending) < concurrency:
+                        task = asyncio.create_task(
+                            fetch(
+                                "pgn",
+                                f"/api/games/user/gbtami/pgn?max={pgn_max_games}",
+                                authenticated,
+                            )
+                        )
+                        pending.add(task)
+                        task.add_done_callback(pending.discard)
+                    else:
+                        stats.dropped += 1
+                    next_pgn = now + 120
+                if now >= next_http:
+                    if len(pending) < concurrency:
+                        label, path = next(paths)
+                        task = asyncio.create_task(fetch(label, path, public))
+                        pending.add(task)
+                        task.add_done_callback(pending.discard)
+                    else:
+                        stats.dropped += 1
+                    next_http = now + interval
+                await asyncio.sleep(
+                    max(0.01, min(0.2, next_http - monotonic(), stop - monotonic()))
+                )
+            if pending:
+                await asyncio.gather(*pending)
+        finally:
+            if authenticated is not None:
+                await authenticated.close()
+    return stats
+
+
+class TestUserPgnExporter:
+    """Export at most one finished test user's own games during a profiling run.
+
+    Uses the same aiohttp session that authenticated the Test-* user for
+    gameplay. No copied browser cookie, credential, or admin privilege is needed.
+    The one-export limit also leaves room for an optional gbtami export under
+    the shared local PGN rate limit (two requests per 120 seconds).
+    """
+
+    def __init__(self, max_games: int):
+        self.max_games = max_games
+        self._lock = asyncio.Lock()
+        self.attempted = False
+        self.username: str | None = None
+        self.status: int | str | None = None
+        self.bytes_received = 0
+        self.elapsed_ms = 0.0
+
+    async def maybe_export(self, session: aiohttp.ClientSession, username: str) -> None:
+        if not username.startswith(TEST_PREFIX):
+            return
+        async with self._lock:
+            if self.attempted:
+                return
+            self.attempted = True
+            self.username = username
+
+        start = monotonic()
+        try:
+            path = f"/api/games/user/{quote(username, safe='')}/pgn?max={self.max_games}"
+            async with asyncio.timeout(30):
+                async with session.get(URI.rstrip("/") + path) as response:
+                    self.status = response.status
+                    async for chunk in response.content.iter_chunked(65536):
+                        self.bytes_received += len(chunk)
+                    if response.content_type != "text/pgn":
+                        self.status = f"{response.status}:{response.content_type}"
+        except (aiohttp.ClientError, TimeoutError, OSError) as exc:
+            self.status = type(exc).__name__
+        finally:
+            self.elapsed_ms = (monotonic() - start) * 1000
+
+    def report(self) -> None:
+        if not self.attempted:
+            print("test_user_pgn=skipped (no completed non-aborted Test–* game)")
+            return
+        print(
+            "test_user_pgn="
+            f"user:{self.username} status:{self.status} bytes:{self.bytes_received} "
+            f"elapsed_ms:{self.elapsed_ms:.1f}"
+        )
+        if self.status != 200 or self.bytes_received == 0:
+            print("Test-user PGN warning: export was rejected or had no saved game to export.")
 
 
 class SpectatorAllocator:
@@ -294,6 +977,36 @@ class BotChallengeScheduler:
             self._fairy_active_games.discard(game_id)
 
 
+@dataclass
+class PendingMove:
+    sent_at: float
+    sender: str
+    move: str
+    profile: str
+    confirmed: bool = False
+    timed_out: bool = False
+
+
+def latency_summary(values: list[float]) -> dict[str, float | int | None]:
+    """All durations in milliseconds. No artificial zero for missing data."""
+    if not values:
+        return {"count": 0, "p50_ms": None, "p95_ms": None, "max_ms": None}
+    ordered = sorted(values)
+
+    def percentile(fraction: float) -> float:
+        position = (len(ordered) - 1) * fraction
+        lo = int(position)
+        hi = min(lo + 1, len(ordered) - 1)
+        return ordered[lo] + (ordered[hi] - ordered[lo]) * (position - lo)
+
+    return {
+        "count": len(ordered),
+        "p50_ms": round(percentile(0.5), 2),
+        "p95_ms": round(percentile(0.95), 2),
+        "max_ms": round(ordered[-1], 2),
+    }
+
+
 class RunStats:
     def __init__(self) -> None:
         self._lock = asyncio.Lock()
@@ -316,12 +1029,99 @@ class RunStats:
         self.challenges_sent_by_profile: Counter[str] = Counter()
         self.new_games_by_actual_bot_profile: Counter[str] = Counter()
         self._seen_game_start_ids: set[str] = set()
+        self._seen_game_end_ids: set[str] = set()
+        self._unfinished_game_ids: set[str] = set()
+        self.peak_unfinished_games = 0
         self.challenge_to_game_start_count_by_bot_profile: Counter[str] = Counter()
         self.challenge_to_game_start_sum_by_bot_profile: defaultdict[str, float] = defaultdict(
             float
         )
         self.challenge_to_game_start_min_by_bot_profile: dict[str, float] = {}
         self.challenge_to_game_start_max_by_bot_profile: dict[str, float] = {}
+        self.game_time_controls: dict[str, str] = {}
+        self.games_started_by_time_control: Counter[str] = Counter()
+        self.games_ended_by_time_control: Counter[str] = Counter()
+        self.moves_sent = 0
+        self.moves_confirmed = 0
+        self.moves_observed_by_opponent = 0
+        self.move_timeouts = 0
+        self.unexpected_round_ws_disconnects = 0
+        self.unexpected_round_ws_disconnect_reasons: Counter[str] = Counter()
+        self.unexpected_round_ws_disconnects_by_time_control: Counter[str] = Counter()
+        self.unexpected_round_ws_close_codes: Counter[str] = Counter()
+        self.shutdown_started = False
+        self.round_ws_closures_during_shutdown = 0
+        self.round_ws_shutdown_close_codes: Counter[str] = Counter()
+        self.postgame_round_ws_disconnect_reasons: Counter[str] = Counter()
+        self.round_tasks_cancelled_at_shutdown = 0
+        self.moves_sent_by_time_control: Counter[str] = Counter()
+        self.moves_confirmed_by_time_control: Counter[str] = Counter()
+        self.moves_observed_by_opponent_by_time_control: Counter[str] = Counter()
+        self.move_timeouts_by_time_control: Counter[str] = Counter()
+        self.move_acks_ms: list[float] = []
+        self.opponent_moves_ms: list[float] = []
+        self.move_acks_by_time_control: defaultdict[str, list[float]] = defaultdict(list)
+        self.opponent_moves_by_time_control: defaultdict[str, list[float]] = defaultdict(list)
+        self._pending_moves: dict[tuple[str, int], PendingMove] = {}
+        # Simulated games never take back moves, so a per-game high-water mark
+        # avoids retaining a (game, ply) key for every confirmed move.
+        self._last_observed_move_ply: dict[str, int] = {}
+        self.first_move_at: float | None = None
+        self.arena_joined_players: defaultdict[str, set[str]] = defaultdict(set)
+        self.arena_started_games: Counter[str] = Counter()
+        self.arena_ended_games: Counter[str] = Counter()
+        self.arena_notification_first: dict[str, float] = {}
+        self.arena_notification_skew_ms: defaultdict[str, list[float]] = defaultdict(list)
+        self.arena_first_pair_wait_ms: defaultdict[str, list[float]] = defaultdict(list)
+        self.arena_repair_wait_ms: defaultdict[str, list[float]] = defaultdict(list)
+
+    def record_arena_joined(self, tournament_id: str, username: str) -> None:
+        self.arena_joined_players[tournament_id].add(username)
+
+    def record_arena_notification(
+        self,
+        tournament_id: str,
+        game_id: str,
+        *,
+        joined_at: float | None,
+        last_game_end_at: float | None,
+    ) -> None:
+        now = monotonic()
+        first = self.arena_notification_first.pop(game_id, None)
+        if first is None:
+            self.arena_notification_first[game_id] = now
+            self.arena_started_games[tournament_id] += 1
+        else:
+            self.arena_notification_skew_ms[tournament_id].append((now - first) * 1000)
+        if last_game_end_at is not None:
+            self.arena_repair_wait_ms[tournament_id].append((now - last_game_end_at) * 1000)
+        elif joined_at is not None:
+            self.arena_first_pair_wait_ms[tournament_id].append((now - joined_at) * 1000)
+
+    def record_arena_game_end(self, tournament_id: str) -> None:
+        self.arena_ended_games[tournament_id] += 1
+
+    def arena_summary(self, arenas: list[ArenaSpec]) -> dict[str, object]:
+        return {
+            spec.tournament_id: {
+                "profile": spec.profile.name,
+                "variant": spec.variant,
+                "planned_players": spec.players,
+                "joined_players": len(self.arena_joined_players[spec.tournament_id]),
+                "games_started": self.arena_started_games[spec.tournament_id],
+                "player_game_ends_observed": self.arena_ended_games[spec.tournament_id],
+                "notification_skew_ms": latency_summary(
+                    self.arena_notification_skew_ms[spec.tournament_id]
+                ),
+                "join_to_first_pairing_ms": latency_summary(
+                    self.arena_first_pair_wait_ms[spec.tournament_id]
+                ),
+                "game_end_to_next_pairing_ms": latency_summary(
+                    self.arena_repair_wait_ms[spec.tournament_id]
+                ),
+            }
+            for spec in arenas
+        }
 
     async def record_challenge_sent(self, bot_profile: str | None) -> None:
         profile_key = bot_profile if isinstance(bot_profile, str) else "unknown"
@@ -333,12 +1133,19 @@ class RunStats:
         game_id: str,
         actual_bot_profile: str | None,
         challenge_to_start_latency_secs: float | None,
+        time_control: str = "custom",
     ) -> None:
         profile_key = actual_bot_profile if isinstance(actual_bot_profile, str) else "unknown"
         async with self._lock:
             if game_id in self._seen_game_start_ids:
                 return
             self._seen_game_start_ids.add(game_id)
+            self.game_time_controls[game_id] = time_control
+            self.games_started_by_time_control[time_control] += 1
+            self._unfinished_game_ids.add(game_id)
+            self.peak_unfinished_games = max(
+                self.peak_unfinished_games, len(self._unfinished_game_ids)
+            )
             self.new_games_by_actual_bot_profile[profile_key] += 1
             if isinstance(challenge_to_start_latency_secs, (int, float)):
                 latency = max(0.0, float(challenge_to_start_latency_secs))
@@ -353,6 +1160,7 @@ class RunStats:
 
     async def record_game_end(
         self,
+        game_id: str,
         result: str,
         status: int,
         ply: int | None,
@@ -360,6 +1168,11 @@ class RunStats:
         bot_profile: str | None = None,
     ) -> None:
         async with self._lock:
+            if game_id in self._seen_game_end_ids:
+                return
+            self._seen_game_end_ids.add(game_id)
+            self._unfinished_game_ids.discard(game_id)
+            self.games_ended_by_time_control[self.game_time_controls.get(game_id, "custom")] += 1
             profile_key = bot_profile if isinstance(bot_profile, str) else "unknown"
             self.total_games += 1
             self.games_by_bot_profile[profile_key] += 1
@@ -381,6 +1194,180 @@ class RunStats:
                 self.games_without_ply += 1
             else:
                 self.by_game_length_ply[ply] += 1
+
+    def record_move_sent(
+        self, game_id: str, ply: int, move: str, sender: str, sent_at: float
+    ) -> None:
+        """Count each WebSocket move send; keep one outstanding attempt per ply.
+
+        This runner has one asyncio event loop, so these non-awaiting methods
+        cannot interleave and need no separate asyncio lock.
+        """
+        self.moves_sent += 1
+        profile = self.game_time_controls.get(game_id, "custom")
+        self.moves_sent_by_time_control[profile] += 1
+        if self.first_move_at is None:
+            self.first_move_at = sent_at
+        key = (game_id, ply)
+        if key not in self._pending_moves and ply > self._last_observed_move_ply.get(game_id, -1):
+            self._pending_moves[key] = PendingMove(sent_at, sender, move, profile)
+
+    def observe_board(
+        self,
+        game_id: str,
+        ply: int,
+        last_move: str | None,
+        observer: str,
+        received_at: float,
+    ) -> None:
+        """Confirm a submitted ply using an authoritative server board event.
+
+        Both clients receive a board message. Only count the move once,
+        and measure the opponent's receipt separately from first confirmation.
+        """
+        key = (game_id, ply)
+        pending = self._pending_moves.get(key)
+        if pending is None or (last_move is not None and last_move != pending.move):
+            return
+        latency_ms = max(0.0, received_at - pending.sent_at) * 1000
+        if not pending.confirmed:
+            pending.confirmed = True
+            self.moves_confirmed += 1
+            self.moves_confirmed_by_time_control[pending.profile] += 1
+            self.move_acks_ms.append(latency_ms)
+            self.move_acks_by_time_control[pending.profile].append(latency_ms)
+        if observer != pending.sender:
+            self.moves_observed_by_opponent += 1
+            self.moves_observed_by_opponent_by_time_control[pending.profile] += 1
+            self.opponent_moves_ms.append(latency_ms)
+            self.opponent_moves_by_time_control[pending.profile].append(latency_ms)
+            del self._pending_moves[key]
+            self._last_observed_move_ply[game_id] = max(
+                self._last_observed_move_ply.get(game_id, -1), ply
+            )
+
+    def begin_shutdown(self) -> None:
+        # Set before cancelling user tasks: their shared ClientSession may close
+        # round transports before the round receive loops finish.
+        self.shutdown_started = True
+
+    def record_unexpected_disconnect(
+        self, reason: str, *, time_control: str = "custom", close_code: int | None = None
+    ) -> None:
+        if self.shutdown_started:
+            self.round_ws_closures_during_shutdown += 1
+            if close_code is not None:
+                self.round_ws_shutdown_close_codes[str(close_code)] += 1
+            return
+        self.unexpected_round_ws_disconnects += 1
+        self.unexpected_round_ws_disconnect_reasons[reason] += 1
+        self.unexpected_round_ws_disconnects_by_time_control[time_control] += 1
+        if close_code is not None:
+            self.unexpected_round_ws_close_codes[str(close_code)] += 1
+
+    def record_postgame_disconnect(self, reason: str) -> None:
+        # A game can finish with its WebSocket still open. Count post-game
+        # departures separately from active-game failures, without assuming
+        # that receiving gameEnd closes the socket.
+        self.postgame_round_ws_disconnect_reasons[reason] += 1
+
+    def record_shutdown_task_cancellations(self, count: int) -> None:
+        self.round_tasks_cancelled_at_shutdown += count
+
+    async def active_time_controls(self) -> dict[str, int]:
+        async with self._lock:
+            active_counts = Counter(
+                self.game_time_controls.get(game_id, "custom")
+                for game_id in self._unfinished_game_ids
+            )
+            return dict(sorted(active_counts.items()))
+
+    def _update_move_timeouts(self, now: float, threshold: float) -> None:
+        for pending in self._pending_moves.values():
+            if (
+                not pending.confirmed
+                and not pending.timed_out
+                and now - pending.sent_at >= threshold
+            ):
+                pending.timed_out = True
+                self.move_timeouts += 1
+                self.move_timeouts_by_time_control[pending.profile] += 1
+
+    def move_counters(self, now: float, ack_timeout_secs: float) -> dict[str, int]:
+        self._update_move_timeouts(now, ack_timeout_secs)
+        return {
+            "moves_sent": self.moves_sent,
+            "moves_confirmed": self.moves_confirmed,
+            "moves_pending": sum(not p.confirmed for p in self._pending_moves.values()),
+            "move_timeouts": self.move_timeouts,
+            "unexpected_round_ws_disconnects": self.unexpected_round_ws_disconnects,
+        }
+
+    def move_summary(self, now: float, ack_timeout_secs: float) -> dict[str, object]:
+        counts = self.move_counters(now, ack_timeout_secs)
+        duration = (now - self.first_move_at) if self.first_move_at is not None else 0
+        return {
+            **counts,
+            "unexpected_round_ws_disconnect_reasons": dict(
+                sorted(self.unexpected_round_ws_disconnect_reasons.items())
+            ),
+            "unexpected_round_ws_disconnects_by_time_control": dict(
+                sorted(self.unexpected_round_ws_disconnects_by_time_control.items())
+            ),
+            "unexpected_round_ws_close_codes": dict(
+                sorted(self.unexpected_round_ws_close_codes.items())
+            ),
+            "round_ws_closures_during_shutdown": self.round_ws_closures_during_shutdown,
+            "round_ws_shutdown_close_codes": dict(
+                sorted(self.round_ws_shutdown_close_codes.items())
+            ),
+            "postgame_round_ws_departure_reasons": dict(
+                sorted(self.postgame_round_ws_disconnect_reasons.items())
+            ),
+            "round_tasks_cancelled_at_shutdown": self.round_tasks_cancelled_at_shutdown,
+            "moves_observed_by_opponent": self.moves_observed_by_opponent,
+            "moves_confirmed_per_second": (
+                round(self.moves_confirmed / duration, 2) if duration > 0 else 0.0
+            ),
+            "move_latency": latency_summary(self.move_acks_ms),
+            "opponent_move_latency": latency_summary(self.opponent_moves_ms),
+            "games_started_by_time_control": dict(
+                sorted(self.games_started_by_time_control.items())
+            ),
+            "games_ended_by_time_control": dict(sorted(self.games_ended_by_time_control.items())),
+            "moves_sent_by_time_control": dict(sorted(self.moves_sent_by_time_control.items())),
+            "moves_confirmed_by_time_control": dict(
+                sorted(self.moves_confirmed_by_time_control.items())
+            ),
+            "moves_observed_by_opponent_by_time_control": dict(
+                sorted(self.moves_observed_by_opponent_by_time_control.items())
+            ),
+            "move_timeouts_by_time_control": dict(
+                sorted(self.move_timeouts_by_time_control.items())
+            ),
+            "move_latency_by_time_control": {
+                profile: latency_summary(latencies)
+                for profile, latencies in sorted(self.move_acks_by_time_control.items())
+            },
+            "opponent_move_latency_by_time_control": {
+                profile: latency_summary(latencies)
+                for profile, latencies in sorted(self.opponent_moves_by_time_control.items())
+            },
+        }
+
+    async def activity_snapshot(self) -> tuple[int, int, int, int]:
+        """Starts, unfinished games, high-water mark, and observed ends.
+
+        Unfinished means no terminal message was seen by the test client;
+        it does not guarantee the round websocket is still connected.
+        """
+        async with self._lock:
+            return (
+                len(self._seen_game_start_ids),
+                len(self._unfinished_game_ids),
+                self.peak_unfinished_games,
+                self.total_games,
+            )
 
     async def snapshot(
         self,
@@ -448,6 +1435,46 @@ class RunStats:
             )
 
 
+class HumanPair:
+    """Coordinate one casual seek between two independent test-user sessions."""
+
+    def __init__(self, time_control: TimeControlProfile | None = None) -> None:
+        self.time_control = time_control
+        self.names: dict[str, str] = {}
+        self.ready = asyncio.Event()
+        self.challenge_sent_at: float | None = None
+        self.active_game_id: str | None = None
+        self.finished_roles: set[str] = set()
+        self.generation = 0
+
+    def game_started(self, game_id: str) -> None:
+        if self.active_game_id is None:
+            self.active_game_id = game_id
+        elif self.active_game_id != game_id:
+            raise RuntimeError(
+                f"Pair received another game before completing {self.active_game_id}: {game_id}"
+            )
+
+    def round_released(self, role: str, game_id: str) -> None:
+        if game_id != self.active_game_id:
+            return
+        self.finished_roles.add(role)
+        if self.finished_roles == {"creator", "acceptor"}:
+            self.active_game_id = None
+            self.finished_roles.clear()
+            self.challenge_sent_at = None
+            self.generation += 1
+
+    def register(self, role: str, username: str) -> None:
+        self.names[role] = username
+        if len(self.names) == 2:
+            self.ready.set()
+
+    @property
+    def creator_name(self) -> str | None:
+        return self.names.get("creator")
+
+
 class TestUser:
     def __init__(
         self,
@@ -456,11 +1483,23 @@ class TestUser:
         challenge_delay_min_secs: float = DEFAULT_CHALLENGE_DELAY_MIN_SECS,
         challenge_delay_max_secs: float = DEFAULT_CHALLENGE_DELAY_MAX_SECS,
         challenge_retry_secs: float = DEFAULT_CHALLENGE_RETRY_SECS,
+        game_minutes: int = 1,
+        move_delay_secs: float = 0.0,
+        move_delay_min_secs: float | None = None,
+        move_delay_max_secs: float | None = None,
         spectator_request_gap_secs: float = DEFAULT_SPECTATOR_REQUEST_GAP_SECS,
         spectator_http_semaphore: asyncio.Semaphore | None = None,
         spectator_allocator: SpectatorAllocator | None = None,
         bot_scheduler: BotChallengeScheduler | None = None,
         run_stats: RunStats | None = None,
+        test_user_pgn_exporter: TestUserPgnExporter | None = None,
+        human_pair: HumanPair | None = None,
+        human_role: str | None = None,
+        maintain_human_games: bool = False,
+        postgame_linger_max_secs: float = 0.0,
+        postgame_linger_probability: float = 0.0,
+        client_heartbeat_secs: float = 0.0,
+        arena_spec: ArenaSpec | None = None,
     ):
         self.username = ""
         self.seeks = []
@@ -472,10 +1511,36 @@ class TestUser:
         self.challenge_delay_min_secs = challenge_delay_min_secs
         self.challenge_delay_max_secs = challenge_delay_max_secs
         self.challenge_retry_secs = challenge_retry_secs
+        self.game_minutes = game_minutes
+        self.move_delay_secs = move_delay_secs
+        self.move_delay_min_secs = move_delay_min_secs
+        self.move_delay_max_secs = move_delay_max_secs
         self.spectator_http_semaphore = spectator_http_semaphore
         self.spectator_allocator = spectator_allocator
         self.bot_scheduler = bot_scheduler
         self.run_stats = run_stats
+        self.test_user_pgn_exporter = test_user_pgn_exporter
+        self.human_pair = human_pair
+        self.arena_spec = arena_spec
+        self.arena_id = arena_spec.tournament_id if arena_spec is not None else None
+        self.arena_joined_at: float | None = None
+        self.last_arena_game_end_at: float | None = None
+        self._arena_end_recorded: set[str] = set()
+        self._arena_games_seen: set[str] = set()
+
+        self.human_role = human_role
+        self.maintain_human_games = maintain_human_games
+        self.postgame_linger_max_secs = postgame_linger_max_secs
+        self.postgame_linger_probability = postgame_linger_probability
+        self.client_heartbeat_secs = client_heartbeat_secs
+        self.human_generation = human_pair.generation if human_pair is not None else 0
+        self.time_control_name = "custom"
+        if arena_spec is not None:
+            self.time_control_name = arena_spec.profile.name
+        elif human_pair is not None and human_pair.time_control is not None:
+            self.time_control_name = human_pair.time_control.name
+        self.human_seek_sent = False
+        self.last_human_accepted_seek_id: str | None = None
         self.spectators = []
         self.round_tasks: set[asyncio.Task[None]] = set()
         self.active_round_games: set[str] = set()
@@ -487,7 +1552,17 @@ class TestUser:
         self.last_challenge_variant: str | None = None
         self.last_challenge_profile: str | None = None
         self.last_challenge_sent_at: float | None = None
+        if self.human_pair is not None or self.arena_spec is not None:
+            # Both participants know their variant before the first board.
+            self.last_challenge_variant = (
+                self.arena_spec.variant if self.arena_spec is not None else "chess"
+            )
+            self.last_challenge_profile = "Human"
         self.round_diag: dict[str, dict[str, object]] = {}
+
+    @property
+    def simulated_human(self) -> bool:
+        return self.human_pair is not None or self.arena_id is not None
 
     def _is_transient_connection_error(self, exc: BaseException) -> bool:
         if self._is_fd_limit_error(exc):
@@ -545,7 +1620,10 @@ class TestUser:
     async def _cancel_round_tasks(self) -> None:
         if not self.round_tasks:
             return
-        for task in list(self.round_tasks):
+        unfinished = [task for task in self.round_tasks if not task.done()]
+        if self.run_stats is not None:
+            self.run_stats.record_shutdown_task_cancellations(len(unfinished))
+        for task in unfinished:
             task.cancel()
         await asyncio.gather(*self.round_tasks, return_exceptions=True)
         self.round_tasks.clear()
@@ -567,6 +1645,8 @@ class TestUser:
     ) -> None:
         if game_id in self.active_round_games:
             return
+        if self.maintain_human_games and self.human_pair is not None:
+            self.human_pair.game_started(game_id)
         if game_variant is not None:
             self.game_variants[game_id] = game_variant
         if game_bot_profile is not None:
@@ -602,6 +1682,14 @@ class TestUser:
         return len(self.pending_challenges) + len(self.active_round_games)
 
     def _can_issue_new_challenge(self) -> bool:
+        if self.maintain_human_games and self.human_pair is not None:
+            return (
+                self.human_pair.ready.is_set()
+                and self.human_pair.active_game_id is None
+                and self.human_pair.challenge_sent_at is None
+                and not self.pending_challenges
+                and not self._has_active_round_task()
+            )
         # Keep one game per user in-flight by default when games_target is 1, and
         # never queue more potential games than the remaining target.
         remaining = self.games_target - self.games_completed
@@ -632,7 +1720,7 @@ class TestUser:
             "rm": challenge_profile == "Random-Mover",
             "fen": "",
             "color": "r",
-            "minutes": 1,
+            "minutes": self.game_minutes,
             "increment": 0,
             "byoyomiPeriod": 0,
             "level": 0,
@@ -664,6 +1752,64 @@ class TestUser:
         elif self.bot_scheduler is not None:
             await self.bot_scheduler.release_pending(scheduler_token, challenge_profile)
         return sent
+
+    async def _send_create_human_seek(self, wsl) -> bool:
+        if self.human_pair is None or self.human_role != "creator":
+            return False
+        if self.maintain_human_games and self.human_pair.generation != self.human_generation:
+            self.human_generation = self.human_pair.generation
+            self.human_seek_sent = False
+        if not self.human_pair.ready.is_set() or self.human_seek_sent:
+            return False
+        payload = {
+            "type": "create_seek",
+            "variant": "chess",
+            "fen": "",
+            "color": "r",
+            "minutes": self.game_minutes,
+            "increment": 0,
+            "byoyomiPeriod": 0,
+            "rated": False,
+            "chess960": False,
+            "target": self.human_pair.names["acceptor"],
+        }
+        sent = await self._send_json_safe(wsl, payload)
+        if sent:
+            self.human_seek_sent = True
+            sent_at = monotonic()
+            self.human_pair.challenge_sent_at = sent_at
+            self.pending_challenges.append(("chess", "Human", sent_at, None))
+            self.last_challenge_sent_at = sent_at
+            if self.run_stats is not None:
+                await self.run_stats.record_challenge_sent("Human")
+        return sent
+
+    async def _accept_human_seek(self, wsl, seeks: list[dict]) -> None:
+        if self.human_pair is None or self.human_role != "acceptor":
+            return
+        if self.maintain_human_games and (
+            self.human_pair.active_game_id is not None or self.human_pair.challenge_sent_at is None
+        ):
+            return
+        if self._has_active_round_task():
+            return
+        creator_name = self.human_pair.creator_name
+        if creator_name is None:
+            return
+        for seek in seeks:
+            if (
+                seek.get("user") != creator_name
+                or seek.get("variant") != "chess"
+                or seek.get("target") != self.username
+                or not isinstance(seek.get("seekID"), str)
+            ):
+                continue
+            seek_id = seek["seekID"]
+            if seek_id == self.last_human_accepted_seek_id:
+                return
+            if await self._send_json_safe(wsl, {"type": "accept_seek", "seekID": seek_id}):
+                self.last_human_accepted_seek_id = seek_id
+            return
 
     def _variant_for_game(self, game_id: str) -> str | None:
         variant = self.game_variants.get(game_id)
@@ -731,9 +1877,15 @@ class TestUser:
         if self.run_stats is None:
             return
         latency_secs: float | None = None
+        if self.human_pair is not None:
+            # The acceptor normally sees new_game first, but did not send the seek.
+            # Both participants must use the creator's timestamp for game latency.
+            challenge_sent_at = self.human_pair.challenge_sent_at
         if isinstance(challenge_sent_at, (int, float)):
             latency_secs = max(0.0, monotonic() - challenge_sent_at)
-        await self.run_stats.record_game_start(game_id, actual_bot_profile, latency_secs)
+        await self.run_stats.record_game_start(
+            game_id, actual_bot_profile, latency_secs, self.time_control_name
+        )
 
     def _diag_for_game(self, game_id: str) -> dict[str, object]:
         diag = self.round_diag.get(game_id)
@@ -842,10 +1994,17 @@ class TestUser:
         end_source: str = "unknown",
     ) -> None:
         print("END", game_id, result, status)
+        if self.arena_id is not None and game_id not in self._arena_end_recorded:
+            self._arena_end_recorded.add(game_id)
+            self.last_arena_game_end_at = monotonic()
+            if self.run_stats is not None:
+                self.run_stats.record_arena_game_end(self.arena_id)
         abort_diag = self._abort_diag(game_id, end_source) if status == 0 else None
         bot_profile = self._profile_for_game(game_id)
         if self.run_stats is not None:
-            await self.run_stats.record_game_end(result, status, ply, abort_diag, bot_profile)
+            await self.run_stats.record_game_end(
+                game_id, result, status, ply, abort_diag, bot_profile
+            )
 
     async def get(self, url=None):
         async with aiohttp.ClientSession(cookie_jar=make_cookie_jar()) as session:
@@ -871,20 +2030,35 @@ class TestUser:
                 while True:
                     await self._prune_stale_pending_challenges()
                     if (
-                        self.games_completed >= self.games_target
+                        not self.maintain_human_games
+                        and self.games_completed >= self.games_target
                         and not self._has_active_round_task()
                         and not self.pending_challenges
                     ):
                         break
                     async with session.get(URI) as resp:
+                        if resp.status != 200:
+                            raise RuntimeError(
+                                f"Lobby GET {resp.url} failed: HTTP {resp.status}; "
+                                f"Retry-After={resp.headers.get('Retry-After', 'n/a')}"
+                            )
                         text = await resp.text()
-                        current_username = extract_username(text)
+                        try:
+                            current_username = extract_username(text)
+                        except RuntimeError as exc:
+                            raise RuntimeError(
+                                f"Lobby GET {resp.url} returned HTTP 200 but no username "
+                                f"(content-type={resp.content_type}, body_length={len(text)})"
+                            ) from exc
                         if self.username != current_username:
                             self.username = current_username
                             print(self.username)
 
                     try:
-                        async with session.ws_connect(LOBBY_URL, headers={"Origin": URI}) as wsl:
+                        async with (
+                            session.ws_connect(LOBBY_URL, headers={"Origin": URI}) as wsl,
+                            browser_heartbeat(wsl, self.client_heartbeat_secs),
+                        ):
                             # await wsl.send_json({"type": "lobby_user_connected", "username": self.username})
                             # await wsl.send_json({"type": "get_seeks"})
                             loop_time = asyncio.get_running_loop().time
@@ -893,6 +2067,13 @@ class TestUser:
                             self.playing = self._has_active_round_task()
 
                             async def maybe_send_challenge(now: float) -> float:
+                                if self.human_pair is not None:
+                                    if (
+                                        self._can_issue_new_challenge()
+                                        and await self._send_create_human_seek(wsl)
+                                    ):
+                                        return loop_time()
+                                    return last_challenge_sent
                                 if (
                                     self._can_issue_new_challenge()
                                     and self.challenge_retry_secs > 0
@@ -901,13 +2082,19 @@ class TestUser:
                                     return loop_time()
                                 return last_challenge_sent
 
-                            if (
+                            if self.human_pair is None and (
                                 self._can_issue_new_challenge()
                                 and await self._send_create_ai_challenge(wsl)
                             ):
                                 last_challenge_sent = loop_time()
 
                             while True:
+                                # A real browser sends frequent /n heartbeats. When
+                                # these keep the receive loop busy, its idle timeout
+                                # cannot be relied on to start replacement games.
+                                # Recheck pair readiness on every loop iteration.
+                                if self.maintain_human_games:
+                                    last_challenge_sent = await maybe_send_challenge(loop_time())
                                 try:
                                     msg = await asyncio.wait_for(
                                         wsl.receive(),
@@ -926,6 +2113,8 @@ class TestUser:
                                 # print('Lobby message received from server:', msg)
 
                                 if msg.type == aiohttp.WSMsgType.TEXT:
+                                    if msg.data == "/n":
+                                        continue
                                     data = json.loads(msg.data)
                                     # print('Lobby message received from server:', data["type"])
                                     if data["type"] == "ping":
@@ -973,7 +2162,9 @@ class TestUser:
                                                 self.game_bot_profiles[game_id] = actual_bot_profile
                                             await self._record_game_start(
                                                 game_id,
-                                                actual_bot_profile or game_bot_profile,
+                                                "Human"
+                                                if self.human_pair is not None
+                                                else (actual_bot_profile or game_bot_profile),
                                                 challenge_sent_at,
                                             )
                                             self._start_round_task(
@@ -994,7 +2185,11 @@ class TestUser:
                                             challenge_sent_at,
                                         ) = await self._bind_game_challenge(game_id)
                                         await self._record_game_start(
-                                            game_id, game_bot_profile, challenge_sent_at
+                                            game_id,
+                                            "Human"
+                                            if self.human_pair is not None
+                                            else game_bot_profile,
+                                            challenge_sent_at,
                                         )
                                         self._start_round_task(
                                             session,
@@ -1004,18 +2199,36 @@ class TestUser:
                                             game_bot_profile=game_bot_profile,
                                         )
 
+                                    elif (
+                                        data["type"] == "get_seeks" and self.human_pair is not None
+                                    ):
+                                        await self._accept_human_seek(wsl, data.get("seeks", []))
                                     elif data["type"] == "lobby_user_connected":
                                         if data.get("username") == self.username:
                                             print("Connected as %s" % data["username"])
-                                    elif data["type"] == "error":
-                                        if self.pending_challenges:
-                                            _, profile, _, scheduler_token = (
-                                                self.pending_challenges.popleft()
-                                            )
-                                            if self.bot_scheduler is not None:
-                                                await self.bot_scheduler.release_pending(
-                                                    scheduler_token, profile
+                                            if (
+                                                self.human_pair is not None
+                                                and self.human_role is not None
+                                            ):
+                                                self.human_pair.register(
+                                                    self.human_role, self.username
                                                 )
+                                                last_challenge_sent = await maybe_send_challenge(
+                                                    loop_time()
+                                                )
+                                    elif data["type"] == "error" and self.human_pair is not None:
+                                        raise RuntimeError(
+                                            f"Human matchmaking failed for {self.username}: "
+                                            f"{data.get('message')}"
+                                        )
+                                    elif data["type"] == "error" and self.pending_challenges:
+                                        _, profile, _, scheduler_token = (
+                                            self.pending_challenges.popleft()
+                                        )
+                                        if self.bot_scheduler is not None:
+                                            await self.bot_scheduler.release_pending(
+                                                scheduler_token, profile
+                                            )
 
                                 elif msg.type in (
                                     aiohttp.WSMsgType.CLOSED,
@@ -1032,11 +2245,230 @@ class TestUser:
                         if self._is_fd_limit_error(exc):
                             await asyncio.sleep(random.uniform(1.0, 3.0))
 
-                    if self.games_completed < self.games_target:
+                    if self.maintain_human_games or self.games_completed < self.games_target:
                         await asyncio.sleep(random.uniform(0.1, 0.5))
         finally:
             await self._cancel_round_tasks()
             await self._cancel_spectator_tasks()
+
+    async def go_to_arena(self) -> None:
+        """Follow the browser's tournament -> round -> tournament navigation.
+
+        Pairings and joins use the real /wst protocol. On a new_game message,
+        the tournament websocket is closed (as when the browser redirects to
+        /{gameId}), and a /wsr round is played. A new tournament page and WST
+        connection are opened only after leaving that round. This matters for
+        Arena waiting-player eligibility and realistic socket counts.
+        """
+        assert self.arena_spec is not None
+        tournament_id = self.arena_spec.tournament_id
+        try:
+            async with aiohttp.ClientSession(cookie_jar=make_cookie_jar()) as session:
+                async with session.get(URI) as resp:
+                    if resp.status != 200:
+                        raise RuntimeError(f"Arena identity GET failed: HTTP {resp.status}")
+                    self.username = extract_username(await resp.text())
+                    if not self.username.startswith(TEST_PREFIX):
+                        raise RuntimeError(
+                            "Arena mode requires local server -a (logged-in Test users). "
+                            f"Received {self.username!r} instead."
+                        )
+
+                while True:
+                    # A real navigation back to the tournament renders its page.
+                    async with session.get(f"{URI}/tournament/{tournament_id}") as resp:
+                        if resp.status != 200:
+                            raise RuntimeError(
+                                f"Arena {tournament_id} page failed: HTTP {resp.status}"
+                            )
+                        await resp.read()
+
+                    pairing: tuple[str, str, str] | None = None
+                    try:
+                        async with (
+                            session.ws_connect(TOURNAMENT_URL, headers={"Origin": URI}) as wst,
+                            browser_heartbeat(wst, self.client_heartbeat_secs),
+                        ):
+                            await wst.send_json(
+                                {"type": "tournament_user_connected", "tournamentId": tournament_id}
+                            )
+                            join_pending = False
+                            joined = False
+                            last_refresh_at = monotonic()
+                            while True:
+                                try:
+                                    msg = await asyncio.wait_for(wst.receive(), timeout=10)
+                                except TimeoutError:
+                                    if monotonic() - last_refresh_at >= 30:
+                                        await self._send_json_safe(
+                                            wst,
+                                            {
+                                                "type": "get_players",
+                                                "tournamentId": tournament_id,
+                                                "page": 1,
+                                            },
+                                        )
+                                        last_refresh_at = monotonic()
+                                    continue
+                                if msg.type == aiohttp.WSMsgType.TEXT:
+                                    if msg.data == "/n":
+                                        continue
+                                    data = json.loads(msg.data)
+                                    kind = data.get("type")
+                                    if kind == "ping":
+                                        await self._send_json_safe(wst, {"type": "pong"})
+                                    elif kind == "tournament_user_connected":
+                                        if data.get("tsystem") != ARENA:
+                                            raise RuntimeError(
+                                                f"Tournament {tournament_id} is not an Arena"
+                                            )
+                                        if data.get("tstatus", 0) > T_STARTED:
+                                            return
+                                        if data.get("ustatus") == "joined":
+                                            joined = True
+                                        elif data.get("ustatus") == "spectator":
+                                            if not join_pending:
+                                                await wst.send_json(
+                                                    {"type": "join", "tournamentId": tournament_id}
+                                                )
+                                                join_pending = True
+                                        else:
+                                            raise RuntimeError(
+                                                f"Arena {tournament_id} rejected/paused "
+                                                f"{self.username}: {data.get('ustatus')}"
+                                            )
+                                    elif (
+                                        kind == "ustatus" and data.get("username") == self.username
+                                    ):
+                                        if data.get("ustatus") != "joined":
+                                            raise RuntimeError(
+                                                f"Arena {tournament_id} join failed for "
+                                                f"{self.username}: {data.get('ustatus')}"
+                                            )
+                                        joined = True
+                                        join_pending = False
+                                    elif kind == "new_game":
+                                        game_id = data.get("gameId")
+                                        wplayer = data.get("wplayer")
+                                        bplayer = data.get("bplayer")
+                                        if self.username not in (wplayer, bplayer):
+                                            continue
+                                        if not (joined or join_pending):
+                                            raise RuntimeError(
+                                                f"Arena {tournament_id} paired an unjoined user"
+                                            )
+                                        if not isinstance(game_id, str):
+                                            raise RuntimeError("Invalid arena game ID")
+                                        if game_id in self._arena_games_seen:
+                                            continue
+                                        self._arena_games_seen.add(game_id)
+                                        if self.run_stats is not None:
+                                            self.run_stats.record_arena_notification(
+                                                tournament_id,
+                                                game_id,
+                                                joined_at=self.arena_joined_at,
+                                                last_game_end_at=self.last_arena_game_end_at,
+                                            )
+                                        self.last_arena_game_end_at = None
+                                        await self._record_game_start(game_id, "Human", None)
+                                        pairing = (game_id, wplayer, bplayer)
+                                        # Match the tournament client's short beep before redirect.
+                                        await asyncio.sleep(0.7)
+                                        break
+                                    elif kind == "tstatus":
+                                        if data.get("tstatus", 0) > T_STARTED:
+                                            return
+                                    elif kind == "error":
+                                        raise RuntimeError(
+                                            f"Arena {tournament_id} protocol error for "
+                                            f"{self.username}: {data.get('message')}"
+                                        )
+
+                                    if joined and self.arena_joined_at is None:
+                                        self.arena_joined_at = monotonic()
+                                        if self.run_stats is not None:
+                                            self.run_stats.record_arena_joined(
+                                                tournament_id, self.username
+                                            )
+                                elif msg.type in (
+                                    aiohttp.WSMsgType.CLOSE,
+                                    aiohttp.WSMsgType.CLOSED,
+                                    aiohttp.WSMsgType.CLOSING,
+                                    aiohttp.WSMsgType.ERROR,
+                                ):
+                                    break
+                    except Exception as exc:
+                        if not self._is_transient_connection_error(exc):
+                            raise
+
+                    if pairing is None:
+                        await asyncio.sleep(random.uniform(0.3, 1.0))
+                        continue
+
+                    # The browser redirected away and closed WST after its
+                    # notification delay. Now open the round page/WebSocket.
+                    game_id, wplayer, bplayer = pairing
+                    self._start_round_task(
+                        session,
+                        None,  # Arena round cleanup never logs out of the closed WST.
+                        game_id,
+                        wplayer,
+                        bplayer,
+                        self.arena_spec.variant,
+                        "Human",
+                    )
+                    # One active game per player. Don't reconnect to the Arena
+                    # until the round is finished or its reconnect attempts end.
+                    round_tasks = tuple(self.round_tasks)
+                    if round_tasks:
+                        await asyncio.gather(*round_tasks)
+                    await asyncio.sleep(random.uniform(0.1, 0.5))
+        finally:
+            await self._cancel_round_tasks()
+            await self._cancel_spectator_tasks()
+
+    def _next_move_delay_secs(self) -> float:
+        if self.move_delay_min_secs is not None and self.move_delay_max_secs is not None:
+            return random.uniform(self.move_delay_min_secs, self.move_delay_max_secs)
+        return self.move_delay_secs
+
+    async def _leave_finished_game(self, wsr, wsl) -> None:
+        """Keep some post-game connections open, just as real users might."""
+        if (
+            self.maintain_human_games or self.arena_id is not None
+        ) and random.random() < self.postgame_linger_probability:
+            until = monotonic() + random.uniform(0, self.postgame_linger_max_secs)
+            while (remaining := until - monotonic()) > 0:
+                try:
+                    msg = await asyncio.wait_for(wsr.receive(), timeout=remaining)
+                except TimeoutError:
+                    break
+                except (aiohttp.ClientError, ConnectionResetError) as exc:
+                    if self.run_stats is not None:
+                        self.run_stats.record_postgame_disconnect(type(exc).__name__)
+                    return
+                if msg.type in (
+                    aiohttp.WSMsgType.CLOSED,
+                    aiohttp.WSMsgType.ERROR,
+                    aiohttp.WSMsgType.CLOSING,
+                    aiohttp.WSMsgType.CLOSE,
+                ):
+                    if self.run_stats is not None:
+                        self.run_stats.record_postgame_disconnect(msg.type.name)
+                    return
+                if msg.type == aiohttp.WSMsgType.TEXT:
+                    if msg.data == "/n":
+                        continue
+                    data = json.loads(msg.data)
+                    if data.get("type") == "ping":
+                        await self._send_json_safe(wsr, {"type": "pong"})
+        if self.run_stats is not None:
+            self.run_stats.record_postgame_disconnect("client_logout_requested")
+        await self._send_json_safe(wsr, {"type": "logout"})
+        # Keep the lobby session connected so these same two simulated players
+        # can start their next game, without creating more anonymous users.
+        if not self.maintain_human_games and self.arena_id is None:
+            await self._send_json_safe(wsl, {"type": "logout"})
 
     # @profile
     async def go_to_round(
@@ -1052,6 +2484,7 @@ class TestUser:
         print("---------ROUND baby")
         game_completed = False
         last_ply: int | None = None
+        last_sent_ply: int | None = None
         resolved_variant = game_variant or self._variant_for_game(game_id)
         resolved_bot_profile = game_bot_profile or self._profile_for_game(game_id)
         try:
@@ -1069,9 +2502,16 @@ class TestUser:
             while not game_completed:
                 reconnect_needed = False
                 try:
-                    async with session.ws_connect(
-                        ROUND_URL + game_id, timeout=20.0, headers={"Origin": URI}
-                    ) as wsr:
+                    async with (
+                        session.ws_connect(
+                            ROUND_URL + game_id, timeout=20.0, headers={"Origin": URI}
+                        ) as wsr,
+                        browser_heartbeat(wsr, self.client_heartbeat_secs),
+                        independent_human_moves() as pending_human_move,
+                    ):
+                        connected_at = monotonic()
+                        last_received_at = connected_at
+                        last_app_pong_at: float | None = None
                         self._mark_round_connected(game_id, resolved_variant, resolved_bot_profile)
                         # TODO: am I player or am I spectator ???
                         ok = await self._send_json_safe(
@@ -1099,15 +2539,23 @@ class TestUser:
                                 round_idle_cycles += 1
                                 if round_idle_cycles >= DEFAULT_ROUND_MAX_IDLE_CYCLES:
                                     reconnect_needed = True
+                                    if self.run_stats is not None:
+                                        self.run_stats.record_unexpected_disconnect(
+                                            "idle_timeout", time_control=self.time_control_name
+                                        )
                                     break
                                 await self._send_json_safe(
                                     wsr, {"type": "board", "gameId": game_id}
                                 )
                                 continue
                             # print('Round message received from server:', msg)
+                            last_received_at = monotonic()
                             round_idle_cycles = 0
 
                             if msg.type == aiohttp.WSMsgType.TEXT:
+                                if msg.data == "/n":
+                                    last_app_pong_at = monotonic()
+                                    continue
                                 data = json.loads(msg.data)
                                 try:
                                     if "type" not in data:
@@ -1122,6 +2570,7 @@ class TestUser:
                                         )
 
                                     elif data["type"] == "board":
+                                        board_received_at = monotonic()
                                         board_variant = data.get("variant")
                                         if isinstance(board_variant, str):
                                             resolved_variant = board_variant
@@ -1140,8 +2589,20 @@ class TestUser:
                                         board_ply = data.get("ply")
                                         if isinstance(board_ply, int):
                                             last_ply = board_ply
+                                            pending_human_move.position_changed(board_ply)
                                         self._mark_board_seen(game_id, data.get("tp"))
+                                        if self.run_stats is not None and isinstance(
+                                            board_ply, int
+                                        ):
+                                            self.run_stats.observe_board(
+                                                game_id,
+                                                board_ply,
+                                                data.get("lastMove"),
+                                                self.username,
+                                                monotonic(),
+                                            )
                                         if data["result"] != "*":
+                                            await pending_human_move.close()
                                             await self._record_game_end(
                                                 game_id,
                                                 data["result"],
@@ -1155,6 +2616,13 @@ class TestUser:
                                             if not game_completed:
                                                 self.games_completed += 1
                                                 game_completed = True
+                                                if (
+                                                    self.test_user_pgn_exporter is not None
+                                                    and data["status"] != 0
+                                                ):
+                                                    await self.test_user_pgn_exporter.maybe_export(
+                                                        session, self.username
+                                                    )
                                             await self._release_bot_slot_for_game(
                                                 game_id, resolved_bot_profile
                                             )
@@ -1162,11 +2630,11 @@ class TestUser:
                                             self.game_bot_profiles.pop(game_id, None)
                                             self.game_challenge_sent_at.pop(game_id, None)
                                             self.round_diag.pop(game_id, None)
-                                            await self._send_json_safe(wsr, {"type": "logout"})
-                                            await self._send_json_safe(wsl, {"type": "logout"})
+                                            await self._leave_finished_game(wsr, wsl)
                                             break
 
-                                        await asyncio.sleep(random.uniform(0, 0.1))
+                                        if not self.simulated_human:
+                                            await asyncio.sleep(random.uniform(0, 0.1))
                                         parts = data["fen"].split(" ")
                                         turn_color = parts[1]
                                         variant_for_moves = (
@@ -1175,26 +2643,135 @@ class TestUser:
                                         if variant_for_moves is None:
                                             continue
                                         resolved_variant = variant_for_moves
-                                        legal_moves = sf.legal_moves(
-                                            variant_for_moves, data["fen"], [], False
-                                        )
                                         should_move = (
                                             (turn_color == mycolor)
                                             if mycolor is not None
                                             else data.get("tp") == self.username
                                         )
+                                        if self.simulated_human and (
+                                            not should_move or last_sent_ply == board_ply
+                                        ):
+                                            continue
+                                        if self.simulated_human:
+                                            # Unlike the old sleep inside the receive loop,
+                                            # this preserves continuous WebSocket reads (and
+                                            # protocol PING/PONG handling) while thinking.
+                                            if not isinstance(board_ply, int):
+                                                continue
+                                            if pending_human_move.ply == board_ply:
+                                                continue
+                                            move_snapshot = data
+                                            delay = self._next_move_delay_secs()
+
+                                            async def delayed_human_move(
+                                                snapshot=move_snapshot,
+                                                delay_secs=delay,
+                                                position_ply=board_ply,
+                                                color=turn_color,
+                                                received_at=board_received_at,
+                                                variant=variant_for_moves,
+                                            ):
+                                                nonlocal last_sent_ply
+                                                await asyncio.sleep(
+                                                    random.uniform(0, 0.1) + delay_secs
+                                                )
+                                                if wsr.closed:
+                                                    return
+                                                legal_moves = sf.legal_moves(
+                                                    variant,
+                                                    snapshot["fen"],
+                                                    [],
+                                                    False,
+                                                )
+                                                if not legal_moves:
+                                                    return
+                                                chosen_move = random.choice(legal_moves)
+                                                submitted_at = monotonic()
+                                                move_clocks = simulated_human_clocks(
+                                                    snapshot["clocks"],
+                                                    color,
+                                                    submitted_at - received_at,
+                                                    position_ply,
+                                                )
+                                                # Don't submit a move after the local clock expires.
+                                                if position_ply >= 2:
+                                                    mover_index = 0 if color == "w" else 1
+                                                    if move_clocks[mover_index] <= 0:
+                                                        return
+                                                sent = await self._send_json_safe(
+                                                    wsr,
+                                                    {
+                                                        "type": "move",
+                                                        "gameId": game_id,
+                                                        "move": chosen_move,
+                                                        "clocks": move_clocks,
+                                                        "ply": position_ply + 1,
+                                                    },
+                                                )
+                                                if sent:
+                                                    self._mark_move_sent(game_id)
+                                                    if self.run_stats is not None:
+                                                        self.run_stats.record_move_sent(
+                                                            game_id,
+                                                            position_ply + 1,
+                                                            chosen_move,
+                                                            self.username,
+                                                            submitted_at,
+                                                        )
+                                                    last_sent_ply = position_ply
+
+                                            pending_human_move.schedule(
+                                                board_ply, delayed_human_move
+                                            )
+                                            continue
+                                        legal_moves = sf.legal_moves(
+                                            variant_for_moves, data["fen"], [], False
+                                        )
                                         if legal_moves and should_move:
-                                            self._mark_move_sent(game_id)
-                                            await self._send_json_safe(
+                                            move_delay = self._next_move_delay_secs()
+                                            if move_delay:
+                                                await asyncio.sleep(move_delay)
+                                            chosen_move = random.choice(legal_moves)
+                                            submitted_at = monotonic()
+                                            move_clocks = (
+                                                simulated_human_clocks(
+                                                    data["clocks"],
+                                                    turn_color,
+                                                    submitted_at - board_received_at,
+                                                    board_ply,
+                                                )
+                                                if self.simulated_human
+                                                else data["clocks"]
+                                            )
+                                            # If the simulated player's clock expired,
+                                            # don't manufacture a move with 0 time left.
+                                            # The server clock will flag the player.
+                                            if self.simulated_human and board_ply >= 2:
+                                                mover_index = 0 if turn_color == "w" else 1
+                                                if move_clocks[mover_index] <= 0:
+                                                    continue
+                                            sent = await self._send_json_safe(
                                                 wsr,
                                                 {
                                                     "type": "move",
                                                     "gameId": game_id,
-                                                    "move": random.choice(legal_moves),
-                                                    "clocks": data["clocks"],
+                                                    "move": chosen_move,
+                                                    "clocks": move_clocks,
                                                     "ply": data["ply"] + 1,
                                                 },
                                             )
+                                            if sent:
+                                                self._mark_move_sent(game_id)
+                                                if self.run_stats is not None:
+                                                    self.run_stats.record_move_sent(
+                                                        game_id,
+                                                        data["ply"] + 1,
+                                                        chosen_move,
+                                                        self.username,
+                                                        submitted_at,
+                                                    )
+                                                if self.simulated_human:
+                                                    last_sent_ply = board_ply
                                             await asyncio.sleep(0)
 
                                     elif data["type"] == "setup":
@@ -1217,6 +2794,7 @@ class TestUser:
                                         print("START", game_id)
 
                                     elif data["type"] == "gameEnd":
+                                        await pending_human_move.close()
                                         game_end_ply = data.get("ply")
                                         if not isinstance(game_end_ply, int):
                                             game_end_ply = last_ply
@@ -1231,6 +2809,13 @@ class TestUser:
                                         if not game_completed:
                                             self.games_completed += 1
                                             game_completed = True
+                                            if (
+                                                self.test_user_pgn_exporter is not None
+                                                and data["status"] != 0
+                                            ):
+                                                await self.test_user_pgn_exporter.maybe_export(
+                                                    session, self.username
+                                                )
                                         await self._release_bot_slot_for_game(
                                             game_id, resolved_bot_profile
                                         )
@@ -1238,8 +2823,7 @@ class TestUser:
                                         self.game_bot_profiles.pop(game_id, None)
                                         self.game_challenge_sent_at.pop(game_id, None)
                                         self.round_diag.pop(game_id, None)
-                                        await self._send_json_safe(wsr, {"type": "logout"})
-                                        await self._send_json_safe(wsl, {"type": "logout"})
+                                        await self._leave_finished_game(wsr, wsl)
                                         break
                                 except Exception:
                                     print("FAILED wsr msg", msg)
@@ -1250,13 +2834,45 @@ class TestUser:
                                 aiohttp.WSMsgType.CLOSING,
                                 aiohttp.WSMsgType.CLOSE,
                             ):
-                                reconnect_needed = not game_completed
+                                if not game_completed and self.run_stats is not None:
+                                    self.run_stats.record_unexpected_disconnect(
+                                        msg.type.name,
+                                        time_control=self.time_control_name,
+                                        close_code=wsr.close_code,
+                                    )
+                                reconnect_needed = not game_completed and not (
+                                    self.run_stats is not None and self.run_stats.shutdown_started
+                                )
+                                if (
+                                    reconnect_needed
+                                    and os.getenv("PYCHESS_TEST_WS_DIAGNOSTICS") == "1"
+                                ):
+                                    now = monotonic()
+                                    pong_age = (
+                                        None
+                                        if last_app_pong_at is None
+                                        else round(now - last_app_pong_at, 1)
+                                    )
+                                    print(
+                                        f"TEST_ROUND_WS_CLIENT_CLOSE user={self.username} "
+                                        f"game={game_id} type={msg.type.name} "
+                                        f"code={wsr.close_code} exception={wsr.exception()!r} "
+                                        f"lifetime_secs={now - connected_at:.1f} "
+                                        f"last_rx_age_secs={now - last_received_at:.1f} "
+                                        f"last_app_pong_age_secs={pong_age}"
+                                    )
                                 break
                         await wsr.close()
                 except Exception as exc:
                     if not self._is_transient_connection_error(exc):
                         raise
-                    reconnect_needed = True
+                    reconnect_needed = not (
+                        self.run_stats is not None and self.run_stats.shutdown_started
+                    )
+                    if self.run_stats is not None:
+                        self.run_stats.record_unexpected_disconnect(
+                            type(exc).__name__, time_control=self.time_control_name
+                        )
 
                 if game_completed or not reconnect_needed:
                     break
@@ -1270,6 +2886,9 @@ class TestUser:
             if not self._is_transient_connection_error(exc):
                 raise
         finally:
+            if self.maintain_human_games and game_completed and self.human_pair is not None:
+                assert self.human_role is not None
+                self.human_pair.round_released(self.human_role, game_id)
             if not game_completed:
                 self.playing = False
             if game_completed:
@@ -1330,15 +2949,48 @@ async def spectators(
         await asyncio.gather(*tasks, return_exceptions=True)
 
 
+async def wait_for_client_tasks(tasks: list[asyncio.Task[None]], duration_secs: float) -> bool:
+    """Wait until completion or deadline without cancelling sessions on timeout.
+
+    Returns whether some clients were still running when the deadline expired.
+    An early client failure is propagated instead of hiding it until the deadline.
+    """
+    if duration_secs <= 0:
+        await asyncio.gather(*tasks)
+        return False
+    done, pending = await asyncio.wait(
+        tasks, timeout=duration_secs, return_when=asyncio.FIRST_EXCEPTION
+    )
+    for task in done:
+        if not task.cancelled():
+            error = task.exception()
+            if error is not None:
+                raise error
+    return bool(pending)
+
+
 async def main(args: argparse.Namespace):
+    if args.arena:
+        args.arena = await create_local_arenas(args.arena, args.run_duration_secs)
     spectator_http_semaphore = asyncio.Semaphore(args.max_spectator_http_concurrency)
     run_stats = RunStats()
-    bot_scheduler = BotChallengeScheduler()
+    test_user_pgn_exporter = TestUserPgnExporter(args.pgn_max_games) if args.test_user_pgn else None
+    bot_scheduler = None if args.human_vs_human else BotChallengeScheduler()
     spectator_allocator = SpectatorAllocator(
         featured_games=args.featured_games,
         featured_count=args.spectators_per_game,
         regular_count=args.spectators_regular_per_game,
     )
+    mixed_profiles = (
+        distribute_time_controls(args.users // 2, args.mix_seed) if args.mixed_time_controls else []
+    )
+    human_pairs = (
+        [HumanPair(mixed_profiles[i] if mixed_profiles else None) for i in range(args.users // 2)]
+        if args.human_vs_human
+        else []
+    )
+    arena_assignments = [spec for spec in args.arena for _ in range(spec.players)]
+    random.Random(args.mix_seed).shuffle(arena_assignments)
     users = [
         TestUser(
             spectators_per_game=args.spectators_per_game,
@@ -1346,22 +2998,139 @@ async def main(args: argparse.Namespace):
             challenge_delay_min_secs=args.challenge_delay_min_secs,
             challenge_delay_max_secs=args.challenge_delay_max_secs,
             challenge_retry_secs=args.challenge_retry_secs,
+            game_minutes=(
+                arena_assignments[i].profile.minutes
+                if args.arena
+                else human_pairs[i // 2].time_control.minutes
+                if args.mixed_time_controls
+                else args.game_minutes
+            ),
+            move_delay_secs=args.move_delay_secs,
+            move_delay_min_secs=(
+                arena_assignments[i].profile.min_move_delay_secs
+                if args.arena
+                else human_pairs[i // 2].time_control.min_move_delay_secs
+                if args.mixed_time_controls
+                else args.move_delay_min_secs
+            ),
+            move_delay_max_secs=(
+                arena_assignments[i].profile.max_move_delay_secs
+                if args.arena
+                else human_pairs[i // 2].time_control.max_move_delay_secs
+                if args.mixed_time_controls
+                else args.move_delay_max_secs
+            ),
             spectator_request_gap_secs=args.spectator_request_gap_secs,
             spectator_http_semaphore=spectator_http_semaphore,
             spectator_allocator=spectator_allocator,
             bot_scheduler=bot_scheduler,
             run_stats=run_stats,
+            test_user_pgn_exporter=test_user_pgn_exporter,
+            human_pair=human_pairs[i // 2] if args.human_vs_human else None,
+            human_role=("creator" if i % 2 == 0 else "acceptor") if args.human_vs_human else None,
+            maintain_human_games=args.maintain_human_games,
+            client_heartbeat_secs=args.client_heartbeat_secs,
+            postgame_linger_max_secs=(
+                args.postgame_linger_max_secs if args.maintain_human_games or args.arena else 0.0
+            ),
+            postgame_linger_probability=(
+                args.postgame_linger_probability if args.maintain_human_games or args.arena else 0.0
+            ),
+            arena_spec=arena_assignments[i] if args.arena else None,
         )
         for i in range(args.users)
     ]
 
+    if args.human_vs_human:
+        print(f"Human vs human: {args.users} players, {args.users // 2} paired games")
+    if args.arena:
+        print(f"Arena mode: {args.users} players across {len(args.arena)} real arenas")
+        for spec in args.arena:
+            print(
+                f"  arena={spec.tournament_id} players={spec.players} "
+                f"profile={spec.profile.name} variant={spec.variant}"
+            )
+    if mixed_profiles:
+        print(
+            "mixed_time_controls_planned="
+            f"{dict(sorted(Counter(p.name for p in mixed_profiles).items()))} "
+            f"mix_seed={args.mix_seed}"
+        )
+
     async def start_user(user: TestUser):
         if args.user_start_spread_secs > 0:
             await asyncio.sleep(random.uniform(0, args.user_start_spread_secs))
-        await user.go_to_lobby()
+        if args.arena:
+            await user.go_to_arena()
+        else:
+            await user.go_to_lobby()
 
+    pgn_cookie: str | None = None
+    if args.pgn_cookie_file is not None:
+        pgn_cookie = read_session_cookie(args.pgn_cookie_file)
+    http_task = (
+        asyncio.create_task(
+            run_http_workload(
+                rps=args.http_rps,
+                duration=args.http_duration_secs,
+                concurrency=args.http_concurrency,
+                pgn_cookie=pgn_cookie,
+                pgn_max_games=args.pgn_max_games,
+            )
+        )
+        if args.http_rps > 0
+        else None
+    )
     tasks = [asyncio.create_task(start_user(user)) for user in users]
-    await asyncio.gather(*tasks)
+
+    async def report_activity() -> None:
+        began = monotonic()
+        previous_time = began
+        previous_confirmed = 0
+        while True:
+            await asyncio.sleep(args.report_interval_secs)
+            now = monotonic()
+            started, unfinished, peak, ended = await run_stats.activity_snapshot()
+            moves = run_stats.move_counters(now, args.move_ack_timeout_secs)
+            active_by_tc = await run_stats.active_time_controls()
+            interval = max(0.001, now - previous_time)
+            recent_rate = (moves["moves_confirmed"] - previous_confirmed) / interval
+            previous_time = now
+            previous_confirmed = moves["moves_confirmed"]
+            print(
+                f"game_load_elapsed_secs={now - began:.1f} "
+                f"games_started={started} games_unfinished={unfinished} "
+                f"peak_unfinished={peak} games_ended={ended} "
+                f"active_by_time_control={active_by_tc} "
+                f"moves_sent={moves['moves_sent']} moves_confirmed={moves['moves_confirmed']} "
+                f"moves_pending={moves['moves_pending']} "
+                f"move_timeouts={moves['move_timeouts']} "
+                f"moves_per_sec={recent_rate:.2f}",
+                flush=True,
+            )
+
+    reporter = asyncio.create_task(report_activity()) if args.report_interval_secs > 0 else None
+    try:
+        timed_out = await wait_for_client_tasks(tasks, args.run_duration_secs)
+        if timed_out:
+            print(f"Game load stopped after {args.run_duration_secs:g}s (partial game stats).")
+    finally:
+        # Mark the shutdown *before* cancelling lobby tasks. Their session
+        # cleanup also closes round WebSockets, often with local code 1006.
+        run_stats.begin_shutdown()
+        if reporter is not None:
+            reporter.cancel()
+            await asyncio.gather(reporter, return_exceptions=True)
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+        if http_task is not None:
+            # Continue HTTP load to its intended deadline if games ended early.
+            http_stats = await http_task
+            http_stats.report()
+        if test_user_pgn_exporter is not None:
+            test_user_pgn_exporter.report()
     (
         total_games,
         aborted_games,
@@ -1396,7 +3165,29 @@ async def main(args: argparse.Namespace):
         profile: dict(sorted(result_map.items()))
         for profile, result_map in sorted(by_result_by_bot_profile.items())
     }
+    started_games, unfinished_games, peak_unfinished, _ = await run_stats.activity_snapshot()
+    move_perf = run_stats.move_summary(monotonic(), args.move_ack_timeout_secs)
     print("=== STRESS SUMMARY ===")
+    print(f"games_started={started_games}")
+    print(f"games_unfinished_at_stop={unfinished_games}")
+    print(f"peak_unfinished_games={peak_unfinished}")
+    print(f"active_games_by_time_control_at_stop={await run_stats.active_time_controls()}")
+    if args.arena:
+        print(f"arena_stats={run_stats.arena_summary(args.arena)}")
+    if args.maintain_human_games:
+        planned = Counter(
+            pair.time_control.name if pair.time_control else "custom" for pair in human_pairs
+        )
+        print(f"target_active_games={len(human_pairs)}")
+        print(f"target_active_games_by_time_control={dict(sorted(planned.items()))}")
+        print(f"replacement_games_started={max(0, started_games - len(human_pairs))}")
+        replacements_by_tc = {
+            name: max(0, run_stats.games_started_by_time_control[name] - target)
+            for name, target in planned.items()
+        }
+        print(f"replacement_games_by_time_control={dict(sorted(replacements_by_tc.items()))}")
+    for name, value in move_perf.items():
+        print(f"{name}={value}")
     print(f"games_total={total_games}")
     print(f"games_aborted={aborted_games} ({abort_ratio:.1f}%)")
     print(f"by_status={dict(sorted(by_status.items()))}")

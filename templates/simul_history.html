@@ -1,7 +1,7 @@
 {% extends "template.html" %}
 {% block content %}
 <div id="main-wrap">
-<main class="page-small box box-pad simul-history">
+<main class="page-small box box-pad simul-history" data-infinite-scroll="simul-history">
     <div class="box-top">
         <h1><a href="{{ home }}/@/{{ simul_history_profile }}">{{ simul_history_profile }}</a> {% trans %}hosted simuls{% endtrans %}</h1>
         <strong class="simul-history__count">{{ simul_history_total }}</strong>
@@ -17,9 +17,9 @@
                 <th>{% trans %}Wins{% endtrans %} / {% trans %}Draws{% endtrans %} / {% trans %}Losses{% endtrans %}</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody data-infinite-scroll-content>
         {% for simul in simul_history_entries %}
-            <tr>
+            <tr data-infinite-scroll-key="{{ simul.id }}">
                 <td><div class="icon" data-icon="{{ simul.icon }}"></div></td>
                 <td class="header">
                     <a href="/simul/{{ simul.id }}">
@@ -41,9 +41,9 @@
     {% endif %}
 
     {% if simul_history_prev_href or simul_history_next_href %}
-    <nav class="simul-history__pagination" aria-label="{% trans %}Pagination{% endtrans %}">
+    <nav class="simul-history__pagination" aria-label="{% trans %}Pagination{% endtrans %}" data-infinite-scroll-pager>
         {% if simul_history_prev_href %}<a href="{{ simul_history_prev_href }}">‹ {% trans %}Previous{% endtrans %}</a>{% endif %}
-        {% if simul_history_next_href %}<a href="{{ simul_history_next_href }}">{% trans %}Next{% endtrans %} ›</a>{% endif %}
+        {% if simul_history_next_href %}<a rel="next" href="{{ simul_history_next_href }}">{% trans %}Next{% endtrans %} ›</a>{% endif %}
     </nav>
     {% endif %}
 </main>

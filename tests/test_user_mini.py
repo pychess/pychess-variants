@@ -38,6 +38,26 @@ class UserMiniJoinedAtTestCase(AioHTTPTestCase):
         session_data = {"session": {"user_name": username}, "created": int(time.time())}
         self.client.session.cookie_jar.update_cookies({"AIOHTTP_SESSION": json.dumps(session_data)})
 
+    async def test_missing_mini_returns_small_json_404(self):
+        response = await self.client.get("/@/nonexistent-user/mini")
+        self.assertEqual(response.status, 404)
+        self.assertEqual(await response.json(), {"error": "Not found"})
+        self.assertLess(len(await response.read()), 100)
+
+    async def test_missing_page_returns_standalone_small_html_404(self):
+        response = await self.client.get("/some-nonexistent-page")
+        self.assertEqual(response.status, 404)
+        self.assertEqual(response.content_type, "text/html")
+        html = await response.text()
+        self.assertIn("Return to PyChess", html)
+        self.assertNotIn("Eight Queens", html)
+        self.assertLess(len(html), 1024)
+
+    async def test_missing_api_route_returns_json_404(self):
+        response = await self.client.get("/api/nonexistent-route")
+        self.assertEqual(response.status, 404)
+        self.assertEqual(await response.json(), {"error": "Not found"})
+
     async def test_user_mini_omits_unknown_joined_at(self):
         response = await self.client.get("/@/legacy-user/mini")
         self.assertEqual(response.status, 200)

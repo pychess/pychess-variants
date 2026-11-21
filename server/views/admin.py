@@ -10,6 +10,10 @@ from admin import is_protected_username
 from admin_api import MOD_ACTION_LABELS, MOD_LOG_COLLECTION, TEAM_LOG_ACTIONS, USER_LOG_ACTIONS
 from admin_ops_api import OPERATION_LOG_ACTIONS, fishnet_key_id
 from aiohttp import web
+from bson import ObjectId
+from bson.errors import InvalidId
+from cheat_report import valid_overlay_svg
+from event_loop_lag import loop_lag_monitor_key
 from pychess_global_app_state_utils import get_app_state
 from report_api import TIMEOUT_REASONS
 from security_evasion import BAN_SIGNAL_COLLECTION, signal_ids_from_user_doc
@@ -241,6 +245,44 @@ async def admin_fair_play(request: web.Request) -> ViewContext:
     return context
 
 
+async def admin_overlay_download(request: web.Request) -> web.Response:
+    # A direct download URL must be protected even when linked only from an admin page.
+    user, _ = await get_user_context(request)
+    if not _is_admin_username(user.username):
+        raise web.HTTPForbidden()
+
+    try:
+        report_id = ObjectId(request.match_info["reportId"])
+    except (InvalidId, TypeError) as exc:
+        raise web.HTTPNotFound() from exc
+    app_state = get_app_state(request.app)
+    report = await app_state.db.cheat_report.find_one(
+        {"_id": report_id, "kind": "external_overlay"},
+        projection={"overlaySvg": 1, "gameId": 1},
+    )
+    svg = valid_overlay_svg(report.get("overlaySvg")) if report else None
+    if svg is None:
+        raise web.HTTPNotFound()
+
+    game_id = report.get("gameId", "unknown")
+    safe_game_id = (
+        game_id
+        if isinstance(game_id, str) and re.fullmatch(r"[A-Za-z0-9]{8}", game_id)
+        else "unknown"
+    )
+    filename = f"overlay-{safe_game_id}.svg"
+    return web.Response(
+        body=svg.encode("utf-8"),
+        content_type="application/octet-stream",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "X-Content-Type-Options": "nosniff",
+            "Cache-Control": "no-store",
+            "Content-Security-Policy": "sandbox",
+        },
+    )
+
+
 @aiohttp_jinja2.template("admin.html")
 async def admin(request: web.Request) -> ViewContext:
     return await _admin_context(request, "overview", "Administration")
@@ -329,7 +371,16 @@ async def admin_operations(request: web.Request) -> ViewContext:
     context["admin_action_notice"] = (
         MOD_ACTION_LABELS.get(done, "") if done in OPERATION_LOG_ACTIONS else ""
     )
+    logging_doc = await app_state.db.config.find_one({"name": "logging.config"})
+    value = logging_doc.get("value", {}) if logging_doc else {}
+    handlers = value.get("handlers", {}) if isinstance(value, dict) else {}
+    default_handler = handlers.get("default", {}) if isinstance(handlers, dict) else {}
+    level = default_handler.get("level") if isinstance(default_handler, dict) else None
+    context["admin_operations_logging_level"] = (
+        level if level in {"DEBUG", "INFO", "WARNING", "ERROR"} else "UNKNOWN"
+    )
     context["admin_operations_anons_disabled"] = app_state.disable_new_anons
+    context["admin_operations_event_loop_lag"] = request.app[loop_lag_monitor_key].snapshot()
     context["admin_operations_streams"] = sorted(
         app_state.youtube.live_streams,
         key=lambda stream: str(stream.get("username") or "").casefold(),

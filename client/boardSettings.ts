@@ -9,6 +9,7 @@ import {
     ensureBoardStyleOverride,
     ensureCataloguedBoardCSS,
     ensurePieceCSS,
+    notifyChessgroundResize,
     pieceStyleClass,
     removeCataloguedBoardCSS,
 } from './document';
@@ -108,9 +109,17 @@ function setBoardStyle(target: HTMLElement, assetURL: string, css: string): void
     setSquareColors(target, css);
 }
 
-function setCataloguedBoardStyle(target: HTMLElement, variant: Variant): void {
+function setCataloguedBoardStyle(target: HTMLElement, variant: Variant, assetURL: string, css?: string): void {
     ensureCataloguedBoardCSS(variant.name, variant.boardRevision);
-    target.style.removeProperty('--board-image');
+    const builtin = css !== undefined;
+    const changed = target.classList.contains('board-style-builtin') !== builtin;
+    target.classList.toggle('board-style-builtin', builtin);
+    if (css !== undefined) setBoardStyle(target, assetURL, css);
+    else {
+        target.style.removeProperty('--board-image');
+        setSquareColors(target, '');
+    }
+    if (changed) notifyChessgroundResize();
 }
 
 function setPieceStyleClass(target: HTMLElement, family: string, css: string, variant: Variant): void {
@@ -246,7 +255,10 @@ class BoardSettings {
         const family = variant.boardFamily;
         const css = this.boardCSS(family, variant);
         if (variant.hasBoard) {
-            boardStyleTargets(variant).forEach(target => setCataloguedBoardStyle(target, variant));
+            const custom = this.getSettings('BoardStyle', family, '', variant).value === 0;
+            boardStyleTargets(variant).forEach(target =>
+                setCataloguedBoardStyle(target, variant, this.assetURL, custom ? undefined : css),
+            );
         } else {
             removeCataloguedBoardCSS(variant.name);
             boardStyleTargets(variant).forEach(target => setBoardStyle(target, this.assetURL, css));
@@ -260,8 +272,10 @@ class BoardSettings {
         if (el instanceof HTMLElement) {
             const target = (el.closest('.' + family) as HTMLElement | null) ?? el;
             target.dataset.boardVariant = variant.name;
-            if (variant.hasBoard) setCataloguedBoardStyle(target, variant);
-            else {
+            if (variant.hasBoard) {
+                const custom = this.getSettings('BoardStyle', family, '', variant).value === 0;
+                setCataloguedBoardStyle(target, variant, this.assetURL, custom ? undefined : css);
+            } else {
                 removeCataloguedBoardCSS(variant.name);
                 setBoardStyle(target, this.assetURL, css);
             }
@@ -484,11 +498,15 @@ class BoardStyleSettings extends NumberSettings {
     }
 
     view(): VNode {
+        const vboard = this.value;
+        const boards: VNode[] = [];
         if (this.variant.hasBoard) {
             ensureCataloguedBoardCSS(this.variant.name, this.variant.boardRevision);
-            return h('settings-board', [
+            boards.push(
                 h('input#board0', {
-                    props: { type: 'radio', name: 'board', value: 0, checked: true, disabled: true },
+                    on: { change: () => (this.value = 0) },
+                    props: { type: 'radio', name: 'board', value: 0, checked: vboard === 0 },
+                    attrs: { 'aria-label': _('custom board') },
                 }),
                 h(
                     'label.board.catalogued-custom-board-preview',
@@ -500,14 +518,13 @@ class BoardStyleSettings extends NumberSettings {
                     },
                     '',
                 ),
-            ]);
+            );
         }
 
-        const vboard = this.value;
-        const boards: VNode[] = [];
-
         const boardCSS = BOARD_FAMILIES[this.boardFamily].boardCSS;
-        for (let i = 0; i < boardCSS.length; i++) {
+        // An uploaded board replaces the family's first theme; other themes
+        // keep their existing indices and remain available in the chooser.
+        for (let i = this.variant.hasBoard ? 1 : 0; i < boardCSS.length; i++) {
             boards.push(
                 h('input#board' + i, {
                     on: { change: evt => (this.value = Number((evt.target as HTMLInputElement).value)) },

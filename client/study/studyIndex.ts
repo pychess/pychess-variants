@@ -3,6 +3,7 @@ import ffishModule from 'ffish-es6';
 
 import { patch } from '../document';
 import { studyChapterCreateForm, studyEnabledModesFromJson } from './studyChapterForm';
+import { studyFlairPicker } from './studyFlair';
 import {
     parseStudyPgnDocumentForImportWithEngines,
     postNewStudyPgnImport,
@@ -14,7 +15,7 @@ import {
 } from './studyPgnImport';
 import { pgnParser as studyPgnParser } from '../pgnParser';
 
-const STUDY_SETTING_FIELDS = ['name', 'visibility', 'computer', 'explorer', 'cloneable', 'shareable'] as const;
+const STUDY_SETTING_FIELDS = ['name', 'flair', 'visibility', 'computer', 'explorer', 'cloneable', 'shareable'] as const;
 const studyPgnModules = new Map<boolean, Promise<StudyPgnEngine>>();
 
 type StudyIndexPgnImport = (
@@ -41,12 +42,14 @@ function studySettings(form: HTMLFormElement): StudyPgnNewStudySettings {
     };
     const nameInput = form.querySelector<HTMLInputElement>('input[name="name"]');
     const name = value('name');
+    const flair = value('flair');
     return {
         // Leave the generated default empty for PGN imports so an exported
         // StudyName can restore the original study title. An explicitly edited
         // name always wins, and the server supplies the normal default when the
         // PGN has no StudyName metadata.
         name: nameInput && name === nameInput.defaultValue ? '' : name,
+        ...(flair ? { flair } : {}),
         visibility: value('visibility'),
         computer: value('computer'),
         explorer: value('explorer'),
@@ -103,6 +106,9 @@ export function initStudyIndex(options: StudyIndexOptions = {}): void {
     const settingsForm = document.querySelector<HTMLFormElement>('#study-create-form');
     const enabledModes = studyEnabledModesFromJson(document.body.getAttribute('data-study-enabled-modes'));
     if (!dialog || !chapterDialog || !chapterFormMount || !openButton || !settingsForm) return;
+
+    const flairMount = settingsForm.querySelector('#study-flair-mount');
+    if (flairMount) patch(flairMount, studyFlairPicker());
 
     const pgnImport = options.pgnImport ?? importNewStudyPgn;
     const navigate = options.navigate ?? ((url: string) => window.location.assign(url));

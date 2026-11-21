@@ -376,12 +376,12 @@ async def challenge_seek_accept(request: web.Request) -> web.StreamResponse:
 
     cleanup_expired_direct_challenges(app_state)
 
+    user = await app_state.users.get(session_user)
     seek_id = request.match_info.get("seekId")
-    if seek_id is None or seek_id not in app_state.seeks:
+    seek = None if seek_id is None else app_state.seeks.get(seek_id)
+    if seek is None:
         return json_response({"type": "error", "message": "Challenge not found"}, status=404)
 
-    user = await app_state.users.get(session_user)
-    seek = app_state.seeks[seek_id]
     if (
         not seek.is_direct_challenge
         or seek.target != user.username
@@ -393,11 +393,12 @@ async def challenge_seek_accept(request: web.Request) -> web.StreamResponse:
     if result["type"] == "error":
         return json_response(result, status=403)
     game_ids: dict[str, str] | None = None
-    if result["type"] == "new_game" and len(seek.creator.lobby_sockets) == 0:
+    if result["type"] == "new_game":
         game_ids = {seek.creator.username: result["gameId"]}
 
-    await broadcast_challenge_state(app_state, challenge_participants(seek), game_ids=game_ids)
-    await app_state.lobby.lobby_broadcast_seeks()
+    participants = challenge_participants(seek)
+    await broadcast_challenge_state(app_state, participants, game_ids=game_ids)
+    await app_state.lobby.lobby_broadcast_seeks(participants)
     return json_response(result)
 
 
@@ -410,12 +411,12 @@ async def challenge_seek_decline(request: web.Request) -> web.StreamResponse:
 
     cleanup_expired_direct_challenges(app_state)
 
+    user = await app_state.users.get(session_user)
     seek_id = request.match_info.get("seekId")
-    if seek_id is None or seek_id not in app_state.seeks:
+    seek = None if seek_id is None else app_state.seeks.get(seek_id)
+    if seek is None:
         return json_response({"type": "error", "message": "Challenge not found"}, status=404)
 
-    user = await app_state.users.get(session_user)
-    seek = app_state.seeks[seek_id]
     if (
         not seek.is_direct_challenge
         or seek.target != user.username
@@ -432,7 +433,7 @@ async def challenge_seek_decline(request: web.Request) -> web.StreamResponse:
     seek.set_challenge_decline_reason(decline_reason)
     set_direct_challenge_status(seek, DIRECT_CHALLENGE_DECLINED)
     await broadcast_challenge_state(app_state, usernames)
-    await app_state.lobby.lobby_broadcast_seeks()
+    await app_state.lobby.lobby_broadcast_seeks(usernames)
     return json_response({"ok": True})
 
 
@@ -445,12 +446,12 @@ async def challenge_seek_cancel(request: web.Request) -> web.StreamResponse:
 
     cleanup_expired_direct_challenges(app_state)
 
+    user = await app_state.users.get(session_user)
     seek_id = request.match_info.get("seekId")
-    if seek_id is None or seek_id not in app_state.seeks:
+    seek = None if seek_id is None else app_state.seeks.get(seek_id)
+    if seek is None:
         return json_response({"type": "error", "message": "Challenge not found"}, status=404)
 
-    user = await app_state.users.get(session_user)
-    seek = app_state.seeks[seek_id]
     if (
         not seek.is_direct_challenge
         or seek.creator.username != user.username
@@ -461,5 +462,5 @@ async def challenge_seek_cancel(request: web.Request) -> web.StreamResponse:
     usernames = challenge_participants(seek)
     set_direct_challenge_status(seek, DIRECT_CHALLENGE_CANCELED)
     await broadcast_challenge_state(app_state, usernames)
-    await app_state.lobby.lobby_broadcast_seeks()
+    await app_state.lobby.lobby_broadcast_seeks(usernames)
     return json_response({"ok": True})

@@ -110,6 +110,9 @@ label.piece.piece9.standard {
     background-image: url('images/pieces/firi/wpb.svg');
 }
 label.piece.piece10.standard {
+    background-image: url('images/pieces/forest/wN.svg');
+}
+label.piece.piece11.standard {
     background-image: url('images/pieces/disguised/w.svg');
 }
 label.piece.piece0.capa {
@@ -151,6 +154,19 @@ label.piece.piece2.centaur {
     background-image: url('images/pieces/disguised/w.svg');
 }
 
+label.piece.piece0.aiwok {
+    background-image: url('images/pieces/alfaerie/wchancellorferz.svg');
+}
+label.piece.piece1.aiwok {
+    background-image: url('images/pieces/disguised/w.svg');
+}
+
+label.piece.piece0.foxandhounds {
+    background-image: url('images/pieces/fox-and-hounds/wF.svg');
+}
+label.piece.piece1.foxandhounds {
+    background-image: url('images/pieces/disguised/w.svg');
+}
 label.piece.piece0.amazons {
     background-image: url('images/pieces/merida/wQ.svg');
 }
@@ -158,6 +174,16 @@ label.piece.piece1.amazons {
     background-image: url('images/pieces/amazons/arrow/wQ.svg');
 }
 label.piece.piece2.amazons {
+    background-image: url('images/pieces/disguised/w.svg');
+}
+
+label.piece.piece0.snailtrail {
+    background-image: url('images/pieces/snailtrail/wP.svg');
+}
+label.piece.piece0.isolation {
+    background-image: url('images/pieces/merida/wK.svg');
+}
+label.piece.piece1.snailtrail, label.piece.piece1.isolation {
     background-image: url('images/pieces/disguised/w.svg');
 }
 
@@ -263,6 +289,24 @@ label.piece.piece0.shogi {
     background-image: url('images/pieces/shogi/ctk/0KA.svg');
     filter: drop-shadow(2px 2px 2px #000);
 }
+label.piece.piece0.decimalshogi {
+    background-image: url('images/pieces/shogi/ctk/0KA.svg');
+    filter: drop-shadow(2px 2px 2px #000);
+}
+label.piece.piece0.okisakishogi {
+    background-image: url('images/pieces/shogi/ctk/0KA.svg');
+    filter: drop-shadow(2px 2px 2px #000);
+}
+label.piece.piece0.microshogi {
+    background-image: url('images/pieces/shogi/ctk/0KA.svg');
+    filter: drop-shadow(2px 2px 2px #000);
+}
+label.piece.piece1.microshogi {
+    background-image: url('images/pieces/firi/bb.svg');
+}
+label.piece.piece2.microshogi {
+    background-image: url('images/pieces/disguised/shogi-ally.svg');
+}
 label.piece.piece1.shogi {
     background-image: url('images/pieces/shogi/2kanji/0KA.svg');
     filter: drop-shadow(0.68px 0.68px 0.68px #000);
@@ -306,10 +350,14 @@ label.piece.piece13.shogi {
 label.piece.piece14.shogi {
     background-image: url('images/pieces/shogi/cz/0KA.svg');
 }
-label.piece.piece15.shogi {
+label.piece.piece15.shogi,
+label.piece.piece1.decimalshogi,
+label.piece.piece1.okisakishogi {
     background-image: url('images/pieces/firi/bb.svg');
 }
-label.piece.piece16.shogi {
+label.piece.piece16.shogi,
+label.piece.piece2.decimalshogi,
+label.piece.piece2.okisakishogi {
     background-image: url('images/pieces/disguised/shogi-ally.svg');
 }
 
@@ -436,6 +484,9 @@ label.piece.piece17.xiangqi {
     background-image: url('images/pieces/xiangqi/euro/red_king.svg');
 }
 label.piece.piece18.xiangqi {
+    background-image: url('images/pieces/xiangqi/forest/red_king.svg');
+}
+label.piece.piece19.xiangqi {
     background-image: url('images/pieces/disguised/3d-red.svg');
 }
 
@@ -706,4 +757,8 @@ label.piece.piece0.battleofideologies {
 }
 label.piece.piece1.battleofideologies {
     background-image: url('images/pieces/disguised/b.svg');
+}
+
+label.piece.piece0.wolf {
+    background-image: url('images/pieces/alfaerie/wchancellor.svg');
 }

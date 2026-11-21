@@ -18,6 +18,11 @@ CLIENT_IP_MODE = os.getenv("CLIENT_IP_MODE", "heroku" if os.getenv("DYNO") else 
 if CLIENT_IP_MODE not in {"direct", "heroku"}:
     raise ValueError("CLIENT_IP_MODE must be 'direct' or 'heroku'")
 
+# Per-process admission budgets for anonymous public browsing, independent of
+# addresses, user agents, and query strings. Live game/stream routes are exempt.
+ANON_HTML_REQUESTS_PER_MINUTE = max(1, int(os.getenv("ANON_HTML_REQUESTS_PER_MINUTE", "120")))
+ANON_HTML_MAX_INFLIGHT = max(1, int(os.getenv("ANON_HTML_MAX_INFLIGHT", "12")))
+
 # Simuls are available on both production and DEV deployments.
 SIMULING = True
 

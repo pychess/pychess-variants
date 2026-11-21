@@ -11,9 +11,10 @@ import { GatingInput } from '../client/input/gating';
 import { PromotionInput } from '../client/input/promotion';
 import { DuckInput } from '../client/input/duck';
 import { ArrowingInput } from '../client/input/arrowing';
-import { VARIANTS } from '../client/variants';
-import { moveDests, UCIMove } from '../client/chess';
-import { premoveForVariant } from '../client/cataloguedPremove';
+import { registerCataloguedVariant, unregisterCataloguedVariant, VARIANTS } from '../client/variants';
+import { moveDests, promotedRole, UCIMove } from '../client/chess';
+import { premoveForVariant } from '../client/premove';
+import { variantsIni } from '../client/variantsIni';
 import { predrop } from 'chessgroundx/predrop';
 
 let ffish: FairyStockfish;
@@ -29,6 +30,7 @@ beforeAll(async () => {
         printErr: () => {},
     });
     ffish.loadVariantConfig('[limitedpromo:chess]\npromotionLimit = q:1\n');
+    ffish.loadVariantConfig(variantsIni);
 });
 
 beforeEach(() => {
@@ -42,6 +44,8 @@ afterEach(async () => {
         ctrl.chessground.destroy();
         ctrl.ffishBoard.delete();
     }
+    unregisterCataloguedVariant('wolf-promotion-test');
+    unregisterCataloguedVariant('asymmetric-promotion-test');
 });
 
 function controller(fen = promotionFen, variant = 'chess', engineVariant = variant, color: cg.Color = 'white') {
@@ -301,30 +305,66 @@ describe('promotion premoves', () => {
         expect(sent).toEqual([{ move: 'a7a8n', premove: true }]);
     });
 
-    test('supports choosing optional shogi promotion before the opponent moves', async () => {
-        const { ctrl, el, sent } = controller('k8/9/P8/9/9/9/9/9/8K[-] b - - 0 1', 'shogi');
-        await queue(ctrl);
-        expect(el.querySelectorAll('#extension_choice square')).toHaveLength(2);
-        choose(el, 'pp-piece');
-        await reply(ctrl, 'a9b9');
-        expect(sent).toEqual([{ move: 'a7a8+', premove: true }]);
-    });
+    test.each(['shogi', 'yokai'])(
+        'supports choosing optional %s promotion before the opponent moves',
+        async variant => {
+            const { ctrl, el, sent } = controller('k8/9/P8/9/9/9/9/9/8K[-] b - - 0 1', variant);
+            await queue(ctrl);
+            expect(el.querySelectorAll('#extension_choice square')).toHaveLength(2);
+            choose(el, 'pp-piece');
+            await reply(ctrl, 'a9b9');
+            expect(sent).toEqual([{ move: 'a7a8+', premove: true }]);
+        },
+    );
 
-    test('retains a deliberately declined optional shogi promotion', async () => {
-        const { ctrl, el, sent } = controller('k8/9/P8/9/9/9/9/9/8K[-] b - - 0 1', 'shogi');
+    test.each(['shogi', 'yokai'])('retains a deliberately declined optional %s promotion', async variant => {
+        const { ctrl, el, sent } = controller('k8/9/P8/9/9/9/9/9/8K[-] b - - 0 1', variant);
         await queue(ctrl);
         choose(el, 'p-piece');
         await reply(ctrl, 'a9b9');
         expect(sent).toEqual([{ move: 'a7a8', premove: true }]);
     });
 
-    test('automatically prepares mandatory shogi promotion', async () => {
-        const { ctrl, el, sent } = controller('k8/P8/9/9/9/9/9/9/8K[-] b - - 0 1', 'shogi');
+    test.each(['shogi', 'yokai'])('automatically prepares mandatory %s promotion', async variant => {
+        const { ctrl, el, sent } = controller('k8/P8/9/9/9/9/9/9/8K[-] b - - 0 1', variant);
         await queue(ctrl, 'a8', 'a9');
         expect(el.querySelector('#extension_choice')).toBeNull();
         expect(sent).toEqual([]);
         await reply(ctrl, 'a9b9');
         expect(sent).toEqual([{ move: 'a8a9+', premove: true }]);
+    });
+
+    test('prepares promotion of a Yokai Kitsune before the opponent moves', async () => {
+        const { ctrl, el, sent } = controller('k8/9/9/4F4/9/9/9/9/8K[-] b - - 0 1', 'yokai');
+        await queue(ctrl, 'e6', 'e7');
+        expect(el.querySelectorAll('#extension_choice square')).toHaveLength(2);
+        choose(el, 'pf-piece');
+        await reply(ctrl, 'a9a8');
+        expect(sent).toEqual([{ move: 'e6e7+', premove: true }]);
+    });
+
+    test('an already promoted Yokai Tengu can premove backwards as a full knight', async () => {
+        const { ctrl, sent } = controller('k8/9/9/9/4+G4/9/9/9/8K[-] b - - 0 1', 'yokai');
+        await queue(ctrl, 'e5', 'c4');
+        await reply(ctrl, 'a9b9');
+        expect(sent).toEqual([{ move: 'e5c4', premove: true }]);
+    });
+
+    test('rejects a Yokai premove when the opponent drops a blocker', async () => {
+        const { ctrl, el, sent } = controller('1k7/9/9/9/4F4/9/9/9/8K[n] b - - 0 1', 'yokai');
+        await queue(ctrl, 'e5', 'e7');
+        choose(el, 'f-piece');
+        await reply(ctrl, 'N@e6');
+        expect(sent).toEqual([]);
+        expect(ctrl.premove).toBeUndefined();
+        expect(ctrl.chessground.state.boardState.pieces.get('e5')?.role).toBe('f-piece');
+    });
+
+    test('a Yokai capture premove can target a piece the opponent has yet to drop', async () => {
+        const { ctrl, sent } = controller('1k7/9/9/9/4F4/9/9/9/8K[n] b - - 0 1', 'yokai');
+        await queue(ctrl, 'e5', 'f6');
+        await reply(ctrl, 'N@f6');
+        expect(sent).toEqual([{ move: 'e5f6', premove: true }]);
     });
 
     test('canceling a queued choice ignores a click from the removed picker', async () => {
@@ -348,5 +388,212 @@ describe('promotion premoves', () => {
         expect(ctrl.chessground.state.drawable.autoShapes).toHaveLength(2);
         ctrl.promotion.dismiss();
         expect(ctrl.chessground.state.drawable.autoShapes).toEqual([drawing]);
+    });
+});
+
+describe.each(['sortofalmost', 'chigorin'])('%s asymmetric promotion', variant => {
+    function targets(color: cg.Color) {
+        if (color === 'white') return variant === 'sortofalmost' ? ['c', 'r', 'b', 'n'] : ['c', 'r', 'n'];
+        return variant === 'sortofalmost' ? ['q', 'r', 'b', 'n'] : ['q', 'r', 'b'];
+    }
+
+    beforeEach(() => {
+        const board = new ffish.Board(variant);
+        const startFen = board.fen();
+        board.delete();
+        registerCataloguedVariant({
+            name: 'asymmetric-promotion-test',
+            source: 'fairy-stockfish-builtin',
+            fsfBuiltinVariant: variant,
+            baseVariant: variant === 'sortofalmost' ? 'chess' : '',
+            clientVariant: 'chess',
+            ini: '',
+            startFen,
+            width: 8,
+            height: 8,
+            pieces: ['p', 'n', 'b', 'r', 'q', 'c', 'k'],
+            pieceFamilyOverride: 'capa',
+            promotionType: 'regular',
+            promotionRoles: ['p'],
+            promotionOrder: ['q', 'c', 'r', 'b', 'n'],
+            promotionOrderByColor: {
+                white: targets('white') as cg.Letter[],
+                black: targets('black') as cg.Letter[],
+            },
+        });
+    });
+
+    function position(color: cg.Color, premove = false) {
+        const turn = premove ? opposite(color) : color;
+        const placement = color === 'white' ? '7k/P7/8/8/8/8/8/7K' : '7k/8/8/8/8/8/p7/7K';
+        return placement + ` ${turn === 'white' ? 'w' : 'b'} - - 0 1`;
+    }
+
+    async function startPromotion(ctrl: GameController, color: cg.Color) {
+        ctrl.turnColor = color;
+        ctrl.chessground.set({ turnColor: color });
+        ctrl.setDests();
+        ctrl.chessground.selectSquare(color === 'white' ? 'a7' : 'a2');
+        ctrl.chessground.selectSquare(color === 'white' ? 'a8' : 'a1');
+        await flushCallbacks();
+    }
+
+    test.each(['white', 'black'] as const)(
+        '%s picker displays only its legal targets, in preference order',
+        async color => {
+            const { ctrl, el, sent } = controller(position(color), 'asymmetric-promotion-test', variant, color);
+            await startPromotion(ctrl, color);
+            const roles = [...el.querySelectorAll('#extension_choice piece')].map(piece =>
+                [...piece.classList].find(c => c.endsWith('-piece')),
+            );
+            expect(roles).toEqual(targets(color).map(target => target + '-piece'));
+            choose(el, color === 'white' ? 'c-piece' : 'q-piece');
+            expect(sent).toEqual([{ move: color === 'white' ? 'a7a8c' : 'a2a1q', premove: false }]);
+            expect(ctrl.ffishBoard.push(sent[0].move)).toBe(true);
+        },
+    );
+
+    test.each(['white', 'black'] as const)('%s can premove an underpromotion', async color => {
+        const { ctrl, el, sent } = controller(position(color, true), 'asymmetric-promotion-test', variant, color);
+        await queue(ctrl, color === 'white' ? 'a7' : 'a2', color === 'white' ? 'a8' : 'a1');
+        choose(el, 'r-piece');
+        await reply(ctrl, color === 'white' ? 'h8g8' : 'h1g1');
+        expect(sent).toEqual([{ move: color === 'white' ? 'a7a8r' : 'a2a1r', premove: true }]);
+    });
+
+    test.each(['white', 'black'] as const)('%s auto-promotes to its own top choice', async color => {
+        const { ctrl, el, sent } = controller(position(color), 'asymmetric-promotion-test', variant, color);
+        ctrl.autoPromote = true;
+        await startPromotion(ctrl, color);
+        expect(sent).toEqual([{ move: color === 'white' ? 'a7a8c' : 'a2a1q', premove: false }]);
+        expect(el.querySelector('#extension_choice')).toBeNull();
+    });
+
+    test.each(['white', 'black'] as const)('%s prepares auto-promotion before the opponent moves', async color => {
+        const { ctrl, el, sent } = controller(position(color, true), 'asymmetric-promotion-test', variant, color);
+        ctrl.autoPromote = true;
+        await queue(ctrl, color === 'white' ? 'a7' : 'a2', color === 'white' ? 'a8' : 'a1');
+        expect(sent).toEqual([]);
+        expect(el.querySelector('#extension_choice')).toBeNull();
+        await reply(ctrl, color === 'white' ? 'h8g8' : 'h1g1');
+        expect(sent).toEqual([{ move: color === 'white' ? 'a7a8c' : 'a2a1q', premove: true }]);
+    });
+
+    test.each(['white', 'black'] as const)('%s can hold Ctrl to override auto-promotion', async color => {
+        const { ctrl, el, sent } = controller(position(color), 'asymmetric-promotion-test', variant, color);
+        ctrl.autoPromote = true;
+        ctrl.turnColor = color;
+        ctrl.chessground.set({ turnColor: color });
+        ctrl.setDests();
+        ctrl.chessground.state.stats.ctrlKey = true;
+        ctrl.chessground.selectSquare(color === 'white' ? 'a7' : 'a2');
+        ctrl.chessground.selectSquare(color === 'white' ? 'a8' : 'a1');
+        await flushCallbacks();
+        expect(sent).toEqual([]);
+        choose(el, 'r-piece');
+        expect(sent).toEqual([{ move: color === 'white' ? 'a7a8r' : 'a2a1r', premove: false }]);
+    });
+
+    test.each(['white', 'black'] as const)('%s editor default promotes to a piece available to that side', color => {
+        const registered = VARIANTS['asymmetric-promotion-test'];
+        expect(promotedRole(registered, { role: 'p-piece', color })).toBe(color === 'white' ? 'c-piece' : 'q-piece');
+        expect(registered.pieceFamily).toBe('capa');
+    });
+});
+
+describe('Wolf mixed promotion', () => {
+    beforeEach(() => {
+        const board = new ffish.Board('wolf');
+        const startFen = board.fen();
+        board.delete();
+        registerCataloguedVariant({
+            name: 'wolf-promotion-test',
+            displayName: 'Wolf promotion test',
+            ini: '',
+            clientVariant: 'chess',
+            startFen,
+            width: 8,
+            height: 10,
+            pieces: ['k', 'q', 'w', 'f', 'r', 'b', 'n', 'p', 's', '+p'],
+            kingRoles: ['k'],
+            promotionType: 'regular',
+            promotionRoles: ['p', 's'],
+            promotionOrder: ['q', 'w', 'f', 'r', 'b', '+'],
+        });
+    });
+
+    function position(color: cg.Color, sergeant: boolean, opponentTurn = false) {
+        const letter = sergeant ? 's' : 'p';
+        const turn = opponentTurn ? opposite(color) : color;
+        const placement =
+            color === 'white' ? `7k/${letter.toUpperCase()}7/8/8/8/8/8/8/8/7K` : `7k/8/8/8/8/8/8/8/${letter}7/7K`;
+        return placement + ` ${turn === 'white' ? 'w' : 'b'} - - 0 1`;
+    }
+
+    async function startPromotion(ctrl: GameController, color: cg.Color) {
+        ctrl.turnColor = color;
+        ctrl.chessground.set({ turnColor: color });
+        ctrl.setDests();
+        ctrl.chessground.selectSquare(color === 'white' ? 'a9' : 'a2');
+        ctrl.chessground.selectSquare(color === 'white' ? 'a:' : 'a1');
+        await flushCallbacks();
+    }
+
+    test.each(['white', 'black'] as const)(
+        '%s sees six distinct pawn choices, including queen and elephant',
+        async color => {
+            const { ctrl, el } = controller(position(color, false), 'wolf-promotion-test', 'wolf', color);
+            await startPromotion(ctrl, color);
+            const roles = [...el.querySelectorAll('#extension_choice piece')].map(piece =>
+                [...piece.classList].find(c => c.endsWith('-piece')),
+            );
+            expect(new Set(roles)).toEqual(
+                new Set(['q-piece', 'w-piece', 'f-piece', 'r-piece', 'b-piece', 'pp-piece']),
+            );
+        },
+    );
+
+    test.each(['white', 'black'] as const)('%s sergeants have five ordinary choices and no elephant', async color => {
+        const { ctrl, el } = controller(position(color, true), 'wolf-promotion-test', 'wolf', color);
+        await startPromotion(ctrl, color);
+        expect(el.querySelectorAll('#extension_choice piece')).toHaveLength(5);
+        expect(el.querySelector('#extension_choice piece.pp-piece')).toBeNull();
+        expect(el.querySelector('#extension_choice piece.q-piece')).not.toBeNull();
+    });
+
+    test.each([
+        ['white', 'pp-piece', '+'],
+        ['white', 'q-piece', 'q'],
+        ['black', 'pp-piece', '+'],
+        ['black', 'q-piece', 'q'],
+    ] as const)('%s choosing %s sends %s and restores exactly after undo', async (color, role, suffix) => {
+        const { ctrl, el, sent } = controller(position(color, false), 'wolf-promotion-test', 'wolf', color);
+        const original = ctrl.ffishBoard.fen();
+        await startPromotion(ctrl, color);
+        choose(el, role);
+        const move = (color === 'white' ? 'a9a10' : 'a2a1') + suffix;
+        expect(sent).toEqual([{ move, premove: false }]);
+        expect(ctrl.ffishBoard.push(move)).toBe(true);
+        ctrl.chessground.set({ fen: ctrl.ffishBoard.fen() });
+        expect(ctrl.chessground.state.boardState.pieces.get(color === 'white' ? 'a:' : 'a1')?.role).toBe(role);
+        ctrl.ffishBoard.pop();
+        expect(ctrl.ffishBoard.fen()).toBe(original);
+    });
+
+    test.each(['white', 'black'] as const)('%s keeps auto-queen separate from the elephant upgrade', async color => {
+        const { ctrl, el, sent } = controller(position(color, false), 'wolf-promotion-test', 'wolf', color);
+        ctrl.autoPromote = true;
+        await startPromotion(ctrl, color);
+        expect(sent).toEqual([{ move: color === 'white' ? 'a9a10q' : 'a2a1q', premove: false }]);
+        expect(el.querySelector('#extension_choice')).toBeNull();
+    });
+
+    test.each(['white', 'black'] as const)('%s can premove the elephant upgrade', async color => {
+        const { ctrl, el, sent } = controller(position(color, false, true), 'wolf-promotion-test', 'wolf', color);
+        await queue(ctrl, color === 'white' ? 'a9' : 'a2', color === 'white' ? 'a:' : 'a1');
+        choose(el, 'pp-piece');
+        expect(sent).toEqual([]);
+        await reply(ctrl, color === 'white' ? 'h10g10' : 'h1g1');
+        expect(sent).toEqual([{ move: color === 'white' ? 'a9a10+' : 'a2a1+', premove: true }]);
     });
 });

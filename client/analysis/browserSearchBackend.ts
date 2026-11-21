@@ -19,6 +19,7 @@ export class BrowserSearchBackend implements AnalysisSearchBackend {
     private pending?: AnalysisSearch;
     private searching = false;
     private destroyed = false;
+    private failure?: string;
 
     constructor(private readonly host: BrowserSearchHost) {}
 
@@ -28,6 +29,7 @@ export class BrowserSearchBackend implements AnalysisSearchBackend {
 
     get status(): SearchBackendStatus {
         if (this.destroyed) return 'disconnected';
+        if (this.failure) return 'error';
         if (this.awaitingReady) return 'stopping';
         if (this.searching) return 'searching';
         return this.capabilities.available ? 'ready' : 'loading';
@@ -38,7 +40,7 @@ export class BrowserSearchBackend implements AnalysisSearchBackend {
     }
 
     get canDeliverEvaluation(): boolean {
-        return !this.destroyed && !this.awaitingReady && this.capabilities.available && this.host.canSearch();
+        return !this.destroyed && !this.failure && !this.awaitingReady && this.capabilities.available && this.host.canSearch();
     }
 
     deliver(ceval: Ceval): void {
@@ -46,6 +48,7 @@ export class BrowserSearchBackend implements AnalysisSearchBackend {
     }
 
     onReady(): void {
+        if (this.failure || this.destroyed) return;
         this.awaitingReady = false;
         const pending = this.pending;
         this.pending = undefined;
@@ -57,7 +60,7 @@ export class BrowserSearchBackend implements AnalysisSearchBackend {
     }
 
     start(search: AnalysisSearch): void {
-        if (this.destroyed || !this.capabilities.supportsVariant || !this.host.canSearch()) return;
+        if (this.destroyed || this.failure || !this.capabilities.supportsVariant || !this.host.canSearch()) return;
         if (this.awaitingReady) {
             this.pending = search;
             return;
@@ -85,12 +88,22 @@ export class BrowserSearchBackend implements AnalysisSearchBackend {
     }
 
     stop(): void {
-        if (this.destroyed) return;
+        if (this.destroyed || this.failure) return;
         this.awaitingReady = true;
         this.pending = undefined;
         this.searching = false;
         this.host.postMessage('stop');
         this.host.postMessage('isready');
+    }
+
+    /** A terminated WASM engine must never accept another search in this page. */
+    onFailure(message: string): void {
+        if (this.destroyed || this.failure) return;
+        this.failure = message;
+        this.awaitingReady = false;
+        this.pending = undefined;
+        this.searching = false;
+        this.host.onStatusChanged?.('error', 'engine_terminated');
     }
 
     destroy(): void {

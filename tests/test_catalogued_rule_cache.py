@@ -3,8 +3,8 @@ from __future__ import annotations
 from unittest import TestCase
 from unittest.mock import patch
 
-import catalogued_rules
-from catalogued_rules import catalogued_rule_summary
+import catalogued.rules as catalogued_rules
+from catalogued.rules import catalogued_rule_summary
 
 
 class CataloguedRuleSummaryCacheTestCase(TestCase):
@@ -23,7 +23,7 @@ class CataloguedRuleSummaryCacheTestCase(TestCase):
         }
 
         with patch(
-            "catalogued_rules.parse_catalogued_ini", wraps=catalogued_rules.parse_catalogued_ini
+            "catalogued.rules.parse_catalogued_ini", wraps=catalogued_rules.parse_catalogued_ini
         ) as parse:
             first = catalogued_rule_summary(doc)
             second = catalogued_rule_summary(dict(doc))
@@ -62,7 +62,7 @@ class CataloguedRuleSummaryCacheTestCase(TestCase):
         wider_doc = {**doc, "width": 10}
 
         with patch(
-            "catalogued_rules.parse_catalogued_ini", wraps=catalogued_rules.parse_catalogued_ini
+            "catalogued.rules.parse_catalogued_ini", wraps=catalogued_rules.parse_catalogued_ini
         ) as parse:
             first = catalogued_rule_summary(doc)
             second = catalogued_rule_summary(wider_doc)

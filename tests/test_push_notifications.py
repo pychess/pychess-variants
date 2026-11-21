@@ -142,6 +142,42 @@ class PushSubscribeTestCase(AioHTTPTestCase):
         remaining = await app_state.db.push_subscription.count_documents({"user": user.username})
         self.assertEqual(remaining, 0)
 
+    async def test_corr_browser_pref_persists_independently_of_push(self):
+        app_state = get_app_state(self.app)
+        username = "browser_pref_user"
+        await app_state.db.user.insert_one({"_id": username, "cps": False})
+        user = await app_state.users.get(username)
+        self.assertTrue(user.corr_browser_enabled)
+        self.set_session_user(username)
+
+        for value in (False, True):
+            response = await self.client.post(
+                "/pref/corr-browser", data={"corr_browser": str(value).lower()}
+            )
+            self.assertEqual(response.status, 204)
+            self.assertEqual(app_state.users[username].corr_browser_enabled, value)
+            stored = await app_state.db.user.find_one({"_id": username})
+            self.assertEqual(stored["cbs"], value)
+            self.assertFalse(stored["cps"])
+
+            app_state.users.data.pop(username, None)
+            reloaded = await app_state.users.get(username)
+            self.assertEqual(reloaded.corr_browser_enabled, value)
+            self.assertFalse(reloaded.corr_push_enabled)
+
+            response = await self.client.get("/")
+            self.assertIn(f'data-corr-browser-enabled="{value}"', await response.text())
+
+    async def test_corr_browser_pref_rejects_anon_user(self):
+        app_state = get_app_state(self.app)
+        user = User(app_state, username="Anon-browser-pref", anon=True)
+        app_state.users[user.username] = user
+        self.set_session_user(user.username)
+
+        response = await self.client.post("/pref/corr-browser", data={"corr_browser": "false"})
+        self.assertEqual(response.status, 403)
+        self.assertTrue(user.corr_browser_enabled)
+
     async def test_corr_push_pref_updates_user_and_db(self):
         app_state = get_app_state(self.app)
         user = User(app_state, username="pref_user")

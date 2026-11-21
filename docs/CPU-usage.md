@@ -389,7 +389,7 @@ loop from direct blocking. On a one-vCPU dyno, however, concurrent child-process
 validation can still compete with the web process for CPU, so concurrency limits
 also matter even when work is correctly off-process.
 
-## Production observability gap: event-loop lag
+## Optional event-loop lag diagnostics
 
 Existing slow-request timing is useful, but it cannot fully answer the question
 that matters for fast games: **how long was the aiohttp event loop unable to
@@ -399,11 +399,13 @@ A request may appear slow because it awaited MongoDB without harming other games
 Conversely, a synchronous Study import or heap scan may freeze every WebSocket
 without producing an obvious per-game slow-request trace.
 
-A small event-loop-lag watchdog would make the impact measurable in production.
-For example, periodically schedule a short sleep/timer and record the difference
-between expected and actual wake-up time, logging or counting stalls above
-thresholds such as 50 ms and 100 ms. The exact thresholds and reporting mechanism
-should be discussed before implementation.
+The server now has an **opt-in** timer-based event-loop-lag monitor (disabled
+by default, including production) with counters for delays of at least
+20/50/100/250 ms, bounded WARNING logs for stalls at least 100 ms, and data in
+authenticated summary metrics and the existing recorder. See
+[event-loop-profiling.md](event-loop-profiling.md) for
+Tachyon correlation and interpretation. This measures scheduling lateness,
+not the identity or exact duration of the blocking synchronous operation.
 
 ## Suggested discussion order
 
@@ -416,7 +418,7 @@ Before writing fixes, discuss the findings in this order:
 5. Bughouse per-move processing.
 6. Remaining Study serialization/tree costs.
 7. Tournament/other occasional CPU algorithms.
-8. Event-loop-lag production instrumentation and how to use it to verify changes.
+8. Opt-in event-loop-lag diagnostics and how to use them to verify changes (implemented; see above).
 
 The first three are the clearest sources of large one-shot stalls. Items 4 and 5
 are likely more important for continuous CPU utilization and jitter under normal

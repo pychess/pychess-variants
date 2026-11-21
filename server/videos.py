@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-# TODO: make videos page paginated
-
 
 #  Deferred translations!
 def _(message):

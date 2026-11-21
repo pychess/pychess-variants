@@ -40,7 +40,7 @@ def _has_internal_referer(request: web.Request) -> bool:
 
 @aiohttp_jinja2.template("profile.html")
 async def profile(request: web.Request) -> ViewContext:
-    user, context = await get_user_context(request)
+    user, context = await get_user_context(request, include_catalogued_variants=True)
 
     profileId = request.match_info["profileId"]
     # Variant may come from the URL path (/@/<profile>/perf/<key>) or from the

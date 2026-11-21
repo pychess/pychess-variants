@@ -143,7 +143,13 @@ export function result(
                     text = _('King captured');
                     break;
                 case 'ataxx':
+                case 'janggi':
+                case 'janggimodern':
                     text = _('Point counting');
+                    break;
+                case 'janggitraditional':
+                case 'janggicasual':
+                    text = _('Draw');
                     break;
                 default:
                     text = _('Variant ending');
@@ -153,6 +159,7 @@ export function result(
         case 13:
             switch (variantName) {
                 case 'janggi':
+                case 'janggimodern':
                     text = _('Point counting');
                     break;
                 default:
@@ -168,7 +175,7 @@ export function result(
     if (status <= 0) {
         return text;
     } else if (result === '1/2-1/2') {
-        if (status === 5) {
+        if (status === 5 || text === _('Draw')) {
             return text;
         } else {
             return text + ' • ' + _('Draw');

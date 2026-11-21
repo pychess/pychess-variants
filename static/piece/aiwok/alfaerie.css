@@ -1,0 +1,36 @@
+.aiwok piece.k-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wking.svg');
+}
+.aiwok piece.a-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wchancellorferz.svg');
+}
+.aiwok piece.s-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wsilvergeneral.svg');
+}
+.aiwok piece.n-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wknight.svg');
+}
+.aiwok piece.r-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wrook.svg');
+}
+.aiwok piece.p-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wpawn.svg');
+}
+.aiwok piece.k-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bking.svg');
+}
+.aiwok piece.a-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bchancellorferz.svg');
+}
+.aiwok piece.s-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bsilvergeneral.svg');
+}
+.aiwok piece.n-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bknight.svg');
+}
+.aiwok piece.r-piece.black {
+    background-image: url('../../images/pieces/alfaerie/brook.svg');
+}
+.aiwok piece.p-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bpawn.svg');
+}

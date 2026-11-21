@@ -9,7 +9,7 @@ import aiohttp_jinja2
 import aiohttp_session
 import settings
 from aiohttp import web
-from catalogued_variants import catalogued_variant_client_doc_for_name
+from catalogued.variants import catalogued_variant_client_doc_for_name
 from fairy import BLACK, FairyBoard
 from json_utils import json_dumps
 from pychess_global_app_state_utils import get_app_state
@@ -29,6 +29,7 @@ from study.constants import (
     STUDY_TOPIC_MAX_LENGTH,
     STUDY_TOPIC_MIN_LENGTH,
 )
+from study.flair import study_flair, study_flair_icon
 from study.models import (
     Study,
     StudyChapter,
@@ -60,6 +61,7 @@ from study.quota import (
 from study.sequencer import sequence_study
 from study.snapshot import chapter_snapshot_token, study_snapshot_token
 from study.storage import (
+    StudyListOrder,
     StudyStorageError,
     add_chapter_from_draft,
     add_chapters_from_drafts,
@@ -83,6 +85,7 @@ from study.storage import (
     load_study,
     member_study_topics,
     owner_studies_page,
+    owner_view_studies_page,
     popular_study_topics,
     public_studies_page,
     remove_study_member,
@@ -92,9 +95,7 @@ from study.storage import (
     set_study_member_role,
     set_study_topics,
     set_study_visibility,
-    studies_for_owner_view,
     studies_writable_by,
-    study_list_chapter_names,
     study_list_order,
     study_search_page,
     topic_studies_page,
@@ -119,7 +120,7 @@ from typing_defs import ViewContext
 from utils import USERNAME_PREFIX_RE
 from variants import ALL_VARIANTS, is_catalogued_variant
 
-from views import get_user_context
+from views import add_catalogued_client_docs_context, get_user_context
 
 
 def _require_owner_user(user: Any) -> None:
@@ -154,7 +155,11 @@ def _study_sync_enabled(value: object, *, default: bool = True) -> bool:
 
 def _study_creation_metadata(
     data: Mapping[str, object],
-) -> tuple[str, StudyVisibility, dict[str, object]]:
+) -> tuple[str, StudyVisibility, dict[str, object], str]:
+    try:
+        flair = study_flair(data.get("flair"))
+    except ValueError as exc:
+        raise StudyStorageError(str(exc)) from exc
     try:
         visibility = study_visibility(data.get("visibility", "private"))
         settings = {
@@ -164,7 +169,7 @@ def _study_creation_metadata(
     except ValueError as exc:
         raise StudyStorageError("Invalid Study settings") from exc
     name = str(data.get("name") or "").strip()
-    return name, visibility, settings
+    return name, visibility, settings, flair
 
 
 def _study_context(context: ViewContext) -> None:
@@ -181,12 +186,35 @@ def _positive_page(value: str | None) -> int:
         return 1
 
 
-_STUDY_ORDER_LABELS = {
-    "updated": "Recently updated",
-    "newest": "Date added (newest)",
-    "oldest": "Date added (oldest)",
-    "alphabetical": "Alphabetical",
+_STUDY_LIST_FORMAT_COOKIE = "studyListFormat"
+
+
+def _study_list_is_compact(request: web.Request) -> bool:
+    return request.cookies.get(_STUDY_LIST_FORMAT_COOKIE) == "compact"
+
+
+_STUDY_ORDERS: tuple[StudyListOrder, ...] = (
+    "hot",
+    "newest",
+    "oldest",
+    "updated",
+    "popular",
+    "alphabetical",
+)
+_STUDY_ORDER_MENUS: dict[str, tuple[StudyListOrder, ...]] = {
+    "all": ("hot", "newest", "updated", "popular"),
+    "search": ("hot", "newest", "popular", "alphabetical", "relevant"),
+    "topic": (*_STUDY_ORDERS, "mine"),
 }
+
+
+def _requested_study_order(
+    request: web.Request, *, default: StudyListOrder = "updated", allow_mine: bool = False
+) -> StudyListOrder:
+    order = study_list_order(request.rel_url.query.get("order"), default=default)
+    if (order == "mine" and not allow_mine) or (order == "relevant" and default != "relevant"):
+        return default
+    return order
 
 
 def _study_list_query_href(
@@ -234,13 +262,19 @@ def _populate_study_page(
     active: str,
 ) -> None:
     order = study_list_order(result.get("order"))
+    choices = _STUDY_ORDER_MENUS.get(active, _STUDY_ORDERS)
+    if context["anon"] and active == "topic":
+        choices = _STUDY_ORDERS
     context["studies"] = result["studies"]
     context["study_card_chapters"] = result.get("chapter_names", {})
     context["study_page"] = result
+    context["study_list_compact"] = _study_list_is_compact(request)
+    context["study_list_return_to"] = str(request.rel_url)
     context["study_list_order"] = order
-    context["study_list_order_label"] = _STUDY_ORDER_LABELS[order]
+    context["study_flair_icon"] = study_flair_icon
+    context["study_search_order"] = order if order in _STUDY_ORDER_MENUS["search"] else "relevant"
     context["study_order_hrefs"] = {
-        key: _study_list_query_href(request, order=key) for key in _STUDY_ORDER_LABELS
+        key: _study_list_query_href(request, order=key) for key in choices
     }
     context["study_prev_href"] = (
         _study_list_query_href(request, page=result.get("prev_page"))
@@ -252,7 +286,34 @@ def _populate_study_page(
         if isinstance(result.get("next_page"), int)
         else ""
     )
-    _populate_study_list_navigation(context, active=active)
+    if active != "owner":
+        _populate_study_list_navigation(context, active=active)
+
+
+async def study_list_format(request: web.Request) -> web.StreamResponse:
+    data = await read_post_data(request)
+    if data is None:
+        raise web.HTTPNoContent()
+    list_format = data.get("format")
+    if list_format not in ("card", "compact"):
+        raise web.HTTPBadRequest(text="Invalid Study list format.")
+    location = "/study/all"
+    return_to = data.get("return_to")
+    if isinstance(return_to, str):
+        path = return_to.partition("?")[0]
+        if path == "/study" or path.startswith("/study/"):
+            location = return_to
+    response = web.HTTPSeeOther(location)
+    response.set_cookie(
+        _STUDY_LIST_FORMAT_COOKIE,
+        list_format,
+        path="/study",
+        max_age=365 * 24 * 60 * 60,
+        httponly=True,
+        secure=settings.PROD or request.secure,
+        samesite="Lax",
+    )
+    return response
 
 
 async def _owned_study_and_chapter(
@@ -369,7 +430,7 @@ async def _viewable_study_and_chapter(
     if not can_view_study(study, viewer):
         raise web.HTTPNotFound()
 
-    user, context = await get_user_context(request)
+    user, context = await get_user_context(request, include_catalogued_variants=True)
     requested_chapter_id = request.match_info.get("chapterId")
     chapter_id = requested_chapter_id or study.current_chapter
     chapter = await load_chapter(app_state, study.id, chapter_id) if chapter_id else None
@@ -510,12 +571,13 @@ async def studies(request: web.Request) -> ViewContext:
         raise web.HTTPServiceUnavailable(text="Studies require database access.")
 
     _study_context(context)
-    order = study_list_order(request.rel_url.query.get("order"))
+    order = _requested_study_order(request)
     result = await owner_studies_page(
         app_state,
         user.username,
         order=order,
         page=_positive_page(request.rel_url.query.get("page")),
+        compact=_study_list_is_compact(request),
     )
     context["study_list_owner"] = user.username
     context["study_list_is_self"] = True
@@ -538,12 +600,13 @@ async def studies_contributed(request: web.Request) -> ViewContext:
 
     _study_context(context)
     context["title"] = "Studies I contribute to • PyChess"
-    order = study_list_order(request.rel_url.query.get("order"))
+    order = _requested_study_order(request)
     result = await contributed_studies_page(
         app_state,
         user.username,
         order=order,
         page=_positive_page(request.rel_url.query.get("page")),
+        compact=_study_list_is_compact(request),
     )
     context["study_list_owner"] = user.username
     context["study_list_is_self"] = False
@@ -566,12 +629,13 @@ async def studies_liked(request: web.Request) -> ViewContext:
 
     _study_context(context)
     context["title"] = "My favorite studies • PyChess"
-    order = study_list_order(request.rel_url.query.get("order"))
+    order = _requested_study_order(request)
     result = await favorite_studies_page(
         app_state,
         user.username,
         order=order,
         page=_positive_page(request.rel_url.query.get("page")),
+        compact=_study_list_is_compact(request),
     )
     context["study_list_owner"] = user.username
     context["study_list_is_self"] = False
@@ -594,13 +658,14 @@ async def studies_mine_public(request: web.Request) -> ViewContext:
 
     _study_context(context)
     context["title"] = "My public studies • PyChess"
-    order = study_list_order(request.rel_url.query.get("order"))
+    order = _requested_study_order(request)
     result = await owner_studies_page(
         app_state,
         user.username,
         visibility="public",
         order=order,
         page=_positive_page(request.rel_url.query.get("page")),
+        compact=_study_list_is_compact(request),
     )
     context["study_list_owner"] = user.username
     context["study_list_is_self"] = True
@@ -623,13 +688,14 @@ async def studies_mine_private(request: web.Request) -> ViewContext:
 
     _study_context(context)
     context["title"] = "My private studies • PyChess"
-    order = study_list_order(request.rel_url.query.get("order"))
+    order = _requested_study_order(request)
     result = await owner_studies_page(
         app_state,
         user.username,
         visibility="private-or-unlisted",
         order=order,
         page=_positive_page(request.rel_url.query.get("page")),
+        compact=_study_list_is_compact(request),
     )
     context["study_list_owner"] = user.username
     context["study_list_is_self"] = True
@@ -651,12 +717,13 @@ async def studies_public(request: web.Request) -> ViewContext:
 
     _study_context(context)
     context["title"] = "All studies • PyChess"
-    order = study_list_order(request.rel_url.query.get("order"))
+    order = _requested_study_order(request, default="hot")
     result = await public_studies_page(
         app_state,
         q=request.rel_url.query.get("q", ""),
         order=order,
         page=_positive_page(request.rel_url.query.get("page")),
+        compact=_study_list_is_compact(request),
     )
     context["study_list_owner"] = ""
     context["study_list_is_self"] = False
@@ -693,9 +760,14 @@ async def studies_by_owner(request: web.Request) -> ViewContext:
     is_self = viewer == owner
     _study_context(context)
     context["title"] = f"Studies by {owner} • PyChess"
-    owner_studies = await studies_for_owner_view(app_state, owner, viewer)
-    context["studies"] = owner_studies
-    context["study_card_chapters"] = await study_list_chapter_names(app_state, owner_studies)
+    result = await owner_view_studies_page(
+        app_state,
+        owner,
+        viewer,
+        order=_requested_study_order(request, default="hot"),
+        page=_positive_page(request.rel_url.query.get("page")),
+        compact=_study_list_is_compact(request),
+    )
     context["study_list_owner"] = owner
     context["study_list_is_self"] = is_self
     context["study_list_can_create"] = is_self and not user.bot
@@ -703,6 +775,7 @@ async def studies_by_owner(request: web.Request) -> ViewContext:
     context["study_list_show_owner"] = False
     context["study_list_navigation"] = False
     _populate_study_search_form(context, f"owner:{owner} ")
+    _populate_study_page(context, request, result, active="owner")
     return context
 
 
@@ -715,7 +788,7 @@ async def studies_search(request: web.Request) -> ViewContext:
 
     _study_context(context)
     context["title"] = "Search studies • PyChess"
-    order = study_list_order(request.rel_url.query.get("order"))
+    order = _requested_study_order(request, default="relevant")
     viewer = None if user.anon else user.username
     result = await study_search_page(
         app_state,
@@ -723,6 +796,7 @@ async def studies_search(request: web.Request) -> ViewContext:
         viewer=viewer,
         order=order,
         page=_positive_page(request.rel_url.query.get("page")),
+        compact=_study_list_is_compact(request),
     )
     context["study_list_owner"] = ""
     context["study_list_is_self"] = False
@@ -733,7 +807,7 @@ async def studies_search(request: web.Request) -> ViewContext:
     _populate_study_search_form(
         context,
         str(result.get("q") or ""),
-        clear_href=f"/study/all?order={order}",
+        clear_href="/study/all" if order == "relevant" else f"/study/all?order={order}",
     )
     _populate_study_page(context, request, result, active="search")
     await _populate_study_navigation_topics(
@@ -787,13 +861,14 @@ async def studies_by_topic(request: web.Request) -> ViewContext:
     except ValueError as exc:
         raise web.HTTPNotFound() from exc
     viewer = None if user.anon else user.username
-    order = study_list_order(request.rel_url.query.get("order"))
+    order = _requested_study_order(request, default="hot", allow_mine=not user.anon)
     result = await topic_studies_page(
         app_state,
         topic,
         viewer=viewer,
         order=order,
         page=_positive_page(request.rel_url.query.get("page")),
+        compact=_study_list_is_compact(request),
     )
     _study_context(context)
     context["title"] = f"{topic} • Study topics • PyChess"
@@ -818,7 +893,7 @@ async def study_create(request: web.Request) -> web.StreamResponse:
     if data is None:
         raise web.HTTPNoContent()
     try:
-        name, visibility, settings = _study_creation_metadata(data)
+        name, visibility, settings, flair = _study_creation_metadata(data)
     except StudyStorageError as exc:
         raise web.HTTPBadRequest(text=str(exc)) from exc
 
@@ -839,6 +914,7 @@ async def study_create(request: web.Request) -> web.StreamResponse:
             name=name or None,
             visibility=visibility,
             settings=settings,
+            flair=flair,
         )
     except (StudyStorageError, StudyChapterBuildError) as exc:
         await release_study_creation_slot(app_state, user.username, quota_claim)
@@ -902,6 +978,7 @@ async def _populate_study_chapter_context(
         {
             "id": study.id,
             "name": study.name,
+            "flair": study.flair,
             "owner": study.owner,
             "visibility": study.visibility,
             "isOwner": (
@@ -1007,19 +1084,13 @@ async def _populate_study_chapter_context(
     )
 
     if snapshot_client_doc is not None:
-        variants = json.loads(str(context.get("catalogued_variants") or "[]"))
-        variants = [item for item in variants if item.get("name") != chapter.variant]
-        variants.append(snapshot_client_doc)
-        context["catalogued_variants"] = json_dumps(variants)
+        add_catalogued_client_docs_context(app_state, user, context, [snapshot_client_doc])
     elif is_catalogued_variant(chapter.variant):
         catalogued_doc = catalogued_variant_client_doc_for_name(
             app_state, chapter.variant, user.username
         )
         if catalogued_doc is not None:
-            variants = json.loads(str(context.get("catalogued_variants") or "[]"))
-            if not any(item.get("name") == chapter.variant for item in variants):
-                variants.append(catalogued_doc)
-                context["catalogued_variants"] = json_dumps(variants)
+            add_catalogued_client_docs_context(app_state, user, context, [catalogued_doc])
     elif chapter.variant not in ALL_VARIANTS:
         raise web.HTTPNotFound(text="Study variant is unavailable")
 
@@ -1247,7 +1318,7 @@ async def study_create_pgn(request: web.Request) -> web.StreamResponse:
     if not isinstance(data, Mapping):
         return web.json_response({"ok": False, "error": "invalid import payload"}, status=400)
     try:
-        name, visibility, settings = _study_creation_metadata(data)
+        name, visibility, settings, flair = _study_creation_metadata(data)
         drafts = await _pgn_import_drafts(app_state, user.username, data)
     except StudyVariantCapacityError as exc:
         return web.json_response({"ok": False, "error": str(exc)}, status=503)
@@ -1269,6 +1340,7 @@ async def study_create_pgn(request: web.Request) -> web.StreamResponse:
             name=name or None,
             visibility=visibility,
             settings=settings,
+            flair=flair,
         )
     except (StudyStorageError, StudyChapterBuildError) as exc:
         await release_study_creation_slot(app_state, user.username, quota_claim)
@@ -1441,16 +1513,22 @@ async def study_edit(request: web.Request) -> web.StreamResponse:
         except ValueError as exc:
             raise web.HTTPBadRequest(text="Invalid Study visibility") from exc
         try:
+            flair = study_flair(data.get("flair", current.flair))
+        except ValueError as exc:
+            raise web.HTTPBadRequest(text=str(exc)) from exc
+        try:
             settings = await set_study_feature_settings(app_state, current, data)
         except StudyStorageError as exc:
             raise web.HTTPBadRequest(text=str(exc)) from exc
         settings_changed = settings != dict(current.settings)
-        await rename_study(app_state, current, data.get("name"))
+        await rename_study(app_state, current, data.get("name"), flair=flair)
         await set_study_visibility(app_state, current, visibility)
         if settings_changed:
             await broadcast_study_reload(
                 app_state, current.id, reason="feature_permissions_changed"
             )
+        elif flair != current.flair:
+            await broadcast_study_reload(app_state, current.id, reason="flair_changed")
         if visibility == "private" and current.visibility != "private":
             await close_study_sockets(app_state, current.id)
     raise web.HTTPFound(f"/study/{study.id}")

@@ -85,3 +85,21 @@ test('destruction prevents deferred searches and evaluation delivery', () => {
     expect(onEvaluation).not.toHaveBeenCalled();
     expect(backend.status).toBe('disconnected');
 });
+
+
+test('terminated WASM engine cannot restart or deliver stale results', () => {
+    const { backend, commands, onEvaluation } = fixture();
+    backend.start(request);
+    backend.stop();
+    backend.start({ ...request, currentFen: 'queued', moves: [] });
+    backend.onFailure('worker exited');
+    expect(backend.status).toBe('error');
+    expect(backend.canDeliverEvaluation).toBe(false);
+    const atFailure = commands.length;
+    backend.onReady();
+    backend.start(request);
+    backend.stop();
+    backend.deliver({ d: 1, p: 'e7e8+', s: { cp: 10 } });
+    expect(commands).toHaveLength(atFailure);
+    expect(onEvaluation).not.toHaveBeenCalled();
+});

@@ -615,7 +615,9 @@ async def create(request: web.Request) -> web.Response:
 
     if errors:
         ctx = _build_form_context(context, profile_id, values, errors)
-        return aiohttp_jinja2.render_template("ublog_form.html", request, ctx, status=400)
+        return await aiohttp_jinja2.render_template_async(
+            "ublog_form.html", request, ctx, status=400
+        )
 
     now = datetime.now(UTC)
     post_id = await new_id(app_state.db.ublog_post2)
@@ -686,7 +688,9 @@ async def update(request: web.Request) -> web.Response:
 
     if errors:
         ctx = _build_form_context(context, profile_id, values, errors, post=doc)
-        return aiohttp_jinja2.render_template("ublog_form.html", request, ctx, status=400)
+        return await aiohttp_jinja2.render_template_async(
+            "ublog_form.html", request, ctx, status=400
+        )
 
     image = sanitize_image_url(values["image"])
     next_live = values["live"]

@@ -377,6 +377,7 @@ class CevalDetectedMessage(TypedDict):
 class OverlayDetectedMessage(TypedDict):
     type: Literal["overlay_detected"]
     gameId: str
+    svg: NotRequired[str]
 
 
 RoundInboundMessage: TypeAlias = (

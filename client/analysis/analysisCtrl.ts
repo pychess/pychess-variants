@@ -1,3 +1,4 @@
+import { parseHashAllocationFailure } from './engineFailure';
 import { h, VNode } from 'snabbdom';
 
 import * as Mousetrap from 'mousetrap';
@@ -1460,6 +1461,21 @@ export class AnalysisController extends GameController {
         }
     }
 
+    private reportBrowserEngineFailure(message: string, engineLine: string): void {
+        if (this.browserSearch.status === 'error') return;
+        console.error('Fairy-Stockfish WASM failure', {
+            variant: this.engineVariant,
+            threads: this.threads,
+            hashMiB: this.hash,
+            nnueFile: this.nnue && this.nnueOk ? this.loadedNnueFilename : undefined,
+            stage: this.browserSearch.status,
+            engineLine,
+        });
+        this.browserSearch.onFailure(message);
+        this.suspendLocalAnalysis();
+        void alertDialog({ text: message });
+    }
+
     onFSFline = (line: string) => {
         if (this.destroyed) return;
         if (this.fsfDebug) console.debug('--->', line);
@@ -1467,18 +1483,22 @@ export class AnalysisController extends GameController {
         if (this.analysisExtension?.onEngineLine?.(line)) return;
         if (this.ongoing) return;
 
-        if (line.startsWith('info')) {
-            const error = 'info string ERROR: ';
-            if (line.startsWith(error)) {
-                this.fsfError.push(line.slice(error.length));
-                if (line.includes('terminated')) {
-                    const suggestion = _('Try browser page reload.');
-                    this.fsfError.push('');
-                    this.fsfError.push(suggestion);
-                    const errorMsg = this.fsfError.join('\n');
-                    void alertDialog({ text: errorMsg });
-                    return;
-                }
+        // Fairy-Stockfish can terminate immediately after reporting an allocation
+        // failure, without emitting the usual "info string ERROR: ... terminated".
+        // Do not keep sending commands to a dead WASM worker pool.
+        const hashFailure = parseHashAllocationFailure(line);
+        if (hashFailure !== undefined) {
+            const errorMsg = `Fairy-Stockfish could not allocate its ${hashFailure} MB hash table.\n` +
+                'Reduce Memory in engine settings, then reload the page to restart the WASM engine.';
+            this.reportBrowserEngineFailure(errorMsg, line);
+            return;
+        }
+        if (line.startsWith('info string ERROR: ')) {
+            this.fsfError.push(line.slice('info string ERROR: '.length));
+            if (line.includes('terminated')) {
+                const errorMsg = this.fsfError.join('\n') + '\n' + _('Try browser page reload.');
+                this.reportBrowserEngineFailure(errorMsg, line);
+                return;
             }
         }
 
@@ -1836,6 +1856,7 @@ export class AnalysisController extends GameController {
 
     engineGo = () => {
         if (
+            this.variant.replayOnly ||
             !this.localAnalysis ||
             this.ongoing ||
             this.isLocalAnalysisBlockedByAntiCheat() ||
@@ -2290,6 +2311,7 @@ export class AnalysisController extends GameController {
     }
 
     applyAnalysisMove(move: string, origin: AnalysisMoveApplication['origin'] = 'played-move'): boolean {
+        if (this.variant.replayOnly) return false;
         const previousPath = this.analysisPath ?? '';
         if (this.analysisExtension?.beforeMoveApplied?.({ move, origin, path: previousPath }) === false) {
             if (this.hasAnalysisTree()) this.activateTreePath(previousPath, true, 'reset');

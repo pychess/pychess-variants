@@ -15,6 +15,25 @@
             <div class="admin-ops-grid">
                 <section class="admin-ops-card">
                     <header>
+                        <h2>Console logging</h2>
+                        <p>Set the minimum severity written to the server log. All running servers pick up the saved setting within 60 seconds.</p>
+                    </header>
+                    <div class="admin-ops-state">
+                        <span>Configured level</span>
+                        <strong>{{ admin_operations_logging_level }}</strong>
+                    </div>
+                    <form data-admin-operation action="/api/admin/operations/logging-level" method="post">
+                        <label for="admin-logging-level">Minimum log level</label>
+                        <select id="admin-logging-level" name="level" required>
+                            {% for level in ["DEBUG", "INFO", "WARNING", "ERROR"] %}
+                            <option value="{{ level }}"{% if level == admin_operations_logging_level %} selected{% endif %}>{{ level }}</option>
+                            {% endfor %}
+                        </select>
+                        <button class="admin-action-button" type="submit">Save logging level</button>
+                    </form>
+                </section>
+                <section class="admin-ops-card">
+                    <header>
                         <h2>Anonymous access</h2>
                         <p>Temporarily control creation of new anonymous sessions.</p>
                     </header>
@@ -37,6 +56,36 @@
                         method="post"
                     >
                         <button class="admin-action-button is-danger" type="submit">Disable new anonymous sessions</button>
+                    </form>
+                    {% endif %}
+                </section>
+
+                <section class="admin-ops-card admin-ops-card--wide">
+                    <header>
+                        <h2>Event-loop lag monitoring</h2>
+                        <p>Measure Python event-loop scheduling delays every 50 ms without restarting the server. Enabling starts a fresh measurement window; the runtime setting resets on server restart.</p>
+                    </header>
+                    <div class="admin-ops-state">
+                        <span>Monitoring</span>
+                        <span class="admin-status{% if admin_operations_event_loop_lag.enabled %} is-ok{% endif %}">
+                            {{ "Enabled" if admin_operations_event_loop_lag.enabled else "Disabled" }}
+                        </span>
+                    </div>
+                    <div class="admin-ops-state">
+                        <span>Peak scheduling delay</span>
+                        <strong>{{ admin_operations_event_loop_lag.max_lag_ms }} ms</strong>
+                    </div>
+                    <div class="admin-ops-state">
+                        <span>Stalls ≥ 100 ms</span>
+                        <strong>{{ admin_operations_event_loop_lag.stalls_100ms }}</strong>
+                    </div>
+                    {% if admin_operations_event_loop_lag.enabled %}
+                    <form data-admin-operation action="/api/admin/operations/loop-lag-disable" method="post">
+                        <button class="admin-action-button" type="submit">Disable monitoring</button>
+                    </form>
+                    {% else %}
+                    <form data-admin-operation action="/api/admin/operations/loop-lag-enable" method="post">
+                        <button class="admin-action-button is-positive" type="submit">Enable monitoring</button>
                     </form>
                     {% endif %}
                 </section>

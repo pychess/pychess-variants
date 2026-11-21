@@ -7,13 +7,13 @@ from unittest.mock import AsyncMock, patch
 
 import test_logger
 from aiohttp import web
-from catalogued_variants import (
-    _ensure_catalogued_rule_changes,
+from catalogued.http import (
     check_catalogued_variant_rules,
     clone_catalogued_variant,
     update_catalogued_variant,
     upload_catalogued_variant,
 )
+from catalogued.validation import _ensure_catalogued_rule_changes
 
 test_logger.init_test_logger()
 
@@ -47,9 +47,14 @@ class CataloguedVariantRuleChangesTestCase(unittest.TestCase):
                 _ensure_catalogued_rule_changes(f"[cosmetic:chess]\n{option}\n")
 
     def test_rejects_alias_of_curated_playable_engine_variant(self) -> None:
-        with self.assertRaises(web.HTTPBadRequest) as exc:
-            _ensure_catalogued_rule_changes("[myshatar:shatar]\n# new board")
-        self.assertIn("already playable on PyChess as Shatar", exc.exception.text)
+        for name, display_name in (
+            ("shatar", "Shatar"),
+            ("chigorin", "Chigorin Chess"),
+            ("sortofalmost", "Sort-of-Almost Chess"),
+        ):
+            with self.subTest(name=name), self.assertRaises(web.HTTPBadRequest) as exc:
+                _ensure_catalogued_rule_changes(f"[myvariant:{name}]\n# new board")
+            self.assertIn(f"already playable on PyChess as {display_name}", exc.exception.text)
 
     def test_accepts_gameplay_overrides_alongside_cosmetic_settings(self) -> None:
         for option in (
@@ -61,7 +66,12 @@ class CataloguedVariantRuleChangesTestCase(unittest.TestCase):
                 _ensure_catalogued_rule_changes(COSMETIC_INI + option + "\n")
 
     def test_does_not_claim_unexposed_engine_variant_is_already_playable(self) -> None:
-        _ensure_catalogued_rule_changes("[mychigorin:chigorin]\n# new catalogue entry")
+        candidates = {"candidatevariant": {"displayName": "Candidate Chess"}}
+        with (
+            patch("catalogued.builtin_data.FSF_CATALOGUED_BUILTIN_VARIANTS", {}),
+            patch("catalogued.builtin_data.FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES", candidates),
+        ):
+            _ensure_catalogued_rule_changes("[myvariant:candidatevariant]\n# new catalogue entry")
 
     def test_allows_standalone_rule_definitions(self) -> None:
         _ensure_catalogued_rule_changes("[standalone]\ncustomPiece1 = x:W\n")
@@ -84,42 +94,52 @@ class CataloguedVariantRuleChangesApiTestCase(unittest.IsolatedAsyncioTestCase):
         )
         self.request = SimpleNamespace(app=object())
         self.json_body = {"ini": COSMETIC_INI}
-        self.enterContext(patch("catalogued_variants.get_app_state", return_value=self.app_state))
+        self.enterContext(patch("catalogued.http.get_app_state", return_value=self.app_state))
         self.enterContext(
-            patch("catalogued_variants._current_human_username", AsyncMock(return_value="alice"))
+            patch("catalogued.http._current_human_username", AsyncMock(return_value="alice"))
         )
         self.enterContext(
-            patch("catalogued_variants.read_json_data", AsyncMock(return_value=self.json_body))
+            patch("catalogued.http.read_json_data", AsyncMock(return_value=self.json_body))
         )
         self.read_payload = self.enterContext(
             patch(
-                "catalogued_variants._read_upload_payload",
+                "catalogued.http._read_upload_payload",
                 AsyncMock(
-                    return_value=(COSMETIC_INI, "Chinese skin", "", "", False, "", "", "private")
+                    return_value=(
+                        COSMETIC_INI,
+                        "Chinese skin",
+                        "",
+                        "",
+                        False,
+                        None,
+                        "",
+                        "",
+                        "private",
+                    )
                 ),
             )
         )
         self.enterContext(
             patch(
-                "catalogued_variants._load_owned_doc",
+                "catalogued.http._load_owned_doc",
                 AsyncMock(
                     return_value=(self.app_state, "alice", "chinesechesscambulac", self.existing)
                 ),
             )
         )
         self.enterContext(
-            patch("catalogued_variants._ensure_catalogued_variant_quota", AsyncMock())
+            patch("catalogued.repository._ensure_catalogued_variant_quota", AsyncMock())
         )
         self.enterContext(
-            patch("catalogued_variants.ensure_catalogued_variant_name_available", AsyncMock())
+            patch("catalogued.repository.ensure_catalogued_variant_name_available", AsyncMock())
         )
         self.child_check = self.enterContext(
             patch(
-                "catalogued_variants.check_catalogued_ini_without_mutating_server",
+                "catalogued.validation.check_catalogued_ini_without_mutating_server",
                 AsyncMock(return_value=self.existing["startFen"]),
             )
         )
-        self.load_config = self.enterContext(patch("catalogued_variants.sf.load_variant_config"))
+        self.load_config = self.enterContext(patch("catalogued.validation.sf.load_variant_config"))
 
     def assert_no_registration_or_writes(self) -> None:
         self.child_check.assert_not_awaited()
@@ -151,6 +171,7 @@ class CataloguedVariantRuleChangesApiTestCase(unittest.IsolatedAsyncioTestCase):
             "",
             "",
             False,
+            None,
             "",
             "",
             "private",
@@ -172,11 +193,11 @@ class CataloguedVariantRuleChangesApiTestCase(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch(
-                "catalogued_variants._update_catalogued_variant_document",
+                "catalogued.repository._update_catalogued_variant_document",
                 AsyncMock(side_effect=return_updated),
             ),
-            patch("catalogued_variants.register_catalogued_variant_doc"),
-            patch("catalogued_variants._game_count", AsyncMock(return_value=0)),
+            patch("catalogued.variants.register_catalogued_variant_doc"),
+            patch("catalogued.repository._game_count", AsyncMock(return_value=0)),
         ):
             response = await update_catalogued_variant(self.request)
         self.assertEqual(response.status, 200)

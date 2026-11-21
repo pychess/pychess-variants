@@ -177,8 +177,11 @@ log_context_data = contextvars.ContextVar("log_context_data", default={})
 
 
 def set_log_context(varname, value):
-    context_dict = log_context_data.get()
+    # ContextVar values must be replaced, not mutated: multiple aiohttp tasks
+    # otherwise share the same dictionary and log each other's users/game IDs.
+    context_dict = log_context_data.get().copy()
     context_dict[varname] = value
+    log_context_data.set(context_dict)
 
 
 set_log_context("username", "system")

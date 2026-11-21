@@ -104,6 +104,23 @@ class CevalDetectionTestCase(AioHTTPTestCase):
         self.assertFalse(game.status >= STARTED)
         self.assertEqual(game.result, "*")
 
+    async def test_overlay_snapshot_is_bounded_and_first_report_wins(self):
+        game = self.new_game()
+        svg = '<svg xmlns="http://www.w3.org/2000/svg"><polygon points="0,0 1,1"/></svg>'
+        await handle_overlay_detected(self.wplayer, {"gameId": game.id, "svg": svg}, game)
+        await handle_overlay_detected(
+            self.wplayer, {"gameId": game.id, "svg": "<svg>changed</svg>"}, game
+        )
+        report = await self.latest_report(game)
+        self.assertEqual(report["overlaySvg"], svg)
+
+        other_game = self.new_game()
+        await handle_overlay_detected(
+            self.wplayer, {"gameId": other_game.id, "svg": "<svg>" + "x" * 32768}, other_game
+        )
+        report = await self.latest_report(other_game)
+        self.assertNotIn("overlaySvg", report)
+
     async def test_overlay_report_ignores_spectator_and_wrong_game(self):
         game = self.new_game()
         app_state = get_app_state(self.app)
