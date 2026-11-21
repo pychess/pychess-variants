@@ -480,8 +480,12 @@ class CacheCleanupTestCase(AioHTTPTestCase):
                 await asyncio.wait_for(waiting.wait(), timeout=1)
                 await game.play_move("e2e4", clocks=[300000, 300000], ply=1)
                 current_moves = game.board.legal_moves()
-                game.move_lock.release()
-                await asyncio.wait_for(moved.wait(), timeout=1)
+                with patch.object(
+                    game.board, "legal_moves", wraps=game.board.legal_moves
+                ) as generate:
+                    game.move_lock.release()
+                    await asyncio.wait_for(moved.wait(), timeout=1)
+                    generate.assert_called_once_with()  # Generate White's next moves only.
 
                 self.assertEqual(len(attempted_moves), 1)
                 self.assertIn(attempted_moves[0], current_moves)

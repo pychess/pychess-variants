@@ -1227,20 +1227,18 @@ async def play_move(
             await game.game_ended(user, first_move_timeout_reason(game, game.ply))
             invalid_move = True
 
-        if not user.bot and not invalid_move:
-            legal_moves = game.board.legal_moves()
-            if move not in legal_moves:
-                log.warning(
-                    "Rejecting illegal human move in %s by %s (move=%s ply=%s turn=%s fen=%s)",
-                    gameId,
-                    user.username,
-                    move,
-                    ply,
-                    cur_player.username,
-                    game.board.fen,
-                )
-                await send_human_resync("illegal-human-move")
-                return
+        if not user.bot and not invalid_move and move not in game.legal_moves:
+            log.warning(
+                "Rejecting illegal human move in %s by %s (move=%s ply=%s turn=%s fen=%s)",
+                gameId,
+                user.username,
+                move,
+                ply,
+                cur_player.username,
+                game.board.fen,
+            )
+            await send_human_resync("illegal-human-move")
+            return
 
         if not invalid_move:
             try:

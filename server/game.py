@@ -451,18 +451,6 @@ class Game:
         if self.chess960 or self.random_only or catalogued_casual:
             self.initial_fen = self.board.initial_fen
 
-        self.random_mover = (
-            "Random-Mover"
-            in (
-                self.wplayer.username,
-                self.bplayer.username,
-            )
-            or self.wplayer.title == "TEST"
-            or self.bplayer.title == "TEST"
-        )
-
-        self._refresh_legal_move_state()
-
         if self.board.move_stack:
             self.check = self.board.is_checked()
 
@@ -720,8 +708,6 @@ class Game:
                     self.clocks_b.append(clocks[BLACK])
 
                 self.board.push(move)
-
-                self._refresh_legal_move_state()
 
                 self.update_status()
 
@@ -1453,13 +1439,13 @@ class Game:
     def fen(self) -> str:
         return self.board.fen
 
-    def _refresh_legal_move_state(self) -> None:
-        """Reuse legal moves already needed by Random-Mover for status checks."""
-        if self.random_mover:
-            self.legal_moves = self.board.legal_moves()
-            self.has_legal_move = bool(self.legal_moves)
-        else:
-            self.has_legal_move = self.board.has_legal_move()
+    @property
+    def legal_moves(self) -> tuple[str, ...]:
+        return self.board.cached_legal_moves()
+
+    @property
+    def has_legal_move(self) -> bool:
+        return bool(self.legal_moves)
 
     @property
     def preview_fen(self) -> str:
@@ -2325,7 +2311,6 @@ class Game:
             if self.variant not in JANGGI_VARIANTS or self.bsetup or self.wsetup:
                 self.status = CREATED
 
-        self._refresh_legal_move_state()
         self.lastmove = self.board.move_stack[-1] if self.board.move_stack else None
         self.check = self.board.is_checked()
         await self.save_takeback_state()

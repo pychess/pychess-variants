@@ -91,9 +91,8 @@ async def BOT_task(bot: User, app_state: PychessGlobalAppState) -> None:
                         if game.status > STARTED or game.turn_player != bot.username:
                             continue
                         # A queued event can arrive during the opponent's move.
-                        # Read the current position only after acquiring its lock;
-                        # cached moves may belong to the previous ply or a reload.
-                        legal_moves = game.board.legal_moves()
+                        # Read the current position only after acquiring its lock.
+                        legal_moves = game.legal_moves
                         if not legal_moves:
                             log.warning(
                                 "No legal moves for bot=%s in game=%s game_task()",

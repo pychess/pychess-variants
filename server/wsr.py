@@ -705,11 +705,8 @@ async def handle_setup(
             if (opp_player is not None) and (not opp_player.bot):
                 await opp_player.send_game_message(data["gameId"], board_response)
 
-        # Setup can change Janggi's initial position, so refresh cached move state.
-        game.has_legal_move = game.board.has_legal_move()
-        if game.random_mover:
-            game.legal_moves = game.board.legal_moves()
-
+        # Generate moves from the new setup before saving its FEN.
+        game.board.cached_legal_moves()
         await game.save_setup()
 
         if opp_player is not None and opp_player.bot:
