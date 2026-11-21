@@ -11,6 +11,8 @@ import { variants } from './variants';
 import { RatedSettings, AutoNextSettings } from './puzzleSettings';
 import { boardSettings } from './boardSettings';
 import { updatePoint } from './info';
+import { ChessgroundKeyboard } from './accessibility/chessgroundKeyboard';
+import type { KeyboardMoveCommands } from './accessibility/keyboardMove';
 
 export class PuzzleController extends AnalysisController {
     username: string;
@@ -37,8 +39,8 @@ export class PuzzleController extends AnalysisController {
     // hint/solution reveal must be cancellable to avoid patching dead nodes.
     private hintRevealTimeout?: number;
 
-    constructor(el: HTMLElement, model: PyChessModel) {
-        super(el, model);
+    constructor(el: HTMLElement, model: PyChessModel, keyboard: ChessgroundKeyboard) {
+        super(el, model, keyboard);
         const data = JSON.parse(model.puzzle);
         this._id = data._id;
         this.gameId = data.g;
@@ -321,6 +323,13 @@ export class PuzzleController extends AnalysisController {
         }
     }
 
+    // The status line is the puzzle's own feedback; gameId names the source game, whose result
+    // would otherwise overwrite it on every move.
+    updateBoardSummary(lastMove: string | undefined): void {
+        this.boardSummary.setPosition(this.chessground.state.boardState, lastMove);
+        this.keyboard.update();
+    }
+
     makeMove(move: string) {
         const san = this.ffishBoard.sanMove(move, this.notationAsObject);
         this.moves.push(move as UCIMove);
@@ -407,7 +416,7 @@ export class PuzzleController extends AnalysisController {
                 ]),
             ]),
         );
-        this.boardSummary.setStatus(`${san}? ${_("That's not the move!")} ${_('Try something else.')}`);
+        this.boardSummary.setStatus(`${san}? ${_("That's not the move!")} ${_('Try something else.')}`, true);
         const feedbackEl = document.querySelector('.feedback') as HTMLInputElement;
         feedbackEl.classList.toggle('good', false);
         feedbackEl.classList.toggle('fail', true);
@@ -421,7 +430,7 @@ export class PuzzleController extends AnalysisController {
                 h('div.instruction', [h('strong', _('Best move!')), h('em', _('Keep going...'))]),
             ]),
         );
-        this.boardSummary.setStatus(`${_('Best move!')} ${_('Keep going...')}`);
+        this.boardSummary.setStatus(`${_('Best move!')} ${_('Keep going...')}`, true);
         const feedbackEl = document.querySelector('.feedback') as HTMLInputElement;
         feedbackEl.classList.toggle('fail', false);
         feedbackEl.classList.toggle('good', true);
@@ -521,6 +530,16 @@ export class PuzzleController extends AnalysisController {
             this.localAnalysis =
                 localStorage.localAnalysis === undefined ? false : localStorage.localAnalysis === 'true';
         }
+    }
+
+    // Lichess's puzzle words, once the puzzle is over and its vote and continue links are shown.
+    keyboardMoveCommands(): KeyboardMoveCommands {
+        if (!this.completed) return {};
+        return {
+            next: () => this.continueTraining(this.variant.name),
+            upv: () => this.postVote(true),
+            downv: () => this.postVote(false),
+        };
     }
 
     continueTraining(variant: string) {

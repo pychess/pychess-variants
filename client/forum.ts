@@ -11,6 +11,8 @@ import { PyChessModel } from './types';
 import { expandGameEmbeds, makeExternalLinkPopups, renderRichText } from './richTextEnhance';
 import { boardSettings } from './boardSettings';
 import { VARIANTS } from './variants';
+import { ChessgroundKeyboard } from './accessibility/chessgroundKeyboard';
+import { BoardSummaryView } from './accessibility/boardSummary';
 import { isSameDocumentForumRedirect } from './forumNavigation';
 import { infiniteScroll } from './infiniteScroll';
 
@@ -383,6 +385,8 @@ export function forumView(model: PyChessModel) {
     let captchaMoveDraft = '';
     let captchaState: ForumCaptchaState = 'idle';
     let captchaError = '';
+    let captchaKeyboard: ChessgroundKeyboard | undefined;
+    let captchaFailures = 0;
     let formSubmitError = '';
 
     const reactingPostIds = new Set<string>();
@@ -432,6 +436,7 @@ export function forumView(model: PyChessModel) {
         captchaMoveDraft = '';
         captchaState = 'idle';
         captchaError = '';
+        captchaFailures = 0;
     }
 
     /** Replace active form captcha challenge and reset move/result state. */
@@ -480,6 +485,7 @@ export function forumView(model: PyChessModel) {
                     board.stop();
                 } else {
                     captchaState = 'failure';
+                    captchaFailures++;
                     captchaMoveDraft = '';
                     window.setTimeout(() => {
                         board.set({
@@ -491,6 +497,7 @@ export function forumView(model: PyChessModel) {
                                 dests,
                             },
                         });
+                        captchaKeyboard?.update();
                     }, 280);
                 }
                 redraw();
@@ -502,8 +509,8 @@ export function forumView(model: PyChessModel) {
             });
     }
 
-    /** Render captcha widget used by topic creation and reply forms. */
-    function renderCaptcha() {
+    /** Render captcha widget used by topic creation and reply forms; level is its heading's. */
+    function renderCaptcha(level: number) {
         if (loadingCaptcha) return h('div.forum-captcha-loading', _('Loading captcha...'));
         if (captchaError) {
             return h('div.forum-captcha-error', [
@@ -540,6 +547,47 @@ export function forumView(model: PyChessModel) {
                 },
             },
             [
+                // Before the board in reading order, so the heading leads to it; drawn after it.
+                h('div.forum-captcha__explanation', [
+                    h(`h${level}.form-label`, _('%1 to checkmate in one move', sideLabel)),
+                    h('p', _('This is a %1 CAPTCHA.', variantLabel)),
+                    h('p', _('Click on the board to make your move, and prove you are human.')),
+                    formCaptcha.helpUrl
+                        ? h('p.forum-captcha__help', [
+                              `${_('Help')}: `,
+                              h(
+                                  'a',
+                                  {
+                                      attrs: {
+                                          href: formCaptcha.helpUrl,
+                                          target: '_blank',
+                                          rel: 'noopener',
+                                      },
+                                  },
+                                  formCaptcha.helpUrl,
+                              ),
+                          ])
+                        : null,
+                    h('div', { attrs: { role: 'status', 'aria-live': 'polite' } }, [
+                        h(
+                            'div.forum-captcha__result.success',
+                            {
+                                class: { visible: captchaState === 'success' },
+                            },
+                            _('Checkmate.'),
+                        ),
+                        h(
+                            'div.forum-captcha__result.failure',
+                            {
+                                class: { visible: captchaState === 'failure' },
+                            },
+                            // A second failure follows the first within milliseconds, too fast for the
+                            // hide in between to be announced, so the text changes instead.
+                            `${_('Not a checkmate. Try again.')}${captchaFailures % 2 === 0 ? '\u00a0' : ''}`,
+                        ),
+                    ]),
+                    BoardSummaryView.placeholder('', 'polite'),
+                ]),
                 h('div.forum-captcha__challenge', [
                     h(
                         `selection.forum-captcha-board.${captchaVariant.boardFamily}.${captchaVariant.pieceFamily}.${captchaVariant.ui.boardMark}`,
@@ -564,6 +612,7 @@ export function forumView(model: PyChessModel) {
                                                 dests,
                                                 events: {
                                                     after(orig: cg.Key, dest: cg.Key) {
+                                                        captchaKeyboard?.update();
                                                         checkCaptchaMove(
                                                             `${orig} ${dest}`,
                                                             board,
@@ -575,6 +624,18 @@ export function forumView(model: PyChessModel) {
                                                 },
                                             },
                                         });
+                                        // The forum redraws the whole page on every change, so the
+                                        // keyboard board goes into a host the redraw leaves empty.
+                                        const summary = new BoardSummaryView(captchaVariant, '', {
+                                            level: level + 1,
+                                            lastMove: false,
+                                        });
+                                        captchaKeyboard = new ChessgroundKeyboard(captchaVariant, '', level + 1);
+                                        captchaKeyboard.attach(board, summary);
+                                        const host = (vnode.elm as HTMLElement).nextElementSibling!;
+                                        const slot = host.appendChild(document.createElement('div'));
+                                        patch(slot, captchaKeyboard.boardView());
+                                        summary.setPosition(board.state.boardState, undefined);
                                     },
                                     update(_oldVnode, vnode) {
                                         boardSettings.updateScopedBoardStyle(captchaVariant, vnode.elm as Element);
@@ -582,42 +643,8 @@ export function forumView(model: PyChessModel) {
                                     },
                                 },
                             }),
+                            h('div.forum-captcha-keyboard'),
                         ],
-                    ),
-                ]),
-                h('div.forum-captcha__explanation', [
-                    h('label.form-label', _('%1 to checkmate in one move', sideLabel)),
-                    h('p', _('This is a %1 CAPTCHA.', variantLabel)),
-                    h('p', _('Click on the board to make your move, and prove you are human.')),
-                    formCaptcha.helpUrl
-                        ? h('p.forum-captcha__help', [
-                              `${_('Help')}: `,
-                              h(
-                                  'a',
-                                  {
-                                      attrs: {
-                                          href: formCaptcha.helpUrl,
-                                          target: '_blank',
-                                          rel: 'noopener',
-                                      },
-                                  },
-                                  formCaptcha.helpUrl,
-                              ),
-                          ])
-                        : null,
-                    h(
-                        'div.forum-captcha__result.success',
-                        {
-                            class: { visible: captchaState === 'success' },
-                        },
-                        _('Checkmate.'),
-                    ),
-                    h(
-                        'div.forum-captcha__result.failure',
-                        {
-                            class: { visible: captchaState === 'failure' },
-                        },
-                        _('Not a checkmate. Try again.'),
                     ),
                 ]),
             ],
@@ -1814,7 +1841,7 @@ export function forumView(model: PyChessModel) {
                                   ),
                               ]),
                               formSubmitError ? h('div.forum-form-error.error', formSubmitError) : null,
-                              renderCaptcha(),
+                              renderCaptcha(3),
                               h('div.form-actions', [
                                   h('a.button.button-empty', { attrs: { href: backHref } }, _('Cancel')),
                                   h(
@@ -1900,7 +1927,7 @@ export function forumView(model: PyChessModel) {
                         ),
                     ]),
                     formSubmitError ? h('div.forum-form-error.error', formSubmitError) : null,
-                    renderCaptcha(),
+                    renderCaptcha(2),
                     h('div.form-actions', [
                         h(
                             'a.button.button-empty',
