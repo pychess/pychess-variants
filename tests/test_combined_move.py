@@ -34,7 +34,7 @@ NATIVE_APPLY_MOVE = getattr(sf, "apply_move", None)
 class CombinedBoardMoveTestCase(unittest.TestCase):
     def compare_move(self, board: FairyBoard, move: str) -> MoveResult:
         before = board.fen, board.color, board.ply, list(board.move_stack)
-        result = board.prepare_move(move, include_legal_moves=True)
+        result = board.prepare_move(move)
         self.assertEqual(before, (board.fen, board.color, board.ply, board.move_stack))
         san = board.get_san(move)
         board.push(move)
@@ -124,8 +124,7 @@ class CombinedBoardMoveTestCase(unittest.TestCase):
         board = FairyBoard(name, legal_moves_need_history=True)
         for move in ("e2e3", "e9e8", "e3d3"):
             self.compare_move(board, move)
-        result = board.prepare_move(board.legal_moves()[0])
-        self.assertIsNone(result.legal_moves)
+        self.compare_move(board, board.legal_moves()[0])
         before = board.fen, list(board.move_stack), board.ply
         with self.assertRaises(ValueError):
             board.prepare_move("a1a10")
@@ -178,10 +177,12 @@ class CombinedGameMoveTestCase(AioHTTPTestCase):
             )
         )
 
-    async def test_human_move_uses_one_combined_query(self):
+    async def test_human_move_uses_one_combined_query_and_caches_legal_replies(self):
         game = self.make_game()
         await game.play_move("e2e4", [600000, 600000])
         await game.play_move("e7e5", [600000, 600000])
+        expected_fen = sf.get_fen("chess", game.board.initial_fen, ["e2e4", "e7e5", "g1f3"])
+        expected_moves = tuple(sf.legal_moves("chess", expected_fen, []))
         assert NATIVE_APPLY_MOVE is not None
 
         def apply_move(*args):
@@ -204,6 +205,7 @@ class CombinedGameMoveTestCase(AioHTTPTestCase):
             await play_move(
                 get_app_state(self.app), game.wplayer, game, "g1f3", [599000, 600000], ply=3
             )
+            self.assertEqual(game.legal_moves, expected_moves)
         combined.assert_called_once_with(
             game.board.variant,
             game.board.initial_fen,
@@ -214,7 +216,7 @@ class CombinedGameMoveTestCase(AioHTTPTestCase):
             False,
             game.board.show_promoted,
             0,
-            False,
+            True,
         )
         self.assertEqual(game.ply, 3)
         self.assertEqual(game.steps[-1]["san"], "Nf3")

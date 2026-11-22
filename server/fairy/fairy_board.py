@@ -57,7 +57,7 @@ class MoveResult(NamedTuple):
     fen: str
     check: bool
     has_legal_moves: bool
-    legal_moves: list[str] | None
+    legal_moves: list[str]
     insufficient_material: tuple[bool, bool]
     immediate_game_end: tuple[bool, int]
     optional_game_end: tuple[bool, int]
@@ -288,7 +288,7 @@ class FairyBoard:
             self.sf, "apply_move"
         )
 
-    def prepare_move(self, move: str, *, include_legal_moves: bool = False) -> MoveResult:
+    def prepare_move(self, move: str) -> MoveResult:
         """Validate a move and compute its result without changing the board."""
         apply_move = getattr(self.sf, "apply_move", None)
         if apply_move is None:
@@ -304,7 +304,7 @@ class FairyBoard:
                 self.sfen,
                 self.show_promoted,
                 self.count_started,
-                include_legal_moves,
+                True,  # include_legal_moves
             )
         )
         if self.variant in ("makruk", "makpong", "cambodian", "sittuyin", "asean"):
@@ -346,6 +346,10 @@ class FairyBoard:
                 # print(move, self.fen)
             elif move_result is not None:
                 self.fen = move_result.fen
+                self._legal_moves_cache = (
+                    self._legal_moves_cache_key(),
+                    tuple(move_result.legal_moves),
+                )
             else:
                 self.fen = self.sf.get_fen(
                     self.variant,
@@ -355,11 +359,6 @@ class FairyBoard:
                     self.sfen,
                     self.show_promoted,
                     self.count_started,
-                )
-            if move_result is not None and move_result.legal_moves is not None:
-                self._legal_moves_cache = (
-                    self._legal_moves_cache_key(),
-                    tuple(move_result.legal_moves),
                 )
         except Exception:
             del self.move_stack[previous_stack_length:]

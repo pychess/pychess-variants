@@ -309,15 +309,12 @@ The pinned pyffish release uses the existing move path. The combined path is
 enabled when the installed pyffish build exposes that API.
 
 Human moves are validated by the combined operation before clocks, draw offers,
-or board state change. Its result is passed into `Game.play_move()` and consumed
-for SAN, FEN, legal-move availability, check, material, and game-end decisions.
-Bots compute the same result in the existing trusted move path. Native move
-history is reconstructed once, preserving repetition, chasing, and
-history-dependent legality. No derived result is cached across moves or takebacks.
+or board state change. Bots compute the same result in the existing trusted move
+path. A single native replay preserves repetition, chasing, and history-dependent
+legality while returning SAN, FEN, check, material, game-end information, and
+the full list of legal replies. Every combined move populates the board's
+position-bound legal-move cache, including moves in human-vs-human games.
 
-Random-Mover requests the post-move legal list and stores it in the board's
-position-bound legal-move cache. Ordinary moves request only availability,
-avoiding Python move-string/list allocations.
 Counting variants retain one incremental FEN call because counting toggles can
 change serialized counters outside native move history. Their other engine
 queries share the combined result.
@@ -327,9 +324,10 @@ hidden-piece transformations and advisor filtering. Two-board live move processi
 remains separate because partner pocket transfers are absent from each board's
 ordinary native move history. These paths retain the existing move processing.
 
-A local CPU benchmark compared the previous human-move engine query sequence
-with `FairyBoard.prepare_move()` using the candidate pyffish build. Median CPU
-time over three batches of thirty calls was:
+An earlier local CPU benchmark compared the old human-move query sequence with
+the candidate pyffish build. The baseline predates the position-bound cache, and
+the combined call in this benchmark requested legal-move availability only.
+Median CPU time over three batches of thirty calls was:
 
 | Variant and preceding history | Previous queries | Prepared result |
 | --- | --- | --- |

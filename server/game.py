@@ -454,11 +454,6 @@ class Game:
         if self.chess960 or self.random_only or catalogued_casual:
             self.initial_fen = self.board.initial_fen
 
-        self.random_mover = any(
-            player.username == "Random-Mover" or player.title == "TEST"
-            for player in (self.wplayer, self.bplayer)
-        )
-
         if self.board.move_stack:
             self.check = self.board.is_checked()
 
@@ -705,9 +700,7 @@ class Game:
                     self.last_jieqi_capture = None
                 if self.board.supports_combined_move:
                     if move_result is None:
-                        move_result = self.board.prepare_move(
-                            move, include_legal_moves=self.random_mover
-                        )
+                        move_result = self.board.prepare_move(move)
                     san = move_result.san
                 else:
                     san = self.board.get_san(move)

@@ -1268,9 +1268,7 @@ async def play_move(
                         move[-1] == "=" or ("@" not in move and move[-1].isupper())
                     ):
                         raise ValueError("Noncanonical human move")
-                    move_result = game.board.prepare_move(
-                        move, include_legal_moves=game.random_mover
-                    )
+                    move_result = game.board.prepare_move(move)
                 except ValueError:
                     illegal_move = True
                 else:
