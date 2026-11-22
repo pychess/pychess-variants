@@ -1,7 +1,7 @@
 import unittest
 
 from aiohttp import web
-from catalogued_variants import _clean_piece_family_override, _read_piece_family_override
+from catalogued.validation import _clean_piece_family_override, _read_piece_family_override
 
 
 class CataloguedVariantPieceFamilyOverrideTestCase(unittest.TestCase):
@@ -24,7 +24,15 @@ class CataloguedVariantPieceFamilyOverrideTestCase(unittest.TestCase):
         )
 
     def test_site_piece_family_overrides_are_accepted(self):
-        for family in ("perfect", "courier", "centaur"):
+        for family in (
+            "perfect",
+            "courier",
+            "centaur",
+            "opulent",
+            "isolation",
+            "aiwok",
+            "foxandhounds",
+        ):
             with self.subTest(family=family):
                 self.assertEqual(_clean_piece_family_override(family), family)
 

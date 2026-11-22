@@ -189,6 +189,7 @@ td { vertical-align: top; }
 	<tr><td colspan="2">雄獅在遊戲開始時是防禦性棋子，被限制在己方領地內，且晉升路徑非常有限（需通過雄獅入侵格），很容易被防守。一旦升變，雄獅即獲得遊走整個棋盤的能力。<p/></td><td></td></tr>
 </tbody>
 </table>
+
 ### 棋子價值
 <table  style="border-collapse: collapse; border: 1px solid;">
 <tbody>

@@ -16,6 +16,7 @@ from aiohttp.client_exceptions import ClientConnectionResetError
 from aiohttp.test_utils import AioHTTPTestCase
 from aiohttp_session import Session
 from bson.int64 import Int64
+from compress import encode_move_standard
 from const import SHIELD, STARTED, SWISS, T_FINISHED
 from game import Game
 from game_api import (
@@ -33,7 +34,7 @@ from pymongo.errors import BulkWriteError
 from seek import BOT_CHALLENGE_DECLINED
 from settings import MONGO_DB_NAME
 from user import User
-from variants import VARIANTS, get_server_variant
+from variants import VARIANTS, get_server_variant, unregister_catalogued_server_variant
 
 from server import make_app
 
@@ -152,7 +153,7 @@ class GamesApiCategoryFilterTestCase(AioHTTPTestCase):
 
     async def test_direct_anonymous_profile_uses_restricted_rendering(self):
         app_state = get_app_state(self.app)
-        await app_state.db.ublog_post.insert_one(
+        await app_state.db.ublog_post2.insert_one(
             {
                 "_id": "restricted-profile-post",
                 "author": self.profile_probe,
@@ -174,7 +175,7 @@ class GamesApiCategoryFilterTestCase(AioHTTPTestCase):
 
     async def test_internal_profile_navigation_keeps_full_rendering(self):
         app_state = get_app_state(self.app)
-        await app_state.db.ublog_post.insert_one(
+        await app_state.db.ublog_post2.insert_one(
             {
                 "_id": "internal-profile-post",
                 "author": self.profile_probe,
@@ -271,7 +272,7 @@ class GamesApiCategoryFilterTestCase(AioHTTPTestCase):
         response = await self.client.get(f"/@/{self.user.username}/perf/notavariant")
         self.assertEqual(response.status, 404)
         text = await response.text()
-        self.assertIn("Page not found!", text)
+        self.assertIn("Page not found.", text)
 
     async def test_api_profile_perf_unknown_variant_returns_empty(self):
         self.set_session_user(self.user.username)
@@ -282,6 +283,85 @@ class GamesApiCategoryFilterTestCase(AioHTTPTestCase):
         self.assertEqual(response.status, 200)
         payload = await response.json()
         self.assertEqual(payload, [])
+
+    async def insert_archived_variant_game(self, name, *, inline_rules=True):
+        self.user.game_category = "all"
+        self.set_session_user(self.user.username)
+        app_state = get_app_state(self.app)
+        self.addCleanup(unregister_catalogued_server_variant, name)
+        start_fen = "lnsgqkgsnl/1r6b1/pppppppppp/10/10/10/10/PPPPPPPPPP/1B6R1/LNSGKQGSNL[-] w 0 1"
+        ini = f"[{name}:shogi]\nmaxRank = 10\nmaxFile = 10\nqueen = q\nstartFen = {start_fen}"
+        await app_state.db.catalogued_variant.insert_one(
+            {
+                "_id": name,
+                "name": name,
+                "displayName": "Archived shogi",
+                "ini": ini,
+                "enabled": False,
+                "archived": True,
+            }
+        )
+        doc = {
+            "_id": "archived-variant-game",
+            "us": [self.profile_probe, self.user.username],
+            "v": name,
+            "z": 0,
+            "r": "a",
+            "m": [encode_move_standard("c2c3")],
+            "s": 1,
+            "d": datetime(2026, 10, 7, tzinfo=UTC),
+            "y": 0,
+            "if": start_fen,
+        }
+        if inline_rules:
+            doc.update({"vini": ini, "vd": "Saved shogi"})
+        await app_state.db.game.insert_one(doc)
+        return app_state
+
+    async def test_user_games_restores_archived_variant_from_saved_rules(self):
+        name = "api_archived_inline"
+        app_state = await self.insert_archived_variant_game(name)
+        # Saved rules suffice even if the catalogue entry has been deleted.
+        await app_state.db.catalogued_variant.delete_one({"_id": name})
+
+        response = await self.client.get(f"/api/games/user/{self.profile_probe}")
+
+        self.assertEqual(response.status, 200)
+        payload = await response.json()
+        saved_game = next(doc for doc in payload if doc["_id"] == "archived-variant-game")
+        self.assertEqual(saved_game["v"], name)
+        self.assertEqual(saved_game["lm"], "c3c4")
+        self.assertEqual(saved_game["r"], "1-0")
+        self.assertNotIn(name, app_state.catalogued_variants)
+
+    async def test_user_games_restores_legacy_archived_variant_from_catalogue(self):
+        name = "api_archived_legacy"
+        app_state = await self.insert_archived_variant_game(name, inline_rules=False)
+
+        response = await self.client.get(f"/api/games/user/{self.profile_probe}")
+
+        self.assertEqual(response.status, 200)
+        payload = await response.json()
+        saved_game = next(doc for doc in payload if doc["_id"] == "archived-variant-game")
+        self.assertEqual(saved_game["v"], name)
+        self.assertEqual(saved_game["lm"], "c3c4")
+        self.assertNotIn(name, app_state.catalogued_variants)
+        archived_doc = await app_state.db.catalogued_variant.find_one({"_id": name})
+        self.assertTrue(archived_doc["archived"])
+        self.assertFalse(archived_doc["enabled"])
+
+    async def test_user_games_skips_orphaned_variant_and_keeps_other_games(self):
+        name = "api_archived_missing"
+        app_state = await self.insert_archived_variant_game(name, inline_rules=False)
+        await app_state.db.catalogued_variant.delete_one({"_id": name})
+
+        with patch("game_api.log.error") as error:
+            response = await self.client.get(f"/api/games/user/{self.profile_probe}")
+
+        self.assertEqual(response.status, 200)
+        payload = await response.json()
+        self.assertEqual([doc["_id"] for doc in payload], ["profiledb1"])
+        error.assert_called_once_with("get_user_games() KeyError. Unknown variant %r", name)
 
     async def test_advanced_search_treats_all_variant_as_no_filter(self):
         self.set_session_user(self.user.username)
@@ -1148,7 +1228,8 @@ class SSESubscribeErrorFallbackTestCase(unittest.IsolatedAsyncioTestCase):
                 return True
 
             async def send(self, _payload):
-                await asyncio.Event().wait()
+                async with asyncio.timeout(0.01):
+                    await asyncio.Event().wait()
 
         slow_response = SlowResponse()
 
@@ -1160,7 +1241,6 @@ class SSESubscribeErrorFallbackTestCase(unittest.IsolatedAsyncioTestCase):
         with (
             patch("game_api.get_app_state", return_value=app_state),
             patch("game_api.sse_response", slow_sse_response),
-            patch("sse_utils.SSE_SEND_TIMEOUT", 0.01),
         ):
             response = await game_api.subscribe_games(request)
 

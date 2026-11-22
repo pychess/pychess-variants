@@ -1,4 +1,4 @@
-# ![Minixiangqi ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/Minixiangqi.svg) Minixiangqi (7x7-es kínai sakk)
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/Minixiangqi.svg) Minixiangqi (7x7-es kínai sakk)
 
 ![Minixiangqi ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Minixiangqi.png)
 

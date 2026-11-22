@@ -1,5 +1,5 @@
 
-# ![Minixiangqi](https://github.com/pychess/pychess-variants/blob/master/static/icons/Minixiangqi.svg) Mini-xiangqi
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/Minixiangqi.svg) Mini-xiangqi
 
 ![Minixiangqi](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Minixiangqi.png)
 

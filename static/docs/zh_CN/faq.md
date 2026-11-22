@@ -16,7 +16,7 @@ Py 取自 Python，本站使用的程序语言。 </details>
 两者都致力于象棋类游戏，且开发者是同一人([gbtami](https://www.github.com/gbtami))。除此以外并没有其他的相同之处。此网站的全名其实是「Pychess Variants」，但常常简称 Pychess。
 关于 Pychess 软件的信息，请点击[这里](https://pychess.github.io/)</details>
 
-<details><summary>Pychess 与 [Lichess](https://lichess.org/) 有什么关系?</summary>
+<details><summary>Pychess 与 <a href="https://lichess.org/">Lichess</a> 有什么关系?</summary>
 
 Pychess 网页的设计参考了 Lichess ，对于 Lichess 用户而言比较熟悉。事实上，Pychess 与 Lichess 并没有官方的关系。但 Pychess 使用 Lichess 的用户帐号以方便管理。
 </details>

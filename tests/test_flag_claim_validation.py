@@ -1,5 +1,7 @@
+import asyncio
 import unittest
-from unittest.mock import AsyncMock
+from contextlib import asynccontextmanager
+from unittest.mock import AsyncMock, patch
 
 from aiohttp.test_utils import AioHTTPTestCase
 from clock import first_move_timeout_reason
@@ -10,8 +12,9 @@ from mongomock_motor import AsyncMongoMockClient
 from newid import id8
 from pychess_global_app_state_utils import get_app_state
 from user import User
+from utils import insert_game_to_db
 from variants import VARIANTS
-from wsr import handle_abort_resign_abandon_flag
+from wsr import handle_abort_resign_abandon_flag, handle_byoyomi
 
 from server import make_app
 
@@ -51,6 +54,155 @@ class FlagClaimValidationTestCase(AioHTTPTestCase):
         await self.play_white_first_move(game)
         clocks = (game.clocks_w[-1], game.clocks_b[-1])
         await game.play_move("e7e5", clocks=clocks, ply=2)
+
+    @asynccontextmanager
+    async def paused_countdown(self, game: Game, *, remaining: int, delay: int):
+        clock = game.stopwatch
+        await clock.cancel()
+        clock.restart(remaining)
+        waiting = asyncio.Event()
+        release = asyncio.Event()
+        checked = asyncio.Event()
+        blocked = asyncio.Event()
+        real_sleep = asyncio.sleep
+
+        async def controlled_sleep(seconds):
+            if asyncio.current_task() is task:
+                if not waiting.is_set() and seconds == delay:
+                    waiting.set()
+                    await release.wait()
+                else:
+                    checked.set()
+                    await blocked.wait()
+            else:
+                await real_sleep(seconds)
+
+        async def resume():
+            release.set()
+
+            async def wait_until_checked():
+                while not task.done() and not checked.is_set():
+                    await real_sleep(0)
+
+            await asyncio.wait_for(wait_until_checked(), timeout=1)
+
+        with patch("clock.asyncio.sleep", new=controlled_sleep):
+            task = asyncio.create_task(clock.countdown())
+            clock.clock_task = task
+            try:
+                await asyncio.wait_for(waiting.wait(), timeout=1)
+                yield resume
+            finally:
+                await clock.cancel()
+
+    async def test_old_server_timeout_does_not_flag_a_new_byoyomi_turn(self):
+        app_state = get_app_state(self.app)
+        for player in (self.wplayer, self.bplayer):
+            app_state.users[player.username] = player
+        game = Game(
+            app_state,
+            id8(),
+            "shogi",
+            "",
+            self.wplayer,
+            self.bplayer,
+            base=15,
+            inc=60,
+            byoyomi_period=1,
+        )
+        await insert_game_to_db(game, app_state)
+        for _ in range(2):
+            await game.play_move(game.board.legal_moves()[0], clocks=[900000, 5000])
+
+        async with self.paused_countdown(game, remaining=0, delay=80) as resume:
+            await handle_byoyomi(
+                self.wplayer,
+                {
+                    "type": "byoyomi",
+                    "color": "white",
+                    "period": 0,
+                    "positionId": game.position_id(),
+                },
+                game,
+            )
+            await game.play_move(game.board.legal_moves()[0], clocks=[60000, 5000])
+            # A move at the main-time boundary can report zero before the next browser tick.
+            await game.play_move(game.board.legal_moves()[0], clocks=[60000, 0])
+            await game.play_move(game.board.legal_moves()[0], clocks=[60000, 0])
+            await handle_byoyomi(
+                self.bplayer,
+                {
+                    "type": "byoyomi",
+                    "color": "black",
+                    "period": 0,
+                    "positionId": game.position_id(),
+                },
+                game,
+            )
+            self.assertGreater(game.get_board(full=True)["clocks"][1], 55000)
+
+            await resume()
+
+            self.assertEqual(game.status, STARTED)
+            self.assertEqual(game.result, "*")
+
+    async def test_restarting_same_position_invalidates_pending_timeout(self):
+        game = self.new_game()
+        await self.play_two_plies(game)
+
+        async with self.paused_countdown(game, remaining=0, delay=20) as resume:
+            game.stopwatch.restart(0)
+            await resume()
+
+            self.assertEqual(game.status, STARTED)
+            self.assertEqual(game.result, "*")
+
+    async def test_restart_while_timeout_waits_for_move_lock_does_not_flag(self):
+        game = self.new_game()
+        await self.play_two_plies(game)
+        waiting_for_lock = asyncio.Event()
+        acquire = game.move_lock.acquire
+
+        async def signal_acquire():
+            waiting_for_lock.set()
+            return await acquire()
+
+        await game.move_lock.acquire()
+        try:
+            with patch.object(game.move_lock, "acquire", new=signal_acquire):
+                async with self.paused_countdown(game, remaining=0, delay=20) as resume:
+                    resumed = asyncio.create_task(resume())
+                    await asyncio.wait_for(waiting_for_lock.wait(), timeout=1)
+                    game.stopwatch.restart(0)
+                    game.move_lock.release()
+                    await resumed
+
+                    self.assertEqual(game.status, STARTED)
+                    self.assertEqual(game.result, "*")
+        finally:
+            if game.move_lock.locked():
+                game.move_lock.release()
+
+    async def test_tick_from_previous_turn_does_not_deduct_from_restarted_clock(self):
+        game = self.new_game()
+        await self.play_two_plies(game)
+
+        async with self.paused_countdown(game, remaining=1000, delay=1) as resume:
+            game.stopwatch.restart(5000)
+            await resume()
+
+            self.assertEqual(game.stopwatch.secs, 5000)
+            self.assertEqual(game.status, STARTED)
+
+    async def test_server_timeout_still_flags_current_expired_turn(self):
+        game = self.new_game()
+        await self.play_two_plies(game)
+
+        async with self.paused_countdown(game, remaining=0, delay=20) as resume:
+            await resume()
+
+            self.assertEqual(game.status, FLAG)
+            self.assertEqual(game.result, "0-1")
 
     async def test_flag_ignored_if_not_side_to_move(self):
         game = self.new_game()

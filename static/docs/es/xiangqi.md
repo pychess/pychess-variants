@@ -1,4 +1,4 @@
-# ![Xiangqi](https://github.com/pychess/pychess-variants/blob/master/static/icons/xiangqi.svg) Xiangqi
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/xiangqi.svg) Xiangqi
 
 ![Tableros](https://github.com/pychess/pychess-variants/blob/master/static/images/XiangqiGuide/Boards.png)
 

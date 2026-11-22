@@ -1,5 +1,7 @@
+import asyncio
 import json
 import time
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -10,6 +12,7 @@ from newid import id8
 from pychess_global_app_state_utils import get_app_state
 from tournament.auto_play_tournament import ArenaTestTournament, SwissTestTournament
 from tournament.tournament import upsert_tournament_to_db
+from tournament.tournaments import load_tournament
 from user import User
 
 from server import make_app
@@ -25,6 +28,67 @@ class TournamentCancelRedirectTestCase(AioHTTPTestCase):
     def set_session_user(self, username: str) -> None:
         session_data = {"session": {"user_name": username}, "created": int(time.time())}
         self.client.session.cookie_jar.update_cookies({"AIOHTTP_SESSION": json.dumps(session_data)})
+
+    async def _assert_edit_keeps_clock(self, *, restored: bool, invalid: bool):
+        app_state = get_app_state(self.app)
+        creator = User(app_state, username="arena-creator")
+        app_state.users[creator.username] = creator
+        self.set_session_user(creator.username)
+        tournament = ArenaTestTournament(
+            app_state,
+            id8(),
+            variant="asean",
+            created_by=creator.username,
+            starts_at=datetime.now(UTC) + timedelta(hours=12),
+            minutes=60,
+        )
+        app_state.tournaments[tournament.id] = tournament
+        app_state.tourneysockets[tournament.id] = {}
+        await upsert_tournament_to_db(tournament, app_state)
+        await asyncio.sleep(0)
+        if restored:
+            assert tournament.clock_task is not None
+            tournament.clock_task.cancel()
+            with self.assertRaises(asyncio.CancelledError):
+                await tournament.clock_task
+            del app_state.tournaments[tournament.id]
+            tournament = await load_tournament(app_state, tournament.id)
+            assert tournament is not None
+        tournament.clock_interval = 0.01
+        await asyncio.sleep(0)
+        form = {
+            "variant": "asean",
+            "clockTime": "3",
+            "clockIncrement": "2",
+            "byoyomiPeriod": "0",
+            "startDate": "invalid" if invalid else tournament.starts_at.isoformat(),
+            "minutes": "60",
+            "waitMinutes": "5",
+            "name": "Edited arena",
+        }
+        with patch("views.tournaments.is_tournament_director", return_value=False):
+            response = await self.client.post(f"/tournaments/{tournament.id}/edit", data=form)
+        self.assertEqual(response.status, 400 if invalid else 200)
+        self.assertIsNotNone(tournament.clock_task)
+        assert tournament.clock_task is not None
+        self.assertFalse(tournament.clock_task.done())
+
+        # The surviving clock must actually start the arena when its deadline arrives.
+        tournament.starts_at = datetime.now(UTC) - timedelta(seconds=1)
+        async with asyncio.timeout(2):
+            while tournament.status != T_STARTED:
+                await asyncio.sleep(0.01)
+        doc = await app_state.db.tournament.find_one({"_id": tournament.id})
+        self.assertEqual(doc["status"], T_STARTED)
+
+    async def test_edit_restored_arena_keeps_clock_running(self):
+        await self._assert_edit_keeps_clock(restored=True, invalid=False)
+
+    async def test_rejected_edit_keeps_arena_clock_running(self):
+        await self._assert_edit_keeps_clock(restored=False, invalid=True)
+
+    async def test_edit_new_arena_keeps_clock_running(self):
+        await self._assert_edit_keeps_clock(restored=False, invalid=False)
 
     async def test_cancel_created_tournament_redirects_to_tournaments(self):
         app_state = get_app_state(self.app)

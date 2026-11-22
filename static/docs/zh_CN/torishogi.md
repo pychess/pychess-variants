@@ -1,4 +1,4 @@
-# ![Tori Shogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/ToriShogi.svg) 禽将棋 | Tori Shogi
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/ToriShogi.svg) 禽将棋 | Tori Shogi
 
 |                                                                                                                    |                                                                                                                   |
 | ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
@@ -77,7 +77,7 @@
 
 |                                                                                                             |                                                                                                               |
 | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| ![LeftQuail](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/LeftQuail.png) | ![RightQuail](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/RightQuail.png) |
+| ![Left quail movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/LeftQuail.png) | ![Right quail movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/RightQuail.png) |
 
 鹑（じゅん）是较为特殊的棋子。两枚鹑依据配置于左右两侧而走法不同，棋上会标明左或右字。
 

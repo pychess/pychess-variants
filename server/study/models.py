@@ -17,6 +17,7 @@ from study.constants import (
     STUDY_TOPIC_MAX_LENGTH,
     STUDY_TOPIC_MIN_LENGTH,
 )
+from study.flair import study_flair
 from study.tree import StudyTree
 
 StudyVisibility = Literal["private", "unlisted", "public"]
@@ -295,6 +296,7 @@ class Study:
     revision: int = 0
     likers: tuple[str, ...] = ()
     topics: tuple[str, ...] = ()
+    flair: str = ""
 
     @property
     def likes(self) -> int:
@@ -344,6 +346,8 @@ class Study:
             doc["settings"] = dict(self.settings)
         if self.topics:
             doc["topics"] = list(self.topics)
+        if self.flair:
+            doc["flair"] = study_flair(self.flair)
         return doc
 
     @classmethod
@@ -397,6 +401,7 @@ class Study:
             revision=_nonnegative_int(doc, "revision", default=0),
             likers=likers,
             topics=raw_topics,
+            flair=study_flair(doc.get("flair")),
         )
 
 
@@ -499,7 +504,7 @@ class StudyChapter:
     server_eval: StudyServerEval | None = None
     revision: int = 0
 
-    def to_document(self) -> dict[str, object]:
+    def to_document(self, *, root_document: dict[str, object] | None = None) -> dict[str, object]:
         if self.order < 1:
             raise ValueError("Study chapter order must be positive")
         if self.orientation not in _ORIENTATIONS:
@@ -521,7 +526,7 @@ class StudyChapter:
             "initialFen": self.initial_fen,
             "orientation": self.orientation,
             "mode": mode,
-            "root": self.root.to_document(),
+            "root": self.root.to_document() if root_document is None else root_document,
             "createdAt": _utc(self.created_at),
             "updatedAt": _utc(self.updated_at),
             "revision": self.revision,
@@ -596,6 +601,7 @@ async def make_study(
     name: str | None = None,
     visibility: StudyVisibility = "private",
     settings: Mapping[str, object] | None = None,
+    flair: str = "",
     source: StudySource | None = None,
     now: datetime | None = None,
 ) -> Study:
@@ -611,6 +617,7 @@ async def make_study(
         created_at=created_at,
         updated_at=created_at,
         likers=(owner,),
+        flair=flair,
     )
 
 

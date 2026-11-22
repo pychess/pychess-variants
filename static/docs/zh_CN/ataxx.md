@@ -1,4 +1,4 @@
-# ![Ataxx](https://github.com/pychess/pychess-variants/blob/master/static/icons/ataxx.svg) 同化棋 | Ataxx
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/ataxx.svg) 同化棋 | Ataxx
 
 ![Ataxx Board](https://github.com/pychess/pychess-variants/blob/master/static/images/Ataxx.png?raw=true)
 

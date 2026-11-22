@@ -65,6 +65,7 @@ MAX_NAMED_SPECTATORS = 20
 # Periodically check for sse_request is_connected()
 SSE_GET_TIMEOUT = 10
 SSE_SEND_TIMEOUT = 10
+SSE_PING_INTERVAL = 15
 
 # State snapshots supersede older snapshots. Event queues allow a short burst
 # before disconnecting a subscriber that cannot keep up.

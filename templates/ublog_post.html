@@ -1,6 +1,6 @@
 {% extends "template.html" %}
 {% block content %}
-<div id="main-wrap">
+<div id="main-wrap" class="ublog-post-wrap">
 <main class="page-menu ublog-page">
 <aside>
     <ul class="guide">
@@ -15,9 +15,7 @@
 </aside>
 <article class="ublog-box box box-pad ublog-post">
     <h1 class="ublog-post__title">{{ ublog_post['title'] }}</h1>
-    {% if ublog_post['image'] %}
-    <img class="ublog-post-image ublog-post__image" src="{{ ublog_post['image_src'] }}" alt="{{ ublog_post['imageAlt'] }}">
-    {% endif %}
+    <img class="ublog-post-image ublog-post__image{% if not ublog_post['image_src'] %} ublog-cover-fallback{% endif %}" src="{{ ublog_post['image_src'] or static('images/ublog-default-cover.svg') }}" alt="{{ ublog_post['imageAlt'] if ublog_post['image_src'] else 'PyChess' }}">
     <div class="ublog-post-meta-headline">
         <div class="ublog-post-meta ublog-post__meta">
             <a class="user-link ublog-post__meta__author" href="/@/{{ ublog_post['author'] }}" data-href="/@/{{ ublog_post['author'] }}">
@@ -69,11 +67,7 @@
         {% for rel in ublog_related %}
             <a class="ublog-card ublog-post-card ublog-post-card--link" href="{{ rel['url'] }}">
                 <span class="ublog-post-card__top">
-                    {% if rel['image'] %}
-                    <img class="ublog-card-image ublog-post-card__image" src="{{ rel['image_src'] }}" alt="{{ rel['imageAlt'] }}">
-                    {% else %}
-                    <div class="ublog-card-image ublog-card-image--empty ublog-post-card__image"></div>
-                    {% endif %}
+                    <img class="ublog-card-image ublog-post-card__image{% if not rel['image_src'] %} ublog-cover-fallback{% endif %}" src="{{ rel['image_src'] or static('images/ublog-default-cover.svg') }}" alt="{{ rel['imageAlt'] if rel['image_src'] else 'PyChess' }}">
                 </span>
                 <span class="ublog-post-card__content">
                     <span class="ublog-card-title ublog-post-card__title">{{ rel['title'] }}</span>

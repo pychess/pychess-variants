@@ -14,7 +14,7 @@ async def blog(request: web.Request) -> web.StreamResponse:
     if app_state.db is None or blog_id is None:
         raise web.HTTPNotFound()
 
-    migrated = await app_state.db.ublog_post.find_one(
+    migrated = await app_state.db.ublog_post2.find_one(
         {"legacyBlogId": blog_id, "live": True, "blogType": "site"},
         {"_id": 1, "author": 1, "slug": 1, "category": 1},
     )

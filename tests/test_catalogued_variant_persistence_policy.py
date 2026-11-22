@@ -2,17 +2,18 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
-from catalogued_variants import (
-    _client_doc,
-    _has_active_catalogued_games,
-    _remove_legacy_catalogued_icon_fields,
+from catalogued.documents import _client_doc
+from catalogued.http import (
     archive_catalogued_variant,
+    delete_catalogued_variant,
+    restore_catalogued_variant,
+)
+from catalogued.repository import _remove_legacy_catalogued_icon_fields, find_catalogued_variant_doc
+from catalogued.variants import (
+    _has_active_catalogued_games,
     catalogued_variant_client_doc_for_game,
     catalogued_variant_games_are_persisted,
-    delete_catalogued_variant,
     ensure_catalogued_variant_from_game_doc,
-    find_catalogued_variant_doc,
-    restore_catalogued_variant,
 )
 from const import ABORTED, STARTED
 from mongomock_motor import AsyncMongoMockClient
@@ -116,7 +117,7 @@ class CataloguedVariantGameClientDocumentTest(unittest.IsolatedAsyncioTestCase):
         doc = {"name": name, "visibility": "private"}
         app_state = SimpleNamespace(catalogued_variants={name: doc}, db=None)
 
-        with patch("catalogued_variants._client_doc", return_value={"name": name}) as client_doc:
+        with patch("catalogued.documents._client_doc", return_value={"name": name}) as client_doc:
             result = await catalogued_variant_client_doc_for_game(app_state, game, "participant")
 
         self.assertEqual(result, {"name": name})
@@ -132,7 +133,7 @@ class CataloguedVariantGameClientDocumentTest(unittest.IsolatedAsyncioTestCase):
             db={"catalogued_variant": collection},
         )
 
-        with patch("catalogued_variants._client_doc", return_value={"name": name}):
+        with patch("catalogued.documents._client_doc", return_value={"name": name}):
             result = await catalogued_variant_client_doc_for_game(app_state, game, "participant")
 
         self.assertEqual(result, {"name": name})
@@ -228,10 +229,10 @@ class CataloguedVariantArchiveActiveGameTest(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch(
-                "catalogued_variants._load_owned_doc",
+                "catalogued.http._load_owned_doc",
                 AsyncMock(return_value=(app_state, "author", name, doc)),
             ),
-            patch("catalogued_variants._has_games", AsyncMock(return_value=False)),
+            patch("catalogued.repository._has_games", AsyncMock(return_value=False)),
         ):
             response = await delete_catalogued_variant(request)
 
@@ -261,10 +262,10 @@ class CataloguedVariantArchiveActiveGameTest(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch(
-                "catalogued_variants._load_owned_doc",
+                "catalogued.http._load_owned_doc",
                 AsyncMock(return_value=(app_state, "author", name, doc)),
             ),
-            patch("catalogued_variants._has_games", AsyncMock(return_value=False)),
+            patch("catalogued.repository._has_games", AsyncMock(return_value=False)),
         ):
             response = await delete_catalogued_variant(request)
 
@@ -289,10 +290,10 @@ class CataloguedVariantArchiveActiveGameTest(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch(
-                "catalogued_variants._load_owned_doc",
+                "catalogued.http._load_owned_doc",
                 AsyncMock(return_value=(app_state, "author", name, doc)),
             ),
-            patch("catalogued_variants._has_games", AsyncMock(return_value=False)),
+            patch("catalogued.repository._has_games", AsyncMock(return_value=False)),
             self.assertRaises(Exception) as raised,
         ):
             await delete_catalogued_variant(request)
@@ -301,7 +302,7 @@ class CataloguedVariantArchiveActiveGameTest(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(await db.catalogued_variant_name.find_one({"_id": name}))
         self.assertIsNotNone(await db.tournament.find_one({"_id": "tournament-id"}))
 
-    async def test_delete_permanently_reserves_internal_name(self) -> None:
+    async def test_delete_records_previous_internal_name(self) -> None:
         name = "deleted_name_test"
         doc = {"_id": name, "name": name, "author": "author"}
         variant_collection = SimpleNamespace(delete_one=AsyncMock())
@@ -318,10 +319,10 @@ class CataloguedVariantArchiveActiveGameTest(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch(
-                "catalogued_variants._load_owned_doc",
+                "catalogued.http._load_owned_doc",
                 AsyncMock(return_value=(app_state, "author", name, doc)),
             ),
-            patch("catalogued_variants._has_games", AsyncMock(return_value=False)),
+            patch("catalogued.repository._has_games", AsyncMock(return_value=False)),
         ):
             response = await delete_catalogued_variant(request)
 
@@ -347,7 +348,7 @@ class CataloguedVariantArchiveActiveGameTest(unittest.IsolatedAsyncioTestCase):
         self.addCleanup(unregister_catalogued_server_variant, name)
 
         with patch(
-            "catalogued_variants._load_owned_doc",
+            "catalogued.http._load_owned_doc",
             AsyncMock(
                 return_value=(app_state, "author", name, app_state.catalogued_variants[name])
             ),
@@ -387,7 +388,7 @@ class CataloguedVariantArchiveActiveGameTest(unittest.IsolatedAsyncioTestCase):
         self.addCleanup(unregister_catalogued_server_variant, name)
 
         with patch(
-            "catalogued_variants._load_owned_doc",
+            "catalogued.http._load_owned_doc",
             AsyncMock(return_value=(app_state, "author", name, doc)),
         ):
             response = await archive_catalogued_variant(request)
@@ -413,11 +414,11 @@ class CataloguedVariantArchiveActiveGameTest(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch(
-                "catalogued_variants._load_owned_doc",
+                "catalogued.http._load_owned_doc",
                 AsyncMock(return_value=(app_state, "author", name, doc)),
             ),
             patch(
-                "catalogued_variants._ensure_catalogued_variant_quota",
+                "catalogued.repository._ensure_catalogued_variant_quota",
                 AsyncMock(side_effect=Exception("quota checked")),
             ) as ensure_quota,
             self.assertRaisesRegex(Exception, "quota checked"),
@@ -442,17 +443,17 @@ class CataloguedVariantArchiveActiveGameTest(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch(
-                "catalogued_variants._load_owned_doc",
+                "catalogued.http._load_owned_doc",
                 AsyncMock(return_value=(app_state, "author", name, doc)),
             ),
             patch(
-                "catalogued_variants._ensure_catalogued_variant_quota",
+                "catalogued.repository._ensure_catalogued_variant_quota",
                 new=AsyncMock(),
             ) as ensure_quota,
-            patch("catalogued_variants.register_catalogued_variant_doc"),
-            patch("catalogued_variants._game_count", new=AsyncMock(return_value=0)),
+            patch("catalogued.variants.register_catalogued_variant_doc"),
+            patch("catalogued.repository._game_count", new=AsyncMock(return_value=0)),
             patch(
-                "catalogued_variants._client_doc",
+                "catalogued.documents._client_doc",
                 return_value={"name": name},
             ),
         ):
@@ -498,11 +499,11 @@ class CataloguedVariantArchiveActiveGameTest(unittest.IsolatedAsyncioTestCase):
         )
 
         with patch(
-            "catalogued_variants.validate_catalogued_ini", return_value=validation
+            "catalogued.validation.validate_catalogued_ini", return_value=validation
         ) as validate_catalogued_ini:
             ensure_catalogued_variant_from_game_doc(app_state, game_doc)
 
-        validate_catalogued_ini.assert_called_once_with(game_doc["vini"])
+        validate_catalogued_ini.assert_called_once_with(game_doc["vini"], for_replay=True)
         self.assertTrue(is_catalogued_variant(name))
         self.assertIn(name, app_state.catalogued_variants)
         restored = app_state.catalogued_variants[name]
@@ -510,8 +511,8 @@ class CataloguedVariantArchiveActiveGameTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(restored["ini"], game_doc["vini"])
         self.assertEqual(restored["displayName"], game_doc["vd"])
         self.assertEqual(restored["author"], game_doc["vby"])
-        self.assertFalse(restored["archived"])
-        self.assertTrue(restored["enabled"])
+        self.assertTrue(restored["archived"])
+        self.assertFalse(restored["enabled"])
 
 
 if __name__ == "__main__":

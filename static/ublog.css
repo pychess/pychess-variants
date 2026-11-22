@@ -5,6 +5,11 @@
   align-items: flex-start;
 }
 
+/* Match Lichess's page-small post width, independent of board sizing. */
+#main-wrap.ublog-post-wrap {
+  --main-max-width: 1000px;
+}
+
 .ublog-page .ublog-box {
   width: 100%;
   min-width: 0;
@@ -370,7 +375,7 @@
 
 .ublog-page .ublog-markdown-render,
 .ublog-page .ublog-post__markup {
-  line-height: 1.65;
+  line-height: 1.8;
   overflow-wrap: anywhere;
   word-break: break-word;
   min-width: 0;
@@ -384,6 +389,7 @@
 
 .ublog-page .ublog-markdown-render p {
   margin: 0.85em 0;
+  font-size: 1.2em;
 }
 
 /* Match old blog rendering: paragraphs containing images are centered. */
@@ -684,4 +690,15 @@
   .ublog-page .ublog-post__meta {
     justify-content: flex-start;
   }
+}
+
+/* Preserve the original cover aspect ratio; center the PyChess fallback instead of cropping it. */
+.ublog-page .ublog-cover-fallback,
+.player-ublog .ublog-cover-fallback {
+  object-fit: contain;
+  background: #d9e0e5;
+}
+.ublog-page .ublog-post-image.ublog-cover-fallback {
+  max-height: 360px;
+  object-fit: contain;
 }

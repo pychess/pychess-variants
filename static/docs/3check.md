@@ -1,4 +1,4 @@
-# ![ThreeCheck](https://github.com/pychess/pychess-variants/blob/master/static/icons/3check.svg) Three-Check
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/3check.svg) Three-Check
 
 _Check your opponent 3 times to win the game._
 

@@ -1158,6 +1158,8 @@ class TestGUI:
         user = User(app_state, username="simul-player")
         ws = SimpleNamespace(send_str=AsyncMock())
         game = SimpleNamespace(
+            id="game",
+            is_player=lambda actor: actor is user,
             server_variant=SimpleNamespace(two_boards=False),
             simulId="sid",
         )

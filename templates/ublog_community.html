@@ -24,11 +24,7 @@
     {% for post in community_posts %}
         <a class="ublog-card ublog-post-card ublog-post-card--link" href="{{ post['url'] }}">
             <span class="ublog-post-card__top">
-                {% if post['image'] %}
-                <img class="ublog-card-image ublog-post-card__image" src="{{ post['image_src'] }}" alt="{{ post['imageAlt'] }}">
-                {% else %}
-                <div class="ublog-card-image ublog-card-image--empty ublog-post-card__image"></div>
-                {% endif %}
+                <img class="ublog-card-image ublog-post-card__image{% if not post['image_src'] %} ublog-cover-fallback{% endif %}" src="{{ post['image_src'] or static('images/ublog-default-cover.svg') }}" alt="{{ post['imageAlt'] if post['image_src'] else 'PyChess' }}">
                 <time class="ublog-post-card__over-image">{{ post['date'] }}</time>
                 <span class="ublog-post-card__over-image user-link pos-bottom"><player-title>{{ post['author_title'] }} </player-title>{{ post['author'] }}</span>
             </span>

@@ -80,6 +80,7 @@ export class DuckInput extends ExtraInput {
             return;
         }
 
+        if (meta.premove) meta.premove = false;
         this.setPlacementActive(true);
         // When the game starts there is no duck piece on the board
         if (!duckKey) {

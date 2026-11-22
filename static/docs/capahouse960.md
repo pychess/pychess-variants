@@ -1,4 +1,4 @@
-# ![Capahouse960](https://github.com/pychess/pychess-variants/blob/master/static/icons/Capahouse960.svg) Capahouse 960
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/Capahouse960.svg) Capahouse 960
 
 Capahouse 960 is a custom variant combining the rules of Capablanca chess, Crazyhouse, and Chess 960. As this is considered a derivative of Capablanca chess, please check the Capablanca rules in its separate guide. Crazyhouse and 960 rules are as below for a reminder.
 

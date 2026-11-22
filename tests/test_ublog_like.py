@@ -45,7 +45,7 @@ class UblogEngagementTestCase(AioHTTPTestCase):
         app_state = get_app_state(self.app)
         if await app_state.db.user.find_one({"_id": author}) is None:
             await self.add_user(author)
-        await app_state.db.ublog_post.insert_one(
+        await app_state.db.ublog_post2.insert_one(
             {
                 "_id": post_id,
                 "author": author,
@@ -90,7 +90,7 @@ class UblogEngagementTestCase(AioHTTPTestCase):
         self.assertEqual(await third.json(), {"ok": True, "liked": True, "likes": 1})
 
         app_state = get_app_state(self.app)
-        post = await app_state.db.ublog_post.find_one({"_id": "post0001"})
+        post = await app_state.db.ublog_post2.find_one({"_id": "post0001"})
         self.assertEqual(post["likes"], ["alice"])
 
     async def test_new_like_is_published_to_followers_but_unlike_is_not(self):
@@ -131,7 +131,7 @@ class UblogEngagementTestCase(AioHTTPTestCase):
         self.assertEqual(response.status, 403)
         self.assertEqual(await response.json(), {"ok": False, "error": "forbidden"})
         app_state = get_app_state(self.app)
-        post = await app_state.db.ublog_post.find_one({"_id": "post0001"})
+        post = await app_state.db.ublog_post2.find_one({"_id": "post0001"})
         self.assertEqual(post["likes"], [])
 
     async def test_legacy_duplicate_usernames_count_as_one_like(self):
@@ -144,7 +144,7 @@ class UblogEngagementTestCase(AioHTTPTestCase):
         self.assertEqual(await response.json(), {"ok": True, "liked": False, "likes": 0})
 
         app_state = get_app_state(self.app)
-        post = await app_state.db.ublog_post.find_one({"_id": "post0001"})
+        post = await app_state.db.ublog_post2.find_one({"_id": "post0001"})
         self.assertEqual(post["likes"], [])
 
     async def test_likes_are_counted_per_user(self):
@@ -161,7 +161,7 @@ class UblogEngagementTestCase(AioHTTPTestCase):
         self.assertEqual((await bob_response.json())["likes"], 2)
 
         app_state = get_app_state(self.app)
-        post = await app_state.db.ublog_post.find_one({"_id": "post0001"})
+        post = await app_state.db.ublog_post2.find_one({"_id": "post0001"})
         self.assertEqual(set(post["likes"]), {"alice", "bob"})
 
     async def test_anonymous_views_are_not_counted(self):
@@ -172,7 +172,7 @@ class UblogEngagementTestCase(AioHTTPTestCase):
 
         self.assertEqual(response.status, 200)
         app_state = get_app_state(self.app)
-        post = await app_state.db.ublog_post.find_one({"_id": "post0001"})
+        post = await app_state.db.ublog_post2.find_one({"_id": "post0001"})
         self.assertEqual(post["views"], 0)
         self.assertNotIn("viewers", post)
 
@@ -188,7 +188,7 @@ class UblogEngagementTestCase(AioHTTPTestCase):
         self.assertEqual(first.status, 200)
         self.assertEqual(second.status, 200)
         app_state = get_app_state(self.app)
-        post = await app_state.db.ublog_post.find_one({"_id": "post0001"})
+        post = await app_state.db.ublog_post2.find_one({"_id": "post0001"})
         self.assertEqual(post["views"], 1)
         self.assertEqual(post["viewers"], ["alice"])
 
@@ -206,7 +206,7 @@ class UblogEngagementTestCase(AioHTTPTestCase):
         self.assertEqual(alice_response.status, 200)
         self.assertEqual(bob_response.status, 200)
         app_state = get_app_state(self.app)
-        post = await app_state.db.ublog_post.find_one({"_id": "post0001"})
+        post = await app_state.db.ublog_post2.find_one({"_id": "post0001"})
         self.assertEqual(post["views"], 2)
         self.assertEqual(set(post["viewers"]), {"alice", "bob"})
 
@@ -218,7 +218,7 @@ class UblogEngagementTestCase(AioHTTPTestCase):
 
         self.assertEqual(response.status, 404)
         app_state = get_app_state(self.app)
-        post = await app_state.db.ublog_post.find_one({"_id": "post0001"})
+        post = await app_state.db.ublog_post2.find_one({"_id": "post0001"})
         self.assertEqual(post["views"], 0)
         self.assertNotIn("viewers", post)
 
@@ -233,7 +233,7 @@ class UblogEngagementTestCase(AioHTTPTestCase):
         self.assertEqual(response.status, 404)
         self.assertEqual(await response.json(), {"ok": False, "error": "not_found"})
         app_state = get_app_state(self.app)
-        post = await app_state.db.ublog_post.find_one({"_id": "post0001"})
+        post = await app_state.db.ublog_post2.find_one({"_id": "post0001"})
         self.assertEqual(post["likes"], [])
 
     async def test_disabled_author_posts_are_hidden_from_community_list(self):

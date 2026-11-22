@@ -82,6 +82,33 @@ export interface ChatViewOptions {
     chatHeader?: boolean;
 }
 
+const chatFocusCleanup = new WeakMap<HTMLInputElement, () => void>();
+
+function bindChatFocus(input: HTMLInputElement): void {
+    // Adapted from lila ui/lib/src/chat/discussion.ts (lichess-org/lila#5323).
+    // Capture runs before Chessground prevents the pointer event's default
+    // behavior, which would otherwise leave chat focused when playing a move.
+    const events = ['touchstart', 'mousedown'] as const;
+    const onOutside = (event: Event) => {
+        const mouse = event as MouseEvent;
+        if (!mouse.shiftKey && mouse.buttons !== 2 && mouse.button !== 2 && event.target !== input) input.blur();
+    };
+    const onFocus = () => {
+        events.forEach(event => document.body.addEventListener(event, onOutside, { passive: true, capture: true }));
+    };
+    const onBlur = () => {
+        events.forEach(event => document.body.removeEventListener(event, onOutside, { capture: true }));
+    };
+    input.addEventListener('focus', onFocus);
+    input.addEventListener('blur', onBlur);
+    chatFocusCleanup.set(input, () => {
+        onBlur();
+        input.removeEventListener('focus', onFocus);
+        input.removeEventListener('blur', onBlur);
+        chatFocusCleanup.delete(input);
+    });
+}
+
 export function chatView(ctrl: ChatController, chatType: string, opts: ChatViewOptions = {}) {
     const spectator = 'spectator' in ctrl && ctrl.spectator;
     const chatHeader = opts.chatHeader ?? true;
@@ -116,7 +143,11 @@ export function chatView(ctrl: ChatController, chatType: string, opts: ChatViewO
                   }),
               ])
             : null,
-        h(`ol#${chatType}-messages`, [h('div#messages')]),
+        // A list a reader can step through, whose new messages are read out when the reader is
+        // free, as lichess does. The inner div only collects the items, so it is no list level.
+        h(`ol#${chatType}-messages`, { attrs: { 'aria-live': 'polite', 'aria-relevant': 'additions' } }, [
+            h('div#messages', { attrs: { role: 'none' } }),
+        ]),
         h('input#chat-entry', {
             props: {
                 type: 'text',
@@ -127,8 +158,11 @@ export function chatView(ctrl: ChatController, chatType: string, opts: ChatViewO
             },
             attrs: {
                 maxlength: 140,
-                // autofocus: "true",
-                'aria-label': 'Chat input',
+                'aria-label': _('Chat'),
+            },
+            hook: {
+                insert: vnode => bindChatFocus(vnode.elm as HTMLInputElement),
+                destroy: vnode => chatFocusCleanup.get(vnode.elm as HTMLInputElement)?.(),
             },
             on: { keypress: onKeyPress },
         }),
@@ -148,7 +182,7 @@ export function chatView(ctrl: ChatController, chatType: string, opts: ChatViewO
 //     chatMessage('', '…', 'bugroundchat', undefined, idx, this)
 // where the `undefined` only existed to step over a `time` they had no value for on
 // the way to arguments that were never read.
-export function chatMessage(user: string, message: string, chatType: string, time?: number) {
+export function chatMessage(user: string, message: string, chatType: string, time?: number, history = false) {
     if (shouldSkipMessage(message)) return;
 
     // when the first duck placement starts, DuckInput.start() calls:
@@ -157,6 +191,8 @@ export function chatMessage(user: string, message: string, chatType: string, tim
     const chatDiv = document.getElementById(chatType + '-messages') as HTMLElement | null;
     const container = document.getElementById('messages') as HTMLElement | null;
     if (!chatDiv || !container) return;
+    // History resent on load or reconnect is not news: silent until the next live message.
+    chatDiv.setAttribute('aria-live', history ? 'off' : 'polite');
 
     const isBottom = chatDiv.scrollHeight - (chatDiv.scrollTop + chatDiv.offsetHeight) < 80;
     const localTime = time

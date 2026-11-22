@@ -2,6 +2,7 @@ import asyncio
 import json
 import time
 from datetime import UTC, datetime
+from unittest.mock import patch
 
 import test_logger
 from admin import ban, set_shadowban, unban
@@ -70,10 +71,11 @@ class SignupSecurityEvasionTestCase(AioHTTPTestCase):
         body = await response.json()
         self.assertEqual(body.get("error"), "Username is already taken")
 
+    @patch("client_ip.CLIENT_IP_MODE", "heroku")
     async def test_confirm_username_auto_closes_on_ipfp_ban_signal(self):
         app_state = get_app_state(self.app)
         headers = {
-            "X-Forwarded-For": "198.51.100.44",
+            "X-Forwarded-For": "203.0.113.10, 198.51.100.44",
             "User-Agent": "SecurityTestUA/1.0",
             "Accept-Language": "en-US,en;q=0.8",
             "Cookie": "pcfp=fp-test",
@@ -99,7 +101,7 @@ class SignupSecurityEvasionTestCase(AioHTTPTestCase):
             "/api/confirm-username",
             json={"username": "blocked_signup"},
             headers={
-                "X-Forwarded-For": "198.51.100.44",
+                "X-Forwarded-For": "203.0.113.20, 198.51.100.44",
                 "User-Agent": "SecurityTestUA/1.0",
                 "Accept-Language": "en-US,en;q=0.8",
             },

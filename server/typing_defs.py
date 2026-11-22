@@ -37,9 +37,15 @@ class ArenaCreationHistoryEntry(TypedDict):
     id: str
 
 
+class BotEngineInfo(TypedDict):
+    name: str
+    author: NotRequired[str]
+
+
 class UserDocument(TypedDict, total=False):
     _id: str
     title: str
+    botEngine: BotEngineInfo
     enabled: bool
     shadowban: bool
     patron: bool
@@ -63,6 +69,7 @@ class UserDocument(TypedDict, total=False):
     ct: str
     pmf: bool
     cps: bool
+    cbs: bool
     rps: bool
     cvf: list[str]
     oauth_id: str
@@ -204,6 +211,7 @@ GameDocument = TypedDict(
         "y": NotRequired[int],
         "z": NotRequired[int],
         "tid": NotRequired[str],
+        "arenaStart": NotRequired[datetime | None],
         "rn": NotRequired[int],
         "aid": NotRequired[str],
         "sid": NotRequired[str],
@@ -505,6 +513,7 @@ class ViewContext(TypedDict, total=False):
     selected_tournament_team_id: str
     pm_friends_only: bool
     corr_push_enabled: bool
+    corr_browser_enabled: bool
     rr_push_enabled: bool
     menu_variant: str
     title: str
@@ -523,6 +532,7 @@ class ViewContext(TypedDict, total=False):
     admin_action_notice: str
     admin_timeout_reasons: Mapping[str, str]
     admin_operations_anons_disabled: bool
+    admin_operations_event_loop_lag: Mapping[str, object]
     admin_operations_streams: Sequence[Mapping[str, object]]
     admin_operations_fishnet: Sequence[Mapping[str, object]]
     admin_operations_variants: Sequence[Mapping[str, str]]
@@ -547,6 +557,8 @@ class ViewContext(TypedDict, total=False):
     following_next_href: str
     site_tag: str
     site_tags: list[str]
+    prev_page_href: str | None
+    next_page_href: str | None
     community_posts: list[object]
     community_topic: str
     community_topics: list[str]
@@ -569,6 +581,7 @@ class ViewContext(TypedDict, total=False):
     team_members_next_href: str | None
     team_leaders: Sequence[Mapping[str, object]]
     team_requests: Sequence[Mapping[str, object]]
+    team_requests_total: int
     team_request_teams: Mapping[str, Mapping[str, object]]
     team_declined_requests: Sequence[Mapping[str, object]]
     team_declined_requests_total: int
@@ -655,6 +668,8 @@ class ViewContext(TypedDict, total=False):
     bot_notice: str
     bot_error: str
     new_bot_token: str
+    engine_tokens: list[Mapping[str, object]]
+    new_engine_token: str
     online_users: Sequence[User]
     profile: str | None
     profile_teams: Sequence[Mapping[str, object]]

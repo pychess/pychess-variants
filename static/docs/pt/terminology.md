@@ -2,7 +2,7 @@
 
 Ao longo deste site e dos guias presentes, são usados diversos termos. A maioria destes termos são globais e aplicam-se a todas as formas das variantes de Xadrez, alguns dos termos são usados nalgumas variantes (byo-yomi), e outros têm implicações diferentes dependendo da variante (ex: rei afogado). Qualquer termo usado numa única variante será explicado aqui (ex: muitos termos de Shogi). Esta página serve como referência a fim de esclarecer algumas confusões! 
 
-# "Variantes de Xadrez"
+## "Variantes de Xadrez"
 
 O termo mais importante a ser esclarecido é a definição de "**Variante de Xadrez**". Não existem dúvidas de que o Bughouse e o Crazyhouse são variantes de Xadrez, pelo facto de serem derivadas deste. No entanto existem jogos locais como o Xiangqi, Shogi, Janggi e o Makruk que também podem ser considerados "Variantes de Xadrez" e isto pode causar alguma confusão.
 
@@ -10,13 +10,13 @@ A maior enciclopédia para Variantes de Xadrez, chessvariants.com tem um artigo 
 
 Pelo facto das variantes de Xadrez serem baseados no Xadrez internacional, tal como todas as formas de "Xadrez", existe uma ambiguidade aqui. Na maioria das vezes, podemos chegar à conclusão do que se trata cada tipo de variante pelo nome. No entanto é pode ser considerada uma falha haver este termo ambiguo, e talvez quando se debate sobre todas as formas de Xadrez, então um termo geral denominado de "Variantes como o Xadrez" podia ser usado.
 
-# Peças
+## Peças
 
 **Peças Heterodoxas** - Uma peça não muito comum no Xadrez, como o nome "Heterodoxa" (ingles "Fairy") descreve como "invenção". Não é muito claro se as peças nativas de variantes locais são consideradas "Peças Heterodoxas", mas optamos por não usar este termo para tais jogos. No entanto o Canhão de Xiangqi existe numa variante de Xadrez (como Shako), ou o Bispo que podia porventura aparecer numa variante de Xiangqi podia ser denominado de "Peça Heterodoxa", por não existir no jogo original.
 
 De notar que existem peças que são do mesmo tipo, mas têm nomes distintos. Por exemplo a "Torre" e "Biga" que se referem à mesma peça. O nome é referência para cada jogo que é usado.
 
-## Classificação
+### Classificação
 
 Pelo facto das Peças Heterodoxas introduzirem várias peças possíveis, existe um sistema de classificação para tal. Também existem notações usadas para descrever os seus movimentos, mas isto está fora do âmbito desta página. Existem três tipos de peças simples:
 
@@ -28,7 +28,7 @@ Pelo facto das Peças Heterodoxas introduzirem várias peças possíveis, existe
 
 E por fim, **peças compostas** são peças que combinam o movimento de duas peças base. A Dama do Xadrez, combina a Torre e o Bispo, é um destes exemplos. Existem várias peças heterodoxas que são compostas.
 
-# Relógio
+## Relógio
 
 O Relógio determina restrições no tempo da partida a fim de punir aquele que possa levar demasiado tempo a efetuar um lance. Um tipo de jogo, chamado **correspondência**, é conhecido por usar um relógio longo de no mínimo algumas horas, tipicamente contado em dias. Os jogadores típicamente fazem os seus lances após espairecerem de um dia dificil. Neste momento os jogos por correspondência não estão disponíveis no Pychess.
 
@@ -40,7 +40,7 @@ As partidas feitas de uma só vez usam um relógio principal definido de 1 minut
 
 3. **Morte súbita** - Sem tempo extre. Um jogo que usa incremento ou byo-yomi pode ser configurado para morte súbita ajustando as configurações para 0 segundos.
 
-# Conceitos Gerais
+## Conceitos Gerais
 
 **Xeque** - Ameaçando o Rei com uma peça que o possa capturar no lance seguinte.
 
@@ -66,7 +66,7 @@ As partidas feitas de uma só vez usam um relógio principal definido de 1 minut
 
 **Zona de Promoção** - Área do tabuleiro onde as peças podem ser promovidas. No Xadrez, os Peões só podem ser promovidos na última linha. No entanto em Shogi, a zona de promoção são as três últimas linhas, e grande parte das peças podem ser promovidas. Outras variantes podem ser diferentes na sua zona de promoção.
 
-# Táticas
+## Táticas
 
 **Garfo** - Atacar duas peças ao mesmo tempo. Os Cavalos são quem efetuam mais esta tática em todas as variantes. Nas variantes de colocação, as Torres e os Bispos também são capazes de tal tática.
 

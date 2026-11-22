@@ -35,10 +35,13 @@ import { calendarView } from './calendar';
 import { pasteView, recordImportFfishError } from './paste';
 import { myVariantsView } from './myVariants';
 import { initAnalysisEngine } from './fairyStockfish';
+import { buildStudyEngineRules } from './study/variantRules';
+import { activateStudyEngineRules } from './variants';
 import { statsView } from './stats';
 import { volumeSettings, soundThemeSettings } from './sound';
 import { notifyChessgroundResize, patch } from './document';
-import { renderTimeago } from './datetime';
+import { renderTimeago, updateTimeago } from './datetime';
+import { initInfiniteScroll } from './infiniteScroll';
 import { zenButtonView, zenModeSettings } from './zen';
 import { PyChessModel } from './types';
 import { roundView as bugRoundView } from './two-board/round/round';
@@ -58,17 +61,18 @@ import { maybeShowGameCategoryIntro } from './gameCategoryIntro';
 import { initTournamentForm } from './tournamentForm';
 import { initUserMiniWidget } from './userMiniWidget';
 import { initUblogLike } from './ublogLike';
-import { initUblogMarkdown } from './ublogMarkdown';
+import { initTopNavDisclosures } from './topNav';
+import { initUblogMarkdownV2 } from './ublogMarkdownV2';
 import { initUblogEditor } from './ublogEditor';
 import { initPushSubscription } from './push';
-import { initCommunityVariantFavorites } from './communityVariants';
+import { mountCataloguedStartBoards, initCommunityVariantFavorites } from './communityVariants';
 import { gameSearchView, initGameSearch } from './gameSearch';
 import { initProfileActionOverflow } from './profileActionOverflow';
 import { initVariantAuthors } from './variantAuthors';
 import { initSearchBarDismissal } from './searchBar';
 import { timelinePageView } from './timeline';
 import { initAdminSystemMessages } from './adminSystemMessages';
-import { hydrateHeaderPanel } from './headerPanel';
+import { hydrateHeaderPanel, registerHeaderDropdown } from './headerPanel';
 
 // redirect to correct URL except Heroku preview/dev apps
 if (
@@ -125,9 +129,7 @@ function initModel(el: HTMLElement) {
         botChallengeStatus: el.getAttribute('data-bot-challenge-status') ?? '',
         botChallengeDeclineReason: el.getAttribute('data-bot-challenge-decline-reason') ?? '',
         botChallengeOpponent: el.getAttribute('data-bot-challenge-opponent') ?? '',
-        botSupportedVariants: JSON.parse(el.getAttribute('data-bot-supported-variants') || 'null') as
-            | string[]
-            | null,
+        botSupportedVariants: JSON.parse(el.getAttribute('data-bot-supported-variants') || 'null') as string[] | null,
         challengeId: el.getAttribute('data-challengeid') ?? '',
         ply: parseInt('' + el.getAttribute('data-ply')),
         initialFen: el.getAttribute('data-initialfen') ?? '',
@@ -190,8 +192,7 @@ function initModel(el: HTMLElement) {
             : null,
         pushVapidKey: el.getAttribute('data-vapid') ?? '',
         pushEnabled:
-            el.getAttribute('data-corr-push-enabled') !== 'False' ||
-            el.getAttribute('data-rr-push-enabled') === 'True',
+            el.getAttribute('data-corr-push-enabled') !== 'False' || el.getAttribute('data-rr-push-enabled') === 'True',
     };
 }
 
@@ -248,7 +249,7 @@ export function view(el: HTMLElement, model: PyChessModel): VNode {
         case 'my-variants':
             return h('div#main-wrap', myVariantsView(model));
         case 'stats':
-            return h('div#stats', statsView());
+            return h('main#stats', statsView());
         case 'inbox':
             return h('div#main-wrap', [inboxView(model)]);
         case 'forum':
@@ -299,31 +300,38 @@ function start() {
 
         if (['round', 'analysis', 'study', 'puzzle', 'editor', 'tv', 'embed', 'paste'].includes(dataView)) {
             console.time('load ffish');
-            const variantIni =
-                dataView === 'paste'
-                    ? allVariantsIni(variantsIni)
-                    : variantConfigIni(variantsIni, model.variant);
-            if (model['variant'] === 'alice') {
-                const loadModule = ffishAliceModule(
-                    dataView === 'paste' ? ffishModuleOptions(recordImportFfishError) : ffishModuleOptions(),
-                );
-                loadModule.then((loadedModule: any) => {
-                    console.timeEnd('load ffish_alice');
-                    loadedModule.loadVariantConfig(variantIni);
-                    model.ffish = loadedModule;
-                    renderView();
-                });
-            } else {
-                const loadModule = ffishModule(
-                    dataView === 'paste' ? ffishModuleOptions(recordImportFfishError) : ffishModuleOptions(),
-                );
-                loadModule.then((loadedModule: any) => {
-                    console.timeEnd('load ffish');
-                    loadedModule.loadVariantConfig(variantIni);
-                    model.ffish = loadedModule;
-                    renderView();
-                });
-            }
+            const loadRulesBoard = async () => {
+                if (model.study) {
+                    const rules = model.study.chapter.variantIni
+                        ? await buildStudyEngineRules(model.variant, variantsIni)
+                        : undefined;
+                    activateStudyEngineRules(rules);
+                }
+                const variantIni =
+                    dataView === 'paste' ? allVariantsIni(variantsIni) : variantConfigIni(variantsIni, model.variant);
+                if (model['variant'] === 'alice') {
+                    const loadModule = ffishAliceModule(
+                        dataView === 'paste' ? ffishModuleOptions(recordImportFfishError) : ffishModuleOptions(),
+                    );
+                    loadModule.then((loadedModule: any) => {
+                        console.timeEnd('load ffish_alice');
+                        loadedModule.loadVariantConfig(variantIni);
+                        model.ffish = loadedModule;
+                        renderView();
+                    });
+                } else {
+                    const loadModule = ffishModule(
+                        dataView === 'paste' ? ffishModuleOptions(recordImportFfishError) : ffishModuleOptions(),
+                    );
+                    loadModule.then((loadedModule: any) => {
+                        console.timeEnd('load ffish');
+                        loadedModule.loadVariantConfig(variantIni);
+                        model.ffish = loadedModule;
+                        renderView();
+                    });
+                }
+            };
+            void loadRulesBoard().catch(error => console.warn(error));
         } else {
             renderView();
             if (dataView === 'profile' || dataView === 'level8win') initProfileActionOverflow();
@@ -336,12 +344,14 @@ function start() {
     initUserMiniWidget(model.assetURL, model.username, model.anon);
     if (model.pushEnabled) void initPushSubscription(model.anon, model.pushVapidKey);
     initUblogLike();
-    initUblogMarkdown();
+    initUblogMarkdownV2();
     initUblogEditor();
 
-    (document.querySelector('.hamburger') as HTMLElement).addEventListener('click', () => {
+    const hamburger = document.querySelector('.hamburger') as HTMLElement;
+    hamburger.addEventListener('click', () => {
         document.querySelectorAll('.topnav a').forEach(nav => nav.classList.toggle('navbar-show'));
-        (document.querySelector('.hamburger') as HTMLElement).classList.toggle('is-active');
+        const open = hamburger.classList.toggle('is-active');
+        hamburger.setAttribute('aria-expanded', String(open));
     });
 
     renderTimeago();
@@ -405,19 +415,29 @@ function start() {
         notifyPanel = hydrateHeaderPanel(notifyPanel, notifyView());
     }
 
-    document.addEventListener('click', function (event) {
-        if (!settingsPanel.contains(event.target as Node)) hideSettings();
-        if (model['anon'] !== 'True') {
-            if (!challengePanel.contains(event.target as Node)) hideChallenge();
-            if (!notifyPanel.contains(event.target as Node)) hideNotify();
-        }
-    });
+    // Click outside and Escape are the shared header dismissal's.
+    const registerPanel = (root: HTMLElement, buttonId: string, panelId: string, close: () => void) =>
+        registerHeaderDropdown({
+            root,
+            button: document.getElementById(buttonId) as HTMLElement,
+            isOpen: () => document.getElementById(panelId)?.style.display === 'flex',
+            close,
+        });
+    registerPanel(settingsPanel, 'btn-settings', 'settings', hideSettings);
+    if (model['anon'] !== 'True') {
+        registerPanel(challengePanel, 'btn-challenge', 'challenge-app', hideChallenge);
+        registerPanel(notifyPanel, 'btn-notify', 'notify-app', hideNotify);
+    }
 
     maybeShowGameCategoryIntro();
     initCommunityVariantFavorites(model.assetURL);
     initVariantAuthors();
     initStudyIndex();
     initPracticeIndex();
+    initInfiniteScroll(() => {
+        updateTimeago();
+        mountCataloguedStartBoards(model.assetURL);
+    });
 
     patch(document.getElementById('zen-button') as HTMLElement, zenButtonView());
 }
@@ -447,34 +467,23 @@ function initLoginDropdown() {
                     loginBtn.setAttribute('aria-expanded', (!isOpen).toString());
                 }
             }
-            return;
-        }
-
-        // Close dropdown when clicking outside
-        const loginDropdown = document.querySelector('.login-dropdown.open') as HTMLElement;
-        if (loginDropdown && !loginDropdown.contains(target)) {
-            loginDropdown.classList.remove('open');
-            const loginBtn = loginDropdown.querySelector('.login-btn') as HTMLButtonElement;
-            if (loginBtn) {
-                loginBtn.setAttribute('aria-expanded', 'false');
-            }
         }
     });
 
-    // Handle escape key
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') {
-            const loginDropdown = document.querySelector('.login-dropdown.open') as HTMLElement;
-            if (loginDropdown) {
-                loginDropdown.classList.remove('open');
-                const loginBtn = loginDropdown.querySelector('.login-btn') as HTMLButtonElement;
-                if (loginBtn) {
-                    loginBtn.setAttribute('aria-expanded', 'false');
-                    loginBtn.focus();
-                }
-            }
-        }
-    });
+    // Click outside and Escape are the shared header dismissal's.
+    const dropdown = document.querySelector('.login-dropdown') as HTMLElement | null;
+    const button = dropdown?.querySelector('.login-btn') as HTMLButtonElement | null;
+    if (dropdown && button) {
+        registerHeaderDropdown({
+            root: dropdown,
+            button,
+            isOpen: () => dropdown.classList.contains('open'),
+            close: () => {
+                dropdown.classList.remove('open');
+                button.setAttribute('aria-expanded', 'false');
+            },
+        });
+    }
 
     // Provider-neutral /login redirects here so all callers can use the same chooser.
     if (window.location.hash === '#login') {
@@ -522,6 +531,12 @@ if (el instanceof Element) {
             i18n.setLocale('');
         }
     }
+
+    /* THE HEADER NAV IS WIRED BEFORE THE TRANSLATION FETCH, unlike everything below it. Its labels
+       come from the server-rendered template, so it has no i18n dependency -- and `start()` only
+       runs after an awaited `fetch` of client.json, which would leave the six menus dead for a
+       round trip after first paint, exactly when a screen reader is building its buffer. */
+    initTopNavDisclosures();
 
     void loadTranslations()
         .then(() => {

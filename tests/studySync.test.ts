@@ -2111,3 +2111,96 @@ test('conceal reader clears persisted evaluations from hidden sidelines and neve
     extension.onNodeAdded('', attempted);
     expect(ctrl.doSend).not.toHaveBeenCalled();
 });
+
+test.each([
+    ['normal', true, undefined, true, false],
+    ['gamebook', true, undefined, true, true],
+    ['gamebook', true, 'analysis', true, true],
+    ['gamebook', true, 'preview', false, false],
+    ['gamebook', false, undefined, false, false],
+    ['practice', true, undefined, false, false],
+    ['practice', true, 'analysis', false, false],
+    ['conceal', true, undefined, false, false],
+    ['conceal', false, undefined, false, false],
+] as const)(
+    'fork drawing policy for %s writer=%s override=%s follows Lichess allowLines',
+    (mode, canWrite, override, allowed, gamebook) => {
+        const policy = studySessionPolicy({
+            mode,
+            canWrite,
+            override,
+            computerAllowed: true,
+            savedRecording: true,
+            savedSynchronization: true,
+            activeGame: false,
+        });
+        const extension = new StudyAnalysisExtension(makeCtrl(), {
+            studyId: 'study001',
+            chapterId: 'chapter1',
+            revision: 0,
+            writable: canWrite,
+            policy,
+            onReloadRequired: jest.fn(),
+        });
+        expect(extension.allowVariationArrows()).toBe(allowed);
+        expect(extension.isGamebookEditor()).toBe(gamebook);
+    },
+);
+
+test('local and remote NAG edits and clears refresh current board annotations', () => {
+    const ctrl = makeCtrl();
+    ctrl.setAutoShapes = jest.fn();
+    addStudyNodeToAnalysisTree(ctrl.analysisTree, '', e4Node());
+    ctrl.analysisPath = 'StudyNode1';
+    const extension = new StudyAnalysisExtension(ctrl, {
+        studyId: 'study001',
+        chapterId: 'chapter1',
+        revision: 0,
+        writable: true,
+        recording: false,
+        onReloadRequired: jest.fn(),
+    });
+    extension.onSocketOpen();
+    ctrl.setAutoShapes.mockClear();
+    extension.setNags([1]);
+    expect(ctrl.setAutoShapes).toHaveBeenCalledTimes(1);
+    extension.clearAnnotations();
+    expect(ctrl.setAutoShapes).toHaveBeenCalledTimes(2);
+    ctrl.setAutoShapes.mockClear();
+    extension.onSocketMessage('study_set_nags', {
+        type: 'study_set_nags',
+        studyId: 'study001',
+        chapterId: 'chapter1',
+        clientOpId: 'RemoteNags1',
+        revision: 1,
+        changed: true,
+        path: 'StudyNode1',
+        annotations: { shapes: [], comments: [], nags: [14] },
+    });
+    expect(ctrl.setAutoShapes).toHaveBeenCalledTimes(1);
+    expect(extension.annotationState.annotations.nags).toEqual([14]);
+});
+
+test.each(['practice', 'gamebook'] as const)(
+    '%s playback suppresses authored glyphs before a runtime attaches',
+    mode => {
+        const ctrl = makeCtrl();
+        const policy = studySessionPolicy({
+            mode,
+            canWrite: false,
+            computerAllowed: true,
+            savedRecording: true,
+            savedSynchronization: true,
+            activeGame: false,
+        });
+        const extension = new StudyAnalysisExtension(ctrl, {
+            studyId: 'study001',
+            chapterId: 'chapter1',
+            revision: 0,
+            writable: false,
+            policy,
+            onReloadRequired: jest.fn(),
+        });
+        expect(extension.areTreeNodeAnnotationsVisible(ctrl.analysisTree.root)).toBe(false);
+    },
+);

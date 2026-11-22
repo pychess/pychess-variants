@@ -10,6 +10,7 @@ from const import ABORTED
 from fairy import BLACK, WHITE
 from notify import notify
 from typing_defs import NotificationContent
+from variants import JANGGI_VARIANTS
 
 log = logging.getLogger(__name__)
 
@@ -46,6 +47,7 @@ class Clock:
         self.board: FairyBoard = board if board is not None else game.board
         self.running: bool = False
         self.secs: int | float = -1
+        self._generation: int = 0
         self.restart(secs)
         self.clock_task: asyncio.Task[None] | None = asyncio.create_task(
             self.countdown(), name="game-clock-%s" % game.id
@@ -72,6 +74,9 @@ class Clock:
         # self.game = None
 
     def restart(self, secs: float | None = None) -> None:
+        # Invalidate ticks and timeout waits belonging to the previous countdown,
+        # even when a takeback or time adjustment keeps the same ply and color.
+        self._generation += 1
         self.ply: int = self.game.ply
         self.color: int = self.board.color
         if secs is not None:
@@ -101,25 +106,29 @@ class Clock:
 
     async def countdown(self) -> None:
         while True:
+            generation, ply, color = self._generation, self.ply, self.color
             while self.running and self.secs > 0:
                 await asyncio.sleep(1)
+                if generation != self._generation or not self.running:
+                    break
                 self.secs -= 1000
 
+            if generation != self._generation:
+                continue
+
             # Time was running out
-            if self.running and self.game.ply == self.ply:
+            if self.running and self.game.ply == ply:
                 # On lichess rage quit waits 10 seconds
                 # until the other side gets the win claim,
                 # and a disconnection gets 120 seconds.
-                if self.ply >= 2:
+                if ply >= 2:
                     await asyncio.sleep(20 + self.game.byoyomi_period * self.game.inc)
+
+                if generation != self._generation:
+                    continue
 
                 # If FLAG was not received we have to act
                 if self.game.status < ABORTED and self.secs <= 0 and self.running:
-                    user = self.game.get_player_at(self.color, self.board)
-                    log.debug("FLAG from server. Secs: %s User: %s", self.secs, user.username)
-
-                    reason = first_move_timeout_reason(self.game, self.ply)
-
                     async with self.game.move_lock:
                         # Re-validate after acquiring the move lock. A move may
                         # have been processed while we were waiting, in which case
@@ -128,10 +137,14 @@ class Clock:
                             self.game.status >= ABORTED
                             or not self.running
                             or self.secs > 0
-                            or self.game.ply != self.ply
-                            or self.board.color != self.color
+                            or generation != self._generation
+                            or self.game.ply != ply
+                            or self.board.color != color
                         ):
                             continue
+                        user = self.game.get_player_at(color, self.board)
+                        log.debug("FLAG from server. Secs: %s User: %s", self.secs, user.username)
+                        reason = first_move_timeout_reason(self.game, ply)
                         response = await self.game.game_ended(user, reason)
                         await round_broadcast(self.game, response, full=True)
                         # If a clock expires, there may be no further gameState
@@ -154,7 +167,7 @@ class Clock:
     @property
     def time_for_first_move(self) -> int:
         # Fix 45s for janggi because it has setup phase
-        if self.game.variant == "janggi" or self.game.chess960:
+        if self.game.variant in JANGGI_VARIANTS or self.game.chess960:
             return 45 * 1000
 
         egt = self.estimate_game_time

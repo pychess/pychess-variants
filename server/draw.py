@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from const import DRAW, RATED, STARTED
+from variants import JANGGI_VARIANTS
 
 
 async def draw(game, user, agreement=False):
@@ -31,7 +32,7 @@ async def draw(game, user, agreement=False):
         response = {
             "type": "draw_offer",
             "username": user.username,
-            "message": "Pass" if game.variant == "janggi" else "Draw offer sent",
+            "message": "Pass" if game.variant in JANGGI_VARIANTS else "Draw offer sent",
             "room": "player",
             "user": "",
         }

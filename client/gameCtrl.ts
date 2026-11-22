@@ -9,7 +9,7 @@ import { _ } from './i18n';
 import { patch } from './document';
 import { alertDialog } from './alertDialog';
 import { Step, MsgChat, MsgFullChat, MsgSpectators, MsgShutdown, MsgGameNotFound } from './messages';
-import { adjacent, uci2LastMove, moveDests, cg2uci, unpromotedRole, UCIMove } from './chess';
+import { adjacent, uci2LastMove, moveDests, cg2uci, capturedRole, UCIMove } from './chess';
 import { InputType } from '@/input/input';
 import { GatingInput } from './input/gating';
 import { PromotionInput } from './input/promotion';
@@ -36,6 +36,8 @@ import {
 import { boardSettings } from './boardSettings';
 import { aliceBoardFen } from './aliceBoard';
 import type { AliceBoardName } from './aliceBoard';
+import { BoardSummaryView } from './accessibility/boardSummary';
+import { result } from './result';
 
 export abstract class GameController extends ChessgroundController implements ChatController {
     sock: WebsocketHeartbeatJs;
@@ -118,6 +120,7 @@ export abstract class GameController extends ChessgroundController implements Ch
     undo?: any;
 
     keyboardHelpOpen: boolean;
+    boardSummary: BoardSummaryView;
     private readonly onGameKeyboardHelpKeyDown: (event: KeyboardEvent) => void;
 
     get pocketHotkeyRoles(): readonly cg.Role[] | undefined {
@@ -136,6 +139,7 @@ export abstract class GameController extends ChessgroundController implements Ch
         aliceBoardEl?: HTMLElement,
     ) {
         super(el, model, fullfen, pocket0, pocket1, boardName);
+        this.boardSummary = new BoardSummaryView(this.variant, boardName);
 
         this.gameId = model['gameId'] as string;
         this.tournamentId = model['tournamentId'];
@@ -199,6 +203,7 @@ export abstract class GameController extends ChessgroundController implements Ch
 
         this.turnColor = parts[1] === 'w' ? 'white' : 'black';
         this.suffix = '';
+        this.autoPromote = localStorage.autoPromote === 'true';
 
         this.chessground.set({
             animation: {
@@ -247,6 +252,9 @@ export abstract class GameController extends ChessgroundController implements Ch
             this.initAliceSplitBoard(aliceBoardEl, model);
             Mousetrap.bind('s', () => this.toggleAliceSplitBoards());
         }
+
+        // Not every page navigates to a ply on load: a round at move 0 never does.
+        this.updateBoardSummary(undefined);
     }
 
     private initAliceSplitBoard(el: HTMLElement, model: PyChessModel): void {
@@ -350,6 +358,7 @@ export abstract class GameController extends ChessgroundController implements Ch
     }
 
     override destroy(): void {
+        this.promotion.dismiss();
         this.closeKeyboardHelp();
         document.removeEventListener('keydown', this.onGameKeyboardHelpKeyDown, true);
         Mousetrap.unbind(['left', 'right', 'up', 'down', 'enter', 'f', '?', 's']);
@@ -394,6 +403,10 @@ export abstract class GameController extends ChessgroundController implements Ch
     }
 
     setDests() {
+        if (this.variant.replayOnly) {
+            this.chessground.set({ movable: { color: undefined, dests: new Map() } });
+            return;
+        }
         // console.log("gameCtrl.setDests()");
         const legalMoves = this.ffishBoard
             .legalMoves()
@@ -479,13 +492,44 @@ export abstract class GameController extends ChessgroundController implements Ch
                 break;
             case 'arrowing':
                 this.suffix += lastSuffix;
-                this.sendMove(orig, dest, this.suffix);
+                this.sendMove(orig, dest, this.suffix, meta);
                 break;
         }
     }
 
-    sendMove(orig: cg.Orig, dest: cg.Key, promo: string) {
-        this.doSendMove(cg2uci(orig + dest + promo));
+    sendMove(orig: cg.Orig, dest: cg.Key, promo: string, meta?: cg.MoveMetadata) {
+        const preaction = this.preaction;
+        if (meta) this.preaction = meta.premove;
+        try {
+            this.doSendMove(cg2uci(orig + dest + promo));
+        } finally {
+            this.preaction = preaction;
+        }
+    }
+
+    protected setPremove(orig: cg.Orig, dest: cg.Key, metadata?: cg.SetPremoveMetadata): void {
+        this.premove = { orig, dest, metadata };
+        this.promotion.preparePremove(orig, dest, metadata);
+        // Chessground defers this callback. The opponent's board message can
+        // arrive before it, after the message handler already looked for a premove.
+        const color = this.chessground.state.movable.color;
+        if (this.turnColor === color && this.chessground.state.turnColor === color) {
+            this.performPremove();
+        }
+    }
+
+    protected unsetPremove(): void {
+        this.premove = undefined;
+        this.promotion.dismissPremove();
+        this.preaction = false;
+    }
+
+    performPremove(): void {
+        if (!this.chessground.playPremove()) this.unsetPremove();
+    }
+
+    cancelPromotionInput(): void {
+        this.goPly(this.ply);
     }
 
     getAliceFen(fen: string): string {
@@ -525,6 +569,9 @@ export abstract class GameController extends ChessgroundController implements Ch
         // console.log("gameCtrl.goPly()");
         const step = this.steps[ply];
         if (step === undefined) return;
+        this.chessground.cancelPremove();
+        this.unsetPremove();
+        this.promotion.dismiss();
 
         const lastMove = uci2LastMove(step.move);
         let capture = false;
@@ -587,6 +634,13 @@ export abstract class GameController extends ChessgroundController implements Ch
         }
 
         this.ply = ply;
+        this.updateBoardSummary(step.san);
+    }
+
+    // A page without a game (a bare analysis board) has no status to report.
+    updateBoardSummary(lastMove: string | undefined): void {
+        if (this.gameId) this.boardSummary.setStatus(result(this.variant, this.status, this.result));
+        this.boardSummary.setPosition(this.chessground.state.boardState, lastMove);
     }
 
     doSend = (message: JSONObject) => {
@@ -713,7 +767,7 @@ export abstract class GameController extends ChessgroundController implements Ch
         // chessground doesn't know what piece to revert a captured promoted piece into, so it needs to be handled here
         if (this.variant.pocket?.captureToHand && meta.captured) {
             const piece = {
-                role: unpromotedRole(this.variant, meta.captured),
+                role: capturedRole(this.variant, meta.captured),
                 color: util.opposite(meta.captured.color),
             };
             this.chessground.changePocket(piece, 1);
@@ -785,14 +839,14 @@ export abstract class GameController extends ChessgroundController implements Ch
             // To prevent multiplication of messages we have to remove old messages div first
             patch(container, h('div#messages-clear'));
             // then create a new one
-            patch(document.getElementById('messages-clear') as HTMLElement, h('div#messages'));
+            patch(document.getElementById('messages-clear') as HTMLElement, h('div#messages', { attrs: { role: 'none' } }));
             msg.lines.forEach(line => {
                 if (
                     (this.spectator && line.room === 'spectator') ||
                     (!this.spectator && line.room !== 'spectator') ||
                     line.user.length === 0
                 ) {
-                    chatMessage(line.user, line.message, 'roundchat', line.time);
+                    chatMessage(line.user, line.message, 'roundchat', line.time, true);
                 }
             });
         }

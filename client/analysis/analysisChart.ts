@@ -8,6 +8,12 @@ import { Step } from '../messages';
 import { analysisChartZone } from '../variantColor';
 
 export function analysisChart(ctrl: AnalysisController, container = 'chart-analysis') {
+    const chartEl = document.getElementById(container);
+    if (ctrl.showServerAnalysis === false) {
+        if (chartEl) chartEl.style.display = 'none';
+        return;
+    }
+    if (chartEl && container !== 'chart-analysis') chartEl.style.display = '';
     const firstSide = analysisChartZone(ctrl.variant.colors.first);
     const secondSide = analysisChartZone(ctrl.variant.colors.second);
     const scores = ctrl.steps.map((step: Step, ply: number) => {

@@ -21,7 +21,7 @@
         {% if err == 'title_too_short' %}{% trans %}Title must have at least 3 characters.{% endtrans %}
         {% elif err == 'intro_too_short' %}{% trans %}Intro must have at least 3 characters.{% endtrans %}
         {% elif err == 'body_too_short' %}{% trans %}Post body must have at least 3 characters.{% endtrans %}
-        {% elif err == 'invalid_image_url' %}{% trans %}Image URL must be absolute http(s) or start with /.{% endtrans %}
+        {% elif err == 'invalid_image_url' %}{% trans %}This image host is not allowed. Use an approved image host or leave the field empty for the default PyChess cover.{% endtrans %}
         {% else %}{{ err }}{% endif %}
         </li>
     {% endfor %}
@@ -76,6 +76,7 @@
             <legend>{% trans %}Image{% endtrans %}</legend>
             <label>{% trans %}Image URL{% endtrans %}
                 <input type="text" name="image" maxlength="400" value="{{ ublog_values['image'] }}" placeholder="https://... or /images/...">
+                <small>{% trans %}Use an approved image host or a PyChess static image. Leave blank for the default cover.{% endtrans %}</small>
             </label>
             <label>{% trans %}Image alt text{% endtrans %}
                 <input type="text" name="imageAlt" maxlength="200" value="{{ ublog_values['imageAlt'] }}">

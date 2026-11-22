@@ -11,7 +11,8 @@ unavailable to the browser analysis engine.
 | --- | --- | --- | --- |
 | Play vs AI | Server -> fairyfishnet | An active worker capable of the requested variant | Supported when an Alice-capable worker is active |
 | Server-side game/Study analysis | Server -> fairyfishnet | An active worker capable of the requested variant | Supported when an Alice-capable worker is active |
-| Local analysis | Browser engine worker | The loaded browser engine's advertised UCI variants | Unsupported |
+| Browser analysis | Browser engine worker | The loaded browser engine's advertised UCI variants | Unsupported |
+| Local native analysis | Paired loopback Python bridge | Explicit per-adapter capabilities plus page permissions | Supported with a configured Alice native engine |
 | Computer Practice | Browser engine worker | Local-analysis capability plus Practice restrictions | Unsupported |
 | PGN legality/replay | Browser rules/replay module | The parser/replay implementation for the variant | Supported; this does **not** imply local engine search support |
 
@@ -56,7 +57,8 @@ capabilities are currently available.
 
 Likewise, successful client-side rules handling or PGN replay is not evidence of
 browser engine-search support. Alice PGN import can use Alice-capable replay/rules
-code while Alice local analysis remains disabled.
+code while Alice browser/WASM search remains unavailable. Local native analysis uses
+its separate paired adapter and does not imply Practice support.
 
 ## Feature rules
 
@@ -77,3 +79,42 @@ When adding or changing engine support for a variant:
 Alice is the current reference case for this split: Alice-Stockfish is an optional
 fairyfishnet engine for Play-AI and server analysis, while the normal browser
 Fairy-Stockfish/WASM engine does not support Alice search.
+
+## Local native analysis
+
+Each paired external app configures one UCI executable. Its capabilities contain
+one name, one set of resource limits and its supported variant list. The optional
+`engine.variantRestrictions` map narrows Chess960/custom-rule support for specific
+advertised variants without selecting another executable or changing resource limits.
+
+An advertised Alice capability is qualified with a native search and validated with
+`pyffish-alice`; neither successful PGN replay nor an engine's ordinary custom-rules
+flag enables it. The bridge reports `variantRestrictions.alice` with `chess960: false`
+and `customRules: false`. Alice uses compact looking-glass FEN and coordinate move
+tokens. Page/Study/anti-cheat restrictions still apply, and Practice retains its
+browser engine ownership.
+
+See [the integration reference](external-engine.md) for frontend ownership and
+links to the local application design, protocol and compatibility documentation.
+
+## Engine BOT profile identity
+
+An external BOT can include an optional `engine` object in its existing authenticated
+`GET /api/stream/event` capability header:
+
+```json
+{"version":1,"variants":["alice"],"engine":{"name":"Alice-Stockfish 1.0","author":"Belzedar94 and the Stockfish developers (see AUTHORS file)"}}
+```
+
+The header remains `X-PyChess-Bot-Capabilities`, version 1. The BOT client reads these
+values from the UCI `id name` and `id author` handshake. This is descriptive metadata;
+it does not affect variant eligibility or replace the BOT account's username.
+
+The server accepts a nonempty engine name, normalizes whitespace, and limits names
+to 128 characters and author credits to 256 characters. Unknown engine fields are
+ignored. Missing or malformed optional identity does not prevent the BOT connecting.
+The last reported identity is stored as `botEngine` on that BOT's user document and
+rendered as escaped text in the profile's player summary, including while offline.
+A later advertisement replaces the identity; older clients without an `engine`
+field retain the last reported details. Clients must not send paths, options, tokens,
+or other private configuration in this object.

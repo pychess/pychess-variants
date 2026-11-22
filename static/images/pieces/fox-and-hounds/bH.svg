@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <title>Black hound</title>
+  <!-- Original artwork by pychess-variants contributors, made with AI assistance.
+       SPDX-License-Identifier: CC-BY-4.0
+       https://creativecommons.org/licenses/by/4.0/ -->
+  <g stroke="#231f20" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M29 29C17 24 10 31 9 44L8 66c-1 12 9 17 16 7l12-27Zm42 0c12-5 19 2 20 15l1 22c1 12-9 17-16 7L64 46Z" fill="#393236"/>
+    <path d="M27 35c0-22 46-22 46 0l4 30c2 17-12 25-27 25S21 82 23 65Z" fill="#6a5550"/>
+    <path d="M44 24q6-3 12 0l2 28q-8 9-16 0Z" fill="#e6d9c5" stroke="none"/>
+    <path d="M27 68c1-12 17-11 23-5 6-6 22-7 23 5 2 12-10 19-23 19S25 80 27 68Z" fill="#e6d9c5" stroke="none"/>
+    <path d="M42 66q8-5 16 0l-1 5q-7 8-14 0Z" fill="#231f20" stroke-width="2"/>
+    <path d="M50 75v4m-11 0q5 6 11 0 6 6 11 0" fill="none" stroke-width="2.5"/>
+  </g>
+  <g fill="#fff2db">
+    <ellipse cx="34" cy="53" rx="3" ry="4"/>
+    <ellipse cx="66" cy="53" rx="3" ry="4"/>
+  </g>
+  <g fill="#231f20">
+    <circle cx="35" cy="52" r="1.5"/>
+    <circle cx="67" cy="52" r="1.5"/>
+  </g>
+</svg>

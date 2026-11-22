@@ -32,6 +32,8 @@ static/images/pieces/disguised/* | danegraphics | [CC BY-NC-SA 4.0](https://crea
 static/images/pieces/dubrovny/* | sadsnake1 | [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) | From lichess
 static/images/pieces/empire/* | Couch Tomato | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/pieces/firi/* | [James Faure](https://github.com/jfaure/Firi-pieceset) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+static/images/pieces/forest/* | [hehehai (Paper Generals)](https://papergenerals.com/pieces) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Forest Friends pieces; made with AI assistance
+static/images/pieces/fox-and-hounds/* | pychess-variants contributors | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Original SVG artwork made with AI assistance
 static/images/pieces/green/* | Colin M.L. Burnett and Uray M. János | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/deed.en) | From lichess and [Green Chess](https://greenchess.net/info.php?item=downloads)
 static/images/pieces/hoppel/* | pychess-variants contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/pieces/janggi/* | [Kadagaden](https://github.com/Kadagaden/chess-pieces) | [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) |
@@ -52,10 +54,12 @@ static/images/pieces/shogi/Ka/* | [Kadagaden](https://github.com/orangain/shogi-
 static/images/pieces/shogi/* | pychess-variants contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/pieces/shogun/* | pychess-variants contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/pieces/sittuyin/* | [Kadagaden](https://github.com/Kadagaden/shogi-pieces) | [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) |
+static/images/pieces/snailtrail/* | pychess-variants contributors | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Original SVG artwork made with AI assistance
 static/images/pieces/spartan/* | pychess-variants contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/pieces/synochess/* | Couch Tomato | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/pieces/tori/* | Couch Tomato | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/pieces/xiangqi/euro/* | Jasmin Scharrer and Sebastian Pipping | [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) |
+static/images/pieces/xiangqi/forest/* | [hehehai (Paper Generals)](https://papergenerals.com/pieces) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Forest Friends pieces; made with AI assistance
 static/images/pieces/xiangqi/playok/* | Sebastian Pipping | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 static/images/pieces/xiangqi/* | pychess-variants contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/sound/bugchat/* | [rhasspy/piper](https://github.com/rhasspy/piper) | [MIT](https://github.com/rhasspy/piper/blob/master/LICENSE.md) | Generated with `en_GB-northern_english_male-medium` voice. Voice models are under a different license.
@@ -72,9 +76,11 @@ static/images/trophy/* | pychess-variants contributors | [AGPLv3+](https://www.g
 static/images/\*Guide/* | pychess-variants contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/bughouse.jpg | [Alexandre Duret-Lutz](https://www.flickr.com/photos/gadl/91700546) | [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/) |
 static/images/greenchess-logo.png | Uray M. János | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/deed.en) | From [Green Chess](https://greenchess.net/info.php?item=downloads)
+static/images/friendly-sites/papergenerals.svg | hehehai ([Paper Generals](https://papergenerals.com/)) | All rights reserved | Paper Generals logo, used with permission to link to papergenerals.com
 static/images/friendly-sites/schemingmind-alice.png | [John Tenniel](https://commons.wikimedia.org/wiki/File:Alice_crown.jpg) | Public Domain | Derived from Tenniel's 1871 *Through the Looking-Glass* illustration used by SchemingMind
 static/images/bugroundchat/* | pychess-variants contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/emoji/* | Lichess contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) | From lichess
+static/study-flair/emoji.json | Unicode, Inc. | [Unicode License v3](study-flair/LICENSE.txt) | Emoji sequences and names from Unicode 17.0
 static/images/Santa_hat.svg | [openclipart](https://openclipart.org/detail/190172/santa-hat) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 static/fonts/pychess.* and icomoon.io/pychess-variants.json | Lichess contributors and pychess-variants contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) | PyChess icon font contains the Lichess Wings glyph (licon U+E06C)
 static/images/puzzles.jpg | [puzzles.one](https://puzzles.one/) | | From puzzles.one website

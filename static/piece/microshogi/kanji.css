@@ -1,0 +1,55 @@
+.microshogi piece {
+    --ctk-shadow-size: max(
+        calc(var(--cg-width) / var(--cg-board-files, var(--files)) * 0.0385),
+        calc(var(--cg-height) / var(--cg-board-ranks, var(--ranks)) * 0.03333)
+    );
+    filter: drop-shadow(2px 2px 2px #000);
+    filter: drop-shadow(
+        var(--ctk-shadow-size)
+        var(--ctk-shadow-size)
+        var(--ctk-shadow-size)
+        #000
+    );
+}
+.microshogi piece::before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+.microshogi piece.enemy::before {
+    transform: rotate(180deg);
+}
+.microshogi piece.p-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0FU.svg');
+}
+.microshogi piece.pp-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0KE.svg');
+}
+.microshogi piece.l-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0KY.svg');
+}
+.microshogi piece.pl-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0GI.svg');
+}
+.microshogi piece.b-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0KA.svg');
+}
+.microshogi piece.pb-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0TO.svg');
+}
+.microshogi piece.r-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0HI.svg');
+}
+.microshogi piece.pr-piece::before {
+    background-image: url('../../images/pieces/shogi/ctk/0KI.svg');
+}
+.microshogi piece.k-piece.white::before {
+    background-image: url('../../images/pieces/shogi/ctk/0GY.svg');
+}
+.microshogi piece.k-piece.black::before {
+    background-image: url('../../images/pieces/shogi/ctk/0OU.svg');
+}

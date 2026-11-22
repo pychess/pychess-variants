@@ -40,16 +40,19 @@ async def lichess_team_msg(app_state: PychessGlobalAppState) -> None:
     log.debug("lichess team message: %r", msg)
 
     async with aiohttp.ClientSession() as session:
-        headers = {"Authorization": "Bearer %s" % LICHESS_API_TOKEN}
+        headers = {
+            "Authorization": "Bearer %s" % LICHESS_API_TOKEN,
+            "Accept": "application/json",
+        }
 
         endpoint = f"https://lichess.org/team/{team_id}/pm-all"
         async with session.post(endpoint, headers=headers, data={"message": msg}) as resp:
             log.info("response status: %r", resp.status)
             json = await resp.json()
-            if json.get("error") is not None:
-                log.error(json)
-
-            app_state.sent_lichess_team_msg.append(to_date)
+            if resp.status == 200 and json.get("ok") is True:
+                app_state.sent_lichess_team_msg.append(to_date)
+            else:
+                log.error("Lichess team message failed (HTTP %s): %s", resp.status, json)
 
 
 def upcoming_tournaments_msgs(tournaments: Mapping[str, Tournament]) -> str:

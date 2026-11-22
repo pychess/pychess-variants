@@ -214,7 +214,7 @@ class AccountApiTestCase(AioHTTPTestCase):
                 "editCount": 0,
             }
         )
-        await app_state.db.ublog_post.insert_one(
+        await app_state.db.ublog_post2.insert_one(
             {
                 "_id": "blog1",
                 "author": "alice",
@@ -698,7 +698,7 @@ class AccountApiTestCase(AioHTTPTestCase):
                 },
             ]
         )
-        await app_state.db.ublog_post.insert_many(
+        await app_state.db.ublog_post2.insert_many(
             [
                 {
                     "_id": "blog1",
@@ -942,8 +942,8 @@ class AccountApiTestCase(AioHTTPTestCase):
         other_forum_post = await app_state.db.forum_post.find_one({"_id": "post2"})
         self.assertEqual(["carol"], other_forum_post.get("reactions", {}).get("plusOne"))
 
-        self.assertIsNone(await app_state.db.ublog_post.find_one({"_id": "blog1"}))
-        other_blog = await app_state.db.ublog_post.find_one({"_id": "blog2"})
+        self.assertIsNone(await app_state.db.ublog_post2.find_one({"_id": "blog1"}))
+        other_blog = await app_state.db.ublog_post2.find_one({"_id": "blog2"})
         self.assertEqual(["carol"], other_blog.get("likes"))
 
         self.assertEqual(0, await app_state.db.push_subscription.count_documents({"user": "alice"}))

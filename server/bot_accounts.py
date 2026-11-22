@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
 
 BOT_TOKEN_SCOPE = "bot:play"
+ENGINE_TOKEN_SCOPES = ("engine:read", "engine:write")
 BOT_TOKEN_TEST_EXPIRES_MS = 1358509698620
 
 
@@ -24,6 +25,7 @@ class BotTokenDocument(TypedDict, total=False):
     createdAt: datetime
     usedAt: datetime
     revokedAt: datetime
+    scopes: list[str]
 
 
 def bot_token_hash(raw_token: str) -> str:
@@ -51,7 +53,11 @@ def user_game_count(user_doc: UserDocument | None) -> int:
 
 
 async def create_bot_token(
-    app_state: PychessGlobalAppState, username: str, description: str
+    app_state: PychessGlobalAppState,
+    username: str,
+    description: str,
+    *,
+    scopes: tuple[str, ...] = (BOT_TOKEN_SCOPE,),
 ) -> tuple[str, str]:
     if app_state.db is None:
         raise RuntimeError("BOT token storage requires a database.")
@@ -65,6 +71,7 @@ async def create_bot_token(
             "description": description,
             "tokenHash": bot_token_hash(raw_token),
             "createdAt": datetime.now(UTC),
+            "scopes": list(scopes),
         }
     )
     return token_id, raw_token
@@ -86,16 +93,27 @@ async def revoke_bot_token(app_state: PychessGlobalAppState, username: str, toke
         {"_id": token_id, "user": username, "revokedAt": {"$exists": False}},
         {"$set": {"revokedAt": datetime.now(UTC)}},
     )
+    if result.modified_count:
+        await app_state.db.external_engine.delete_many({"_id": token_id, "user": username})
     return bool(result.modified_count)
 
 
 async def get_db_token_owner(
-    app_state: PychessGlobalAppState, raw_token: str, *, mark_used: bool
+    app_state: PychessGlobalAppState,
+    raw_token: str,
+    *,
+    mark_used: bool,
+    required_scope: str | None = BOT_TOKEN_SCOPE,
 ) -> UserDocument | None:
     if app_state.db is None:
         return None
 
     token_filter = {"tokenHash": bot_token_hash(raw_token), "revokedAt": {"$exists": False}}
+    if required_scope is not None:
+        if required_scope == BOT_TOKEN_SCOPE:
+            token_filter["$or"] = [{"scopes": required_scope}, {"scopes": {"$exists": False}}]
+        else:
+            token_filter["scopes"] = required_scope
     if mark_used:
         token_doc = await app_state.db.bot_token.find_one_and_update(
             token_filter,
@@ -104,6 +122,10 @@ async def get_db_token_owner(
     else:
         token_doc = await app_state.db.bot_token.find_one(token_filter)
     if token_doc is None:
+        return None
+    if required_scope is not None and required_scope not in token_doc.get(
+        "scopes", [BOT_TOKEN_SCOPE]
+    ):
         return None
 
     username = str(token_doc.get("user") or "")

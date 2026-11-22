@@ -6,7 +6,6 @@ from datetime import UTC, datetime
 
 import aiohttp_session
 from aiohttp import web
-from aiohttp_sse import sse_response
 from const import SSE_EVENT_QUEUE_MAXSIZE, SYSTEM_USER
 from json_utils import json_dumps
 from json_utils import json_response as raw_json_response
@@ -15,7 +14,12 @@ from newid import id8, new_id
 from pychess_global_app_state_utils import get_app_state
 from request_utils import read_post_data
 from session_security import session_expiry_timeout
-from sse_utils import consume_sse_queue, enqueue_sse_payload, send_sse_payload
+from sse_utils import (
+    consume_sse_queue,
+    enqueue_sse_payload,
+    log_sse_failure,
+    sse_response,
+)
 from utils import notification_items_for_user
 
 USERNAME_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
@@ -305,19 +309,33 @@ async def inbox_thread(request: web.Request) -> web.Response:
 
     me = await app_state.users.get(username)
     profile = await app_state.public_users.get_profile(contact)
-    if profile is None or not profile.enabled or profile.username.startswith("Anon-"):
+    if contact.startswith("Anon-"):
         return json_response({"type": "error", "message": "User not found"}, status=404)
+
+    tid = _thread_id(username, contact)
+    # Closed/deleted contacts must not prevent the recipient from reading their
+    # existing messages and clearing unread notifications. Do not expose a
+    # conversation with an unavailable user unless it already belongs to me.
+    if profile is None or not profile.enabled:
+        existing = await app_state.db.inbox_thread.find_one(
+            {"_id": tid, "users": username, "deletedBy": {"$ne": username}},
+            projection={"_id": 1},
+        )
+        if existing is None:
+            return json_response({"type": "error", "message": "User not found"}, status=404)
+
     system_contact = contact == SYSTEM_USER
     blocked_by_me = False if system_contact else contact in me.blocked
-    blocked_by_them = False if system_contact else username in profile.blocked
+    blocked_by_them = False if system_contact or profile is None else username in profile.blocked
     can_message = (
-        (not system_contact)
+        profile is not None
+        and profile.enabled
+        and (not system_contact)
         and (not blocked_by_me)
         and (not blocked_by_them)
         and await _can_send_to_contact(app_state, me, contact, profile)
     )
 
-    tid = _thread_id(username, contact)
     before = request.rel_url.query.get("before")
     query: dict[str, object] = {"tid": tid, "deletedBy": {"$ne": username}}
     if before is not None:
@@ -350,12 +368,14 @@ async def inbox_thread(request: web.Request) -> web.Response:
     return json_response(
         {
             "contact": {
-                "name": profile.username,
-                "title": "" if system_contact else profile.title,
+                "name": profile.username if profile is not None else contact,
+                "title": "" if system_contact or profile is None else profile.title,
                 "system": system_contact,
-                "patron": profile.patron,
+                "patron": profile.patron if profile is not None else False,
                 "online": bool(
-                    app_state.users.data.get(profile.username)
+                    profile is not None
+                    and profile.enabled
+                    and app_state.users.data.get(profile.username)
                     and app_state.users.data[profile.username].online
                 ),
                 "canMessage": can_message,
@@ -503,13 +523,12 @@ async def subscribe_inbox(request: web.Request) -> web.StreamResponse:
 
     try:
         async with session_expiry_timeout(session, user), sse_response(request) as response:
-            await send_sse_payload(
-                response,
+            await response.send(
                 json_dumps({"unread": await _unread_count(app_state, username)}),
             )
             await consume_sse_queue(response, queue)
     except Exception:
-        pass
+        log_sse_failure("inbox_api")
     finally:
         user.inbox_channels.discard(queue)
         queue.shutdown(immediate=True)

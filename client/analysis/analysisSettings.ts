@@ -23,15 +23,41 @@ import {
 import { AnalysisController } from './analysisCtrl';
 import { patch } from '../document';
 import { updateMovelist } from '../movelist';
+import { ExternalEngineSettings } from './externalEngineSettings';
+
+function installEnginePreferencesDismissal(vnode: VNode): void {
+    const panel = vnode.elm as HTMLElement;
+    const gear = document.getElementById('analysis-engine-gear');
+    const close = () => { panel.hidden = true; gear?.setAttribute('aria-expanded', 'false'); };
+    const onPointerDown = (event: PointerEvent) => {
+        if (!panel.contains(event.target as Node) && !gear?.contains(event.target as Node)) close();
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape' && !panel.hidden) { close(); (gear as HTMLElement | null)?.focus(); }
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    (panel as HTMLElement & { removeEngineDismissal?: () => void }).removeEngineDismissal = () => {
+        document.removeEventListener('pointerdown', onPointerDown);
+        document.removeEventListener('keydown', onKeyDown);
+    };
+}
+
 
 class AnalysisSettings {
     ctrl: AnalysisController;
     settings: { [key: string]: Settings<number | boolean | string> };
     assetURL: string;
+    readonly externalEngine = new ExternalEngineSettings(() => this.ctrl);
 
     constructor() {
         this.settings = {};
+        this.settings['showServerAnalysis'] = new ServerAnalysisSettings(this);
+        this.settings['showGauge'] = new GaugeSettings();
         this.settings['arrow'] = new ArrowSettings(this);
+        this.settings['variationArrows'] = new VariationArrowSettings(this);
+        this.settings['maneuverArrows'] = new ManeuverArrowSettings(this);
+        this.settings['showMoveAnnotationsOnBoard'] = new MoveAnnotationsSettings(this);
         this.settings['inlineNotation'] = new InlineNotationSettings(this);
         this.settings['disclosureMode'] = new DisclosureModeSettings(this);
         this.settings['infiniteAnalysis'] = new InfiniteAnalysisSettings(this);
@@ -50,6 +76,35 @@ class AnalysisSettings {
         return this.settings[fullName] as NnueFileSettings;
     }
 
+    engineView(variant: {
+        readonly name: string;
+        readonly cataloguedSource?: 'user' | 'fairy-stockfish-builtin';
+        readonly nnueFingerprint?: string;
+    }): VNode {
+        const nnueFileSettings = this.getSettings(variant.name);
+        nnueFileSettings.setLookupContext(nnueLookupContextForVariant(variant));
+        return h('div.analysis-engine-preferences', {
+            attrs: { hidden: true, id: 'analysis-engine-preferences' },
+            hook: {
+                insert: installEnginePreferencesDismissal,
+                destroy: vnode => (vnode.elm as HTMLElement & { removeEngineDismissal?: () => void }).removeEngineDismissal?.(),
+            },
+        }, [
+            this.externalEngine.view(),
+            h('div.analysis-settings-group', [
+                this.settings['multipv'].view(),
+                this.settings['threads'].view(),
+                this.settings['hash'].view(),
+                this.settings['infiniteAnalysis'].view(),
+            ]),
+            h('div.analysis-settings-group.browser-engine-settings', [
+                this.settings['nnue'].view(),
+                nnueFileSettings.view(),
+            ]),
+            h('div.analysis-settings-group.browser-engine-settings', [this.settings['fsfDebug'].view()]),
+        ]);
+    }
+
     view(variant: {
         readonly name: string;
         readonly cataloguedSource?: 'user' | 'fairy-stockfish-builtin';
@@ -57,33 +112,57 @@ class AnalysisSettings {
     }) {
         if (!variant.name) return h('div.analysis-settings');
 
-        const settingsList: VNode[] = [];
+        return h('div.analysis-settings', [
+            h('fieldset.analysis-general-settings-group', [
+                h('legend', _('Move list')),
+                this.settings['inlineNotation'].view(),
+                this.settings['disclosureMode'].view(),
+            ]),
+            h('fieldset.analysis-general-settings-group', [
+                h('legend', _('Board')),
+                this.settings['arrow'].view(),
+                this.settings['variationArrows'].view(),
+                this.settings['maneuverArrows'].view(),
+                this.settings['showMoveAnnotationsOnBoard'].view(),
+            ]),
+            h('fieldset.analysis-general-settings-group', [
+                h('legend', _('General')),
+                this.settings['showServerAnalysis'].view(),
+                this.settings['showGauge'].view(),
+            ]),
+        ]);
+    }
+}
 
-        settingsList.push(this.settings['multipv'].view());
+class ServerAnalysisSettings extends BooleanSettings {
+    constructor(private readonly analysisSettings: AnalysisSettings) {
+        super('showServerAnalysis', true);
+    }
 
-        settingsList.push(this.settings['threads'].view());
+    update(): void {
+        this.analysisSettings.ctrl.setServerAnalysisVisibility(this.value);
+    }
 
-        settingsList.push(this.settings['hash'].view());
+    view(): VNode {
+        return h(
+            'div.serverAnalysis-toggle',
+            toggleSwitch(this, 'serverAnalysis-enabled', _('Show server analysis'), false),
+        );
+    }
+}
 
-        settingsList.push(this.settings['arrow'].view());
+class GaugeSettings extends BooleanSettings {
+    constructor() {
+        super('showGauge', true);
+    }
 
-        settingsList.push(this.settings['inlineNotation'].view());
+    update(): void {
+        document.querySelector('.analysis-app')?.classList.toggle('gauge-off', !this.value);
+        window.dispatchEvent(new Event('resize'));
+    }
 
-        settingsList.push(this.settings['disclosureMode'].view());
-
-        settingsList.push(this.settings['infiniteAnalysis'].view());
-
-        settingsList.push(this.settings['nnue'].view());
-
-        const nnueFileSettings = this.getSettings(variant.name);
-        nnueFileSettings.setLookupContext(nnueLookupContextForVariant(variant));
-        settingsList.push(nnueFileSettings.view());
-
-        settingsList.push(this.settings['fsfDebug'].view());
-
-        settingsList.push();
-
-        return h('div.analysis-settings', settingsList);
+    view(): VNode {
+        return h('div.gauge-toggle', toggleSwitch(this, 'gauge-enabled', _('Show evaluation gauge'), false));
     }
 }
 
@@ -146,6 +225,63 @@ class ArrowSettings extends BooleanSettings {
 
     view(): VNode {
         return h('div.arrow-toggle', toggleSwitch(this, 'arrow-enabled', _('Best move arrow'), false));
+    }
+}
+
+class VariationArrowSettings extends BooleanSettings {
+    constructor(private readonly analysisSettings: AnalysisSettings) {
+        super('variationArrows', true);
+    }
+
+    update(): void {
+        const ctrl = this.analysisSettings.ctrl;
+        ctrl.variationArrows = this.value;
+        ctrl.setAutoShapes();
+    }
+
+    view(): VNode {
+        return h(
+            'div.variation-arrows-toggle',
+            toggleSwitch(this, 'variation-arrows-enabled', _('Show variation arrows'), false),
+        );
+    }
+}
+
+class ManeuverArrowSettings extends BooleanSettings {
+    constructor(private readonly analysisSettings: AnalysisSettings) {
+        super('maneuverArrows', true);
+    }
+
+    update(): void {
+        const ctrl = this.analysisSettings.ctrl;
+        ctrl.maneuverArrowsEnabled = this.value;
+        ctrl.setAutoShapes();
+    }
+
+    view(): VNode {
+        return h(
+            'div.maneuver-arrows-toggle',
+            toggleSwitch(this, 'maneuver-arrows-enabled', _('Show maneuver arrows'), false),
+        );
+    }
+}
+
+class MoveAnnotationsSettings extends BooleanSettings {
+    constructor(private readonly analysisSettings: AnalysisSettings) {
+        super('showMoveAnnotationsOnBoard', true);
+    }
+
+    update(): void {
+        const ctrl = this.analysisSettings.ctrl;
+        ctrl.showMoveAnnotationsOnBoard = this.value;
+        ctrl.setAutoShapes();
+    }
+
+    view(): VNode {
+        return h(
+            'div.move-annotations-toggle',
+            toggleSwitch(this, 'move-annotations-enabled', _('Show move annotations'), false),
+        );
     }
 }
 
@@ -240,10 +376,8 @@ const isIPad = (): boolean => navigator?.maxTouchPoints > 2 && /iPad|Macintosh/.
 // steer the high performance crowd towards external engine as it gets better
 const maxHashMB = (): number => {
     let maxHash = 512; // allocating 1024 often fails and offers little benefit over 512, or 16 for that matter
-    if (isAndroid())
-        maxHash = 64; // budget androids are easy to crash @ 128
-    else if (isIPad())
-        maxHash = 64; // iPadOS safari pretends to be desktop but acts more like iphone
+    if (isAndroid()) maxHash = 64; // budget androids are easy to crash @ 128
+    else if (isIPad()) maxHash = 64; // iPadOS safari pretends to be desktop but acts more like iphone
     else if (isIOS()) maxHash = 32;
     return maxHash;
 };
@@ -294,13 +428,7 @@ class NnueSettings extends BooleanSettings {
     }
 
     view(): VNode {
-        return h('div.nnue-toggle-settings', [
-            h('div.nnue-toggle', toggleSwitch(this, 'nnue-enabled', _('Use NNUE'), false)),
-            h(
-                'small.nnue-toggle-help',
-                _('Uses the installed NNUE network when available. Downloads are managed separately.'),
-            ),
-        ]);
+        return h('div.nnue-toggle', toggleSwitch(this, 'nnue-enabled', _('Use NNUE'), false));
     }
 }
 
@@ -681,13 +809,12 @@ export class EngineSettings extends BooleanSettings {
             toggleSwitch(
                 this,
                 'engine-enabled',
-                '',
+                _('Local engine'),
                 !this.ctrl.analysisContext.capabilities.localAnalysisAllowed ||
                     this.ctrl.isLocalAnalysisBlockedByAntiCheat() ||
                     !this.ctrl.isLocalAnalysisAllowedByExtension() ||
-                    !this.ctrl.localEngine ||
-                    !this.ctrl.isEngineReady ||
-                    !this.ctrl.variantSupportedByFSF,
+                    !this.ctrl.isSelectedEngineReady(),
+                true,
             ),
         );
     }

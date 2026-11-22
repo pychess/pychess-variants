@@ -1,4 +1,4 @@
-# ![Seirawan](https://github.com/pychess/pychess-variants/blob/master/static/icons/schess.svg) S-Chess
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/schess.svg) S-Chess
 
 S-Chess，全称为Seirawan Chess，是美国国际象棋特级大师亚瑟·塞拉万(Yasser Seirawan)和布鲁斯·哈伯(Bruce Harper)于2007年发明的变体。该棋引入了两种新棋子：大象和鹰。与其他棋不同的机制是，大象和鹰并非开局在棋盘上，它会在对局过程中出场。由于对局比国际象棋激烈，也有“SHARPER Chess“的别称。
 

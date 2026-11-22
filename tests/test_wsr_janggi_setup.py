@@ -174,6 +174,7 @@ class JanggiSetupValidationTestCase(AioHTTPTestCase):
         app_state = get_app_state(self.app)
         game = self.new_game()
         initial_count = app_state.g_cnt[0]
+        before_setup = game.legal_moves
 
         with patch("wsr.ws_send_json", new=AsyncMock()):
             await handle_setup(
@@ -205,6 +206,8 @@ class JanggiSetupValidationTestCase(AioHTTPTestCase):
         self.assertFalse(game.bsetup)
         self.assertFalse(game.wsetup)
         self.assertFalse(game.counted_as_active)
+        self.assertNotEqual(game.legal_moves, before_setup)
+        self.assertEqual(game.legal_moves, tuple(game.board.legal_moves()))
 
         await game.play_move(game.board.legal_moves()[0])
         await game.play_move(game.board.legal_moves()[0])

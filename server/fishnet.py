@@ -12,14 +12,14 @@ from typing import TYPE_CHECKING, cast
 
 from aiohttp import web
 from broadcast import round_broadcast
-from catalogued_variants import (
-    CATALOGUED_SOURCE_FSF_BUILTIN,
-    catalogued_variant_ai_disabled,
-    catalogued_variant_allows_fishnet,
+from catalogued.documents import catalogued_variant_ai_disabled
+from catalogued.models import CATALOGUED_SOURCE_FSF_BUILTIN
+from catalogued.repository import (
     clear_catalogued_variant_ai_failures,
-    extract_variant_base_name,
     record_catalogued_variant_ai_failure,
 )
+from catalogued.validation import extract_variant_base_name
+from catalogued.variants import catalogued_variant_allows_fishnet
 from const import ANALYSIS, INVALIDMOVE, MOVE, STARTED
 from csrf import csrf_exempt
 from typing_defs import (
@@ -1267,9 +1267,17 @@ async def fishnet_move(request: web.Request) -> web.Response:
             game.board.fen,
         )
 
+    # Recheck under the same lock that serializes all game moves. A new move
+    # may have arrived after the first stale-work check but before lock entry.
+    stale_after_lock = False
+    previous_status = game.status
     try:
         async with game.move_lock:
-            await play_move(app_state, user, game, move)
+            if not _fishnet_work_matches_current_position(work, game):
+                stale_after_lock = True
+            else:
+                previous_status = game.status
+                await play_move(app_state, user, game, move)
     except Exception:
         log.exception(
             "Fishnet move %s for work %s failed while being applied",
@@ -1279,7 +1287,30 @@ async def fishnet_move(request: web.Request) -> web.Response:
         await _handle_invalid_fishnet_move(app_state, work_id, work, "play_move raised")
         return web.Response(status=204)
 
+    if stale_after_lock:
+        log.info(
+            "DISCARD FISHNET move %s for stale work %s after lock (work moves=%r, game moves=%r)",
+            move,
+            work_id,
+            work.get("moves", ""),
+            _game_move_stack_string(game),
+        )
+        app_state.fishnet_works.pop(work_id, None)
+        return await get_work(app_state, data)
+
     if game.status == INVALIDMOVE:
+        if previous_status <= STARTED:
+            log.warning(
+                "Invalid fishnet move (game=%s work=%s worker=%s bot=%s variant=%s move=%s ply=%s fen=%s)",
+                gameId,
+                work_id,
+                worker,
+                user.username,
+                game.variant,
+                move,
+                game.board.ply,
+                game.board.fen,
+            )
         app_state.fishnet_works.pop(work_id, None)
         await _record_terminal_catalogued_ai_failure(app_state, work, INVALID_FISHNET_MOVE_REASON)
         return web.Response(status=204)

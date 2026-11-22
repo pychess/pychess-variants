@@ -1,4 +1,4 @@
-# ![Atomic](https://github.com/pychess/pychess-variants/blob/master/static/icons/Atomic.svg) Atomic
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/Atomic.svg) Atomic
 
 Exploda o rei do seu adversário para ganhar!
 

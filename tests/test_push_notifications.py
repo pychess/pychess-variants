@@ -142,6 +142,42 @@ class PushSubscribeTestCase(AioHTTPTestCase):
         remaining = await app_state.db.push_subscription.count_documents({"user": user.username})
         self.assertEqual(remaining, 0)
 
+    async def test_corr_browser_pref_persists_independently_of_push(self):
+        app_state = get_app_state(self.app)
+        username = "browser_pref_user"
+        await app_state.db.user.insert_one({"_id": username, "cps": False})
+        user = await app_state.users.get(username)
+        self.assertTrue(user.corr_browser_enabled)
+        self.set_session_user(username)
+
+        for value in (False, True):
+            response = await self.client.post(
+                "/pref/corr-browser", data={"corr_browser": str(value).lower()}
+            )
+            self.assertEqual(response.status, 204)
+            self.assertEqual(app_state.users[username].corr_browser_enabled, value)
+            stored = await app_state.db.user.find_one({"_id": username})
+            self.assertEqual(stored["cbs"], value)
+            self.assertFalse(stored["cps"])
+
+            app_state.users.data.pop(username, None)
+            reloaded = await app_state.users.get(username)
+            self.assertEqual(reloaded.corr_browser_enabled, value)
+            self.assertFalse(reloaded.corr_push_enabled)
+
+            response = await self.client.get("/")
+            self.assertIn(f'data-corr-browser-enabled="{value}"', await response.text())
+
+    async def test_corr_browser_pref_rejects_anon_user(self):
+        app_state = get_app_state(self.app)
+        user = User(app_state, username="Anon-browser-pref", anon=True)
+        app_state.users[user.username] = user
+        self.set_session_user(user.username)
+
+        response = await self.client.post("/pref/corr-browser", data={"corr_browser": "false"})
+        self.assertEqual(response.status, 403)
+        self.assertTrue(user.corr_browser_enabled)
+
     async def test_corr_push_pref_updates_user_and_db(self):
         app_state = get_app_state(self.app)
         user = User(app_state, username="pref_user")
@@ -219,6 +255,25 @@ class PushSubscribeTestCase(AioHTTPTestCase):
             san="e4",
         )
         self.assertEqual(app_state.push_notifier.queue.qsize(), 0)
+
+    async def test_queued_corr_push_respects_later_opt_out(self):
+        app_state = get_app_state(self.app)
+        notifier = app_state.push_notifier
+        notifier.enabled = True
+        username = "corr_opt_out_after_enqueue"
+        user = User(app_state, username=username)
+        app_state.users[username] = user
+        await app_state.db.user.insert_one({"_id": username, "cps": True})
+        notifier.enqueue_corr_move(user, game_id="abcd1234", opponent="opp", san="e4")
+        job = notifier.queue.get_nowait()
+        notifier.queue.task_done()
+        await app_state.db.user.update_one({"_id": username}, {"$set": {"cps": False}})
+
+        from unittest.mock import AsyncMock
+
+        notifier._deliver_payload = AsyncMock()
+        await notifier._deliver_corr_move(job)
+        notifier._deliver_payload.assert_not_awaited()
 
     async def test_rr_push_queues_for_offline_opted_in_user_without_materializing(self):
         app_state = get_app_state(self.app)

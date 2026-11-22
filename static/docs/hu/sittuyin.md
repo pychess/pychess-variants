@@ -1,4 +1,4 @@
-# ![Sittuyin ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/sittuyin.svg) Sittuyin (Burmai sakk)
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/sittuyin.svg) Sittuyin (Burmai sakk)
 
 ![Sittuyin ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Sittuyin.png?raw=true)
 

@@ -1,4 +1,4 @@
-# ![Empire chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/empire.svg) Empire Chess
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/empire.svg) Empire Chess
 
 ![Empire](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Empire.png)
 

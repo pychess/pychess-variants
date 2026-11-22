@@ -45,7 +45,7 @@
                     </dl>
                     <form class="admin-team-action-form" method="post" action="/team/{{ team['_id'] }}/{% if team.get('enabled', True) %}close{% else %}reopen{% endif %}">
                         <input type="hidden" name="redirect" value="/admin/teams">
-                        <input name="reason" maxlength="500" placeholder="Moderation note (optional)">
+                        <input name="reason" maxlength="500" placeholder="Moderation note (optional)" aria-label="Moderation note (optional)">
                         {% if team.get('enabled', True) %}
                         <button class="admin-action-button is-danger" type="submit">Close team</button>
                         {% elif team.get('creatorErasedAt') %}

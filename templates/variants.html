@@ -22,7 +22,7 @@
 </aside>
 <div class="guide">
 {% if community_variants %}
-<article class="community-variants-page" data-favorites-only="{{ 1 if community_variants.favoritesOnly else 0 }}">
+<article class="community-variants-page" data-favorites-only="{{ 1 if community_variants.favoritesOnly else 0 }}" data-infinite-scroll="community-variants">
     <h1>{% trans %}Community variants{% endtrans %}</h1>
     <p>
         {% trans %}Browse public user-defined variants. They stay outside the regular variant catalog and are always casual/unrated.{% endtrans %}
@@ -61,9 +61,9 @@
     <p class="community-variants-count">
         {% trans count=community_variants.total %}{{ count }} public variant{% pluralize %}{{ count }} public variants{% endtrans %}
     </p>
-    <div class="community-variants-list">
+    <div class="community-variants-list" data-infinite-scroll-content>
         {% for item in community_variants.variants %}
-        <section class="community-variant-card{% if item.hasStartBoard %} community-variant-card--with-preview{% endif %}{% if item.favorite %} community-variant-card--favorite{% endif %}" data-variant="{{ item.name }}">
+        <section class="community-variant-card{% if item.hasStartBoard %} community-variant-card--with-preview{% endif %}{% if item.favorite %} community-variant-card--favorite{% endif %}" data-variant="{{ item.name }}" data-infinite-scroll-key="{{ item.name }}">
             <div class="community-variant-card-head">
                 {% if community_variants.canFavorite %}
                 <button
@@ -134,10 +134,10 @@
     {% endif %}
 
     {% if community_variants.pages > 1 %}
-    <nav class="community-variants-pages">
+    <nav class="community-variants-pages" data-infinite-scroll-pager>
         {% if community_prev_href %}<a class="button" href="{{ community_prev_href }}">{% trans %}Previous{% endtrans %}</a>{% endif %}
         <span>{% trans page=community_variants.page, pages=community_variants.pages %}Page {{ page }} / {{ pages }}{% endtrans %}</span>
-        {% if community_next_href %}<a class="button" href="{{ community_next_href }}">{% trans %}Next{% endtrans %}</a>{% endif %}
+        {% if community_next_href %}<a class="button" rel="next" href="{{ community_next_href }}">{% trans %}Next{% endtrans %}</a>{% endif %}
     </nav>
     {% endif %}
 

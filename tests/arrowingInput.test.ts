@@ -29,9 +29,11 @@ describe('Walling input', () => {
         } as unknown as GameController;
         const input = new ArrowingInput(ctrl);
 
-        input.start(piece, 'd1', 'a1', {} as cg.MoveMetadata);
+        const meta: cg.MoveMetadata = { premove: true };
+        input.start(piece, 'd1', 'a1', meta);
 
         expect(input.inputState).toBe('move');
+        expect(meta.premove).toBe(false);
         expect(input.arrowDests).toEqual(['b1', 'j:']);
         expect(pieces.get('a0')).toEqual({ role: '_-piece', color: 'white' });
         expect(ctrl.chessground.set).toHaveBeenCalledWith({
@@ -55,7 +57,7 @@ describe('Walling input', () => {
         expect(ctrl.chessground.state.lastMove).toEqual(['d1', 'a1', 'j:']);
         expect(document.getElementById('undo')?.tagName).toBe('DIV');
         expect((document.getElementById('takeback') as HTMLElement).hidden).toBe(false);
-        expect(processInput).toHaveBeenCalledWith(piece, 'd1', 'a1', {}, ',a1j:', 'arrowing');
+        expect(processInput).toHaveBeenCalledWith(piece, 'd1', 'a1', { premove: false }, ',a1j:', 'arrowing');
     });
 
     test('automatically submits a deterministic wall on the vacated square', () => {
@@ -85,5 +87,46 @@ describe('Walling input', () => {
         expect(ctrl.chessground.selectSquare).not.toHaveBeenCalled();
         expect(ctrl.chessground.state.lastMove).toEqual(['d4', 'c2', 'd4']);
         expect(processInput).toHaveBeenCalledWith(piece, 'd4', 'c2', {}, ',c2d4', 'arrowing');
+    });
+
+    test('Isolation permits a distant wall while preserving previous walls', () => {
+        const piece: cg.Piece = { role: 'p-piece', color: 'white' };
+        const wall: cg.Piece = { role: '_-piece', color: 'black' };
+        const processInput = jest.fn();
+        const pieces = new Map<cg.Key, cg.Piece>([['b1', piece], ['a1', wall]]);
+        const ctrl = {
+            variant: { rules: { arrowing: true } },
+            legalMoves: () => ['c1b1,b1f8', 'c1b1,b1e7', 'c1c2,c2f8'],
+            chessground: {
+                state: { boardState: { pieces }, lastMove: undefined },
+                set: jest.fn(),
+                selectSquare: jest.fn(),
+            },
+            processInput,
+            onArrowingInputStateChange: jest.fn(),
+        } as unknown as GameController;
+        const input = new ArrowingInput(ctrl);
+
+        input.start(piece, 'c1', 'b1', {} as cg.MoveMetadata);
+
+        expect(input.inputState).toBe('move');
+        expect(input.arrowDests).toEqual(['f8', 'e7']);
+        expect(pieces.get('a1')).toBe(wall);
+        expect(pieces.get('a0')).toEqual({ role: '_-piece', color: 'white' });
+        input.finish('c1'); // Protected starting square: no turn is submitted.
+        expect(processInput).not.toHaveBeenCalled();
+        input.finish('f8');
+        expect(processInput).toHaveBeenCalledWith(piece, 'c1', 'b1', {}, ',b1f8', 'arrowing');
+        expect(pieces.get('a1')).toBe(wall);
+        expect(ctrl.chessground.state.lastMove).toEqual(['c1', 'b1', 'f8']);
+
+        input.start(piece, 'c1', 'b1', {} as cg.MoveMetadata);
+        input.cancel();
+        expect(input.inputState).toBeUndefined();
+        expect(input.arrowDests).toEqual([]);
+        expect(pieces.has('a0')).toBe(false);
+        expect(pieces.get('a1')).toBe(wall);
+        input.finish('e7');
+        expect(processInput).toHaveBeenCalledTimes(1);
     });
 });

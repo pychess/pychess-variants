@@ -60,6 +60,7 @@ export type StudyChapterPreview = {
 export type StudyPageModel = {
     id: string;
     name: string;
+    flair?: string;
     owner: string;
     visibility: 'private' | 'unlisted' | 'public';
     isOwner: boolean;

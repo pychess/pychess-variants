@@ -1,4 +1,4 @@
-# ![Antichess](https://github.com/pychess/pychess-variants/blob/master/static/icons/antichess.svg) Antichess
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/antichess.svg) Antichess
 
 _Lose all your pieces (or get stalemated) to win the game._
 

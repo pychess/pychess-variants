@@ -1,0 +1,52 @@
+{% extends "template.html" %}
+{% block content %}
+<div id="main-wrap">
+<main class="page-menu legal-page">
+<aside></aside>
+<div class="guide legal-doc account-action">
+<section class="account-action__panel">
+    <h1>External engines</h1>
+    <p>Use your own UCI engine for analysis on Pychess. Your engine runs on your computer.</p>
+    <p>Create a token for each local installation and configure <a href="https://github.com/pychess/pychess-external-engine">pychess-external-engine</a> with it. Start the app, then choose your engine in analysis settings.</p>
+</section>
+<section class="account-action__panel">
+    <h2>Create engine token</h2>
+    <form class="account-action__form" method="post" action="/account/engines/token/create">
+        <div class="account-action__field">
+            <label class="account-action__label" for="engine-token-description">Description</label>
+            <input id="engine-token-description" class="account-action__input" name="description" maxlength="120" placeholder="My computer">
+        </div>
+        <button class="account-action__button account-action__button--primary" type="submit">Create token</button>
+    </form>
+    {% if new_engine_token %}
+    <div class="account-action__field">
+        <label class="account-action__label" for="new-engine-token">New token</label>
+        <input id="new-engine-token" class="account-action__input" readonly value="{{ new_engine_token }}">
+    </div>
+    <p>Copy this token now; it is shown only once. This token permits engine registration, without BOT gameplay access.</p>
+    {% endif %}
+</section>
+<section class="account-action__panel">
+    <h2>Your engine tokens</h2>
+    {% if engine_tokens %}
+    <ul class="account-action__links">
+        {% for token in engine_tokens %}
+        <li>
+            <strong>{{ token.description }}</strong>{% if token.revokedAt %} (revoked){% endif %}
+            <form class="account-action__form" method="post" action="/account/engines/token/{{ token._id }}/revoke">
+                <button class="account-action__button account-action__button--secondary" type="submit" {% if token.revokedAt %}disabled{% endif %}>Revoke token</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No engine tokens yet.</p>
+    {% endif %}
+</section>
+</div>
+</main>
+</div>
+{% endblock %}
+{% block js %}
+<script src="{{ js }}"></script>
+{% endblock %}

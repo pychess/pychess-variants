@@ -28,9 +28,11 @@ describe('Duck move controls', () => {
         } as unknown as GameController;
         const input = new DuckInput(ctrl);
 
-        input.start(piece, 'a2', 'a3', {} as cg.MoveMetadata);
+        const meta: cg.MoveMetadata = { premove: true };
+        input.start(piece, 'a2', 'a3', meta);
 
         expect(input.inputState).toBe('move');
+        expect(meta.premove).toBe(false);
         expect((document.getElementById('undo') as HTMLButtonElement).title).toBe('Cancel piece move');
         expect((document.getElementById('takeback') as HTMLElement).hidden).toBe(true);
 
@@ -39,6 +41,6 @@ describe('Duck move controls', () => {
         expect(input.inputState).toBeUndefined();
         expect(document.getElementById('undo')?.tagName).toBe('DIV');
         expect((document.getElementById('takeback') as HTMLElement).hidden).toBe(false);
-        expect(processInput).toHaveBeenCalledWith(piece, 'a2', 'a3', {}, ',a3b3', 'duck');
+        expect(processInput).toHaveBeenCalledWith(piece, 'a2', 'a3', { premove: false }, ',a3b3', 'duck');
     });
 });

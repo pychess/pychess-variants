@@ -37,6 +37,8 @@ export interface AnalysisTreeNode {
     children: AnalysisTreeNode[];
     collapsed?: boolean;
     forceVariation?: boolean;
+    // Continuations created by saved computer advice, rather than by the player.
+    serverAnalysis?: boolean;
     // Present only for nodes that still sit on the original persisted game mainline.
     mainlinePly?: number;
     // Study annotations and server-generated game analysis comments/NAGs.
@@ -147,7 +149,9 @@ export function mergeServerAdvice(tree: AnalysisTree, ply: number, evaluation?: 
     };
     let path = parentPath(node.path);
     for (const step of advice.variation) {
+        const sizeBefore = tree.byPath.size;
         path = addOrSelectChild(tree, path, { ...step }, false);
+        if (tree.byPath.size > sizeBefore) tree.byPath.get(path)!.serverAnalysis = true;
     }
     return true;
 }

@@ -1,4 +1,4 @@
-# ![Orda Mirror](https://github.com/pychess/pychess-variants/blob/master/static/icons/ordamirror.svg) Orda Mirror
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/ordamirror.svg) Orda Mirror
 
 ![Orda Mirror Board](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/OrdaMirror.png)
 

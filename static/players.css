@@ -1,3 +1,6 @@
+#main-wrap {
+  --main-max-width: 100%;
+}
 .page-menu.small {
     max-width: 1000px;
     width:100%;
@@ -109,7 +112,7 @@ div.card div.player-data:nth-child(2n + 1), tr.player-data:nth-child(2n) {
     text-overflow: ellipsis;
     width: 60%;
 }
-.user-link.player, 
+.user-link.player,
 table#players a,
 .flat-bg .highscore a {
     white-space: nowrap;

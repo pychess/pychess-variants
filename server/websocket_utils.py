@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import re
 from collections.abc import Awaitable, Callable, Iterable, Mapping
+from time import monotonic
 from typing import TYPE_CHECKING, TypeVar, cast
 
 import aiohttp
@@ -12,7 +14,7 @@ import msgspec
 from aiohttp import WSMessage, web
 from aiohttp.client_exceptions import ClientConnectionResetError
 from aiohttp.web_ws import WebSocketResponse
-from const import NONE_USER
+from const import NONE_USER, TEST_PREFIX
 from preferences import (
     apply_anonymous_session_preferences,
 )
@@ -27,12 +29,16 @@ from session_security import (
     session_matches_user,
     websocket_session_lifetime,
 )
+from settings import PROD
 
 log = logging.getLogger(__name__)
 
 _SEND_CONCURRENCY = 200
 _SEND_TIMEOUT_SECS = 2.0
 _RECEIVE_TIMEOUT_SECS = 30.0
+# Keep idle browser connections alive at the Heroku router even if JavaScript
+# timers (and therefore the application-level /n heartbeat) are suspended.
+_WS_HEARTBEAT_SECS = 25.0
 _WS_JSON_ENCODER = msgspec.json.Encoder()
 _WS_JSON_DECODER = msgspec.json.Decoder()
 _TYPE_FIELD_RE = re.compile(r'"type"\s*:\s*"([^"\\]+)"')
@@ -123,9 +129,10 @@ async def process_ws(
         return None
 
     # The client sends an application-level "/n" ping every 2.5 seconds and
-    # reconnects if its pong is missing. Keep server cleanup deliberately
-    # slower so short network stalls do not race an aggressive protocol ping.
-    ws = WebSocketResponse(receive_timeout=_RECEIVE_TIMEOUT_SECS)
+    # reconnects if its pong is missing. Browser throttling can pause those
+    # JavaScript timers, so send a protocol-level PING when traffic goes quiet.
+    # Keep server cleanup slower than the normal application-level heartbeat.
+    ws = WebSocketResponse(receive_timeout=_RECEIVE_TIMEOUT_SECS, heartbeat=_WS_HEARTBEAT_SECS)
     ws_ready = ws.can_prepare(request)
     if not ws_ready.ok:
         log.debug("Ignoring non-websocket request on %s: %r", request.rel_url.path, ws_ready)
@@ -155,20 +162,36 @@ async def process_ws(
 
     log.info("NEW %s WEBSOCKET by %s from %s", request.rel_url.path, user.username, request.remote)
 
+    # Opt-in diagnostics are strictly for local synthetic test-user round sockets.
+    diagnose = (
+        not PROD
+        and os.getenv("PYCHESS_TEST_WS_DIAGNOSTICS") == "1"
+        and user.username.startswith(TEST_PREFIX)
+        and request.rel_url.path.startswith("/wsr/")
+    )
+    opened_at = monotonic()
+    last_received_at = opened_at
+    last_app_heartbeat_at: float | None = None
+    close_reason = "receive_loop_ended"
+
     try:
         async with websocket_session_lifetime(session, user, request, ws):
             if init_msg is not None:
                 await init_msg(app_state, ws, user)
             msg: WSMessage
             async for msg in ws:
+                last_received_at = monotonic()
                 if app_state.shutdown or not session_matches_user(session, user, request=request):
+                    close_reason = "shutdown_or_session_invalid"
                     break
 
                 if msg.type == aiohttp.WSMsgType.TEXT:
                     if msg.data == "close":
+                        close_reason = "client_close_message"
                         log.debug("Got 'close' msg.")
                         break
                     elif msg.data == "/n":
+                        last_app_heartbeat_at = monotonic()
                         await ws_send_str(ws, "/n")
                     else:
                         decoded = _ws_json_loads(msg.data, typed_decoders)
@@ -185,6 +208,7 @@ async def process_ws(
                             request=request,
                             message=cast(Mapping[str, object], decoded),
                         ):
+                            close_reason = "message_session_invalid"
                             break
 
                         data = cast(DataT, decoded)
@@ -200,14 +224,17 @@ async def process_ws(
                                 masked_data,
                             )
                         if msg_type == "logout":
+                            close_reason = "client_logout"
                             await ws.close()
                         elif msg_type == "disconnect":
+                            close_reason = "client_disconnect_request"
                             # Used only to test socket disconnection...
                             await ws.close(code=1009)
                         else:
                             ws[GAMEPLAY_EXPIRY_GRACE_KEY] = not session_matches_user(session, user)
                             await custom_msg_processor(app_state, user, ws, data)
                 elif msg.type == aiohttp.WSMsgType.CLOSED:
+                    close_reason = "ws_message_closed"
                     log.debug(
                         "%s websocket %s msg.type == aiohttp.WSMsgType.CLOSED",
                         request.rel_url.path,
@@ -215,6 +242,7 @@ async def process_ws(
                     )
                     break
                 elif msg.type == aiohttp.WSMsgType.ERROR:
+                    close_reason = "ws_message_error"
                     exc = ws.exception()
                     if exc is None or isinstance(
                         exc,
@@ -236,16 +264,31 @@ async def process_ws(
                     break
                 else:
                     log.debug("%s ws other msg.type %s %s", request.rel_url.path, msg.type, msg)
-    except (TimeoutError, OSError):
-        # Disconnected or stale.
-        pass
+    except (TimeoutError, OSError) as exc:
+        close_reason = f"{type(exc).__name__}: {exc!s}"
+        # Disconnected or stale. These errors are normally intentionally quiet.
     except Exception:
+        close_reason = "unexpected_server_exception"
         log.exception(
             "Exception in % socket handling owned by %s ",
             request.rel_url.path,
             user.username,
         )
     finally:
+        if diagnose:
+            now = monotonic()
+            log.warning(
+                "TEST_ROUND_WS_CLOSE user=%s game=%s reason=%s code=%s exception=%r "
+                "lifetime_secs=%.1f last_rx_age_secs=%.1f last_app_ping_age_secs=%s",
+                user.username,
+                request.match_info.get("gameId"),
+                close_reason,
+                ws.close_code,
+                ws.exception(),
+                now - opened_at,
+                now - last_received_at,
+                (None if last_app_heartbeat_at is None else round(now - last_app_heartbeat_at, 1)),
+            )
         user.authenticated_sockets.discard(ws)
         log.debug("%s finally: await ws.close() %s", request.rel_url.path, user.username)
         await ws.close()

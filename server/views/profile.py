@@ -40,10 +40,13 @@ def _has_internal_referer(request: web.Request) -> bool:
 
 @aiohttp_jinja2.template("profile.html")
 async def profile(request: web.Request) -> ViewContext:
-    user, context = await get_user_context(request)
+    user, context = await get_user_context(request, include_catalogued_variants=True)
 
     profileId = request.match_info["profileId"]
-    variant = request.match_info.get("variant")
+    # Variant may come from the URL path (/@/<profile>/perf/<key>) or from the
+    # query string (/@/<profile>/rated?variant=<key>), so the profile page tabs
+    # and the variant filter can be combined instead of resetting each other.
+    variant = request.match_info.get("variant") or request.rel_url.query.get("variant")
     if (variant is not None) and (variant not in VARIANTS):
         raise web.HTTPNotFound()
 
@@ -188,6 +191,7 @@ async def profile(request: web.Request) -> ViewContext:
         )
     }
     context["profile_title"] = profile_user.title
+    context["profile_bot_engine"] = profile_user.bot_engine if profile_user.bot else None
     context["profile_tournament_points"] = profile_user.tournament_points
     context["profile_forum_posts"] = profile_user.forum_posts
     context["profile_variant_count"] = profile_user.variant_count
@@ -222,11 +226,11 @@ async def profile(request: web.Request) -> ViewContext:
             context["profile_study_count"] = await count_studies_for_owner_view(
                 app_state, profile_user.username, viewer
             )
-        context["ublog_post_count"] = await app_state.db.ublog_post.count_documents(
+        context["ublog_post_count"] = await app_state.db.ublog_post2.count_documents(
             {"author": profileId, "live": True}
         )
         posts = await (
-            app_state.db.ublog_post.find({"author": profileId, "live": True})
+            app_state.db.ublog_post2.find({"author": profileId, "live": True})
             .sort([("sticky", -1), ("publishedAt", -1), ("createdAt", -1)])
             .limit(3)
             .to_list(3)

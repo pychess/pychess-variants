@@ -2,7 +2,7 @@ import * as cg from 'chessgroundx/types';
 
 import { uci2LastMove } from '../chess';
 import { Step } from '../messages';
-import { PyChessModel } from '../types';
+import { BugBoardName, PyChessModel } from '../types';
 import { Variant, VARIANTS } from '../variants';
 import { boardSettings } from '@/boardSettings';
 import { ChessgroundController } from '@/cgCtrl';
@@ -11,6 +11,9 @@ import { MovelistView } from './common/movelist';
 import { GameInfoView } from './common/gameInfo';
 import { Seat } from './common/seat';
 import { SeatConfiguration, twoBoardSeats } from './common/seatConfiguration';
+import { ownBoardName } from './common/boardRoles';
+import { result } from '../result';
+import { displayUsername } from '@/user';
 
 // Shared core of the two bughouse page controllers (RoundControllerBughouse and
 // AnalysisControllerBughouse): owns the two boards and the state/logic both need.
@@ -124,6 +127,31 @@ export abstract class TwoBoardController {
         // not retained: the panel is rendered once from this controller's state and
         // never updated again, so nothing needs a reference to it afterwards
         gameInfoView.render(this);
+        this.updateBoardSummaryStatus();
+    }
+
+    /** SAN of the latest move on one board, as of the ply the move list shows. */
+    lastSanOn(boardName: BugBoardName): string | undefined {
+        for (let ply = this.movelistView.ply(); ply > 0; ply--) {
+            const step = this.steps[ply];
+            if (step?.boardName === boardName) return step.san;
+        }
+        return undefined;
+    }
+
+    // The game status is the same on both boards, so only the viewer's own board reports it.
+    protected updateBoardSummaryStatus(): void {
+        if (this.gameId === '') return;
+        const teams = this.seats.teams;
+        const text = result(
+            this.variant,
+            this.status,
+            this.result,
+            teams[0].name(displayUsername),
+            teams[1].name(displayUsername),
+        );
+        const own = ownBoardName(this.seats) === 'a' ? this.boardA : this.boardB;
+        own.boardSummary.setStatus(text);
     }
 
     protected stampStepPlys = (step: Step, idx: number): void => {

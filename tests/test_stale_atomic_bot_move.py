@@ -242,10 +242,12 @@ class StaleAtomicBotMoveTestCase(AioHTTPTestCase):
 
         self.assertEqual(game.board.fen, POST_CASTLE_FEN)
         self.assertEqual(game.ply, 18)
-        # Combined validation refuses the move before recording its clocks or
-        # replacing the last successfully played move.
-        self.assertEqual(game.lastmove, "c8b8")
-        self.assertEqual(clocks_before, (game.clocks_w, game.clocks_b))
+        if game.board.supports_combined_move:
+            # Combined validation fails before recording clocks or the move.
+            self.assertEqual(game.lastmove, "c8b8")
+            self.assertEqual(clocks_before, (game.clocks_w, game.clocks_b))
+        else:
+            self.assertEqual(game.lastmove, "c8b7")
         self.assertEqual(game.status, INVALIDMOVE)
         self.assertEqual(game.result, "0-1")
 

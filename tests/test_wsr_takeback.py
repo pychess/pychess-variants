@@ -283,7 +283,7 @@ class TakebackBroadcastTestCase(AioHTTPTestCase):
             "",
             white,
             black,
-            base=0,
+            base=1,
             inc=5,
             byoyomi_period=3,
             rated=False,
@@ -358,6 +358,54 @@ class TakebackBroadcastTestCase(AioHTTPTestCase):
         self.assertEqual(document["byop"], [3, 3])
         self.assertFalse(document["byoo"])
         self.assertEqual(len(document["byost"]), 1)
+
+    async def test_zero_main_time_byoyomi_stays_in_overtime_after_reload_and_takeback(self):
+        app_state = get_app_state(self.app)
+        white = User(app_state, username="zero-byo-white", perfs=TEST_PLAYER_PERFS)
+        black = User(app_state, username="zero-byo-black", perfs=TEST_PLAYER_PERFS)
+        app_state.users[white.username] = white
+        app_state.users[black.username] = black
+        game = Game(
+            app_state,
+            id8(),
+            "torishogi",
+            "",
+            white,
+            black,
+            base=0,
+            inc=5,
+            byoyomi_period=3,
+        )
+        await insert_game_to_db(game, app_state)
+        self.assertTrue(game.overtime)
+        self.assertEqual(game.byoyomi_periods, [2, 2])
+        self.assertEqual(game.clocks, (5000, 5000))
+        for _ in range(2):
+            await game.play_move(game.board.legal_moves()[0])
+        await handle_byoyomi(
+            white,
+            {
+                "type": "byoyomi",
+                "color": "white",
+                "period": 1,
+                "positionId": game.position_id(),
+            },
+            game,
+        )
+        await game.play_move(game.board.legal_moves()[0])
+
+        persisted = await app_state.db.game.find_one({"_id": game.id})
+        await game.stopwatch.cancel()
+        reloaded = await load_game_from_doc(app_state, persisted)
+        assert isinstance(reloaded, Game)
+        self.assertTrue(reloaded.overtime)
+        self.assertEqual(reloaded.byoyomi_periods, [1, 2])
+        await handle_takeback(AsyncMock(), reloaded.wplayer, reloaded)
+        await handle_takeback(AsyncMock(), reloaded.bplayer, reloaded)
+
+        self.assertEqual(reloaded.board.ply, 2)
+        self.assertTrue(reloaded.overtime)
+        self.assertEqual(reloaded.byoyomi_periods, [2, 2])
 
     async def test_pending_takeback_offer_is_resent_on_reconnect(self):
         app_state = get_app_state(self.app)

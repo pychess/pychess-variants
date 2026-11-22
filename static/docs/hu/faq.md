@@ -14,7 +14,7 @@ The server code is written in Python.</details>
 
 Both are designed to play chess variants, and both share the same developer ([gbtami](https://www.github.com/gbtami)). However, the similarities end there. The full name for this site is "Pychess Variants" for distinction, but is often just called Pychess. The site for the desktop application is [here](https://pychess.github.io/).</details>
 
-<details><summary>What is the relationship to [Lichess](https://lichess.org/)?</summary>
+<details><summary>What is the relationship to <a href="https://lichess.org/">Lichess</a>?</summary>
 
 Pychess's design is heavily influenced by Lichess and is meant to be comfortable for Lichess users. Pychess has no official relationship to Lichess. However, it does use Lichess accounts to facilitate user management.</details>
 

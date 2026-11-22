@@ -1,8 +1,15 @@
 import { VNode, init, classModule, attributesModule, propsModule, eventListenersModule, styleModule } from 'snabbdom';
+import type { Hooks } from 'snabbdom';
 
 import { sanitizeURL } from './url';
 
 export const patch = init([classModule, attributesModule, propsModule, eventListenersModule, styleModule]);
+
+// Open a <dialog> as modal; close() before removal so the browser returns focus to the opener.
+export const modalDialogHooks: Hooks = {
+    insert: vnode => (vnode.elm as HTMLDialogElement).showModal(),
+    destroy: vnode => (vnode.elm as HTMLDialogElement).close(),
+};
 
 export function downloadText(filename: string, text: string) {
     const element = document.createElement('a');
@@ -125,6 +132,14 @@ export function ensurePieceCSS(assetUrl: string, family: string, cssFile: string
     if (cssFile === 'letters') newUrl = sanitizeURL(`${assetUrl}/piece-css/letters.css`);
     if (cssFile === 'invisible') newUrl = sanitizeURL(`${assetUrl}/piece-css/invisible.css`);
 
+    if (family.startsWith('catalogued-') && cssFile.startsWith('custom')) {
+        const customId = `piece-set-${family}-custom`;
+        document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]').forEach(link => {
+            if (link.id !== cssId && (link.id === customId || link.id.startsWith(`${customId}-`))) {
+                link.remove();
+            }
+        });
+    }
     if (document.getElementById(cssId)) return;
 
     const link = document.createElement('link');

@@ -154,6 +154,7 @@ export interface StudySyncOptions {
     onConcealChanged?: (concealPly: number, revision: number) => void;
     concealPly?: number;
     onServerEvalChanged?: (serverEval: StudyServerEval | undefined) => void;
+    onServerAnalysisVisibilityChanged?: () => void;
     onServerAnalysisUnavailable?: (reason: string) => void;
     onGamebookScriptChanged?: () => void;
     onOrientationChanged?: (orientation: 'white' | 'black') => void;
@@ -667,7 +668,7 @@ export class StudyAnalysisExtension implements AnalysisExtension {
     }
 
     areTreeNodeAnnotationsVisible(node: AnalysisTreeNode): boolean {
-        if (this.options.rootOnlyPreview) return false;
+        if (this.options.rootOnlyPreview || this.practiceSession || this.policy?.training) return false;
         if (this.gamebookPlayback && !this.gamebookPlayback.areTreeNodeAnnotationsVisible()) return false;
         return this.conceal?.areTreeNodeAnnotationsVisible(node) ?? true;
     }
@@ -972,9 +973,31 @@ export class StudyAnalysisExtension implements AnalysisExtension {
         return this.policy?.tools.computerSearch ?? true;
     }
 
+    allowVariationArrows(): boolean {
+        // Lila suppresses forks for the entire Practice/Conceal chapter, including
+        // author views, and during gamebook playback. Never disclose lesson answers.
+        return (
+            !this.options.rootOnlyPreview &&
+            !this.practiceSession &&
+            !this.gamebookPlayback &&
+            !this.conceal &&
+            this.policy?.tools.fullTree !== false &&
+            !this.policy?.session.startsWith('conceal') &&
+            !this.policy?.session.startsWith('practice')
+        );
+    }
+
+    isGamebookEditor(): boolean {
+        return this.policy?.session === 'gamebook-author' || this.policy?.session === 'gamebook-analysis';
+    }
+
     onEvaluation(): boolean {
         if (this.options.rootOnlyPreview) return false;
         return this.policy?.tools.evaluationDisplay ?? true;
+    }
+
+    onServerAnalysisVisibilityChanged(): void {
+        this.options.onServerAnalysisVisibilityChanged?.();
     }
 
     onNodeAdded(parentPath: string, node: AnalysisTreeNode): void {
@@ -1012,6 +1035,7 @@ export class StudyAnalysisExtension implements AnalysisExtension {
     private updateConcealPly(concealPly: number, revision: number): void {
         this.options.concealPly = concealPly;
         this.conceal?.setConcealPly(concealPly);
+        this.ctrl.setAutoShapes?.();
         updateMovelist(this.ctrl, true, false);
         this.options.onConcealChanged?.(concealPly, revision);
     }
@@ -1279,6 +1303,7 @@ export class StudyAnalysisExtension implements AnalysisExtension {
     private notifyAnnotationState(): void {
         this.onAnnotationStateChanged?.(this.annotationState);
         this.ctrl.refreshPgnView?.();
+        this.ctrl.setAutoShapes?.();
     }
 
     private restoreCurrentShapes(): void {
@@ -1650,6 +1675,7 @@ export class StudyAnalysisExtension implements AnalysisExtension {
         this.refreshPreferredMainline();
         this.currentRevision = data.revision as number;
         if (typeof data.concealPly === 'number') this.updateConcealPly(data.concealPly, this.currentRevision);
+        if (!POSITION_ANNOTATION_MUTATIONS.has(type) && this.allowVariationArrows()) this.ctrl.setAutoShapes?.();
         updateMovelist(this.ctrl, true, false);
         this.ctrl.refreshPgnView?.();
         if (this.gamebookPlayback && GAMEBOOK_SCRIPT_MUTATIONS.has(type)) {

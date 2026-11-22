@@ -270,6 +270,16 @@ class PushNotifier:
                 self.queue.task_done()
 
     async def _deliver_corr_move(self, job: CorrMovePushJob) -> None:
+        # The preference may have changed after this job was enqueued.
+        # Read the persisted preference so a queued job cannot bypass opt-out.
+        if self.app_state.db is None:
+            return
+        user_doc = await self.app_state.db.user.find_one(
+            {"_id": job.username}, projection={"cps": 1}
+        )
+        if user_doc is not None and user_doc.get("cps", True) is False:
+            return
+
         payload = json.dumps(
             {
                 "title": "It's your turn!",

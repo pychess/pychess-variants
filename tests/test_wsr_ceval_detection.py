@@ -17,7 +17,7 @@ from newid import id8
 from pychess_global_app_state_utils import get_app_state
 from user import User
 from variants import VARIANTS
-from wsr import handle_ceval_detected
+from wsr import handle_ceval_detected, handle_overlay_detected
 
 from server import make_app
 
@@ -85,6 +85,53 @@ class CevalDetectionTestCase(AioHTTPTestCase):
             {"gameId": game.id},
             sort=[("createdAt", -1)],
         )
+
+    async def test_overlay_reporting_is_on_by_default_and_never_forfeits(self):
+        game = self.new_game()
+        payload = {"type": "overlay_detected", "gameId": game.id}
+        await handle_overlay_detected(self.wplayer, payload, game)
+        app_state = get_app_state(self.app)
+        await handle_overlay_detected(self.wplayer, payload, game)
+        await handle_overlay_detected(self.wplayer, payload, game)
+
+        reports = await app_state.db[CHEAT_REPORT_COLLECTION].count_documents(
+            {"kind": "external_overlay", "gameId": game.id}
+        )
+        self.assertEqual(reports, 1)
+        report = await self.latest_report(game)
+        self.assertEqual(report["action"], "reported_only")
+        self.assertEqual(report["source"], "unverified_client_dom")
+        self.assertFalse(game.status >= STARTED)
+        self.assertEqual(game.result, "*")
+
+    async def test_overlay_snapshot_is_bounded_and_first_report_wins(self):
+        game = self.new_game()
+        svg = '<svg xmlns="http://www.w3.org/2000/svg"><polygon points="0,0 1,1"/></svg>'
+        await handle_overlay_detected(self.wplayer, {"gameId": game.id, "svg": svg}, game)
+        await handle_overlay_detected(
+            self.wplayer, {"gameId": game.id, "svg": "<svg>changed</svg>"}, game
+        )
+        report = await self.latest_report(game)
+        self.assertEqual(report["overlaySvg"], svg)
+
+        other_game = self.new_game()
+        await handle_overlay_detected(
+            self.wplayer, {"gameId": other_game.id, "svg": "<svg>" + "x" * 32768}, other_game
+        )
+        report = await self.latest_report(other_game)
+        self.assertNotIn("overlaySvg", report)
+
+    async def test_overlay_report_ignores_spectator_and_wrong_game(self):
+        game = self.new_game()
+        app_state = get_app_state(self.app)
+        spectator = User(app_state, username="spectator-overlay", perfs=PERFS)
+        await handle_overlay_detected(
+            spectator, {"type": "overlay_detected", "gameId": game.id}, game
+        )
+        await handle_overlay_detected(
+            self.wplayer, {"type": "overlay_detected", "gameId": "wrong-id"}, game
+        )
+        self.assertIsNone(await self.latest_report(game))
 
     async def test_ceval_detection_reports_matching_live_game_without_forfeit_by_default(self):
         game = self.new_game()

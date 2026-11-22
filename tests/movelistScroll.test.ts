@@ -1,6 +1,6 @@
 import { afterEach, expect, jest, test } from '@jest/globals';
 
-import { createAnalysisTree } from '../client/analysis/analysisTree';
+import { addOrSelectChild, createAnalysisTree, mergeServerAdvice } from '../client/analysis/analysisTree';
 import type { GameController } from '../client/gameCtrl';
 import type { Step } from '../client/messages';
 import { selectMove, updateMovelist } from '../client/movelist';
@@ -151,4 +151,78 @@ test('tree visibility policy omits hidden continuations from the rendered moveli
     updateMovelist(ctrl, true, false, false);
 
     expect([...document.querySelectorAll('#movelist move:not(.empty)')].map(node => node.textContent)).toEqual(['e4']);
+});
+
+test.each([false, true])('server analysis can be hidden and restored in inline mode %s', inline => {
+    document.body.innerHTML = '<div id="movelist"></div>';
+    const steps = [
+        { fen: 'start w - - 0 1', turnColor: 'white', san: '' },
+        {
+            fen: 'after b - - 0 1',
+            move: 'e2e4',
+            turnColor: 'black',
+            san: 'e4',
+            scoreStr: '-2.5',
+            analysis: {
+                s: { cp: -250 },
+                advice: {
+                    nag: 4,
+                    comment: 'Blunder. d4 was best.',
+                    variation: [{ fen: 'better b - - 0 1', move: 'd2d4', turnColor: 'black', san: 'd4' }],
+                },
+            },
+        },
+    ] as Step[];
+    const tree = createAnalysisTree(steps);
+    const move = tree.root.children[0];
+    move.annotations!.comments.push({ id: 'authored', author: 'Player', text: 'My plan' });
+    move.annotations!.nags.push(1);
+    const ctrl = {
+        steps,
+        analysisTree: tree,
+        hasAnalysisTree: () => true,
+        isTreeInlineNotation: () => inline,
+        ply: 1,
+        status: -1,
+        showServerAnalysis: true,
+    } as unknown as GameController & { showServerAnalysis: boolean };
+
+    updateMovelist(ctrl, true, false, false);
+    expect(document.getElementById('movelist')!.textContent).toContain('??');
+    expect(document.getElementById('movelist')!.textContent).toContain('-2.5');
+    expect(document.getElementById('movelist')!.textContent).toContain('d4');
+
+    ctrl.showServerAnalysis = false;
+    updateMovelist(ctrl, true, false, false);
+    const hidden = document.getElementById('movelist')!.textContent!;
+    expect(hidden).not.toContain('??');
+    expect(hidden).not.toContain('-2.5');
+    expect(hidden).not.toContain('d4');
+    expect(hidden).not.toContain('Blunder');
+    expect(hidden).toContain('e4!');
+    expect(hidden).toContain('My plan');
+    expect(move.step.analysis?.advice?.nag).toBe(4);
+
+    // Results arriving after the switch was disabled stay hidden.
+    mergeServerAdvice(tree, 1, steps[1].analysis);
+    updateMovelist(ctrl, true, false, false);
+    expect(document.getElementById('movelist')!.textContent).not.toContain('Blunder');
+
+    ctrl.showServerAnalysis = true;
+    updateMovelist(ctrl, true, false, false);
+    expect(document.getElementById('movelist')!.textContent).toContain('??');
+    expect(document.getElementById('movelist')!.textContent).toContain('-2.5');
+    expect(document.getElementById('movelist')!.textContent).toContain('Blunder');
+});
+
+test('server advice preserves a player-created continuation when analysis is hidden', () => {
+    const steps = [
+        { fen: 'start w - - 0 1', turnColor: 'white', san: '' },
+        { fen: 'after b - - 0 1', move: 'e2e4', turnColor: 'black', san: 'e4' },
+    ] as Step[];
+    const tree = createAnalysisTree(steps);
+    const alternative = { fen: 'better b - - 0 1', move: 'd2d4', turnColor: 'black', san: 'd4' } as Step;
+    const path = addOrSelectChild(tree, '', alternative, false);
+    mergeServerAdvice(tree, 1, { s: { cp: -250 }, advice: { nag: 4, comment: 'Blunder', variation: [alternative] } });
+    expect(tree.byPath.get(path)!.serverAnalysis).toBeUndefined();
 });

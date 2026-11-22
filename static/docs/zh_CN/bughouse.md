@@ -1,4 +1,4 @@
-# ![Bughouse](https://raw.githubusercontent.com/pychess/pychess-variants/master/static/icons/Bughouse.svg) 四狂象棋 | Bughouse
+# ![](https://raw.githubusercontent.com/pychess/pychess-variants/master/static/icons/Bughouse.svg) 四狂象棋 | Bughouse
 
 ![Boards](https://github.com/pychess/pychess-variants/blob/master/static/images/bugboards.png)
 

@@ -10,11 +10,12 @@ from aiohttp import web
 from bot_accounts import (
     BOT_TOKEN_SCOPE,
     BOT_TOKEN_TEST_EXPIRES_MS,
+    bot_token_hash,
     get_db_token_owner,
     upgrade_user_to_bot_account,
 )
 from broadcast import round_broadcast
-from const import RESIGN, STARTED
+from const import INVALIDMOVE, RESIGN, STARTED
 from csrf import csrf_exempt
 from game import Game
 from json_utils import json_dumps, json_response
@@ -23,7 +24,7 @@ from request_utils import read_post_data, read_text_data
 from seek import BOT_CHALLENGE_DECLINED, resolve_decline_reason
 from settings import BOT_TOKENS
 from sse_utils import enqueue_sse_payload
-from typing_defs import UserDocument
+from typing_defs import BotEngineInfo, UserDocument
 from user import User
 from utils import load_game, new_game, play_move, send_bot_game_start_unless_streaming
 from variants import ALL_VARIANTS
@@ -58,7 +59,25 @@ def _require_bot_invite_owner(username: str, seek: Seek) -> None:
         raise web.HTTPForbidden()
 
 
-def _parse_bot_supported_variants(request: web.Request) -> set[str]:
+def _parse_bot_engine_info(value: object) -> BotEngineInfo | None:
+    if not isinstance(value, dict):
+        return None
+    name = value.get("name")
+    if not isinstance(name, str):
+        return None
+    name = " ".join(name.split())[:128]
+    if not name:
+        return None
+    engine: BotEngineInfo = {"name": name}
+    author = value.get("author")
+    if isinstance(author, str):
+        author = " ".join(author.split())[:256]
+        if author:
+            engine["author"] = author
+    return engine
+
+
+def _parse_bot_capabilities(request: web.Request) -> tuple[set[str], BotEngineInfo | None]:
     raw_capabilities = request.headers.get(BOT_CAPABILITIES_HEADER)
     if raw_capabilities is None:
         raise web.HTTPBadRequest(text=f"Missing required {BOT_CAPABILITIES_HEADER} header.")
@@ -87,7 +106,7 @@ def _parse_bot_supported_variants(request: web.Request) -> set[str]:
     }
     if not supported_variants:
         raise web.HTTPBadRequest(text="BOT does not advertise any PyChess-supported variants.")
-    return supported_variants
+    return supported_variants, _parse_bot_engine_info(capabilities.get("engine"))
 
 
 def _refresh_bot_api_online(bot_player: User) -> None:
@@ -215,13 +234,16 @@ async def bot_token_test(request: web.Request) -> web.StreamResponse:
             }
             continue
 
-        user_doc = await get_db_token_owner(app_state, token, mark_used=False)
+        user_doc = await get_db_token_owner(app_state, token, mark_used=False, required_scope=None)
         if user_doc is None:
             response[token] = None
             continue
 
+        token_doc = await app_state.db.bot_token.find_one({"tokenHash": bot_token_hash(token)})
         response[token] = {
-            "scopes": BOT_TOKEN_SCOPE,
+            "scopes": ",".join(token_doc.get("scopes", [BOT_TOKEN_SCOPE]))
+            if token_doc
+            else BOT_TOKEN_SCOPE,
             "userId": user_doc["_id"],
             "expires": BOT_TOKEN_TEST_EXPIRES_MS,
         }
@@ -345,7 +367,7 @@ async def challenge_decline(request: web.Request) -> web.StreamResponse:
 async def event_stream(request: web.Request) -> web.StreamResponse:
     app_state = get_app_state(request.app)
     username = _request_username(request)
-    supported_variants = _parse_bot_supported_variants(request)
+    supported_variants, engine_info = _parse_bot_capabilities(request)
 
     resp = web.StreamResponse()
     resp.content_type = "application/x-ndjson"
@@ -364,6 +386,8 @@ async def event_stream(request: web.Request) -> web.StreamResponse:
         app_state.users[bot_player.username] = bot_player
 
         doc: UserDocument | None = await app_state.db.user.find_one({"_id": username})
+        if doc is not None:
+            bot_player.bot_engine = doc.get("botEngine")
         if doc is None:
             result = await app_state.db.user.insert_one(
                 {
@@ -375,6 +399,15 @@ async def event_stream(request: web.Request) -> web.StreamResponse:
             log.debug("db insert user result %r", result.inserted_id)
 
     bot_player.bot_supported_variants = supported_variants
+    if engine_info is not None:
+        # Store the last reported identity so offline profiles can show it too.
+        if app_state.db is not None:
+            await app_state.db.user.update_one(
+                {"_id": username, "botEngine": {"$ne": engine_info}},
+                {"$set": {"botEngine": engine_info}},
+            )
+        bot_player.bot_engine = engine_info
+        app_state.public_users.invalidate(username)
 
     _refresh_bot_api_online(bot_player)
 
@@ -508,7 +541,42 @@ async def bot_move(request: web.Request) -> web.StreamResponse:
     user = app_state.users[username]
     game = await _load_authorized_game(app_state, gameId, username)
 
-    await play_move(app_state, user, game, move)
+    # Lichess-compatible BOT clients retry a POST when its response times out.
+    # If the original move succeeded and the opponent has already replied, the
+    # duplicate arrives on the BOT's next turn. The ordinary last-move guard in
+    # utils.play_move() no longer recognizes it, and would forfeit the game.
+    # Check the move BEFORE calling play_move(), and only swallow an illegal
+    # repeat: some drop variants can legitimately play the same move again.
+    async with game.move_lock:
+        if (
+            game.status <= STARTED
+            and game.turn_player == username
+            and len(game.board.move_stack) >= 2
+            and game.board.move_stack[-2] == move
+            and move not in game.board.legal_moves()
+        ):
+            log.info(
+                "Ignoring retried external BOT move after opponent reply "
+                "(game=%s user=%s move=%s ply=%s)",
+                gameId,
+                username,
+                move,
+                game.board.ply,
+            )
+            return json_response({"ok": True})
+
+        previous_status = game.status
+        await play_move(app_state, user, game, move)
+        if previous_status <= STARTED and game.status == INVALIDMOVE:
+            log.warning(
+                "Invalid external BOT API move (game=%s user=%s variant=%s move=%s ply=%s fen=%s)",
+                gameId,
+                username,
+                game.variant,
+                move,
+                game.board.ply,
+                game.board.fen,
+            )
 
     return json_response({"ok": True})
 

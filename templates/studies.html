@@ -1,4 +1,16 @@
 {% extends "template.html" %}
+{% macro study_icon(study) %}
+    {% if study.flair %}
+        {% set flair_icon = study_flair_icon(study.flair) %}
+        {% if study.flair.startswith('variant:') %}
+        <span class="study-card__flair study-flair-icon" data-icon="{{ flair_icon }}" aria-hidden="true"></span>
+        {% else %}
+        <span class="study-card__flair study-flair-icon" aria-hidden="true">{{ flair_icon }}</span>
+        {% endif %}
+    {% else %}
+    <span class="study-card__icon" aria-hidden="true"></span>
+    {% endif %}
+{% endmacro %}
 {% block content %}
 <div id="main-wrap" class="study-index-wrap">
     <main class="study-index-page{% if study_list_navigation %} page-menu{% endif %}">
@@ -18,7 +30,7 @@
             {% endfor %}
         </nav>
         {% endif %}
-        <section class="study-index{% if study_list_navigation %} page-menu__content{% endif %} box">
+        <section class="study-index{% if study_list_navigation %} page-menu__content{% endif %} box" data-infinite-scroll="studies">
             {% if study_topics_index %}
             <div class="study-topics-index">
                 <h1>{% trans %}Topics{% endtrans %}</h1>
@@ -66,7 +78,7 @@
                 </h1>
                 {% if study_search_value is defined %}
                 <form class="study-search" method="get" action="{{ home }}/study/search">
-                    {% if study_page is defined %}<input type="hidden" name="order" value="{{ study_list_order }}">{% endif %}
+                    {% if study_page is defined %}<input type="hidden" name="order" value="{{ study_search_order }}">{% endif %}
                     <label class="study-search__query">
                         <input type="search" name="q" value="{{ study_search_value }}" minlength="3" maxlength="100" placeholder="{% trans %}Search studies{% endtrans %}" aria-label="{% trans %}Search studies{% endtrans %}" enterkeyhint="search">
                     </label>
@@ -79,21 +91,35 @@
                 </form>
                 {% endif %}
                 {% if study_page is defined %}
+                {% set order_labels = {
+                    'hot': gettext('Hot'),
+                    'newest': gettext('Date added (newest)'),
+                    'oldest': gettext('Date added (oldest)'),
+                    'updated': gettext('Recently updated'),
+                    'popular': gettext('Most popular'),
+                    'alphabetical': gettext('Alphabetical'),
+                    'mine': gettext('My studies'),
+                    'relevant': gettext('Relevant')
+                } %}
                 <details class="study-list-order">
-                    <summary class="button button-empty">
-                        {{ study_list_order_label }}
+                    <summary>
+                        <span class="study-list-order__label">{{ order_labels[study_list_order] }}</span>
                     </summary>
                     <div class="study-list-order__menu">
-                        <a{% if study_list_order == 'updated' %} class="current"{% endif %} href="{{ study_order_hrefs['updated'] }}">{% trans %}Recently updated{% endtrans %}</a>
-                        <a{% if study_list_order == 'newest' %} class="current"{% endif %} href="{{ study_order_hrefs['newest'] }}">{% trans %}Date added (newest){% endtrans %}</a>
-                        <a{% if study_list_order == 'oldest' %} class="current"{% endif %} href="{{ study_order_hrefs['oldest'] }}">{% trans %}Date added (oldest){% endtrans %}</a>
-                        <a{% if study_list_order == 'alphabetical' %} class="current"{% endif %} href="{{ study_order_hrefs['alphabetical'] }}">{% trans %}Alphabetical{% endtrans %}</a>
+                        {% for order, href in study_order_hrefs.items() %}
+                        <a{% if order == study_list_order %} class="current" aria-current="true"{% endif %} href="{{ href }}">{{ order_labels[order] }}</a>
+                        {% endfor %}
                     </div>
                 </details>
+                {% set format_label = gettext('Switch to card view') if study_list_compact else gettext('Switch to list view') %}
+                <form class="study-list-format" method="post" action="/study/list-format">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                    <input type="hidden" name="return_to" value="{{ study_list_return_to }}">
+                    <button class="study-list-format__toggle{% if study_list_compact %} study-list-format__toggle--active{% endif %}" type="submit" name="format" value="{{ 'card' if study_list_compact else 'compact' }}" title="{{ format_label }}" aria-label="{{ format_label }}">
+                        <span class="icon icon-list" aria-hidden="true"></span>
+                    </button>
+                </form>
                 {% endif %}
-                <a class="study-index__topics" href="{{ home }}/study/topic" title="{% trans %}Topics{% endtrans %}" aria-label="{% trans %}Topics{% endtrans %}">
-                    <span class="icon icon-list" aria-hidden="true"></span>
-                </a>
                 {% if study_list_can_create %}
                 <button class="study-new__toggle" type="button" data-study-new-open title="{% trans %}Create study{% endtrans %}" aria-label="{% trans %}Create study{% endtrans %}" aria-haspopup="dialog" aria-controls="study-new-dialog">
                     <span class="icon icon-plus-square" aria-hidden="true"></span>
@@ -106,12 +132,18 @@
             <p class="study-search__hint">{% trans %}Enter at least 3 characters to search studies.{% endtrans %}</p>
             {% endif %}
             {% if studies %}
-            <div class="studies study-list">
+            <div class="studies study-list" data-infinite-scroll-content>
                 {% for study in studies %}
-                <article class="study-card">
+                {% if study_list_compact %}
+                <a class="study-card study-list__entry" data-infinite-scroll-key="{{ study.id }}" href="/study/{{ study.id }}" title="{{ study.name }}">
+                    {{ study_icon(study) }}
+                    <span class="study-list__name">{{ study.name }}</span>
+                </a>
+                {% else %}
+                <article class="study-card" data-infinite-scroll-key="{{ study.id }}">
                     <a class="study-card__overlay" href="/study/{{ study.id }}" title="{{ study.name }}" aria-label="{{ study.name }}"></a>
                     <div class="study-card__top">
-                        <span class="study-card__icon" aria-hidden="true"></span>
+                        {{ study_icon(study) }}
                         <div class="study-card__summary">
                             <strong class="study-card__name">{{ study.name }}</strong>
                             <div class="study-card__meta">
@@ -144,6 +176,7 @@
                         </ol>
                     </div>
                 </article>
+                {% endif %}
                 {% endfor %}
             </div>
             {% elif study_search is defined %}
@@ -192,10 +225,10 @@
             </div>
             {% endif %}
             {% if study_page is defined and study_page.pages > 1 %}
-            <nav class="study-public-pages" aria-label="{% trans %}Pagination{% endtrans %}">
+            <nav class="study-public-pages" aria-label="{% trans %}Pagination{% endtrans %}" data-infinite-scroll-pager>
                 {% if study_prev_href %}<a class="button" href="{{ study_prev_href }}">{% trans %}Previous{% endtrans %}</a>{% endif %}
                 <span>{% trans page=study_page.page, pages=study_page.pages %}Page {{ page }} / {{ pages }}{% endtrans %}</span>
-                {% if study_next_href %}<a class="button" href="{{ study_next_href }}">{% trans %}Next{% endtrans %}</a>{% endif %}
+                {% if study_next_href %}<a class="button" rel="next" href="{{ study_next_href }}">{% trans %}Next{% endtrans %}</a>{% endif %}
             </nav>
             {% endif %}
             {% endif %}
@@ -209,10 +242,13 @@
         <button class="study-icon-button study-dialog__close" type="button" data-study-new-close aria-label="{% trans %}Close{% endtrans %}">×</button>
     </div>
     <form id="study-create-form" class="study-dialog__form study-create-form">
-        <label class="study-dialog__field">
-            <span>{% trans %}Name{% endtrans %}</span>
-            <input type="text" name="name" value="{{ username }}'s Study" maxlength="100" autocomplete="off">
-        </label>
+        <div class="study-flair-and-name">
+            <div id="study-flair-mount"></div>
+            <label class="study-dialog__field">
+                <span>{% trans %}Name{% endtrans %}</span>
+                <input type="text" name="name" value="{{ username }}'s Study" maxlength="100" autocomplete="off">
+            </label>
+        </div>
         <div class="study-dialog__split">
             <label class="study-dialog__field">
                 <span>{% trans %}Visibility{% endtrans %}</span>

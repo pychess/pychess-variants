@@ -35,6 +35,7 @@ from study.storage import (
     load_owned_study,
     member_study_topics,
     owner_studies_page,
+    owner_view_studies_page,
     popular_study_topics,
     remove_study_member,
     rename_chapter,
@@ -44,7 +45,6 @@ from study.storage import (
     set_study_topics,
     set_study_visibility,
     studies_for_owner,
-    studies_for_owner_view,
     study_list_chapter_names,
     study_search_page,
     topic_studies_page,
@@ -116,22 +116,13 @@ class StudyStorageTestCase(unittest.IsolatedAsyncioTestCase):
         await set_study_visibility(cast(Any, self.app_state), unlisted, "unlisted")
         await set_study_visibility(cast(Any, self.app_state), public, "public")
 
-        owner_ids = {
-            study.id
-            for study in await studies_for_owner_view(cast(Any, self.app_state), "owner", "owner")
-        }
-        public_ids = {
-            study.id
-            for study in await studies_for_owner_view(cast(Any, self.app_state), "owner", None)
-        }
-        other_ids = {
-            study.id
-            for study in await studies_for_owner_view(cast(Any, self.app_state), "owner", "other")
-        }
-
-        self.assertEqual(owner_ids, {private.id, unlisted.id, public.id})
-        self.assertEqual(public_ids, {public.id})
-        self.assertEqual(other_ids, {public.id})
+        for viewer, expected in (
+            ("owner", {private.id, unlisted.id, public.id}),
+            (None, {public.id}),
+            ("other", {public.id}),
+        ):
+            result = await owner_view_studies_page(cast(Any, self.app_state), "owner", viewer)
+            self.assertEqual({study.id for study in result["studies"]}, expected)
         self.assertEqual(
             await count_studies_for_owner_view(cast(Any, self.app_state), "owner", "owner"), 3
         )
@@ -423,6 +414,7 @@ class StudyStorageTestCase(unittest.IsolatedAsyncioTestCase):
             study,
             settings={"example": "preserved"},
             topics=("Opening", "King pawn"),
+            flair="variant:chess960",
         )
 
         with patch.object(
@@ -442,6 +434,7 @@ class StudyStorageTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(cloned.source, StudySource("study", study.id))
         self.assertEqual(cloned.settings, {"example": "preserved"})
         self.assertEqual(cloned.topics, ("Opening", "King pawn"))
+        self.assertEqual(cloned.flair, "variant:chess960")
         self.assertEqual(cloned.revision, 0)
         self.assertEqual(cloned.current_chapter, cloned_first.id)
         self.assertNotEqual(cloned_first.id, first.id)

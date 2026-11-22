@@ -9,6 +9,7 @@ from time import monotonic
 
 import aiohttp_session
 from aiohttp import web
+from client_ip import get_client_ip
 from request_utils import request_log_fingerprint, safe_log_value
 from typedefs import (
     REQUEST_NEW_SESSION_KEY,
@@ -16,7 +17,6 @@ from typedefs import (
     REQUEST_RATE_LIMIT_BUCKET_KEY,
 )
 from users import NotInDbUsers
-from views import page404
 
 from lang import LOCALE
 
@@ -83,8 +83,26 @@ async def handle_404(request: web.Request, handler: Handler) -> web.StreamRespon
         return await handler(request)
     except web.HTTPException as ex:
         if ex.status == 404:
-            response = await page404.page404(request)
-            return response
+            # JSON consumers must not receive a full HTML page on a missing resource.
+            path = request.path
+            if path.startswith("/api/") or (path.startswith("/@/") and path.endswith("/mini")):
+                return web.json_response({"error": "Not found"}, status=404)
+            # Avoid rendering the whole site for nonexistent pages and scanner traffic.
+            return web.Response(
+                text=(
+                    '<!doctype html><html lang="en"><head>'
+                    '<meta charset="utf-8"><meta name="viewport" '
+                    'content="width=device-width,initial-scale=1">'
+                    "<title>404 · PyChess</title>"
+                    "<style>body{font:1.2rem system-ui,sans-serif;max-width:38rem;"
+                    "margin:12vh auto;padding:0 1.5rem;color:#333}"
+                    "h1{font-size:4rem;margin:0}a{color:#1769aa}</style>"
+                    "</head><body><main><h1>404</h1><p>Page not found.</p>"
+                    '<p><a href="/">Return to PyChess</a></p></main></body></html>'
+                ),
+                status=404,
+                content_type="text/html",
+            )
         # IMPORTANT: re-raise all other HTTP errors
         raise
     except NotInDbUsers:
@@ -159,8 +177,7 @@ async def request_timing_middleware(request: web.Request, handler: Handler) -> w
         path = request.rel_url.path
         if _should_trace_request(path, status, duration_ms):
             request_id = request.headers.get("X-Request-ID", "-")
-            forwarded_for = request.headers.get("X-Forwarded-For", request.remote or "-")
-            client_ip = forwarded_for.split(",", maxsplit=1)[0].strip()
+            client_ip = get_client_ip(request)
             user_agent, referer, http_version, session_cookie = request_log_fingerprint(request)
             profile_restricted = request.get(REQUEST_PROFILE_RESTRICTED_KEY, "-")
             rate_limit_bucket = request.get(REQUEST_RATE_LIMIT_BUCKET_KEY, "-")

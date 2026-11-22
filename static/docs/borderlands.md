@@ -147,6 +147,7 @@ They can move like a Ferz (F). Upon promotion, Marauders gain the ability to mak
     <tr><td colspan="2">Lions start the game as a defensive piece restricted to their side's Territory, and have a very limited path to promotion (via the Lion's Incursion Squares) that is easily defended against. Upon promotion, Lions gain the ability to roam the entire board.<p/></td><td></td></tr>
 </tbody>
 </table>
+
 ### Piece Values
 <table  style="border-collapse: collapse; border: 1px solid;">
 <tbody>

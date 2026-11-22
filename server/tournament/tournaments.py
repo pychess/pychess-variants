@@ -35,8 +35,8 @@ from tournament.arena import ArenaTournament
 if TYPE_CHECKING:
     from game import Game
     from pychess_global_app_state import PychessGlobalAppState
-from catalogued_variants import (
-    CATALOGUED_VARIANT_COLLECTION,
+from catalogued.models import CATALOGUED_VARIANT_COLLECTION
+from catalogued.variants import (
     is_public_catalogued_variant,
     register_historical_catalogued_variant_doc,
 )
@@ -53,7 +53,7 @@ from typing_defs import (
     TournamentPoint,
 )
 from user import User
-from utils import load_game
+from utils import load_game, load_game_from_doc
 from variants import ALL_VARIANTS, C2V, VARIANTS, get_server_variant, is_catalogued_variant
 from ws_types import ChatLine
 
@@ -389,9 +389,22 @@ async def _repair_missing_pairing_docs_from_games(tournament: Tournament) -> Non
         async for doc in pairing_table.find({"tid": tournament.id}, projection={"_id": 1})
     }
     repaired_ids: list[str] = []
+    unpublished: list[Game] = []
 
     async for game_doc in game_table.find({"tid": tournament.id}):
         game_id = game_doc["_id"]
+        if (
+            tournament.system == ARENA
+            and "arenaStart" in game_doc
+            and game_doc["arenaStart"] is None
+            and game_doc["s"] <= STARTED
+        ):
+            game = await load_game_from_doc(tournament.app_state, game_doc)
+            if game is not None:
+                if TYPE_CHECKING:
+                    assert isinstance(game, Game)
+                unpublished.append(game)
+            continue
         if game_id in pairing_ids:
             continue
 
@@ -425,6 +438,9 @@ async def _repair_missing_pairing_docs_from_games(tournament: Tournament) -> Non
         await tournament.db_update_pairing(pairing_game)
         repaired_ids.append(game_id)
 
+    if unpublished:
+        # A new process can pair these players again when they reconnect.
+        await tournament.discard_unpublished_arena_games(unpublished)
     if repaired_ids:
         log.warning(
             "Recovered %s missing tournament pairing docs from db.game in %s: %s",
@@ -901,7 +917,7 @@ async def create_or_update_tournament(
     *,
     creator_is_director: bool = True,
     editor_is_admin: bool = False,
-) -> None:
+) -> Tournament:
     """Manual tournament creation from /tournaments/new form input values"""
 
     variant = str(form.get("variant", ""))
@@ -1267,8 +1283,11 @@ async def create_or_update_tournament(
         await upsert_tournament_to_db(tournament, app_state)
 
     await broadcast_tournament_creation(
-        app_state, tournament, announce_to_discord=creator_is_director
+        app_state,
+        tournament,
+        announce_to_discord=creator_is_director and not app_state.is_test_user(username),
     )
+    return tournament
 
 
 async def broadcast_tournament_creation(

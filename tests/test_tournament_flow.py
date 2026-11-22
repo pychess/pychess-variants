@@ -2,7 +2,7 @@ import asyncio
 import json
 import unittest
 from datetime import UTC, datetime, timedelta
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from const import FLAG, T_ABORTED, T_CREATED, T_FINISHED, T_STARTED
 from glicko2.glicko2 import new_default_perf, new_default_perf_map
@@ -51,6 +51,91 @@ class TournamentFlowTestCase(TournamentTestCase):
         tournament.wave = timedelta(milliseconds=200)
         tournament.wave_delta = timedelta(milliseconds=25)
         return tournament
+
+    async def _arena_with_discord_failure(self, reminder_minutes: int, *, stalled: bool):
+        app_state = get_app_state(self.app)
+        now = datetime.now(UTC)
+        self.tournament = ArenaTestTournament(
+            app_state,
+            id8(),
+            variant="asean",
+            starts_at=now + timedelta(minutes=reminder_minutes),
+            minutes=60,
+            with_clock=False,
+        )
+        tournament = self.tournament
+        app_state.tournaments[tournament.id] = tournament
+        app_state.tourneysockets[tournament.id] = {}
+        await upsert_tournament_to_db(tournament, app_state)
+        release_discord = asyncio.Event()
+
+        async def send_to_discord(*args):
+            nonlocal now
+            now = tournament.starts_at
+            if stalled:
+                await release_discord.wait()
+            else:
+                raise OSError("Discord unavailable")
+
+        original_start = tournament.start
+
+        async def start(start_time):
+            nonlocal now
+            await original_start(start_time)
+            doc = await app_state.db.tournament.find_one({"_id": tournament.id})
+            self.assertEqual(doc["status"], T_STARTED)
+            now = tournament.ends_at
+
+        with (
+            patch("tournament.tournament.datetime", wraps=datetime) as clock_datetime,
+            patch.object(
+                app_state.discord, "send_to_discord", side_effect=send_to_discord
+            ) as send_mock,
+            patch.object(tournament, "start", side_effect=start) as start_mock,
+            patch("tournament.tournament.lichess_team_msg", new_callable=AsyncMock),
+        ):
+            clock_datetime.now.side_effect = lambda _tz: now
+            tournament.clock_task = asyncio.create_task(tournament.clock())
+            try:
+                await asyncio.wait_for(tournament.clock_task, timeout=1)
+                send_mock.assert_awaited_once()
+                start_mock.assert_awaited_once()
+                self.assertEqual(tournament.status, T_FINISHED)
+                self.assertIsNone(await app_state.db.tournament.find_one({"_id": tournament.id}))
+            finally:
+                release_discord.set()
+                await asyncio.sleep(0)
+
+    async def test_arena_starts_and_finishes_when_discord_reminder_fails(self):
+        for reminder_minutes in (360, 10):
+            with self.subTest(reminder_minutes=reminder_minutes):
+                await self._arena_with_discord_failure(reminder_minutes, stalled=False)
+
+    async def test_arena_starts_and_finishes_while_discord_reminder_is_stalled(self):
+        for reminder_minutes in (360, 10):
+            with self.subTest(reminder_minutes=reminder_minutes):
+                await self._arena_with_discord_failure(reminder_minutes, stalled=True)
+
+    async def test_stalled_discord_reminder_is_cancelled_after_timeout(self):
+        app_state = get_app_state(self.app)
+        tournament = ArenaTestTournament(app_state, id8(), with_clock=False)
+        cancelled = asyncio.Event()
+
+        async def send_to_discord(*args):
+            try:
+                await asyncio.Event().wait()
+            finally:
+                cancelled.set()
+
+        with (
+            patch("tournament.tournament.DISCORD_REMINDER_TIMEOUT", 0.01),
+            patch.object(app_state.discord, "send_to_discord", side_effect=send_to_discord),
+            self.assertLogs("tournament.tournament", level="ERROR") as logs,
+        ):
+            await asyncio.wait_for(tournament._send_discord_start_reminder("reminder"), timeout=1)
+
+        self.assertTrue(cancelled.is_set())
+        self.assertIn(tournament.id, logs.output[0])
 
     def _new_condition_user(
         self,

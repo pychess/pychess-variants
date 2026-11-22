@@ -134,6 +134,7 @@ describe('round move validation', () => {
             gameId,
             lastMaybeSentMsgMove: pending,
             chessground: { cancelPremove },
+            promotion: { dismiss: jest.fn() },
             unsetPremove,
             pendingMoveStorageKey: roundProto.pendingMoveStorageKey,
             clearPendingMoveCache: roundProto.clearPendingMoveCache,
@@ -165,6 +166,7 @@ describe('round move validation', () => {
 
         expect(cancelPremove).toHaveBeenCalledTimes(1);
         expect(unsetPremove).toHaveBeenCalledTimes(1);
+        expect((ctrl.promotion as { dismiss: ReturnType<typeof jest.fn> }).dismiss).toHaveBeenCalledTimes(1);
         expect(ctrl.lastMaybeSentMsgMove).toBeUndefined();
         expect(localStorage.getItem(key)).toBeNull();
 

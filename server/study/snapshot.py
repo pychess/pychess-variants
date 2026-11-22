@@ -4,10 +4,11 @@ from hashlib import sha256
 
 from bson import BSON
 
+from study.document import encode_chapter
 from study.models import Study, StudyChapter
 
 
-def chapter_snapshot_token(chapter: StudyChapter) -> str:
+async def chapter_snapshot_token(chapter: StudyChapter) -> str:
     """Opaque fingerprint for one persisted Study chapter snapshot.
 
     Chapter ``revision`` intentionally tracks collaborative mutations, while
@@ -16,7 +17,9 @@ def chapter_snapshot_token(chapter: StudyChapter) -> str:
     against the websocket stream without relying on revision semantics alone.
     """
 
-    return sha256(BSON.encode(chapter.to_document())).hexdigest()[:32]
+    encoded = await encode_chapter(chapter, snapshot=True)
+    assert encoded.snapshot_token is not None
+    return encoded.snapshot_token
 
 
 def study_snapshot_token(study: Study, chapters: list[dict[str, object]]) -> str:

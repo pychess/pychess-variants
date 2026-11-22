@@ -9,7 +9,7 @@
 
             <form method="post" action="/team/{{ team['_id'] }}/leaders/add" class="team-add-leader box__pad">
                 <div class="team-add-leader__input">
-                    <input class="form-control" name="username" required autocomplete="off" placeholder="{% trans %}Add a new leader{% endtrans %}">
+                    <input class="form-control" name="username" required autocomplete="off" placeholder="{% trans %}Add a new leader{% endtrans %}" aria-label="{% trans %}Add a new leader{% endtrans %}">
                     <button class="button" type="submit">{% trans %}Add{% endtrans %}</button>
                 </div>
                 <p class="form-help">{% trans count=team_max_leaders %}The user must already be a team member. A team can have up to {{ count }} leader.{% pluralize %}The user must already be a team member. A team can have up to {{ count }} leaders.{% endtrans %}</p>

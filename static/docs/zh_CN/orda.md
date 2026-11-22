@@ -1,4 +1,4 @@
-# ![Orda chess](https://github.com/pychess/pychess-variants/blob/master/static/icons/orda.svg) 可汗西征棋 | Orda
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/orda.svg) 可汗西征棋 | Orda
 
 ![Orda](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Orda.png)
 

@@ -1,0 +1,61 @@
+.opulent piece.p-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wpawn.svg');
+}
+.opulent piece.r-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wrook.svg');
+}
+.opulent piece.n-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wknightwazir.svg');
+}
+.opulent piece.b-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wbishop.svg');
+}
+.opulent piece.q-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wqueen.svg');
+}
+.opulent piece.k-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wking.svg');
+}
+.opulent piece.a-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wcardinal.svg');
+}
+.opulent piece.c-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wchancellor.svg');
+}
+.opulent piece.w-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wmage.svg');
+}
+.opulent piece.l-piece.white {
+    background-image: url('../../images/pieces/alfaerie/wlion.svg');
+}
+
+.opulent piece.p-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bpawn.svg');
+}
+.opulent piece.r-piece.black {
+    background-image: url('../../images/pieces/alfaerie/brook.svg');
+}
+.opulent piece.n-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bknightwazir.svg');
+}
+.opulent piece.b-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bbishop.svg');
+}
+.opulent piece.q-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bqueen.svg');
+}
+.opulent piece.k-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bking.svg');
+}
+.opulent piece.a-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bcardinal.svg');
+}
+.opulent piece.c-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bchancellor.svg');
+}
+.opulent piece.w-piece.black {
+    background-image: url('../../images/pieces/alfaerie/bmage.svg');
+}
+.opulent piece.l-piece.black {
+    background-image: url('../../images/pieces/alfaerie/blion.svg');
+}

@@ -17,7 +17,8 @@ import { _, ngettext } from '../i18n';
 import { updateMovelist } from '../movelist';
 import { renderLinkifiedText } from '../richTextEnhance';
 import type { PyChessModel, StudyFeatureSelection, StudyPageModel } from '../types';
-import { loadCataloguedVariantsFromJson, variantConfigIni } from '../variants';
+import { activateStudyEngineRules, loadCataloguedVariantsFromJson, variantConfigIni } from '../variants';
+import { buildStudyEngineRules } from './variantRules';
 import { variantsIni } from '../variantsIni';
 import { createWebsocket } from '../socket/webSocketUtils';
 import { displayUsername, userLink } from '../user';
@@ -48,6 +49,7 @@ import {
 } from './studyChapterForm';
 import { studySessionPolicy, type StudySessionPolicy } from './studyMode';
 import { isConcealPlayback } from './studyConceal';
+import { studyFlairIcon, studyFlairPicker } from './studyFlair';
 
 function dialogField(label: string, control: VNode): VNode {
     return h('label.study-dialog__field', [h('span', label), control]);
@@ -95,18 +97,21 @@ function studyPermissionField(
 
 function studySettingsForm(study: StudyPageModel, formId: string): VNode {
     return h(`form#${formId}.study-dialog__form`, { attrs: { method: 'post', action: `/study/${study.id}/edit` } }, [
-        dialogField(
-            _('Name'),
-            h('input', {
-                attrs: {
-                    type: 'text',
-                    name: 'name',
-                    value: study.name,
-                    maxlength: '100',
-                    autocomplete: 'off',
-                },
-            }),
-        ),
+        h('div.study-flair-and-name', [
+            studyFlairPicker(study.flair),
+            dialogField(
+                _('Name'),
+                h('input', {
+                    attrs: {
+                        type: 'text',
+                        name: 'name',
+                        value: study.name,
+                        maxlength: '100',
+                        autocomplete: 'off',
+                    },
+                }),
+            ),
+        ]),
         dialogField(
             _('Visibility'),
             h(
@@ -259,6 +264,7 @@ function studyLikeControl(study: StudyPageModel): VNode {
 function studyMetadataTitle(study: StudyPageModel): VNode {
     return h('h2.study-underboard__title', [
         h('span.study-underboard__name', [
+            ...(study.flair ? [studyFlairIcon(study.flair)] : []),
             `${study.name}: ${study.chapter.name}`,
             ...((study.chapter.mode ?? 'normal') === 'normal'
                 ? []
@@ -992,7 +998,14 @@ export function renderStudyMoveListFooter(study: StudyPageModel, ctrl: AnalysisC
                     {
                         class: { selected: child.path === selectedPath },
                         attrs: { type: 'button', 'data-path': child.path },
-                        on: { click: () => ctrl.activateTreePath(child.path) },
+                        on: {
+                            click: () => ctrl.activateTreePath(child.path),
+                            mouseenter: () => {
+                                if (window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+                                    ctrl.setVariationHover(child.step.move);
+                            },
+                            mouseleave: () => ctrl.setVariationHover(),
+                        },
                     },
                     [
                         h('span.study-move-fork__index', studyMoveIndex(child.ply)),
@@ -2683,6 +2696,7 @@ function runStudyGround(
                     study.serverAnalysisError = undefined;
                     updateStudyServerEvalContent(study, modeActions);
                 },
+                onServerAnalysisVisibilityChanged: () => modeActions.showServerAnalysis?.(),
                 onServerAnalysisUnavailable: reason => {
                     study.serverAnalysisError = reason;
                     updateStudyServerEvalContent(study, modeActions);
@@ -2971,6 +2985,9 @@ function runStudyGround(
             // the current board. Alice and the ordinary variants use separate modules.
             analysisTreeFromStudy(data.board.steps[0], data.study.chapter.tree);
             const alice = data.study.chapter.variant === 'alice';
+            const rules = data.study.chapter.variantIni
+                ? await buildStudyEngineRules(data.study.chapter.variant, variantsIni, data.cataloguedVariants)
+                : undefined;
             const ffish = await loadStudyModule(alice);
             await ctrl.whenEngineConfigured();
             if (!isCurrent()) return;
@@ -3009,6 +3026,7 @@ function runStudyGround(
             };
             updateStudyUnderboardChapter(study, model, modeActions, practiceProgress);
             loadCataloguedVariantsFromJson(JSON.stringify(data.cataloguedVariants));
+            activateStudyEngineRules(rules);
             ffish.loadVariantConfig(variantConfigIni(variantsIni, model.variant));
             document.body.dataset.variant = model.variant;
             document.title = studyDocumentTitle(study);
@@ -3260,6 +3278,7 @@ export function studyView(model: PyChessModel): VNode[] {
     page[0].data = {
         ...page[0].data,
         class: {
+            ...page[0].data?.class,
             'study-app': true,
             'has-players': studyHasGamePlayers(study),
             'study-conceal-playback': isConcealPlayback(effectiveStudySessionPolicy(study)),

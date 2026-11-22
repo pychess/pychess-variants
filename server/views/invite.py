@@ -8,7 +8,7 @@ from sse_utils import enqueue_sse_payload
 from typing_defs import ViewContext
 from utils import join_seek, load_game, remove_seek
 
-from views import add_game_context, get_user_context
+from views import add_catalogued_variant_context, add_game_context, get_user_context
 
 log = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ def set_expired_invite_context(context: ViewContext, game_id: str) -> None:
 
 @aiohttp_jinja2.template("index.html")
 async def invite(request: web.Request) -> ViewContext:
-    user, context = await get_user_context(request)
+    user, context = await get_user_context(request, include_catalogued_variants=True)
 
     app_state = get_app_state(request.app)
 
@@ -77,6 +77,7 @@ async def invite(request: web.Request) -> ViewContext:
     if inviter is not None:
         context["gameid"] = gameId
         context["variant"] = seek.variant
+        await add_catalogued_variant_context(app_state, user, context, seek.variant)
         context["chess960"] = seek.chess960
         context["rated"] = seek.rated
         context["corr"] = seek.day > 0
@@ -94,6 +95,7 @@ async def invite(request: web.Request) -> ViewContext:
             return context
 
         add_game_context(game, None, user, context)
+        await add_catalogued_variant_context(app_state, user, context, game.variant, game=game)
 
         context["view"] = "round"
         context["view_css"] = "round.css"

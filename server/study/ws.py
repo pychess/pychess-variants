@@ -445,7 +445,7 @@ async def _sync_chapter_message(
             "chapterId": chapter_id,
             "requestId": request_id,
             "revision": chapter.revision if chapter is not None else None,
-            "snapshotToken": chapter_snapshot_token(chapter) if chapter is not None else None,
+            "snapshotToken": await chapter_snapshot_token(chapter) if chapter is not None else None,
             "roomSnapshotToken": (
                 study_snapshot_token(study, chapters) if study is not None else None
             ),

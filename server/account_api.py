@@ -5,16 +5,14 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-import aiohttp_jinja2
 import aiohttp_session
 import msgspec
 from aiohttp import web
 from bot_accounts import (
+    ENGINE_TOKEN_SCOPES,
     create_bot_token,
-    list_bot_tokens,
     revoke_bot_token,
     upgrade_user_to_bot_account,
-    user_game_count,
 )
 from forum.constants import ERASED_POST_TEXT, ERASED_POST_USER, KEY_TO_REACTION
 from forum.storage import recompute_categ_summary, recompute_topic_summary
@@ -27,10 +25,9 @@ from study.gdpr import erase_user_from_studies
 from team import remove_user_from_teams_on_account_disable
 from tournament.gdpr import erase_user_from_tournaments
 from typedefs import REQUEST_NEW_SESSION_KEY
-from typing_defs import UserDocument, ViewContext
+from typing_defs import UserDocument
 from user_stats import DEFAULT_USER_COUNT
 from utils import remove_seek
-from views import get_user_context
 
 log = logging.getLogger(__name__)
 
@@ -292,8 +289,9 @@ async def _scrub_delete_owned_data(app_state: Any, user: Any, now: datetime) -> 
         app_state, user.username, erase=True, remove_from_tournaments=True
     )
     await _erase_forum_posts_by_user(app_state, user.username, now)
-    await db.ublog_post.delete_many({"author": user.username})
+    await db.ublog_post2.delete_many({"author": user.username})
     await db.bot_token.delete_many({"user": user.username})
+    await db.external_engine.delete_many({"user": user.username})
     await db.push_subscription.delete_many({"user": user.username})
     await db.practice.delete_one({"_id": user.username})
     await db.account_reopen_token.delete_many({"username": user.username})
@@ -311,7 +309,7 @@ async def _scrub_delete_owned_data(app_state: Any, user: Any, now: datetime) -> 
     )
     await db.relation.delete_many({"$or": [{"u1": user.username}, {"u2": user.username}]})
 
-    await db.ublog_post.update_many(
+    await db.ublog_post2.update_many(
         {"$or": [{"likes": user.username}, {"viewers": user.username}]},
         {"$pull": {"likes": user.username, "viewers": user.username}},
     )
@@ -322,51 +320,30 @@ async def _scrub_delete_owned_data(app_state: Any, user: Any, now: datetime) -> 
     )
 
 
-@aiohttp_jinja2.template("account.html")
-async def account_home(request: web.Request) -> ViewContext:
-    user, context = await get_user_context(request)
-    if user.anon:
-        raise web.HTTPFound("/login")
-    context["view_css"] = "faq.css"
-    return context
-
-
-@aiohttp_jinja2.template("account_data.html")
-async def account_personal_data(request: web.Request) -> ViewContext:
-    user, context = await get_user_context(request)
-    if user.anon:
-        raise web.HTTPFound("/login")
-    context["view_css"] = "faq.css"
-    return context
-
-
-@aiohttp_jinja2.template("account_bot.html")
-async def account_bot(request: web.Request) -> ViewContext:
-    user, context = await get_user_context(request)
-    if user.anon:
-        raise web.HTTPFound("/login")
-
-    app_state = get_app_state(request.app)
-    session = await aiohttp_session.get_session(request)
-    user_doc: UserDocument | None = await app_state.db.user.find_one({"_id": user.username})
-    game_count = user_game_count(user_doc)
-    if user_doc is not None and user_doc.get("title") == "BOT" and not user.bot:
-        user.enable_bot_account()
-
-    context["view_css"] = "faq.css"
-    context["bot_tokens"] = await list_bot_tokens(app_state, user.username)
-    context["bot_account_title"] = user.title
-    context["bot_game_count"] = game_count
-    context["bot_upgrade_eligible"] = (not user.bot) and game_count == 0
-    context["bot_upgrade_reason"] = (
-        ""
-        if user.bot or game_count == 0
-        else "Only accounts that never played a single game can be upgraded to BOT."
+async def account_engine_token_create(request: web.Request) -> web.StreamResponse:
+    app_state, user, _ = await _require_logged_in_user(request)
+    data = await read_post_data(request)
+    if data is None:
+        return web.Response(status=204)
+    description = str(data.get("description", "")).strip()[:120] or "External engine"
+    _, token = await create_bot_token(
+        app_state, user.username, description, scopes=ENGINE_TOKEN_SCOPES
     )
-    context["bot_notice"] = str(session.pop(BOT_NOTICE_SESSION_KEY, "") or "")
-    context["bot_error"] = str(session.pop(BOT_ERROR_SESSION_KEY, "") or "")
-    context["new_bot_token"] = str(session.pop(BOT_NEW_TOKEN_SESSION_KEY, "") or "")
-    return context
+    session = await aiohttp_session.get_session(request)
+    session["new_engine_token"] = token
+    return web.HTTPFound("/account/engines")
+
+
+async def account_engine_token_revoke(request: web.Request) -> web.StreamResponse:
+    app_state, user, _ = await _require_logged_in_user(request)
+    token_id = request.match_info["tokenId"]
+    doc = await app_state.db.bot_token.find_one(
+        {"_id": token_id, "user": user.username, "scopes": "engine:write"}
+    )
+    if doc is None:
+        raise web.HTTPNotFound()
+    await revoke_bot_token(app_state, user.username, token_id)
+    return web.HTTPFound("/account/engines")
 
 
 async def account_personal_data_export(request: web.Request) -> web.StreamResponse:
@@ -394,7 +371,7 @@ async def account_personal_data_export(request: web.Request) -> web.StreamRespon
             app_state.db.inbox_msg.find({"from": user.username}),
         ),
         ("Forum posts by this account", app_state.db.forum_post.find({"user": user.username})),
-        ("Blog posts by this account", app_state.db.ublog_post.find({"author": user.username})),
+        ("Blog posts by this account", app_state.db.ublog_post2.find({"author": user.username})),
         (
             "Push subscriptions",
             app_state.db.push_subscription.find({"user": user.username}),
@@ -484,15 +461,6 @@ async def account_bot_upgrade_post(request: web.Request) -> web.StreamResponse:
     return web.HTTPFound("/account/bot")
 
 
-@aiohttp_jinja2.template("account_close.html")
-async def account_close(request: web.Request) -> ViewContext:
-    user, context = await get_user_context(request)
-    if user.anon:
-        raise web.HTTPFound("/login")
-    context["view_css"] = "faq.css"
-    return context
-
-
 async def account_close_post(request: web.Request) -> web.StreamResponse:
     app_state, user, _ = await _require_logged_in_user(request)
     post_data = await read_post_data(request)
@@ -528,15 +496,6 @@ async def account_close_post(request: web.Request) -> web.StreamResponse:
     user.enabled = False
     _clear_public_user_cache(app_state, user.username)
     return await logout(request)
-
-
-@aiohttp_jinja2.template("account_delete.html")
-async def account_delete(request: web.Request) -> ViewContext:
-    user, context = await get_user_context(request)
-    if user.anon:
-        raise web.HTTPFound("/login")
-    context["view_css"] = "faq.css"
-    return context
 
 
 async def account_delete_post(request: web.Request) -> web.StreamResponse:
@@ -601,42 +560,6 @@ async def erase_account(app_state: Any, user: Any) -> None:
     user.pm_friends_only = False
 
     log.info("Account deleted (GDPR erase) for user %s", user.username)
-
-
-@aiohttp_jinja2.template("account_reopen.html")
-async def account_reopen(request: web.Request) -> ViewContext:
-    _user, context = await get_user_context(request)
-    raw_token = str(request.rel_url.query.get("token") or "").strip()
-    if not raw_token:
-        raise web.HTTPFound("/login")
-
-    app_state = get_app_state(request.app)
-    now = datetime.now(UTC)
-    await app_state.db.account_reopen_token.delete_many({"expiresAt": {"$lt": now}})
-    token_doc = await app_state.db.account_reopen_token.find_one(
-        {
-            "tokenHash": _reopen_token_hash(raw_token),
-            "usedAt": {"$exists": False},
-            "expiresAt": {"$gt": now},
-        }
-    )
-    closed_username = str((token_doc or {}).get("username") or "").strip()
-    user_doc: UserDocument | None = (
-        await app_state.db.user.find_one({"_id": closed_username}) if closed_username else None
-    )
-
-    can_reopen = bool(
-        token_doc
-        and user_doc
-        and (not user_doc.get("enabled", True))
-        and user_doc.get("closeType") == "self"
-        and (not user_doc.get("gdprErasedAt"))
-    )
-    context["view_css"] = "faq.css"
-    context["reopen_username"] = closed_username
-    context["reopen_token"] = raw_token
-    context["can_reopen"] = can_reopen
-    return context
 
 
 async def account_reopen_post(request: web.Request) -> web.StreamResponse:

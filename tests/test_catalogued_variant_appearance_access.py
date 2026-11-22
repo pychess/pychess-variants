@@ -4,22 +4,19 @@ from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
-from catalogued_variants import (
-    CATALOGUED_SOURCE_FSF_BUILTIN,
-    FSF_CATALOGUED_BUILTIN_DESCRIPTION,
-    CataloguedVariantValidation,
-    _build_doc,
-    update_catalogued_variant,
-    upload_catalogued_variant,
-)
+from catalogued.builtin_data import FSF_CATALOGUED_BUILTIN_DESCRIPTION
+from catalogued.documents import _build_doc
+from catalogued.http import update_catalogued_variant, upload_catalogued_variant
+from catalogued.models import CATALOGUED_SOURCE_FSF_BUILTIN, CataloguedVariantValidation
 
-INI = "[appearanceaccess:chess]"
+INI = "[appearanceaccess:chess]\nstartFen = 8/8/8/8/8/8/8/K6k w - - 0 1"
 PAYLOAD = (
     INI,
     "Appearance access",
     "",
     "",
     False,
+    True,
     "standard",
     "standard8x8",
     "private",
@@ -92,6 +89,7 @@ class CataloguedVariantAppearanceAccessTestCase(unittest.IsolatedAsyncioTestCase
             FSF_CATALOGUED_BUILTIN_DESCRIPTION,
             "",
             False,
+            None,
             "",
             "",
             "public",
@@ -99,13 +97,13 @@ class CataloguedVariantAppearanceAccessTestCase(unittest.IsolatedAsyncioTestCase
 
         with (
             patch(
-                "catalogued_variants._load_owned_doc",
+                "catalogued.http._load_owned_doc",
                 new=AsyncMock(return_value=(app_state, "admin", "yarishogi", existing)),
             ),
-            patch("catalogued_variants._read_upload_payload", new=AsyncMock(return_value=payload)),
-            patch("catalogued_variants.register_catalogued_variant_doc"),
-            patch("catalogued_variants._game_count", new=AsyncMock(return_value=0)),
-            patch("catalogued_variants._client_doc", return_value={"name": "yarishogi"}),
+            patch("catalogued.http._read_upload_payload", new=AsyncMock(return_value=payload)),
+            patch("catalogued.variants.register_catalogued_variant_doc"),
+            patch("catalogued.repository._game_count", new=AsyncMock(return_value=0)),
+            patch("catalogued.documents._client_doc", return_value={"name": "yarishogi"}),
         ):
             response = await update_catalogued_variant(request)
 
@@ -123,30 +121,30 @@ class CataloguedVariantAppearanceAccessTestCase(unittest.IsolatedAsyncioTestCase
         request = SimpleNamespace(app=object())
 
         with (
-            patch("catalogued_variants.get_app_state", return_value=app_state),
+            patch("catalogued.http.get_app_state", return_value=app_state),
             patch(
-                "catalogued_variants._current_human_username",
+                "catalogued.http._current_human_username",
                 new=AsyncMock(return_value="alice"),
             ),
             patch(
-                "catalogued_variants._read_upload_payload",
+                "catalogued.http._read_upload_payload",
                 new=AsyncMock(return_value=PAYLOAD),
             ),
             patch(
-                "catalogued_variants._ensure_catalogued_variant_quota",
+                "catalogued.repository._ensure_catalogued_variant_quota",
                 new=AsyncMock(),
             ),
             patch(
-                "catalogued_variants.ensure_catalogued_variant_name_available",
+                "catalogued.repository.ensure_catalogued_variant_name_available",
                 new=AsyncMock(),
             ),
             patch(
-                "catalogued_variants.check_catalogued_ini_without_mutating_server",
+                "catalogued.validation.check_catalogued_ini_without_mutating_server",
                 new=AsyncMock(),
             ),
-            patch("catalogued_variants.validate_catalogued_ini", return_value=VALIDATION),
-            patch("catalogued_variants.register_catalogued_variant_doc"),
-            patch("catalogued_variants._is_admin_username", return_value=False) as is_admin,
+            patch("catalogued.validation.validate_catalogued_ini", return_value=VALIDATION),
+            patch("catalogued.variants.register_catalogued_variant_doc"),
+            patch("catalogued.documents._is_admin_username", return_value=False) as is_admin,
         ):
             response = await upload_catalogued_variant(request)
 
@@ -154,9 +152,19 @@ class CataloguedVariantAppearanceAccessTestCase(unittest.IsolatedAsyncioTestCase
         self.assertEqual(collection.inserted["author"], "alice")
         self.assertEqual(collection.inserted["pieceFamilyOverride"], "standard")
         self.assertEqual(collection.inserted["boardFamilyOverride"], "standard8x8")
+        self.assertTrue(collection.inserted["pieceSetShadow"])
         is_admin.assert_not_called()
 
     async def test_non_admin_update_can_change_appearance_overrides(self):
+        await self._check_appearance_update(True, False)
+
+    async def test_non_admin_update_can_disable_piece_shadows(self):
+        await self._check_appearance_update(False, True)
+
+    async def test_omitted_piece_shadow_setting_preserves_existing_value(self):
+        await self._check_appearance_update(None, True)
+
+    async def _check_appearance_update(self, shadow, previous_shadow):
         existing = _build_doc(
             name=VALIDATION.name,
             base_variant=VALIDATION.base_variant,
@@ -183,6 +191,8 @@ class CataloguedVariantAppearanceAccessTestCase(unittest.IsolatedAsyncioTestCase
             show_check_counters=VALIDATION.show_check_counters,
             created_at=datetime.now(UTC),
         )
+        existing["pieceSetShadow"] = previous_shadow
+        existing["gameCount"] = 14
         collection = AppearanceCollection()
         app_state = SimpleNamespace(
             db=AppearanceDatabase(collection),
@@ -195,24 +205,28 @@ class CataloguedVariantAppearanceAccessTestCase(unittest.IsolatedAsyncioTestCase
 
         with (
             patch(
-                "catalogued_variants._load_owned_doc",
+                "catalogued.http._load_owned_doc",
                 new=AsyncMock(return_value=(app_state, "alice", VALIDATION.name, existing)),
             ),
             patch(
-                "catalogued_variants._read_upload_payload",
-                new=AsyncMock(return_value=PAYLOAD),
+                "catalogued.http._read_upload_payload",
+                new=AsyncMock(return_value=(*PAYLOAD[:5], shadow, *PAYLOAD[6:])),
             ),
             patch(
-                "catalogued_variants._update_catalogued_variant_document",
+                "catalogued.repository._update_catalogued_variant_document",
                 new=AsyncMock(side_effect=return_updated),
             ),
-            patch("catalogued_variants.register_catalogued_variant_doc"),
-            patch("catalogued_variants._game_count", new=AsyncMock(return_value=0)),
-            patch("catalogued_variants._is_admin_username", return_value=False) as is_admin,
+            patch("catalogued.variants.register_catalogued_variant_doc"),
+            patch("catalogued.repository._game_count", new=AsyncMock(return_value=0)),
+            patch("catalogued.documents._is_admin_username", return_value=False) as is_admin,
         ):
             response = await update_catalogued_variant(request)
 
         payload = json.loads(response.text)
+        self.assertEqual(
+            payload["variant"]["pieceSetShadow"],
+            previous_shadow if shadow is None else shadow,
+        )
         self.assertEqual(payload["variant"]["pieceFamilyOverride"], "standard")
         self.assertEqual(payload["variant"]["boardFamilyOverride"], "standard8x8")
         is_admin.assert_not_called()

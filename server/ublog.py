@@ -81,21 +81,62 @@ def normalize_topics(raw: str) -> list[str]:
     return deduped
 
 
-def sanitize_image_url(raw: str) -> str | None:
-    value = raw.strip()
-    if value == "":
-        return None
-    if len(value) > 400:
-        return None
-    if value.startswith("/"):
-        return value
+# Keep in sync with client/ublogMarkdownV2.ts (Lichess image whitelist).
+BLOG_IMAGE_HOSTS = (
+    "imgur.com",
+    "giphy.com",
+    "wikimedia.org",
+    "creativecommons.org",
+    "pexels.com",
+    "piqsels.com",
+    "freeimages.com",
+    "unsplash.com",
+    "pixabay.com",
+    "githubusercontent.com",
+    "googleusercontent.com",
+    "i.postimg.cc",
+    "imgs.xkcd.com",
+    "image.lichess1.org",
+    "image.lichess.org",
+    "pic.lichess.org",
+    "external-content.duckduckgo.com",
+    "images.unsplash.com",
+)
+BLOG_CDN_PATH = re.compile(r"^/gh/pychess/pychess-variants@[^/]+/static/(?:images|docs|icons)/")
+BLOG_STATIC_PATH = re.compile(r"^/static/(?:images|docs|icons)/")
 
-    parsed = urlparse(value)
-    if parsed.scheme not in ("http", "https"):
+
+def sanitize_image_url(raw: str) -> str | None:
+    """Accept only blog-safe image locations; never proxy user-controlled URLs."""
+    value = raw.strip()
+    if not value:
         return None
-    if not parsed.netloc:
+    if len(value) > 400 or value.startswith("//") or "\\" in value:
         return None
-    return value
+    # Legacy cover paths use /images or /icons without /static.
+    if value.startswith(("/images/", "/icons/")):
+        value = "/static" + value
+    if BLOG_STATIC_PATH.match(value):
+        return value
+    try:
+        parsed = urlparse(value)
+        port = parsed.port
+    except ValueError:
+        return None
+    if (
+        parsed.scheme != "https"
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or port not in (None, 443)
+    ):
+        return None
+    host = parsed.hostname.lower()
+    if host == "cdn.jsdelivr.net" and BLOG_CDN_PATH.match(parsed.path):
+        return value
+    if any(host == allowed or host.endswith("." + allowed) for allowed in BLOG_IMAGE_HOSTS):
+        return value
+    return None
 
 
 def safe_trim(raw: str, max_len: int) -> str:
@@ -114,14 +155,7 @@ def post_url(post: Mapping[str, object]) -> str:
 
 
 def image_src(post: Mapping[str, object]) -> str:
-    image = str(post.get("image") or "")
-    if image.startswith(("http://", "https://")):
-        post_id = str(post.get("_id") or "")
-        if post_id:
-            return f"/blogs/image/{post_id}"
-    if image.startswith(("/images/", "/icons/")):
-        return f"/static{image}"
-    return image
+    return sanitize_image_url(str(post.get("image") or "")) or ""
 
 
 def summary_from_markdown(markdown: str, max_len: int = 140) -> str:

@@ -9,8 +9,9 @@ import aiohttp_session
 import pymongo
 from aiohttp import web
 from aiohttp.client_exceptions import ClientConnectionResetError
-from aiohttp_sse import sse_response
 from aiohttp_swagger3 import swagger_doc
+from catalogued.models import CATALOGUED_VARIANT_COLLECTION
+from catalogued.variants import register_historical_catalogued_variant_doc
 from compress import C2R, decode_move_standard
 from const import (
     CATEGORY_VARIANT_SETS,
@@ -32,7 +33,7 @@ from pychess_global_app_state_utils import get_app_state
 from pymongo.errors import BulkWriteError, ExecutionTimeout
 from seek import BOT_CHALLENGE_DECLINED
 from settings import ADMINS
-from sse_utils import consume_sse_queue, enqueue_sse_payload
+from sse_utils import consume_sse_queue, enqueue_sse_payload, log_sse_failure, sse_response
 from tournament.tournaments import get_tournament_name, load_tournament
 from utils import pgn
 from variants import C2V, GRANDS, VARIANTS, get_server_variant, is_catalogued_variant
@@ -65,6 +66,8 @@ GameDoc = TypedDict(
     {
         "_id": str,
         "v": str,
+        "vini": str,
+        "vd": str,
         "r": str,
         "z": int,
         "us": list[str],
@@ -351,74 +354,89 @@ def _build_user_games_filter_cond(
     selected_variant: str | None,
     level: str | None,
 ) -> dict[str, object] | None:
-    filter_cond: dict[str, object] = {}
+    # The scope owns the user condition. Imported games belong to their
+    # uploader, whose name need not appear in the PGN's player list.
+    tab_cond: dict[str, object] = {"us": profile_id}
 
     if selected_filter == "win":
-        filter_cond["$or"] = [
-            {"r": "a", "us.0": profile_id},
-            {"r": "b", "us.1": profile_id},
-        ]
+        tab_cond = {
+            "$or": [
+                {"r": "a", "us.0": profile_id},
+                {"r": "b", "us.1": profile_id},
+            ]
+        }
     elif selected_filter == "loss":
         if level is not None:
-            filter_cond["$and"] = [
-                {"$or": [{"r": "a", "us.1": profile_id}, {"r": "b", "us.0": profile_id}]},
-                {"x": int(level)},
-                {"$or": [{"if": None}, {"v": "j"}]},  # Janggi games always have initial FEN!
-                {
-                    "$or": [
-                        {"s": MATE},
-                        {"s": VARIANTEND},
-                        {"s": INVALIDMOVE},
-                        {"s": CLAIM},
-                    ]
-                },
-            ]
+            tab_cond = {
+                "$and": [
+                    {"$or": [{"r": "a", "us.1": profile_id}, {"r": "b", "us.0": profile_id}]},
+                    {"x": int(level)},
+                    {"$or": [{"if": None}, {"v": "j"}]},  # Janggi games always have initial FEN!
+                    {
+                        "$or": [
+                            {"s": MATE},
+                            {"s": VARIANTEND},
+                            {"s": INVALIDMOVE},
+                            {"s": CLAIM},
+                        ]
+                    },
+                ]
+            }
         else:
-            filter_cond["$or"] = [
-                {"r": "a", "us.1": profile_id},
-                {"r": "b", "us.0": profile_id},
-            ]
+            tab_cond = {
+                "$or": [
+                    {"r": "a", "us.1": profile_id},
+                    {"r": "b", "us.0": profile_id},
+                ]
+            }
     elif selected_filter == "rated":
-        filter_cond["$or"] = [{"y": 1, "us.1": profile_id}, {"y": 1, "us.0": profile_id}]
+        tab_cond = {
+            "$or": [
+                {"y": 1, "us.1": profile_id},
+                {"y": 1, "us.0": profile_id},
+            ]
+        }
     elif selected_filter == "playing":
-        filter_cond["$and"] = [
-            {"$or": [{"c": True, "us.1": profile_id}, {"c": True, "us.0": profile_id}]},
-            {"s": STARTED},
-        ]
+        tab_cond = {
+            "$and": [
+                {"$or": [{"c": True, "us.1": profile_id}, {"c": True, "us.0": profile_id}]},
+                {"s": STARTED},
+            ]
+        }
     elif selected_filter == "import":
-        filter_cond["by"] = profile_id
-        filter_cond["y"] = 2
-    elif selected_filter == "perf":
-        if selected_variant not in VARIANTS:
-            return None
+        tab_cond = {"by": profile_id, "y": 2}
+    elif selected_filter == "me":
+        tab_cond = {
+            "$or": [
+                {"us.0": session_user, "us.1": profile_id},
+                {"us.1": session_user, "us.0": profile_id},
+            ]
+        }
+    # "all" and "perf" retain the default player scope.
 
+    variant_cond: dict[str, object] | None = None
+    if selected_variant is not None:
+        if selected_variant not in VARIANTS:
+            # An unknown variant was requested: nothing can match.
+            return None
         variant960 = selected_variant.endswith("960")
         uci_variant = selected_variant[:-3] if variant960 else selected_variant
 
         v = get_server_variant(uci_variant, variant960)
         z = 1 if variant960 else 0
 
-        filter_cond["$or"] = [
-            {"v": v.code, "z": z, "us.1": profile_id},
-            {"v": v.code, "z": z, "us.0": profile_id},
-        ]
-    elif selected_filter == "me":
-        filter_cond["$or"] = [
-            {"us.0": session_user, "us.1": profile_id},
-            {"us.1": session_user, "us.0": profile_id},
-        ]
-    else:
-        filter_cond["us"] = profile_id
+        variant_cond = {"v": v.code, "z": z}
 
+    conds: list[dict[str, object]] = [tab_cond]
+    if variant_cond is not None:
+        conds.append(variant_cond)
+    # Imported games are only ever returned by the explicit import tab.
     if selected_filter != "import":
-        filter_cond = {
-            "$and": [
-                filter_cond,
-                {"y": {"$ne": 2}},
-            ]
-        }
+        conds.append({"y": {"$ne": 2}})
 
-    return filter_cond
+    if len(conds) == 1:
+        return conds[0]
+    return {"$and": conds}
 
 
 def _apply_category_filter(
@@ -431,6 +449,33 @@ def _apply_category_filter(
     if not allowed_codes:
         return None
     return {"$and": [filter_cond, {"v": {"$in": list(allowed_codes)}}]}
+
+
+async def _resolve_user_game_variant(app_state: PychessGlobalAppState, doc: GameDoc) -> str | None:
+    code = doc["v"]
+    variant = C2V.get(code)
+    if variant is not None:
+        return variant
+
+    # Archived variants are absent from the live catalogue. Restore historical
+    # metadata without making them available for new games.
+    historical_doc = (
+        doc
+        if doc.get("vini")
+        else await app_state.db[CATALOGUED_VARIANT_COLLECTION].find_one({"_id": code})
+    )
+    if historical_doc is not None:
+        try:
+            register_historical_catalogued_variant_doc(historical_doc)
+        except Exception:
+            log.exception("Failed to restore variant %r for user game %s", code, doc["_id"])
+        else:
+            variant = C2V.get(code)
+            if variant is not None:
+                return variant
+
+    log.error("get_user_games() KeyError. Unknown variant %r", code)
+    return None
 
 
 @swagger_doc("docs/api/get_user_games.yaml")
@@ -489,12 +534,10 @@ async def get_user_games(request: web.Request) -> web.StreamResponse:
             cursor.sort("d", -1).skip(int(page_num) * GAME_PAGE_SIZE).limit(GAME_PAGE_SIZE)
         doc: GameDoc
         async for doc in cursor:
-            try:
-                variant = C2V[doc["v"]]
-                doc["v"] = variant
-            except KeyError:
-                log.error("get_user_games() KeyError. Unknown variant %r", doc["v"])
+            variant = await _resolve_user_game_variant(app_state, doc)
+            if variant is None:
                 continue
+            doc["v"] = variant
 
             doc["r"] = C2R[doc["r"]]
             doc["wt"] = (
@@ -612,7 +655,7 @@ async def subscribe_invites(request: web.Request) -> web.StreamResponse:
         async with sse_response(request) as response:
             await consume_sse_queue(response, queue)
     except Exception:
-        pass
+        log_sse_failure("game_api")
     finally:
         channels = app_state.invite_channels.get(gameId)
         if channels is not None:
@@ -632,7 +675,7 @@ async def subscribe_games(request: web.Request) -> web.StreamResponse:
         async with sse_response(request) as response:
             await consume_sse_queue(response, queue)
     except Exception:
-        pass
+        log_sse_failure("game_api")
     finally:
         app_state.game_channels.discard(queue)
         queue.shutdown(immediate=True)
@@ -724,6 +767,8 @@ async def _stream_pgn_cursor(
         async for doc in cursor:
             game_counter += 1
             try:
+                if doc["v"] not in C2V and not doc.get("vini"):
+                    await _resolve_user_game_variant(get_app_state(request.app), doc)
                 pgn_text = pgn(doc)
                 if pgn_text is not None:
                     await response.write(pgn_text.encode())

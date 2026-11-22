@@ -1,4 +1,4 @@
-# ![Janggi](https://github.com/pychess/pychess-variants/blob/master/static/icons/Janggi.svg) 朝鲜象棋 | Janggi
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/Janggi.svg) 朝鲜象棋 | Janggi
 
 ![Boards](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Boards.png)
 

@@ -4,6 +4,8 @@ from unittest.mock import AsyncMock, call, patch
 
 from aiohttp.web_ws import WebSocketResponse
 from websocket_utils import (
+    _RECEIVE_TIMEOUT_SECS,
+    _WS_HEARTBEAT_SECS,
     _ws_json_loads,
     ws_send_json,
     ws_send_json_many,
@@ -15,6 +17,12 @@ from ws_structs import LOBBY_TYPED_DECODERS
 
 
 class WebSocketUtilsTestCase(unittest.IsolatedAsyncioTestCase):
+    def test_heroku_websocket_heartbeat_is_faster_than_idle_timeout(self):
+        ws = WebSocketResponse(receive_timeout=_RECEIVE_TIMEOUT_SECS, heartbeat=_WS_HEARTBEAT_SECS)
+        self.assertLess(_WS_HEARTBEAT_SECS, 55)
+        self.assertEqual(ws._heartbeat, _WS_HEARTBEAT_SECS)
+        self.assertEqual(ws._receive_timeout, _RECEIVE_TIMEOUT_SECS)
+
     async def test_ws_send_json_connection_reset_returns_false_without_error_log(self):
         ws = cast(WebSocketResponse, AsyncMock())
         ws.send_str.side_effect = ConnectionResetError

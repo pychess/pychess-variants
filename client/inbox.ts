@@ -515,6 +515,15 @@ export function inboxView(model: PyChessModel) {
         const reportHref = hasContact
             ? `/report?source=inbox&username=${encodeURIComponent(contact)}&reason=harassment&thread=${encodeURIComponent(reportThreadId(model.username, contact))}`
             : '#';
+        // The server keeps existing conversation access visible, but can
+        // still lock composing if the recipient only accepts friend PMs.
+        const composePlaceholder = !contact
+            ? _('Select a conversation first')
+            : contactBlocked || contactBlockedByThem
+              ? _('This conversation is blocked')
+              : contactCanMessage
+                ? _('Write a message...')
+                : _('This user only accepts messages from friends');
         const convoBodyNodes: (VNode | null)[] = [];
         if (hasMoreMessages) {
             convoBodyNodes.push(
@@ -538,7 +547,11 @@ export function inboxView(model: PyChessModel) {
                 h('div.inbox-side-head', [h('h2', _('Inbox'))]),
                 h('div.inbox-side-compose', [
                     h('input', {
-                        attrs: { type: 'text', placeholder: _('Type username and press Enter') },
+                        attrs: {
+                            type: 'text',
+                            placeholder: _('Type username and press Enter'),
+                            'aria-label': _('Type username and press Enter'),
+                        },
                         props: { value: contact },
                         on: {
                             input: (e: Event) => {
@@ -632,15 +645,8 @@ export function inboxView(model: PyChessModel) {
                           [
                               h('textarea.inbox-convo-post-text', {
                                   attrs: {
-                                      // The server keeps existing conversation access visible, but can
-                                      // still lock composing if the recipient only accepts friend PMs.
-                                      placeholder: !contact
-                                          ? _('Select a conversation first')
-                                          : contactBlocked || contactBlockedByThem
-                                            ? _('This conversation is blocked')
-                                            : contactCanMessage
-                                              ? _('Write a message...')
-                                              : _('This user only accepts messages from friends'),
+                                      placeholder: composePlaceholder,
+                                      'aria-label': composePlaceholder,
                                       rows: 1,
                                       enterkeyhint: 'send',
                                       disabled: !contact || sending || !contactCanMessage,

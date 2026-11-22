@@ -18,7 +18,7 @@ Pychess是一個提供各種象棋類變體的網站，包括各地的傳統象�
   
 該軟體的網站在[這裡](https://pychess.github.io/)</details>
 
-<details><summary>Pychess跟 [Lichess](https://lichess.org/) 有什麼關係?</summary>
+<details><summary>Pychess跟 <a href="https://lichess.org/">Lichess</a> 有什麼關係?</summary>
 
 Pychess網頁的設計受到 Lichess 的影響，然而 Pychess 與 Lichess 並沒有官方的關係。但 Pychess 使用 Lichess 的使用者帳號以方便管理。
 </details>

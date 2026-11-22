@@ -60,15 +60,14 @@ async def handle_draw_bughouse(game: GameBug, user: User) -> None:
     and it broadcasts without full=True, which reaches spectators only. Both are why a
     bughouse draw offer used to arrive at exactly one of the three other players.
     """
-    if game.status > STARTED:
-        return
-
-    team = game.team_of(user.username)
-    if team is None:
-        return  # a spectator cannot offer or accept
-
     response: Mapping[str, object]
     async with game.move_lock:
+        if game.status > STARTED:
+            return
+        team = game.team_of(user.username)
+        if team is None:
+            return  # a spectator cannot offer or accept
+
         if game.draw_offer_team is None:
             game.draw_offer_team = team
             response = {
@@ -95,11 +94,17 @@ async def handle_draw_bughouse(game: GameBug, user: User) -> None:
 
 async def handle_reject_draw_bughouse(game: GameBug, user: User) -> None:
     """Only the team being asked can decline, and declining clears the offer for both."""
-    team = game.team_of(user.username)
-    if team is None or game.draw_offer_team is None or game.draw_offer_team is team:
-        return
+    async with game.move_lock:
+        team = game.team_of(user.username)
+        if (
+            game.status > STARTED
+            or team is None
+            or game.draw_offer_team is None
+            or game.draw_offer_team is team
+        ):
+            return
+        game.draw_offer_team = None
 
-    game.draw_offer_team = None
     await round_broadcast(
         game, {"type": "draw_rejected", "message": "Draw offer rejected"}, full=True
     )
@@ -139,6 +144,9 @@ async def handle_reject_rematch_bughouse(game: GameBug, user: User) -> None:
 
 
 async def handle_resign_bughouse(data: AbortResignMessage, game: GameBug, user: User) -> None:
+    if not game.is_player(user):
+        return
+
     # Keep prior behavior tied to board A ply, but avoid calling GameBug.board
     # (a compatibility shim that logs when accidentally used).
     if data["type"] == "abort" and (game is not None) and game.boards["a"].ply > 2:

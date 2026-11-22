@@ -2,6 +2,7 @@ import { h, VNode } from 'snabbdom';
 
 import { _ } from './i18n';
 import { getDocumentData, patch } from './document';
+import { showMainSettings } from './settingsView';
 
 let dialogVNode: VNode | null = null;
 
@@ -24,16 +25,10 @@ async function setGameCategoryAll(): Promise<void> {
 }
 
 function showGameCategorySettings(): void {
-    const settingsButton = document.getElementById('btn-settings') as HTMLElement | null;
-    const settings = document.getElementById('settings') as HTMLElement | null;
-    const settingsMain = document.getElementById('settings-main') as HTMLElement | null;
-    const settingsSub = document.getElementById('settings-sub') as HTMLElement | null;
-    if (settingsButton && settings && settingsMain && settingsSub) {
-        settingsButton.classList.add('shown');
-        settings.style.display = 'flex';
-        settingsMain.style.display = 'flex';
-        settingsSub.style.display = 'none';
-    }
+    /* THE SETTINGS PANEL HAS ONE OPENER NOW. This re-implemented `showMainSettings()` line for
+       line, which is how it came to be a second place that had to learn about every new thing the
+       panel's button carries -- `aria-expanded` would have gone stale here the day it was added. */
+    showMainSettings();
     const gameCategoryButton = document.getElementById('btn-game-category') as HTMLButtonElement | null;
     if (gameCategoryButton) {
         gameCategoryButton.click();

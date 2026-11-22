@@ -1,4 +1,4 @@
-# ![Sittuyin](https://github.com/pychess/pychess-variants/blob/master/static/icons/sittuyin.svg) 緬甸象棋
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/sittuyin.svg) 緬甸象棋
 
 ![Sittuyin](https://github.com/pychess/pychess-variants/blob/master/static/images/SittuyinGuide/Sittuyin.png?raw=true)
 

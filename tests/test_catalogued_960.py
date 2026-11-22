@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from catalogued_rules import catalogued_random_start, catalogued_rule_summary
+from catalogued.rules import catalogued_random_start, catalogued_rule_summary
 from fairy.fairy_board import STANDARD_FEN
 
 

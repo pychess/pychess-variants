@@ -3,6 +3,7 @@ import { h, VNode } from 'snabbdom';
 import { _ } from '@/i18n';
 import { PyChessModel } from '@/types';
 import { twoBoarsVariants, selectVariant, VARIANTS, validVariant } from '@/variants';
+import { pageHeading } from '@/accessibility/headings';
 import { EditorController } from './editorCtrl';
 
 function runEditor(vnode: VNode, model: PyChessModel) {
@@ -22,7 +23,8 @@ export function editorView(model: PyChessModel): VNode[] {
     const variant = VARIANTS[vVariant];
 
     return [
-        h('div.editor-app', [
+        h('main.editor-app', [
+            pageHeading(),
             h('aside.sidebar-first', [
                 h('div.container', [
                     h('div', [

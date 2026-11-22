@@ -96,6 +96,9 @@ class ServerMetricsDiagnosticsTestCase(AioHTTPTestCase):
         payload = await response.json()
         self.assertEqual(payload["mode"], "summary")
         self.assertNotIn("object_details", payload)
+        # Test apps disable polling by default, but keep the metrics schema stable.
+        self.assertFalse(payload["event_loop_lag"]["enabled"])
+        self.assertEqual(payload["event_loop_lag"]["stalls_100ms"], 0)
 
         process_memory = payload["process_memory"]
         self.assertGreater(process_memory["rss_kib"], 0)

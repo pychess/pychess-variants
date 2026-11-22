@@ -7,7 +7,7 @@ from time import monotonic
 from typing import TYPE_CHECKING
 
 import msgspec
-from catalogued_variants import catalogued_variant_allows_fishnet
+from catalogued.variants import catalogued_variant_allows_fishnet
 from const import MOVE, STARTED
 from fairy import WHITE
 from fishnet import has_available_fishnet_worker
@@ -87,17 +87,19 @@ async def BOT_task(bot: User, app_state: PychessGlobalAppState) -> None:
             # print("   +++ game_queues get()", event)
             try:
                 if random_mover:
-                    legal_moves = game.legal_moves
-                    if len(legal_moves) == 0:
-                        # Keep the task alive: a transient state mismatch should
-                        # not kill the per-game bot worker permanently.
-                        log.warning(
-                            "No legal moves for bot=%s in game=%s game_task()",
-                            bot.username,
-                            game.id,
-                        )
-                        continue
                     async with game.move_lock:
+                        if game.status > STARTED or game.turn_player != bot.username:
+                            continue
+                        # A queued event can arrive during the opponent's move.
+                        # Read the current position only after acquiring its lock.
+                        legal_moves = game.legal_moves
+                        if not legal_moves:
+                            log.warning(
+                                "No legal moves for bot=%s in game=%s game_task()",
+                                bot.username,
+                                game.id,
+                            )
+                            continue
                         await play_move(app_state, bot, game, random.choice(legal_moves))
                 elif has_available_fishnet_worker(app_state, variant=game.variant):
                     if not catalogued_variant_allows_fishnet(app_state, game.variant):

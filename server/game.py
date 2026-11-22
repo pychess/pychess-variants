@@ -10,11 +10,11 @@ from time import monotonic
 from typing import TYPE_CHECKING, Literal, cast
 
 from broadcast import round_broadcast
-from catalogued_variants import (
-    catalogued_variant_games_are_persisted,
+from catalogued.repository import (
     increment_catalogued_variant_game_count,
     increment_catalogued_variant_game_count_once,
 )
+from catalogued.variants import catalogued_variant_games_are_persisted
 from clock import Clock, CorrClock
 from compress import R2C
 from const import (
@@ -71,6 +71,7 @@ from typing_defs import (
 )
 from variants import (
     GRANDS,
+    JANGGI_VARIANTS,
     CataloguedServerVariant,
     ServerVariants,
     catalogued_variant_random_start,
@@ -179,6 +180,8 @@ class Game:
         self.bplayer: User = bplayer
 
         catalogued_casual = is_catalogued_variant(variant)
+        if create and catalogued_casual and get_server_variant(variant, False).replay_only:
+            raise ValueError("This user-defined variant is available for historical replay only.")
         self.persist_to_db: bool = (
             (not catalogued_casual)
             or (not create)
@@ -312,6 +315,8 @@ class Game:
         self.result: str = "*"
         self.last_server_clock: float = monotonic()
         self.last_move_time: datetime | None = None
+        self.arena_pending = False
+        self.arena_started_at: datetime | None = None
         # Wall-clock time which elapsed on the current turn before this Game
         # instance was reconstructed after a server restart. ``monotonic()``
         # cannot span processes, so restart recovery records the missing part
@@ -411,7 +416,7 @@ class Game:
         )
 
         # Janggi setup needed when player is not BOT
-        if self.variant == "janggi":
+        if self.variant in JANGGI_VARIANTS:
             # Janggi custom start position -> no setup phase
             if self.initial_fen:
                 self.bsetup = False
@@ -425,12 +430,14 @@ class Game:
                 if self.bplayer.bot:
                     self.board.janggi_setup("b")
 
-        self.overtime = False
         self.byoyomi = byoyomi_period > 0
+        self.overtime = self.byoyomi and base == 0
         self.byoyomi_period = byoyomi_period
 
-        # Remaining byoyomi periods by players
-        self.byoyomi_periods = [byoyomi_period, byoyomi_period]
+        # Without main time, the first period is already running. The clock
+        # counts unused periods separately from the active countdown.
+        unused_periods = byoyomi_period - 1 if self.overtime else byoyomi_period
+        self.byoyomi_periods = [unused_periods, unused_periods]
 
         # On page refresh we have to add extra byoyomi times gained by current player to report correct clock time
         # We adjust this in "byoyomi" messages in wsr.py
@@ -447,19 +454,10 @@ class Game:
         if self.chess960 or self.random_only or catalogued_casual:
             self.initial_fen = self.board.initial_fen
 
-        self.random_mover = (
-            "Random-Mover"
-            in (
-                self.wplayer.username,
-                self.bplayer.username,
-            )
-            or self.wplayer.title == "TEST"
-            or self.bplayer.title == "TEST"
+        self.random_mover = any(
+            player.username == "Random-Mover" or player.title == "TEST"
+            for player in (self.wplayer, self.bplayer)
         )
-
-        self.has_legal_move = self.board.has_legal_move()
-        if self.random_mover:
-            self.legal_moves = self.board.legal_moves()
 
         if self.board.move_stack:
             self.check = self.board.is_checked()
@@ -539,12 +537,14 @@ class Game:
         between the persisted turn start and ``loaded_at`` has to be carried
         separately. Once a move is played that restart offset is reset to 0.
         """
-        if self.corr or self.status > STARTED:
+        if self.corr or self.status > STARTED or self.arena_pending:
             return
 
         self.loaded_at = loaded_at
 
-        turn_started_at = self.last_move_time if self.board.ply > 0 else self.date
+        turn_started_at = (
+            self.last_move_time if self.board.ply > 0 else self.arena_started_at or self.date
+        )
         if turn_started_at is not None:
             if turn_started_at.tzinfo is None:
                 turn_started_at = turn_started_at.replace(tzinfo=UTC)
@@ -619,6 +619,8 @@ class Game:
         *,
         move_result: MoveResult | None = None,
     ) -> None:
+        if self.server_variant.replay_only:
+            return
         self.stopwatch.stop()
 
         self.byo_correction = 0
@@ -728,16 +730,6 @@ class Game:
                     self.clocks_b.append(clocks[BLACK])
 
                 self.board.push(move, move_result=move_result)
-
-                if move_result is not None:
-                    self.has_legal_move = move_result.has_legal_moves
-                    if self.random_mover:
-                        assert move_result.legal_moves is not None
-                        self.legal_moves = move_result.legal_moves
-                else:
-                    self.has_legal_move = self.board.has_legal_move()
-                    if self.random_mover:
-                        self.legal_moves = self.board.legal_moves()
 
                 self.update_status(move_result=move_result)
 
@@ -1074,7 +1066,7 @@ class Game:
 
             # Janggi game starts with a prelude phase to set up horses and elephants, so
             # initial FEN may be different compared to one we used when db game document was created
-            if self.variant == "janggi":
+            if self.variant in JANGGI_VARIANTS:
                 new_data["if"] = self.board.initial_fen
 
             if self.persist_clock_history:
@@ -1130,7 +1122,10 @@ class Game:
                 try:
                     # In case of server restart we have to wait for loading ongoing tournaments
                     await self.app_state.tournaments_loaded.wait()
-                    await self.app_state.tournaments[self.tournamentId].game_update(self)
+                    # Games may finish after their arena has ended and left the cache.
+                    tournament = self.app_state.tournaments.get(self.tournamentId)
+                    if tournament is not None:
+                        await tournament.game_update(self)
                 except Exception:
                     log.exception("Exception in tournament game_update()")
 
@@ -1467,6 +1462,14 @@ class Game:
         return self.board.fen
 
     @property
+    def legal_moves(self) -> tuple[str, ...]:
+        return self.board.cached_legal_moves()
+
+    @property
+    def has_legal_move(self) -> bool:
+        return bool(self.legal_moves)
+
+    @property
     def preview_fen(self) -> str:
         return self.board.fen
 
@@ -1517,7 +1520,10 @@ class Game:
             self.status = DRAW
             self.result = "1/2-1/2"
 
-        if not self.has_legal_move:
+        has_legal_move = (
+            move_result.has_legal_moves if move_result is not None else self.has_legal_move
+        )
+        if not has_legal_move:
             game_result_value = (
                 move_result.game_result if move_result is not None else self.board.game_result()
             )
@@ -1850,7 +1856,11 @@ class Game:
         if self.result == "*":
             if reason == "abort":
                 result = "*"
-            elif self.variant == "janggi" and reason == "flag" and (self.bsetup or self.wsetup):
+            elif (
+                self.variant in JANGGI_VARIANTS
+                and reason == "flag"
+                and (self.bsetup or self.wsetup)
+            ):
                 if self.bsetup:
                     # In Janggi game the second player (red, who have to do the setup first!) failed to do the setup phase in time
                     result = "1-0"
@@ -2345,12 +2355,9 @@ class Game:
             await self.app_state.lobby.lobby_broadcast(
                 {"type": "g_cnt", "cnt": self.app_state.g_cnt[0]}
             )
-            if self.variant != "janggi" or self.bsetup or self.wsetup:
+            if self.variant not in JANGGI_VARIANTS or self.bsetup or self.wsetup:
                 self.status = CREATED
 
-        self.has_legal_move = self.board.has_legal_move()
-        if self.random_mover:
-            self.legal_moves = self.board.legal_moves()
         self.lastmove = self.board.move_stack[-1] if self.board.move_stack else None
         self.check = self.board.is_checked()
         await self.save_takeback_state()

@@ -70,3 +70,52 @@ async def append_ceval_cheat_report(
         await db[CHEAT_REPORT_COLLECTION].insert_one(report)
     except Exception:
         log.exception("Failed to store ceval cheat report for game %s", game.id)
+
+
+MAX_OVERLAY_SVG_BYTES = 32 * 1024
+
+
+def valid_overlay_svg(value: object) -> str | None:
+    """Bound untrusted evidence; it is never rendered or parsed by the server."""
+    if not isinstance(value, str) or not value.startswith("<svg"):
+        return None
+    if len(value.encode("utf-8", errors="replace")) > MAX_OVERLAY_SVG_BYTES:
+        return None
+    return value
+
+
+async def append_overlay_cheat_report(
+    db: AsyncDatabase | None, *, game: Game, user: User, svg: str | None = None
+) -> None:
+    """Store unverified evidence once per player/game, never impose sanctions."""
+    if db is None:
+        return
+    report_key = {
+        "kind": "external_overlay",
+        "gameId": game.id,
+        "suspect": user.username,
+    }
+    opponent = (
+        game.bplayer.username if user.username == game.wplayer.username else game.wplayer.username
+    )
+    evidence = {"overlaySvg": svg} if svg is not None else {}
+    try:
+        await db[CHEAT_REPORT_COLLECTION].update_one(
+            report_key,
+            {
+                "$setOnInsert": {
+                    **report_key,
+                    "createdAt": datetime.now(UTC),
+                    "action": "reported_only",
+                    "source": "unverified_client_dom",
+                    "opponent": opponent,
+                    "variant": game.variant,
+                    "rated": bool(game.rated),
+                    "ply": game.board.ply,
+                    **evidence,
+                }
+            },
+            upsert=True,
+        )
+    except Exception:
+        log.exception("Failed to store overlay report for game %s", game.id)

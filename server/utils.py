@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, ClassVar
 
 import aiohttp_session
 from aiohttp import web
-from aiohttp_sse import sse_response
 from broadcast import round_broadcast
 from clock import Clock, CorrClock, first_move_timeout_reason
 from compress import C2R, R2C
@@ -25,7 +24,6 @@ from const import (
     T_STARTED,
     UNKNOWNFINISH,
     VARIANT_960_TO_PGN,
-    category_matches,
 )
 from convert import grand2zero, mirror5, mirror9, zero2grand
 from fairy import (
@@ -43,14 +41,13 @@ from fairy import (
 from fairy.fairy_board import MoveResult
 from game import Game, StaleMovePersistenceError
 from newid import new_id
+from pymongo.errors import DuplicateKeyError
 from seek import (
     ANON_RESTRICTED_SEEK_MESSAGE,
-    DIRECT_CHALLENGE_ACCEPTED,
     TWO_BOARD_TARGETED_SEEK_MESSAGE,
     is_anon_restricted_seek,
     is_targeted_two_board_seek,
 )
-from ublog import display_date, image_src, post_url
 from user import User
 from users import NotInDbUsers
 from valid_fen import VALID_FEN
@@ -78,15 +75,16 @@ if TYPE_CHECKING:
 import logging
 
 from json_utils import json_response
-from preferences import effective_game_category
 from pychess_global_app_state_utils import get_app_state
 from request_utils import read_post_data
 from session_security import session_expiry_timeout
 from settings import URI
-from sse_utils import consume_sse_queue
+from sse_utils import consume_sse_queue, log_sse_failure, sse_response
 from variants import (
     C2V,
     GRANDS,
+    JANGGI_VARIANTS,
+    REVERSI_VARIANTS,
     TWO_BOARD_VARIANT_CODES,
     catalogued_variant_random_start,
     get_server_variant,
@@ -166,7 +164,7 @@ async def put_bot_game_queue(player: User, game_id: str, payload: str) -> bool:
 
 def should_send_game_start_to_bot(game: Game | GameBug) -> bool:
     """Janggi bots must wait for setup phase completion before first move."""
-    return game.variant != "janggi" or not (game.bsetup or game.wsetup)
+    return game.variant not in JANGGI_VARIANTS or not (game.bsetup or game.wsetup)
 
 
 async def send_bot_game_start_unless_streaming(player: User, game: Game | GameBug) -> bool:
@@ -229,11 +227,14 @@ async def load_game(
 ) -> Game | GameBug | None:
     """Return Game object from app cache or from database."""
     if game_id in app_state.games:
-        return app_state.games[game_id]
+        game = app_state.games[game_id]
+        if isinstance(game, Game) and game.arena_pending and game.status <= STARTED:
+            return None
+        return game
 
     # log.debug("load_game() %s from db ", game_id)
     doc: GameDocument | None = await app_state.db.game.find_one({"_id": game_id})
-    if doc is None:
+    if doc is None or ("arenaStart" in doc and doc["arenaStart"] is None and doc["s"] <= STARTED):
         return None
 
     return await load_game_from_doc(app_state, doc, cache_finished=cache_finished)
@@ -291,10 +292,19 @@ async def _load_game_from_doc(
     """Construct a game once; callers apply their finished-game cache policy."""
     game_id = doc["_id"]
 
-    if doc.get("vini") and doc["v"] not in C2V:
-        from catalogued_variants import ensure_catalogued_variant_from_game_doc
+    if doc.get("vini") and (doc["v"] not in C2V or doc["v"] not in app_state.catalogued_variants):
+        from catalogued.variants import ensure_catalogued_variant_from_game_doc
 
         ensure_catalogued_variant_from_game_doc(app_state, doc)
+
+    elif doc["v"] not in C2V:
+        from catalogued.variants import register_historical_catalogued_variant_doc
+
+        stored = await app_state.db["catalogued_variant"].find_one({"_id": doc["v"]})
+        if stored is not None:
+            historical = register_historical_catalogued_variant_doc(stored)
+            if historical is not None:
+                app_state.catalogued_variants[str(doc["v"])] = historical
 
     variant = C2V[doc["v"]]
 
@@ -419,9 +429,10 @@ async def _load_game_from_doc(
 
     elif variant in GRANDS:
         mlist = [*map(zero2grand, mlist)]
-        if variant == "janggi":
-            game.wsetup = doc.get("ws", False)
-            game.bsetup = doc.get("bs", False)
+
+    if variant in JANGGI_VARIANTS:
+        game.wsetup = doc.get("ws", False)
+        game.bsetup = doc.get("bs", False)
 
     if "a" in doc:
         game.analysis = doc["a"]
@@ -444,13 +455,15 @@ async def _load_game_from_doc(
     level = doc.get("x")
     game.date = doc["d"]
     game.last_move_time = doc.get("l")
+    game.arena_started_at = doc.get("arenaStart")
+    game.arena_pending = "arenaStart" in doc and game.arena_started_at is None
     if game.date.tzinfo is None:
         game.date = game.date.replace(tzinfo=UTC)
     game.status = doc["s"]
     game.level = level if level is not None else 0
     game.result = C2R[doc["r"]]
     if not game.corr:
-        if game.status <= STARTED:
+        if game.status <= STARTED and not game.arena_pending:
             for player in game.non_bot_players:
                 player.game_in_progress = game.id
         else:
@@ -761,7 +774,7 @@ async def join_seek(
         return {"type": "error", "message": "You cannot accept this seek."}
 
     if is_catalogued_variant(seek.variant):
-        from catalogued_variants import can_create_catalogued_seek
+        from catalogued.variants import can_create_catalogued_seek
 
         # AI games are created as a human-owned seek that the internal engine
         # user immediately joins.  Access for that internal bot join should be
@@ -936,10 +949,9 @@ async def new_game(
         # game invitation; only consume it after admission succeeded
         app_state.invites.pop(seek.game_id, None)
 
-    if seek.is_direct_challenge:
-        seek.set_challenge_status(DIRECT_CHALLENGE_ACCEPTED)
-    else:
-        remove_seek(app_state.seeks, seek)
+    # A successfully consumed direct challenge is no longer a seek, just as
+    # for a public seek.  The game ID is delivered separately to participants.
+    remove_seek(app_state.seeks, seek)
 
     await insert_game_to_db(game, app_state)
 
@@ -1008,7 +1020,7 @@ async def insert_game_to_db(game, app_state: PychessGlobalAppState):
     ):
         document["uci"] = 1
 
-    if game.variant == "janggi":
+    if game.variant in JANGGI_VARIANTS:
         document["ws"] = game.wsetup
         document["bs"] = game.bsetup
         document["if"] = game.board.initial_fen
@@ -1037,12 +1049,36 @@ async def insert_game_to_db(game, app_state: PychessGlobalAppState):
     if game.initial_fen or game.chess960:
         document["if"] = game.initial_fen
 
+    if game.arena_pending:
+        document["arenaStart"] = None
+        try:
+            await app_state.db.game.insert_one(document)
+        except DuplicateKeyError:
+            # An earlier attempt can commit before its acknowledgement is lost.
+            existing = await app_state.db.game.find_one(
+                {
+                    "_id": game.id,
+                    "tid": game.tournamentId,
+                    "us": document["us"],
+                    "d": game.date,
+                    "arenaStart": {"$exists": True},
+                },
+                {"_id": 1},
+            )
+            if existing is None:
+                raise
+        return
+
     result = await app_state.db.game.insert_one(document)
     if result.inserted_id != game.id:
         log.error("db insert game result %s failed !!!", game.id)
 
+    await publish_game_to_tv(game, app_state)
+
+
+async def publish_game_to_tv(game, app_state: PychessGlobalAppState) -> None:
     # No corr and Fog of War games to TV
-    if (not game.corr) and (game.variant != "fogofwar"):
+    if game.persist_to_db and (not game.corr) and (game.variant != "fogofwar"):
         app_state.tv = game.id
         await app_state.lobby.lobby_broadcast(game.tv_game_json)
         game.wplayer.tv = game.id
@@ -1240,7 +1276,7 @@ async def play_move(
                 else:
                     illegal_move = False
             else:
-                illegal_move = move not in game.board.legal_moves()
+                illegal_move = move not in game.legal_moves
             if illegal_move:
                 log.warning(
                     "Rejecting illegal human move in %s by %s (move=%s ply=%s turn=%s fen=%s)",
@@ -1392,10 +1428,12 @@ async def play_move(
         await round_broadcast(game, board_response, channels=app_state.game_channels)
 
         if game.tournamentId is not None:
-            tournament = app_state.tournaments[game.tournamentId]
+            # Arena games can continue after the finished tournament is evicted.
+            tournament = app_state.tournaments.get(game.tournamentId)
             if (
-                (tournament.top_game is not None)
+                tournament is not None
                 and tournament.status == T_STARTED
+                and tournament.top_game is not None
                 and tournament.top_game.id == gameId
             ):
                 await tournament.broadcast(board_response)
@@ -1411,7 +1449,7 @@ def pgn(doc):
         class _NoState:
             catalogued_variants: ClassVar[dict] = {}
 
-        from catalogued_variants import ensure_catalogued_variant_from_game_doc
+        from catalogued.variants import ensure_catalogued_variant_from_game_doc
 
         ensure_catalogued_variant_from_game_doc(_NoState(), doc)
     variant = C2V[doc["v"]]
@@ -1451,30 +1489,33 @@ def pgn(doc):
 
     fen = initial_fen if initial_fen is not None else FairyBoard.start_fen(variant)
     # print(variant, fen, mlist)
-    # Try SAN conversion in stored variant first for backward compatibility.
-    # If that fails, retry with modded castling semantics (capablanca->embassy).
-    san_variants = [variant]
-    variant_fallback = modded_variant(variant, chess960, fen)
-    if variant_fallback != variant:
-        san_variants.append(variant_fallback)
+    # Match Game.pgn: Jieqi coordinates carry reveal suffixes that the engine's
+    # bulk SAN converter cannot replay without the hidden-piece mapping.
+    if variant != "jieqi":
+        # Try SAN conversion in stored variant first for backward compatibility.
+        # If that fails, retry with modded castling semantics (capablanca->embassy).
+        san_variants = [variant]
+        variant_fallback = modded_variant(variant, chess960, fen)
+        if variant_fallback != variant:
+            san_variants.append(variant_fallback)
 
-    for san_variant in san_variants:
-        try:
-            mlist = get_san_moves(san_variant, fen, mlist, chess960, NOTATION_SAN)
-            break
-        except Exception:
-            log.error("%s %s %s movelist contains invalid move", doc["_id"], san_variant, doc["d"])
-    else:
         for san_variant in san_variants:
             try:
-                mlist = get_san_moves(san_variant, fen, mlist[:-1], chess960, NOTATION_SAN)
+                mlist = get_san_moves(san_variant, fen, mlist, chess960, NOTATION_SAN)
                 break
             except Exception:
-                log.error(
-                    "%s %s %s movelist contains invalid move", doc["_id"], san_variant, doc["d"]
-                )
+                pass
         else:
-            mlist = mlist[0]
+            log.error("%s %s %s movelist contains invalid move", doc["_id"], variant, doc["d"])
+            for san_variant in san_variants:
+                try:
+                    mlist = get_san_moves(san_variant, fen, mlist[:-1], chess960, NOTATION_SAN)
+                    break
+                except Exception:
+                    pass
+            else:
+                log.error("%s %s %s movelist contains invalid move", doc["_id"], variant, doc["d"])
+                mlist = mlist[0]
 
     moves = " ".join(
         (
@@ -1548,7 +1589,9 @@ def _fen_material_counts(placement: str) -> tuple[dict[str, int], int]:
     return counts, total
 
 
-def pocket_variant_material_fits_engine(initial_fen: str, start_fen: str) -> bool:
+def pocket_variant_material_fits_engine(
+    initial_fen: str, start_fen: str, variant: str = ""
+) -> bool:
     """Bound pocket and active material before initializing a native position."""
     placement = initial_fen.split(maxsplit=1)[0]
     start_placement = start_fen.split(maxsplit=1)[0]
@@ -1565,11 +1608,20 @@ def pocket_variant_material_fits_engine(initial_fen: str, start_fen: str) -> boo
             pocket_counts[char] = pocket_counts.get(char, 0) + 1
 
     pocket_slots_per_role = FAIRY_STOCKFISH_POCKET_SLOTS_PER_FILE * fen_board_width(start_placement)
-    if any(count > pocket_slots_per_role for count in pocket_counts.values()):
+    # These native placement games intentionally start with more reserves than
+    # capture-to-hand variants. Only trust the canonical built-in definition,
+    # never a user-supplied starting position, to raise the reserve budget.
+    reserve_start = FairyBoard.start_fen(variant).split()[0] if variant in REVERSI_VARIANTS else ""
+    reserve_pocket = reserve_start.partition("[")[2].partition("]")[0]
+    if any(
+        count > max(pocket_slots_per_role, reserve_pocket.count(piece))
+        for piece, count in pocket_counts.items()
+    ):
         return False
 
     counts, total = _fen_material_counts(placement)
-    if total > FAIRY_STOCKFISH_MAX_ACTIVE_PIECES:
+    _, reserve_total = _fen_material_counts(reserve_start)
+    if total > max(FAIRY_STOCKFISH_MAX_ACTIVE_PIECES, reserve_total):
         return False
 
     start_counts, _ = _fen_material_counts(start_placement)
@@ -1602,7 +1654,9 @@ def sanitize_fen(variant, initial_fen, chess960, base=False):
 
     start_fen = FairyBoard.start_fen(variant)
     start_placement = start_fen.split(maxsplit=1)[0]
-    if "[" in start_placement and not pocket_variant_material_fits_engine(initial_fen, start_fen):
+    if "[" in start_placement and not pocket_variant_material_fits_engine(
+        initial_fen, start_fen, variant
+    ):
         return False, ""
 
     sf_validate = validate_fen(initial_fen, variant, chess960)
@@ -1793,88 +1847,6 @@ async def get_names(request):
     return json_response(names)
 
 
-async def get_blogs(request, tag=None, limit=0):
-    app_state = get_app_state(request.app)
-    if app_state.db is None:
-        return []
-
-    session = await aiohttp_session.get_session(request)
-    session_user = session.get("user_name")
-    user = await app_state.users.get(session_user) if session_user else None
-    game_category = effective_game_category(session, user)
-
-    async def enrich_author_titles(blogs: list[dict]) -> list[dict]:
-        titles = await app_state.public_users.get_titles(
-            str(doc.get("author") or "") for doc in blogs
-        )
-        for doc in blogs:
-            author = str(doc.get("author") or "")
-            title = titles.get(author, str(doc.get("author_title") or ""))
-            doc["author_title"] = title
-            doc["atitle"] = title or str(doc.get("atitle") or "")
-        return blogs
-
-    # Prefer migrated site blogs from ublog_post.
-    tag_filter = tag.casefold() if isinstance(tag, str) and tag.strip() != "" else None
-    site_query: dict[str, object] = {"live": True, "blogType": "site"}
-    site_cursor = app_state.db.ublog_post.find(site_query).sort(
-        [("sticky", -1), ("publishedAt", -1), ("createdAt", -1)]
-    )
-    site_blogs: list[dict] = []
-    async for raw_doc in site_cursor:
-        author = str(raw_doc.get("author") or "")
-        author_profile = await app_state.public_users.get_profile(author)
-        if author_profile is None or not author_profile.enabled:
-            continue
-
-        category = raw_doc.get("category", "all")
-        if not category_matches(game_category, category):
-            continue
-        intro = str(raw_doc.get("intro") or raw_doc.get("subtitle") or "")
-        image_alt = str(raw_doc.get("imageAlt") or raw_doc.get("alt") or "")
-        tags_raw = raw_doc.get("tags")
-        tags = [str(tag) for tag in tags_raw] if isinstance(tags_raw, list) else []
-        topics_raw = raw_doc.get("topics")
-        topics = (
-            [str(topic) for topic in topics_raw]
-            if isinstance(topics_raw, list)
-            else [tag.lower() for tag in tags]
-        )
-        if tag_filter is not None:
-            tag_match = any(isinstance(t, str) and t.casefold() == tag_filter for t in tags)
-            topic_match = any(isinstance(t, str) and t.casefold() == tag_filter for t in topics)
-            if not (tag_match or topic_match):
-                continue
-        site_blogs.append(
-            {
-                "_id": str(raw_doc.get("legacyBlogId") or raw_doc.get("_id") or ""),
-                "post_id": str(raw_doc.get("_id") or ""),
-                "title": str(raw_doc.get("title") or ""),
-                "intro": intro,
-                "subtitle": intro,
-                "author": author,
-                "date": display_date(raw_doc),
-                "image": str(raw_doc.get("image") or ""),
-                "image_src": image_src(raw_doc),
-                "imageAlt": image_alt,
-                "alt": image_alt,
-                "tags": tags,
-                "topics": topics,
-                "category": category,
-                "categoryList": category if isinstance(category, list) else [category],
-                "isOfficial": bool(raw_doc.get("isOfficial", True)),
-                "blogType": "site",
-                "url": post_url(raw_doc),
-            }
-        )
-        if limit > 0 and len(site_blogs) >= limit:
-            break
-    if len(site_blogs) > 0:
-        return await enrich_author_titles(site_blogs)
-
-    return []
-
-
 async def get_notifications(request):
     app_state = get_app_state(request.app)
     page_num = int(request.rel_url.query.get("p", 0))
@@ -1971,7 +1943,7 @@ async def subscribe_notify(request):
         async with session_expiry_timeout(session, user), sse_response(request) as response:
             await consume_sse_queue(response, queue)
     except Exception:
-        pass
+        log_sse_failure("utils")
     finally:
         user.notify_channels.discard(queue)
         queue.shutdown(immediate=True)

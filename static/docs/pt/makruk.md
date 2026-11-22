@@ -1,4 +1,4 @@
-# ![Makruk](https://github.com/pychess/pychess-variants/blob/master/static/icons/makruk.svg) Makruk
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/makruk.svg) Makruk
 
 ![Makruk](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 
@@ -60,7 +60,7 @@ Considerando que não existem peças como a Dama do Xadrez, as Torres têm domin
 
 ### Peão (*Bia*)
 
-![Pawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) ![ProPawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true)
+![Pawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) ![Promoted pawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true)
 
 O Peão movimenta-se e ataca exatamente como no Xadrez. No entanto, não existem jogadas de duas casas no inicio. Os peões são promovidos e movimentam-se como a Dama quando atinjem a sexta linha.
 

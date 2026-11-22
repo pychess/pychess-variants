@@ -1,4 +1,4 @@
-# ![Shinobi chess+](https://github.com/pychess/pychess-variants/blob/master/static/icons/shinobi.svg) 新忍者象棋 | Shinobi Chess+
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/shinobi.svg) 新忍者象棋 | Shinobi Chess+
 
 ![Shinobi+](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Shinobiplus.png)
 

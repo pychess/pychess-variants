@@ -10,7 +10,6 @@ from operator import neg
 from time import monotonic
 from typing import TYPE_CHECKING, Any, TypeVar
 
-import aiohttp_jinja2
 from aiohttp import web
 from aiohttp.web_ws import WebSocketResponse
 from pymongo import UpdateOne
@@ -74,13 +73,8 @@ from settings import (
     DISCORD_TOKEN,
     FISHNET_KEYS,
     LOCALHOST,
-    NNUE_DOWNLOAD_ROOT,
     PROD,
-    SOURCE_VERSION,
-    STATIC_ROOT,
     URI,
-    local_static_url,
-    static_url,
 )
 from simul.simul import Simul
 from simul.simuls import load_active_simuls
@@ -109,9 +103,8 @@ from users import NotInDbUsers, Users
 from utils import load_game_from_doc, send_bot_game_start_unless_streaming
 from variants import RATED_VARIANTS, VARIANTS, get_server_variant
 from videos import VIDEOS
+from views.templating import configure_template_environment
 from youtube import Youtube
-
-from lang import LOCALE
 
 log = logging.getLogger(__name__)
 
@@ -438,7 +431,7 @@ class PychessGlobalAppState:
                 if is_test_run():
                     self.catalogued_variants = {}
                 else:
-                    from catalogued_variants import init_catalogued_variants
+                    from catalogued.variants import init_catalogued_variants
 
                     await init_catalogued_variants(self)
 
@@ -642,31 +635,31 @@ class PychessGlobalAppState:
                     video_count = await _upsert_static_docs(self.db.video, VIDEOS)
                     log.debug("[startup] synced %s static video documents", video_count)
 
-                if not is_test_run() and os.getenv("LEGACY_BLOG_BOOTSTRAP", "1") == "1":
-                    # Run legacy bootstrap only for an empty target collection.
-                    # This keeps first deploy fully automatic while preventing
-                    # rewrites of migrated posts on every subsequent restart.
-                    ublog_post_count = await self.db.ublog_post.count_documents({}, limit=1)
-                    if ublog_post_count == 0:
-                        from legacy_blog_migration import build_legacy_ublog_docs
+            with startup.phase("migrate strict blogs to ublog_post2"):
+                from ublog_post2_migration import migrate_ublog_post2
 
-                        legacy_blog_author_policy = os.getenv("LEGACY_BLOG_AUTHOR_POLICY", "keep")
-                        if legacy_blog_author_policy not in (
-                            "keep",
-                            "official-as-pychess",
-                        ):
-                            legacy_blog_author_policy = "keep"
-                        legacy_count = await _upsert_static_docs(
-                            self.db.ublog_post,
-                            build_legacy_ublog_docs(
-                                author_policy=legacy_blog_author_policy,
-                                strip_preamble=True,
-                            ),
-                        )
-                        log.info(
-                            "[startup] bootstrapped %s legacy blog documents",
-                            legacy_count,
-                        )
+                # A brand-new installation has no legacy collection to import.
+                # Bootstrap static posts directly into v2, never writing to v1.
+                if (
+                    not is_test_run()
+                    and os.getenv("LEGACY_BLOG_BOOTSTRAP", "1") == "1"
+                    and await self.db.ublog_post.count_documents({}, limit=1) == 0
+                    and await self.db.ublog_post2.count_documents({}, limit=1) == 0
+                    and not await self.db.config.find_one({"_id": "ublog_post2_migration_v1"})
+                ):
+                    from legacy_blog_migration import build_legacy_ublog_docs
+                    from ublog_markdown_migration import convert_legacy_blog_markdown
+
+                    author_policy = os.getenv("LEGACY_BLOG_AUTHOR_POLICY", "keep")
+                    if author_policy not in ("keep", "official-as-pychess"):
+                        author_policy = "keep"
+                    docs = build_legacy_ublog_docs(author_policy=author_policy, strip_preamble=True)
+                    for doc in docs:
+                        doc["markdown"] = convert_legacy_blog_markdown(doc.get("markdown") or "")
+                    count = await _upsert_static_docs(self.db.ublog_post2, docs)
+                    log.info("[startup] bootstrapped %s strict blog documents", count)
+
+                await migrate_ublog_post2(self.db)
 
             with startup.phase("restore fishnet + config + user migrations"):
                 if "fishnet" in db_collections:
@@ -810,28 +803,7 @@ class PychessGlobalAppState:
         # gets its own copy while test apps share the immutable base translations.
         self.tourneynames = {lang: names.copy() for lang, names in tourney_names.items()}
 
-        # https://github.com/aio-libs/aiohttp-jinja2/issues/187#issuecomment-2519831516
-        class _Translations:
-            @staticmethod
-            def gettext(message: str):
-                return self.translations[LOCALE.get()].gettext(message)
-
-            @staticmethod
-            def ngettext(singular: str, plural: str, num: int):
-                return self.translations[LOCALE.get()].ngettext(singular, plural, num)
-
-        env: Any = aiohttp_jinja2.get_env(self.app)
-        env.install_gettext_translations(_Translations, newstyle=True)
-
-        env.globals["static"] = static_url
-        env.globals["local_static"] = local_static_url
-        env.globals["js"] = "/static/pychess-variants.js%s" % SOURCE_VERSION
-        env.globals["dev"] = DEV
-        env.globals["app_name"] = "PyChess"
-        env.globals["languages"] = LANGUAGES
-        env.globals["asseturl"] = STATIC_ROOT
-        env.globals["nnue_download_root"] = NNUE_DOWNLOAD_ROOT
-        env.globals["home"] = URI
+        configure_template_environment(self.app, self.translations, dev=DEV)
 
     def __start_bots(self):
         rm = self.users["Random-Mover"]

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 from const import ANON_PREFIX, BLOCK, MAX_USER_BLOCK
 from glicko2.glicko2 import sparse_perf_map
-from typing_defs import PerfMap, RelationDocument, UserCount, UserDocument
+from typing_defs import BotEngineInfo, PerfMap, RelationDocument, UserCount, UserDocument
 from user_stats import normalize_user_count
 from variants import RATED_VARIANTS
 
@@ -40,6 +40,7 @@ class PublicProfile:
     tournament_points: int | float = 0
     forum_posts: int = 0
     variant_count: int = 0
+    bot_engine: BotEngineInfo | None = None
 
 
 class PublicUsers:
@@ -83,6 +84,7 @@ class PublicUsers:
             tournament_points=user.tournament_points,
             forum_posts=user.forum_posts,
             variant_count=user.variant_count,
+            bot_engine=user.bot_engine if user.bot else None,
         )
 
     @staticmethod
@@ -108,6 +110,7 @@ class PublicUsers:
             tournament_points=doc.get("tournamentPoints", 0),
             forum_posts=doc.get("forumPosts", 0),
             variant_count=doc.get("variantCount", 0),
+            bot_engine=doc.get("botEngine") if title == "BOT" else None,
         )
 
     @staticmethod

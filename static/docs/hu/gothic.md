@@ -1,4 +1,4 @@
-# ![gothic ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/capablanca.svg) Gothic sakk (Trice-sakk)
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/capablanca.svg) Gothic sakk (Trice-sakk)
 
 ![Gothic ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Gothic.png)
 

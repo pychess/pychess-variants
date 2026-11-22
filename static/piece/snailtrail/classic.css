@@ -1,0 +1,6 @@
+.snailtrail piece.p-piece.white {
+    background-image: url('../../images/pieces/snailtrail/wP.svg');
+}
+.snailtrail piece.p-piece.black {
+    background-image: url('../../images/pieces/snailtrail/bP.svg');
+}

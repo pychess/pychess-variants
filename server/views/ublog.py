@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 import asyncio
-import ipaddress
-import socket
 from datetime import UTC, datetime
 from typing import Any
-from urllib.parse import quote, urlsplit, urlunsplit
+from urllib.parse import quote
 
 import aiohttp_jinja2
-from aiohttp import ClientSession, ClientTimeout, web
+from aiohttp import web
 from forum.storage import recompute_categ_summary, refresh_post_author_count, topic_by_tree
 from newid import new_id
 from pychess_global_app_state_utils import get_app_state
@@ -35,17 +33,11 @@ from ublog import (
 
 from views import get_user_context
 
-UBLOG_IMAGE_PROXY_MAX_BYTES = 5 * 1024 * 1024
-UBLOG_IMAGE_PROXY_UA = (
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
-)
 UBLOG_DISCUSS_CATEG_ID = "community-blog-discussions"
 UBLOG_DISCUSS_CATEG_NAME = "Community Blog Discussions"
 UBLOG_DISCUSS_CATEG_DESC = "Discuss community blog posts."
 UBLOG_DISCUSS_CATEG_ORDER = 25
 UBLOG_DISCUSS_TEXT_PREFIX = "Comments on "
-UBLOG_IMAGE_PROXY_ALLOWED_PORTS = {80, 443}
 
 
 def _safe_path_segment(value: str) -> str:
@@ -215,72 +207,6 @@ async def _cards_from_posts(app_state: Any, posts: list[dict[str, Any]]) -> list
     return [_to_card(post, titles.get(str(post.get("author") or ""), "")) for post in visible_posts]
 
 
-def _is_safe_image_content_type(content_type: str | None) -> bool:
-    if not content_type:
-        return False
-    ctype = content_type.split(";", 1)[0].strip().lower()
-    return ctype in {
-        "image/jpeg",
-        "image/png",
-        "image/gif",
-        "image/webp",
-        "image/avif",
-        "image/svg+xml",
-    }
-
-
-def _is_public_ip(ip_value: str) -> bool:
-    try:
-        return ipaddress.ip_address(ip_value).is_global
-    except ValueError:
-        return False
-
-
-async def _is_safe_image_host(hostname: str) -> bool:
-    host = hostname.strip().rstrip(".").casefold()
-    if not host or host == "localhost" or host.endswith((".localhost", ".local")):
-        return False
-
-    if _is_public_ip(host):
-        return True
-
-    loop = asyncio.get_running_loop()
-    try:
-        addr_infos = await loop.getaddrinfo(host, None, type=socket.SOCK_STREAM)
-    except socket.gaierror:
-        return False
-
-    if not addr_infos:
-        return False
-
-    for info in addr_infos:
-        ip_value = info[4][0]
-        if not isinstance(ip_value, str) or not _is_public_ip(ip_value):
-            return False
-    return True
-
-
-async def _normalize_proxy_image_url(raw_url: str) -> str | None:
-    candidate = raw_url.strip()
-    if candidate == "":
-        return None
-
-    parsed = urlsplit(candidate)
-    if parsed.scheme not in {"http", "https"}:
-        return None
-    if parsed.username or parsed.password:
-        return None
-    if parsed.hostname is None:
-        return None
-    if parsed.port is not None and parsed.port not in UBLOG_IMAGE_PROXY_ALLOWED_PORTS:
-        return None
-    if not await _is_safe_image_host(parsed.hostname):
-        return None
-
-    path = parsed.path if parsed.path else "/"
-    return urlunsplit((parsed.scheme, parsed.netloc, path, parsed.query, ""))
-
-
 async def _profile_exists(app_state: Any, profile_id: str) -> bool:
     profile = await app_state.public_users.get_profile(profile_id)
     return profile is not None and profile.enabled
@@ -289,7 +215,7 @@ async def _profile_exists(app_state: Any, profile_id: str) -> bool:
 async def _load_post(app_state: Any, post_id: str, profile_id: str) -> dict[str, Any] | None:
     if app_state.db is None:
         return None
-    post = await app_state.db.ublog_post.find_one({"_id": post_id, "author": profile_id})
+    post = await app_state.db.ublog_post2.find_one({"_id": post_id, "author": profile_id})
     if post is None:
         return None
     return post
@@ -411,7 +337,7 @@ async def community(request: web.Request) -> ViewContext:
     }
     if topic != "":
         query["topics"] = topic
-    cursor = app_state.db.ublog_post.find(query).sort(
+    cursor = app_state.db.ublog_post2.find(query).sort(
         [("sticky", -1), ("publishedAt", -1), ("createdAt", -1)]
     )
     posts = await cursor.limit(60).to_list(60)
@@ -419,7 +345,7 @@ async def community(request: web.Request) -> ViewContext:
     context["community_topic"] = topic
     context["community_topics"] = sorted(
         t
-        for t in await app_state.db.ublog_post.distinct(
+        for t in await app_state.db.ublog_post2.distinct(
             "topics",
             {
                 "live": True,
@@ -433,69 +359,13 @@ async def community(request: web.Request) -> ViewContext:
     return context
 
 
-async def image_proxy(request: web.Request) -> web.Response:
-    app_state = get_app_state(request.app)
-    post_id = request.match_info["postId"]
-    if app_state.db is None:
-        return web.Response(status=503)
-
-    post = await app_state.db.ublog_post.find_one({"_id": post_id}, {"image": 1})
-    if post is None:
-        return web.Response(status=404)
-    image = str(post.get("image") or "")
-    safe_image = await _normalize_proxy_image_url(image)
-    if safe_image is None:
-        return web.Response(status=404)
-
-    return await _proxy_image_from_url(safe_image)
-
-
-async def image_proxy_external(request: web.Request) -> web.Response:
-    # Proxy arbitrary external inline blog images referenced from markdown content.
-    raw_url = str(request.rel_url.query.get("url", ""))
-    safe_image = await _normalize_proxy_image_url(raw_url)
-    if safe_image is None:
-        return web.Response(status=404)
-    return await _proxy_image_from_url(safe_image)
-
-
-async def _proxy_image_from_url(image: str) -> web.Response:
-    timeout = ClientTimeout(total=8)
-    try:
-        async with (
-            ClientSession(
-                timeout=timeout,
-                headers={
-                    "User-Agent": UBLOG_IMAGE_PROXY_UA,
-                    "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-                },
-            ) as session,
-            session.get(image, allow_redirects=False) as resp,
-        ):
-            if resp.status != 200:
-                return web.Response(status=404)
-            content_type = resp.headers.get("Content-Type")
-            if not _is_safe_image_content_type(content_type):
-                return web.Response(status=404)
-            body = await resp.read()
-            if len(body) > UBLOG_IMAGE_PROXY_MAX_BYTES:
-                return web.Response(status=413)
-            return web.Response(
-                body=body,
-                content_type=content_type.split(";", 1)[0].strip(),
-                headers={"Cache-Control": "public, max-age=3600"},
-            )
-    except Exception:
-        return web.Response(status=404)
-
-
 async def discuss(request: web.Request) -> web.StreamResponse:
     app_state = get_app_state(request.app)
     post_id = request.match_info["postId"]
     if app_state.db is None:
         raise web.HTTPFound("/forum")
 
-    post = await app_state.db.ublog_post.find_one({"_id": post_id, "live": True})
+    post = await app_state.db.ublog_post2.find_one({"_id": post_id, "live": True})
     if post is None:
         raise web.HTTPFound("/forum")
 
@@ -534,13 +404,13 @@ async def like(request: web.Request) -> web.StreamResponse:
     likes = _likes_from_doc(doc)
     liked = user.username in likes
     if user.username in likes:
-        await app_state.db.ublog_post.update_one(
+        await app_state.db.ublog_post2.update_one(
             {"_id": post_id, "author": profile_id},
             {"$pull": {"likes": user.username}},
         )
         liked = False
     else:
-        result = await app_state.db.ublog_post.update_one(
+        result = await app_state.db.ublog_post2.update_one(
             {"_id": post_id, "author": profile_id},
             {"$addToSet": {"likes": user.username}},
         )
@@ -558,7 +428,7 @@ async def like(request: web.Request) -> web.StreamResponse:
             )
 
     if wants_json:
-        updated = await app_state.db.ublog_post.find_one(
+        updated = await app_state.db.ublog_post2.find_one(
             {"_id": post_id, "author": profile_id}, {"likes": 1}
         )
         updated_likes = _likes_from_doc(updated or {})
@@ -591,7 +461,7 @@ async def user_blog(request: web.Request) -> ViewContext:
         context["ublog_posts"] = []
     else:
         posts = await (
-            app_state.db.ublog_post.find({"author": profile_id, "live": True})
+            app_state.db.ublog_post2.find({"author": profile_id, "live": True})
             .sort([("sticky", -1), ("publishedAt", -1), ("createdAt", -1)])
             .limit(50)
             .to_list(50)
@@ -618,7 +488,7 @@ async def drafts(request: web.Request) -> ViewContext:
         context["ublog_posts"] = []
     else:
         posts = await (
-            app_state.db.ublog_post.find({"author": profile_id, "live": False})
+            app_state.db.ublog_post2.find({"author": profile_id, "live": False})
             .sort([("updatedAt", -1), ("createdAt", -1)])
             .limit(50)
             .to_list(50)
@@ -661,7 +531,7 @@ async def post(request: web.Request) -> ViewContext:
         and bool(doc.get("live"))
         and not user.anon
     ):
-        result = await app_state.db.ublog_post.update_one(
+        result = await app_state.db.ublog_post2.update_one(
             {
                 "_id": post_id,
                 "author": profile_id,
@@ -679,7 +549,7 @@ async def post(request: web.Request) -> ViewContext:
     related_docs: list[dict[str, Any]] = []
     if app_state.db is not None:
         related_docs = await (
-            app_state.db.ublog_post.find(
+            app_state.db.ublog_post2.find(
                 {"author": profile_id, "live": True, "_id": {"$ne": doc["_id"]}},
             )
             .sort([("publishedAt", -1), ("createdAt", -1)])
@@ -741,14 +611,16 @@ async def create(request: web.Request) -> web.Response:
         raise web.HTTPBadRequest(text="Invalid form data")
 
     values = _extract_form_values(data, _empty_form_values())
-    errors = _validate_content(values)
+    errors = _validate_full(values)
 
     if errors:
         ctx = _build_form_context(context, profile_id, values, errors)
-        return aiohttp_jinja2.render_template("ublog_form.html", request, ctx, status=400)
+        return await aiohttp_jinja2.render_template_async(
+            "ublog_form.html", request, ctx, status=400
+        )
 
     now = datetime.now(UTC)
-    post_id = await new_id(app_state.db.ublog_post)
+    post_id = await new_id(app_state.db.ublog_post2)
     topics = normalize_topics(values["topics"])
     image = sanitize_image_url(values["image"])
     doc = {
@@ -773,7 +645,7 @@ async def create(request: web.Request) -> web.Response:
         "updatedAt": now,
         "publishedAt": None,
     }
-    await app_state.db.ublog_post.insert_one(doc)
+    await app_state.db.ublog_post2.insert_one(doc)
     raise web.HTTPFound(_blog_post_edit_url(profile_id, post_id))
 
 
@@ -816,7 +688,9 @@ async def update(request: web.Request) -> web.Response:
 
     if errors:
         ctx = _build_form_context(context, profile_id, values, errors, post=doc)
-        return aiohttp_jinja2.render_template("ublog_form.html", request, ctx, status=400)
+        return await aiohttp_jinja2.render_template_async(
+            "ublog_form.html", request, ctx, status=400
+        )
 
     image = sanitize_image_url(values["image"])
     next_live = values["live"]
@@ -849,7 +723,7 @@ async def update(request: web.Request) -> web.Response:
     elif not next_live:
         update_fields["publishedAt"] = None
 
-    await app_state.db.ublog_post.update_one({"_id": post_id}, {"$set": update_fields})
+    await app_state.db.ublog_post2.update_one({"_id": post_id}, {"$set": update_fields})
     updated = await _load_post(app_state, post_id, profile_id)
     if updated is None:
         raise web.HTTPNotFound()
@@ -879,5 +753,5 @@ async def delete(request: web.Request) -> web.Response:
         raise web.HTTPServiceUnavailable(text="Database unavailable")
     if not is_owner(user.username, profile_id, user.anon):
         raise web.HTTPForbidden()
-    await app_state.db.ublog_post.delete_one({"_id": post_id, "author": profile_id})
+    await app_state.db.ublog_post2.delete_one({"_id": post_id, "author": profile_id})
     raise web.HTTPFound(_blog_drafts_url(profile_id))

@@ -1,4 +1,4 @@
-# ![S-House](https://github.com/pychess/pychess-variants/blob/master/static/icons/SHouse.svg) S-House
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/SHouse.svg) S-House
 
 S-House is a custom variant combining the rules of S-Chess (AKA Seirawan or SHARPER chess) with the drop rules of Crazyhouse. The same rules apply to both games with the exception that the Elephant and the Hawk may be entered initially into the game on any vacant square, as a separate move, in the same manner as normal drops in Crazyhouse. As this is considered a derivative of S-chess, please check the rules in its separate guide. Crazyhouse rules are as below for a reminder.
 

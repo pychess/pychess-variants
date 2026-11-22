@@ -5,9 +5,10 @@ import * as cg from 'chessgroundx/types';
 
 import { _, ngettext, pgettext, languageSettings } from './i18n';
 import { alertDialog } from './alertDialog';
-import { getLastMoveFen, VARIANTS } from './variants';
+import { ensureCataloguedVariantsLoaded, getLastMoveFen, VARIANTS } from './variants';
 import { patch } from './document';
-import { renderTimeago } from './datetime';
+import { updateTimeago } from './datetime';
+import { infiniteScroll } from './infiniteScroll';
 import { boardSettings } from './boardSettings';
 import { alternateStartName, timeControlStr } from './view';
 import { PyChessModel } from './types';
@@ -15,7 +16,7 @@ import { Ceval } from './messages';
 import { aiDisplayName, aiLevel, gameType, result, renderRdiff } from './result';
 import { renderBugTeamInfo, renderGameBoardsBug } from '@/two-board/profile';
 import { displayUsername, userLink } from './user';
-import { bindMiniBoardResize, sizeMiniBoardHost } from './miniBoard';
+import { bindBoardResize, sizeMiniBoardHost } from './miniBoard';
 
 export interface Game {
     _id: string; // mongodb document id
@@ -77,9 +78,26 @@ export function gameListView(sentinel: VNode): VNode[] {
     return [h('table#games'), sentinel];
 }
 
+export async function loadGameVariantDefinitions(games: Game[]): Promise<void> {
+    const names = [...new Set(games.map(game => game.v))].filter(name => !VARIANTS[name]);
+    if (!names.length) return;
+    try {
+        await ensureCataloguedVariantsLoaded(names);
+    } catch (error) {
+        console.warn('Failed to load game variant metadata', error);
+    }
+}
+
 export function renderGames(model: PyChessModel, games: Game[]) {
     const rows = games.map(game => {
         const variant = VARIANTS[game.v];
+        // Archived or private historical variants may not be available via the
+        // public metadata API. Keep a usable link instead of failing rendering.
+        if (!variant) {
+            return h('tr', { attrs: { 'data-game-id': game._id } }, [
+                h('td', [h('a', { attrs: { href: '/' + game._id } }, game.v)]),
+            ]);
+        }
         const chess960 = game.z === 1;
         const tc = timeControlStr(game['b'], game['i'], game['bp'], game['c'] === true ? game['b'] : 0);
         const altStartName = alternateStartName(variant, game.initialFen);
@@ -92,7 +110,7 @@ export function renderGames(model: PyChessModel, games: Game[]) {
         }
         let lastMove, fen;
         [lastMove, fen] = getLastMoveFen(variant.name, game.lm, game.f);
-        return h('tr', [
+        return h('tr', { attrs: { 'data-game-id': game._id } }, [
             h('a', { attrs: { href: '/' + game['_id'] } }, [
                 h(
                     'td.board',
@@ -121,7 +139,7 @@ export function renderGames(model: PyChessModel, games: Game[]) {
                                                   addDimensionsCssVarsTo: boardHost,
                                                   pocketRoles: variant.pocket?.roles,
                                               });
-                                              const unbindResize = bindMiniBoardResize(chessground);
+                                              const unbindResize = bindBoardResize(chessground);
                                               (vnode.data as { miniBoardCleanup?: () => void }).miniBoardCleanup = () => {
                                                   unbindResize();
                                                   chessground.destroy();
@@ -222,7 +240,7 @@ export function renderGames(model: PyChessModel, games: Game[]) {
 function isWinClass(model: PyChessModel, game: Game): boolean {
     if (!model['profileid']) return false;
     const variant = VARIANTS[game.v];
-    if (variant.twoBoards) {
+    if (variant?.twoBoards) {
         const team = game['us'][0] === model['profileid'] || game['us'][3] === model['profileid'] ? 0 : 1;
         return (game['r'] === '1-0' && team === 0) || (game['r'] === '0-1' && team === 1);
     } else {
@@ -233,17 +251,31 @@ function isWinClass(model: PyChessModel, game: Game): boolean {
     }
 }
 
-function loadGames(model: PyChessModel, page: number) {
+export function appendGames(model: PyChessModel, games: Game[]): void {
+    const table = document.getElementById('games');
+    if (!table) return;
+    const seen = new Set(Array.from(table.querySelectorAll('[data-game-id]'), row => row.getAttribute('data-game-id')));
+    const fresh = games.filter(game => {
+        if (seen.has(game._id)) return false;
+        seen.add(game._id);
+        return true;
+    });
+    if (!fresh.length) return;
+    // Mount each batch in the live table so board insert hooks can measure it.
+    const body = document.createElement('tbody');
+    table.append(body);
+    patch(body, renderGames(model, fresh)[0]);
+    updateTimeago();
+}
+
+async function loadGames(model: PyChessModel, page: number): Promise<boolean> {
     const lang = languageSettings.value;
 
-    const xmlhttp = new XMLHttpRequest();
     const params = new URLSearchParams({ l: lang, p: String(page) });
+    // Tab / scope filter (mutually exclusive by the nature of the profile tabs).
     if (model.level) {
         params.set('filter', 'loss');
         params.set('x', '8');
-    } else if (model.variant) {
-        params.set('filter', 'perf');
-        params.set('variant', model.variant);
     } else if (model.rated === '1') {
         params.set('filter', 'rated');
     } else if (model.rated === '2') {
@@ -253,23 +285,21 @@ function loadGames(model: PyChessModel, page: number) {
     } else if (model.rated === '-1') {
         params.set('filter', 'me');
     }
+    // The variant filter is independent and combines with the tab above (AND).
+    // Fixes #648: choosing a variant no longer resets the Rated/Casual/... tab.
+    if (model.variant) {
+        params.set('variant', model.variant);
+    }
     const url = `/api/games/user/${encodeURIComponent(model['profileid'])}?${params.toString()}`;
 
-    xmlhttp.onreadystatechange = function () {
-        if (this.readyState === 4 && this.status === 200) {
-            const response = JSON.parse(this.responseText);
-
-            // If empty JSON, exit the function
-            if (!response.length) {
-                return;
-            }
-            const oldVNode = document.getElementById('games');
-            if (oldVNode instanceof Element) patch(oldVNode, h('table#games', renderGames(model, response)));
-            renderTimeago();
-        }
-    };
-    xmlhttp.open('GET', url, true);
-    xmlhttp.send();
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Games: ${response.status}`);
+    const games = (await response.json()) as Game[];
+    // The API returns an empty object for visitors without game-list access.
+    if (!Array.isArray(games)) return false;
+    await loadGameVariantDefinitions(games);
+    appendGames(model, games);
+    return games.length > 0;
 }
 
 function enableRestrictedGameLoading(model: PyChessModel) {
@@ -299,18 +329,15 @@ function restrictedGameListView(model: PyChessModel): VNode[] {
 }
 
 function observeSentinel(vnode: VNode, model: PyChessModel) {
-    const sentinel = vnode.elm as HTMLElement;
     let page = 0;
-    const options = { root: null, rootMargin: '44px', threshold: 1.0 };
-
-    const intersectionObserver = new IntersectionObserver(entries => {
-        if (entries.some(entry => entry.intersectionRatio > 0)) {
-            loadGames(model, page);
+    const destroy = infiniteScroll(vnode.elm as HTMLElement, {
+        load: async () => {
+            const hasMore = await loadGames(model, page);
             page += 1;
-        }
-    }, options);
-
-    intersectionObserver.observe(sentinel);
+            return hasMore;
+        },
+    });
+    vnode.data!.hook!.destroy = destroy;
 }
 
 export function profileView(model: PyChessModel) {
@@ -318,6 +345,9 @@ export function profileView(model: PyChessModel) {
 
     const profileId = model['profileid'];
     const rated = model['rated'];
+    // When a variant is active, every tab link keeps it so the two filters
+    // combine (AND) instead of resetting each other. Issue #648.
+    const variantQ = model.variant ? '?variant=' + model.variant : '';
 
     const blockEl = document.getElementById('block') as HTMLElement;
     if (blockEl !== null) renderBlock('block', profileId);
@@ -334,7 +364,7 @@ export function profileView(model: PyChessModel) {
     let tabs: VNode[] = [];
     tabs.push(
         h('div.sub-ratings', [
-            h('a', { attrs: { href: '/@/' + profileId }, class: { active: rated === 'None' } }, _('Games')),
+            h('a', { attrs: { href: '/@/' + profileId + variantQ }, class: { active: rated === 'None' } }, _('Games')),
         ]),
     );
     if (model['username'] !== profileId) {
@@ -342,7 +372,7 @@ export function profileView(model: PyChessModel) {
             h('div.sub-ratings', [
                 h(
                     'a',
-                    { attrs: { href: '/@/' + profileId + '/me' }, class: { active: rated === '-1' } },
+                    { attrs: { href: '/@/' + profileId + '/me' + variantQ }, class: { active: rated === '-1' } },
                     _('Games with you'),
                 ),
             ]),
@@ -352,7 +382,7 @@ export function profileView(model: PyChessModel) {
         h('div.sub-ratings', [
             h(
                 'a',
-                { attrs: { href: '/@/' + profileId + '/rated' }, class: { active: rated === '1' } },
+                { attrs: { href: '/@/' + profileId + '/rated' + variantQ }, class: { active: rated === '1' } },
                 pgettext('UsePluralFormIfNeeded', 'Rated'),
             ),
         ]),
@@ -361,14 +391,14 @@ export function profileView(model: PyChessModel) {
         h('div.sub-ratings', [
             h(
                 'a',
-                { attrs: { href: '/@/' + profileId + '/playing' }, class: { active: rated === '-2' } },
+                { attrs: { href: '/@/' + profileId + '/playing' + variantQ }, class: { active: rated === '-2' } },
                 pgettext('UsePluralFormIfNeeded', 'Playing'),
             ),
         ]),
     );
     tabs.push(
         h('div.sub-ratings', [
-            h('a', { attrs: { href: '/@/' + profileId + '/import' }, class: { active: rated === '2' } }, _('Imported')),
+            h('a', { attrs: { href: '/@/' + profileId + '/import' + variantQ }, class: { active: rated === '2' } }, _('Imported')),
         ]),
     );
 

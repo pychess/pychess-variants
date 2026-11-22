@@ -1,4 +1,4 @@
-# ![Seirawan sakk ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/schess.svg) S-sakk (Seirawan-sakk, SHARPER sakk) (S-chess)
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/schess.svg) S-sakk (Seirawan-sakk, SHARPER sakk) (S-chess)
 
 Az S-sakkot Yasser Seirawan és Bruce Harper alkotta meg 2007-ben. A standard sakkhoz hasonlóan ezt is 8x8-as táblán játsszák, de két új bábu is bekerült a játékba.
 

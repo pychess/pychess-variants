@@ -1,4 +1,4 @@
-# ![Janggi ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/Janggi.svg) Janggi (Koreai sakk)
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/Janggi.svg) Janggi (Koreai sakk)
 
 ![Janggi tábla](https://github.com/pychess/pychess-variants/blob/master/static/images/JanggiGuide/Boards.png)
 

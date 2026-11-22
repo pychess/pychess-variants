@@ -45,6 +45,13 @@ export class GameControllerBughouse extends GameController {
         this.parent.sendMove(this, move);
     }
 
+    override cancelPromotionInput(): void {
+        // This board's steps belong to the two-board controller. Restore its
+        // current server position rather than navigating the base's empty history.
+        this.renderState();
+        this.setDests();
+    }
+
     onUserDrop = (piece: cg.Piece, dest: cg.Key, meta: cg.MoveMetadata) => {
         console.log(piece, dest, meta);
         this.preaction = meta.premove;
@@ -56,13 +63,6 @@ export class GameControllerBughouse extends GameController {
         return (key: cg.Key) => {
             console.log(key);
         };
-    };
-
-    performPremove = () => {
-        // const { orig, dest, meta } = this.premove;
-        // todo: once premove+promotion bug is fixed for regular variants, apply here as well
-        // console.log("performPremove()", orig, dest, meta);
-        this.chessground.playPremove();
     };
 
     onUserMove = (orig: cg.Key, dest: cg.Key, meta: cg.MoveMetadata) => {
@@ -105,16 +105,6 @@ export class GameControllerBughouse extends GameController {
         this.preaction = false;
     };
 
-    private setPremove = (orig: cg.Orig, dest: cg.Key, metadata?: cg.SetPremoveMetadata) => {
-        this.premove = { orig, dest, metadata };
-        // console.log("setPremove() to:", orig, dest, meta);
-    };
-
-    private unsetPremove = () => {
-        this.premove = undefined;
-        this.preaction = false;
-    };
-
     setState = (fen: cg.FEN, turnColor: cg.Color, move: cg.Orig[] | undefined) => {
         this.fullfen = fen;
 
@@ -125,6 +115,7 @@ export class GameControllerBughouse extends GameController {
         this.ffishBoard.setFen(this.fullfen);
         this.isCheck = this.ffishBoard.isCheck();
         this.setDests();
+        this.promotion.refreshPremove();
     };
 
     /** HAND A CAPTURED PIECE TO THE PARTNER'S POCKET, locally.
@@ -248,6 +239,11 @@ export class GameControllerBughouse extends GameController {
         return { san, sanSAN };
     };
 
+    // The game status belongs to both boards, so the parent reports it (on one board only).
+    updateBoardSummary(lastMove: string | undefined): void {
+        this.boardSummary.setPosition(this.chessground.state.boardState, lastMove);
+    }
+
     renderState = () => {
         this.chessground.set({
             fen: this.fullfen,
@@ -255,6 +251,7 @@ export class GameControllerBughouse extends GameController {
             check: this.isCheck,
             lastMove: this.lastmove,
         });
+        this.updateBoardSummary(this.parent?.lastSanOn(this.boardName));
     };
 
     setGround = () => {
@@ -274,8 +271,8 @@ export class GameControllerBughouse extends GameController {
                 premoveFunc: premove(this.variant.name, this.chess960, this.variant.board.dimensions),
                 predropFunc: predrop(this.variant.name, this.variant.board.dimensions),
                 events: {
-                    set: this.setPremove,
-                    unset: this.unsetPremove,
+                    set: (orig, dest, metadata) => this.setPremove(orig, dest, metadata),
+                    unset: () => this.unsetPremove(),
                 },
             },
             events: {

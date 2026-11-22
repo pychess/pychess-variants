@@ -254,6 +254,26 @@ class StudyServerAnalysisTestCase(unittest.IsolatedAsyncioTestCase):
         repeated = await self._request()
         self.assertEqual(repeated.status, "already_done")
 
+    async def test_oversized_analysis_tree_merge_keeps_original_tree(self) -> None:
+        await self._add_line(["e2e4", "e7e5", "g1f3", "b8c6", "f1b5"])
+        original = await self._chapter()
+        started = await self._request()
+        self.assertEqual(started.status, "started")
+        work_id, work = next(iter(self.app_state.fishnet_works.items()))
+        rows = [{"score": {"cp": 25}, "depth": 18} for _ in range(6)]
+        with (
+            patch("study.analysis.STUDY_CHAPTER_MAX_BSON_BYTES", 1),
+            self.assertLogs("study.analysis", level="WARNING"),
+        ):
+            await merge_study_server_analysis(cast(Any, self.app_state), work_id, work, rows)
+        chapter = await self._chapter()
+        self.assertEqual(chapter.root, original.root)
+        self.assertEqual(chapter.revision, original.revision)
+        assert chapter.server_eval is not None
+        self.assertTrue(chapter.server_eval.done)
+        self.assertEqual(len(chapter.server_eval.analysis), 6)
+        self.assertNotIn(work_id, self.app_state.fishnet_works)
+
     async def test_analysis_merges_lila_style_evals_advice_and_best_lines(self) -> None:
         _, revision = await self._add_line(["e2e4", "e7e5", "g1f3", "b8c6", "f1b5"])
         chapter = await self._chapter()

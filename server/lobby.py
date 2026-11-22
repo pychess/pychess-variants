@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING
 
 from aiohttp.web_ws import WebSocketResponse
@@ -45,12 +45,24 @@ class Lobby:
         response: LobbyCountMessage = {"type": "ap_cnt", "cnt": self.app_state.auto_pairing_count()}
         await self.lobby_broadcast(response)
 
-    async def lobby_broadcast_seeks(self) -> None:
+    async def lobby_broadcast_seeks(self, usernames: Iterable[str] | None = None) -> None:
+        """Refresh all lobby users, or only the named users for a private challenge."""
+        recipients = (
+            tuple(self.lobbysockets.items())
+            if usernames is None
+            else tuple(
+                (username, sockets)
+                for username in dict.fromkeys(usernames)
+                if (sockets := self.lobbysockets.get(username))
+            )
+        )
+        if not recipients:
+            return
         # We will need all the seek users blocked info
-        for seek in self.app_state.seeks.values():
+        for seek in tuple(self.app_state.seeks.values()):
             await self.app_state.users.get(seek.creator.username)
 
-        for username, ws_set in tuple(self.lobbysockets.items()):
+        for username, ws_set in recipients:
             ws_user = await self.app_state.users.get(username)
             compatible_seeks = get_seeks(ws_user, self.app_state.seeks.values())
             response: LobbySeeksMessage = {"type": "get_seeks", "seeks": compatible_seeks}

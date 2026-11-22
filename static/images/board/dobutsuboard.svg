@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg version="1.1" viewBox="0 0 156 240" xmlns="http://www.w3.org/2000/svg">
+<svg version="1.1" viewBox="0 0 156 208" xmlns="http://www.w3.org/2000/svg">
  <defs>
   <clipPath id="clipPath35">
    <rect width="156" height="240" fill="none"/>
@@ -14,6 +14,7 @@
    <rect width="156" height="240" fill="none"/>
   </clipPath>
  </defs>
+ <g transform="scale(1 0.8666666666666667)">
  <path d="m0 0h156v106.66667h-156z" fill="#92caed" stroke-width="1.00077"/>
  <path d="m0 66.68398c12.81697-2.468278 29.333895 2.875162 34.963056 4.582025 5.354957 0.738445 15.442311-0.690638 16.56227-1.073152 16.317172-7.312918 24.08787-5.721223 35.38221-2.097803 8.776396 4.215708 15.453034 4.502512 28.726094 0.08368 11.34702-3.777596 21.10857-10.056102 40.36637 0.54797v117.27328h-156z" fill="#fbf2b7" fill-rule="evenodd" stroke-width="1.00058"/>
  <path d="m1.8e-6 160.15271c18.6310082-1.71573 27.0020612 10.78797 29.3204462 15.25082 16.993904-29.4823 44.845462-8.86397 49.168528-0.7004 12.6786-18.24449 40.186174-17.49534 49.840494 0.5551 7.39553-13.41503 22.98268-21.05471 27.67053-20.30808v85.04985h-156z" fill="#cfde7f" fill-rule="evenodd" stroke-width="1.00072"/>
@@ -29,4 +30,5 @@
  </g>
  <path d="m159.25 240h-162.5m0-60h162.5m0-60h-162.5m0-60h162.5m-162.5-60h162.5" clip-path="url(#clipPath36)" fill="none" stroke="#bd6055" stroke-dasharray="6.5, 6.5" stroke-linecap="square" stroke-width="1.488"/>
  <path d="m0-3.75v247.5m156 0v-247.5m-52 0v247.5m-52-247.5v247.5" clip-path="url(#clipPath35)" fill="none" stroke="#bd6055" stroke-dasharray="7.5, 7.5" stroke-linecap="square" stroke-width="1.488"/>
+ </g>
 </svg>

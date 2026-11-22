@@ -144,6 +144,7 @@ async def test_study_create_from_normalized_pgn_batch_preserves_settings_and_all
         "/study/import-pgn",
         json={
             "name": "Imported PGN Study",
+            "flair": "emoji:👽",
             "visibility": "unlisted",
             "computer": "member",
             "explorer": "owner",
@@ -183,6 +184,7 @@ async def test_study_create_from_normalized_pgn_batch_preserves_settings_and_all
     study_doc = await app_state.db.study.find_one({"_id": payload["studyId"]})
     assert study_doc is not None
     assert study_doc["name"] == "Imported PGN Study"
+    assert study_doc["flair"] == "emoji:👽"
     assert study_doc["visibility"] == "unlisted"
     assert study_doc["settings"] == {
         "computer": "member",
@@ -1390,6 +1392,57 @@ async def test_invalid_study_feature_permission_does_not_partially_edit_study(
 
 
 @pytest.mark.asyncio
+async def test_study_flair_survives_creation_and_can_be_edited_or_removed(aiohttp_client) -> None:
+    app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+    client = await aiohttp_client(app)
+    app_state = get_app_state(app)
+    username = "flair_owner"
+    await _insert_user(app_state, username)
+    client.session.cookie_jar.update_cookies({"AIOHTTP_SESSION": _login_cookie(username)})
+
+    response = await client.post(
+        "/study",
+        data={
+            "name": "Flair test",
+            "variant": "chess",
+            "flair": "emoji:🐢",
+            "visibility": "public",
+        },
+        allow_redirects=False,
+    )
+    assert response.status == 302
+    chapter_url = response.headers["Location"]
+    study_id = chapter_url.split("/")[2]
+    study_url = f"/study/{study_id}"
+    response = await client.get(chapter_url, headers={"Accept": "application/json"})
+    assert (await response.json())["study"]["flair"] == "emoji:🐢"
+    response = await client.get("/study/all")
+    assert 'aria-hidden="true">🐢</span>' in await response.text()
+
+    response = await client.post(
+        f"{study_url}/edit", data={"flair": "variant:shogi"}, allow_redirects=False
+    )
+    assert response.status == 302
+    response = await client.get(chapter_url, headers={"Accept": "application/json"})
+    assert (await response.json())["study"]["flair"] == "variant:shogi"
+
+    response = await client.post(
+        f"{study_url}/edit", data={"name": "Renamed", "flair": "emoji:abc"}, allow_redirects=False
+    )
+    assert response.status == 400
+    persisted = await app_state.db.study.find_one({"_id": study_id})
+    assert persisted["name"] == "Flair test"
+    assert persisted["flair"] == "variant:shogi"
+
+    response = await client.post(f"{study_url}/edit", data={"flair": ""}, allow_redirects=False)
+    assert response.status == 302
+    response = await client.get("/study/all")
+    html = await response.text()
+    assert 'class="study-card__icon"' in html
+    assert 'class="study-card__flair' not in html
+
+
+@pytest.mark.asyncio
 async def test_profile_study_listing_only_exposes_public_studies(aiohttp_client) -> None:
     app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
     client = await aiohttp_client(app)
@@ -1457,7 +1510,7 @@ async def test_profile_study_listing_only_exposes_public_studies(aiohttp_client)
 
 
 @pytest.mark.asyncio
-async def test_study_list_cards_preview_chapters_and_members(aiohttp_client) -> None:
+async def test_study_list_switches_between_card_previews_and_compact_links(aiohttp_client) -> None:
     app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
     client = await aiohttp_client(app)
     app_state = get_app_state(app)
@@ -1487,6 +1540,46 @@ async def test_study_list_cards_preview_chapters_and_members(aiohttp_client) -> 
     assert 'class="study-card__chapter">Fifth line</li>' not in html
     assert f'class="study-card__member study-card__member--write">{owner}</li>' in html
     assert f'class="study-card__member study-card__member--read">{reader}</li>' in html
+
+    return_to = "/study/search?q=preview&order=popular"
+    response = await client.post(
+        "/study/list-format",
+        data={"format": "compact", "return_to": return_to},
+        allow_redirects=False,
+    )
+    assert response.status == 303
+    assert response.headers["Location"] == return_to
+
+    for url in (return_to, "/study/all"):
+        response = await client.get(url)
+        assert response.status == 200
+        html = await response.text()
+        assert 'aria-label="Switch to card view"' in html
+        assert f'class="study-card study-list__entry" data-infinite-scroll-key="{study.id}"' in html
+        assert "Preview repertoire" in html
+        assert "study-card__chapters" not in html
+        assert "study-card__members" not in html
+
+    topic_url = "/study/topic/King;pawn?order=popular"
+    response = await client.post(
+        "/study/list-format",
+        data={"format": "compact", "return_to": topic_url},
+        allow_redirects=False,
+    )
+    assert response.status == 303
+    assert response.headers["Location"] == topic_url
+
+    response = await client.post(
+        "/study/list-format",
+        data={"format": "card", "return_to": "//example.org/"},
+        allow_redirects=False,
+    )
+    assert response.status == 303
+    assert response.headers["Location"] == "/study/all"
+    response = await client.get("/study/all")
+    html = await response.text()
+    assert 'aria-label="Switch to list view"' in html
+    assert "study-card__chapters" in html
 
 
 @pytest.mark.asyncio
@@ -1615,12 +1708,15 @@ async def test_public_study_discovery_and_search_never_expose_link_only_studies(
     assert "discovery_alice" in html
     assert "Sicilian Secret" not in html
     assert "Sicilian Private" not in html
-    assert 'class="study-index__topics"' in html
+    assert 'aria-label="Switch to list view"' in html
+    assert '/study/topic">Topics</a>' in html
     assert 'class="study-topic-list study-topic-list--shortcuts"' not in html
     assert 'class="study-search-count"' not in html
     assert "<info-date timestamp=" in html
     # Keep Studies with the learning resources, matching Lichess navigation.
-    assert html.index('href="/study/all">Studies</a>') < html.index('href="/tv">Watch</a>')
+    assert html.index('class="nav-link" href="/study/all"') < html.index(
+        'class="nav-link" href="/tv"'
+    )
 
     response = await client.get("/study/all?q=sic")
     assert response.status == 200
@@ -1651,6 +1747,81 @@ async def test_public_study_discovery_and_search_never_expose_link_only_studies(
     # while private remains protected.
     assert (await client.get(f"/study/{unlisted.id}", allow_redirects=False)).status == 302
     assert (await client.get(f"/study/{private.id}", allow_redirects=False)).status == 404
+
+
+@pytest.mark.asyncio
+async def test_study_discovery_sorts_by_likes_recency_and_relevance(aiohttp_client) -> None:
+    app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+    client = await aiohttp_client(app)
+    app_state = get_app_state(app)
+    owner = "sort_owner"
+    other = "sort_other"
+    await _insert_user(app_state, owner)
+    await _insert_user(app_state, other)
+    now = datetime.now(UTC)
+
+    for username, name, chapter_name, age, likes in (
+        (owner, "Classic lines", "Sicilian variations", 30, 40),
+        (owner, "Sicilian updates", "Main line", 0, 1),
+        (other, "Sicilian elsewhere", "Main line", 12, 0),
+    ):
+        draft = await StudyChapterBuilder(app_state, username).blank_or_fen(
+            variant="chess", name=chapter_name
+        )
+        study, _ = await create_study_from_draft(
+            app_state, username, draft, name=name, visibility="public"
+        )
+        await app_state.db.study.update_one(
+            {"_id": study.id},
+            {
+                "$set": {
+                    "createdAt": now - timedelta(days=age),
+                    "likers": [f"fan_{i}" for i in range(likes)],
+                    "topics": ["Openings"],
+                },
+                "$unset": {"likes": ""},
+            },
+        )
+
+    response = await client.get("/study/all")
+    assert response.status == 200
+    html = await response.text()
+    assert (
+        html.index("Sicilian updates")
+        < html.index("Classic lines")
+        < html.index("Sicilian elsewhere")
+    )
+    assert 'class="current" aria-current="true" href="/study/all?order=hot">Hot</a>' in html
+
+    with patch("study.storage.STUDY_LIST_PAGE_SIZE", 1):
+        response = await client.get("/study/search?q=sic&order=popular")
+        assert response.status == 200
+        html = await response.text()
+        assert "Classic lines" in html
+        assert "Sicilian updates" not in html
+        assert 'href="/study/search?q=sic&amp;order=popular&amp;page=2"' in html
+
+        response = await client.get("/study/search?q=sic&order=popular&page=2")
+        assert response.status == 200
+        html = await response.text()
+        assert "Sicilian updates" in html
+        assert "Classic lines" not in html
+        assert 'href="/study/search?q=sic&amp;order=hot"' in html
+
+    response = await client.get("/study/search?q=sic")
+    assert response.status == 200
+    html = await response.text()
+    assert html.index("Sicilian updates") < html.index("Classic lines")
+    assert (
+        'class="current" aria-current="true" href="/study/search?q=sic&amp;order=relevant"' in html
+    )
+
+    client.session.cookie_jar.update_cookies({"AIOHTTP_SESSION": _login_cookie(owner)})
+    response = await client.get("/study/topic/Openings?order=mine")
+    assert response.status == 200
+    html = await response.text()
+    assert html.index("Sicilian updates") < html.index("Classic lines")
+    assert "Sicilian elsewhere" not in html
 
 
 @pytest.mark.asyncio

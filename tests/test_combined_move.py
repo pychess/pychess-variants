@@ -27,7 +27,10 @@ from server import make_app
 
 test_logger.init_test_logger()
 
+NATIVE_APPLY_MOVE = getattr(sf, "apply_move", None)
 
+
+@unittest.skipUnless(NATIVE_APPLY_MOVE is not None, "requires pyffish.apply_move")
 class CombinedBoardMoveTestCase(unittest.TestCase):
     def compare_move(self, board: FairyBoard, move: str) -> MoveResult:
         before = board.fen, board.color, board.ply, list(board.move_stack)
@@ -136,6 +139,7 @@ class CombinedBoardMoveTestCase(unittest.TestCase):
         self.compare_move(board, "f1c4")
 
 
+@unittest.skipUnless(NATIVE_APPLY_MOVE is not None, "requires pyffish.apply_move")
 class CombinedGameMoveTestCase(AioHTTPTestCase):
     async def get_application(self):
         return make_app(db_client=AsyncMongoMockClient(tz_aware=True))
@@ -178,11 +182,11 @@ class CombinedGameMoveTestCase(AioHTTPTestCase):
         game = self.make_game()
         await game.play_move("e2e4", [600000, 600000])
         await game.play_move("e7e5", [600000, 600000])
-        native_apply_move = sf.apply_move
+        assert NATIVE_APPLY_MOVE is not None
 
         def apply_move(*args):
             self.assertEqual(args[2], ["e2e4", "e7e5"])
-            return native_apply_move(*args)
+            return NATIVE_APPLY_MOVE(*args)
 
         with ExitStack() as stack:
             combined = stack.enter_context(patch.object(sf, "apply_move", side_effect=apply_move))
@@ -221,13 +225,13 @@ class CombinedGameMoveTestCase(AioHTTPTestCase):
         expected_fen = sf.get_fen("chess", game.board.initial_fen, ["e2e4"])
         expected_moves = sf.legal_moves("chess", expected_fen, [])
         with (
-            patch.object(sf, "apply_move", wraps=sf.apply_move) as combined,
+            patch.object(sf, "apply_move", wraps=NATIVE_APPLY_MOVE) as combined,
             patch.object(sf, "legal_moves", side_effect=AssertionError("duplicate legal query")),
         ):
             await game.play_move("e2e4", [600000, 600000])
+            self.assertEqual(game.legal_moves, tuple(expected_moves))
         self.assertEqual(combined.call_count, 1)
         self.assertTrue(combined.call_args.args[-1])
-        self.assertEqual(game.legal_moves, expected_moves)
 
     async def test_illegal_human_move_leaves_clocks_offers_and_board_untouched(self):
         game = self.make_game()

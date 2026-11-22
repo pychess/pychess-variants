@@ -1,4 +1,4 @@
-# ![Cannon Shogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/CannonShogi.svg) 大炮将棋 | Cannon Shogi
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/CannonShogi.svg) 大炮将棋 | Cannon Shogi
 
 ![Cannon Shogi](https://github.com/pychess/pychess-variants/blob/master/static/images/CannonShogiGuide/Board.png)
 

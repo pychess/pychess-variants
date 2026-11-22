@@ -1,4 +1,4 @@
-# ![Shatranj](https://github.com/pychess/pychess-variants/blob/master/static/icons/Shatranj.svg) Shatranj
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/Shatranj.svg) Shatranj
 
 ![Shatranj](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/shatranj.png?raw=true)
 

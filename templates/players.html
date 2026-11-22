@@ -2,7 +2,12 @@
 {% block content %}
 <div id="main-wrap">
 <main class="page-menu players">
-<aside class="flat-bg">
+<h1 class="sr-only">{% trans %}Players{% endtrans %}</h1>
+{# NAMED, because this page has TWO asides and `<aside>` carries `complementary` implicitly:
+   unnamed, a landmark list read "complementary, complementary". The table below is headed
+   "Online" and dominates the region; the tournament links above it are secondary. #}
+<aside class="flat-bg" aria-label="{% trans %}Online{% endtrans %}">
+    <h2 class="sr-only">{% trans %}Online{% endtrans %}</h2>
     {% if admin %}
     <a class="allplayers-button" href="{{ home }}/allplayers">{% trans %}All players{% endtrans %}</a><br>
     {% endif %}
@@ -38,12 +43,14 @@
         </tbody>
     </table>
 </aside>
-<aside class="flat-bg">
+{# The per-variant top-score cards. #}
+<aside class="flat-bg" aria-label="{% trans %}Leaderboard{% endtrans %}">
+    <h2 class="sr-only">{% trans %}Leaderboard{% endtrans %}</h2>
     <div class="highscore">
         {% for key in highscore %}
         <div class="card">
             <div class="info0 icon" data-icon="{{ icons[key] }}">
-                <a href="{{ home }}/players/{{ key }}"><div class="variant">{{ variant_display_name(key) }}</div></a>
+                <a href="{{ home }}/players/{{ key }}"><div class="variant" role="heading" aria-level="3">{{ variant_display_name(key) }}</div></a>
             </div>
             {% for user, score in highscore[key].items() %}
                 {% set highscore_user = user.split("|")[0] %}

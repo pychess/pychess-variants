@@ -1,4 +1,4 @@
-# ![Tori Shogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/ToriShogi.svg) 禽將棋
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/ToriShogi.svg) 禽將棋
 
 |   |   |
 --- | ---
@@ -77,7 +77,7 @@
 
 |   |   |
 --- | ---
-![LeftQuail](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/LeftQuail.png) | ![RightQuail](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/RightQuail.png)
+![Left quail movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/LeftQuail.png) | ![Right quail movement](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/RightQuail.png)
 
 鶉依據配置於左右兩側而走法不同，棋上會標明左或右字。
 

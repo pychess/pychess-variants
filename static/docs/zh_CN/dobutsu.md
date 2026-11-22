@@ -1,4 +1,4 @@
-# ![Dobutsu Shogi](https://github.com/pychess/pychess-variants/blob/master/static/icons/Dobutsu.svg) 动物将棋|Dōbutsu Shogi
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/Dobutsu.svg) 动物将棋|Dōbutsu Shogi
 
 ![Dobutsu](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Dobutsu.png)
 

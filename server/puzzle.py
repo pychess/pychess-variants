@@ -54,6 +54,7 @@ NO_PUZZLE_VARIANTS = (
     "makbug",
     "shoshogi",
     "jieqi",
+    "yokai",
 )
 
 PUZZLE_VARIANTS = [v for v in VARIANTS if (not v.endswith("960") and (v not in NO_PUZZLE_VARIANTS))]
@@ -291,6 +292,8 @@ async def next_puzzle(
                 "p": doc.get("p", 0),
                 "lm": doc.get("lm", ""),
             }
+            if "perf" in doc:
+                puzzle["perf"] = doc["perf"]
             break
 
     if puzzle is None:

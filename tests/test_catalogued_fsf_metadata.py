@@ -5,15 +5,15 @@ from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import AsyncMock, patch
 
-from catalogued_variants import (
-    CATALOGUED_CHESS_PROMOTION_ORDER,
-    CATALOGUED_SOURCE_FSF_BUILTIN,
+from catalogued.builtin_data import (
     FSF_CATALOGUED_BUILTIN_DESCRIPTION,
     FSF_CATALOGUED_BUILTIN_VARIANTS,
     FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES,
     FSF_CATALOGUED_RETIRED_BUILTIN_VARIANTS,
-    _build_fsf_builtin_doc,
-    _fsf_builtin_synced_fields,
+)
+from catalogued.documents import _build_fsf_builtin_doc, _client_doc, _fsf_builtin_synced_fields
+from catalogued.models import CATALOGUED_CHESS_PROMOTION_ORDER, CATALOGUED_SOURCE_FSF_BUILTIN
+from catalogued.repository import (
     _remove_legacy_fsf_builtin_description_fields,
     ensure_fsf_catalogued_builtin_variants,
 )
@@ -22,22 +22,35 @@ from catalogued_variants import (
 class FsfBuiltinMetadataTestCase(TestCase):
     def test_engine_and_client_variant_relationships_are_separate(self) -> None:
         expected = {
+            "ai-wok": ("makruk", "makruk"),
             "amazons": ("", "chess"),
             "atomar": ("nocheckatomic", "atomic"),
             "centaur": ("", "capablanca"),
             "chancellor": ("", "capablanca"),
+            "chigorin": ("", "chess"),
+            "chessgi": ("loop", "crazyhouse"),
             "codrus": ("giveaway", "antichess"),
             "courier": ("", "shatranj"),
+            "euroshogi": ("", "shogi"),
+            "fox-and-hounds": ("", "chess"),
             "georgian": ("amazon", "chess"),
             "giveaway": ("", "antichess"),
+            "isolation": ("", "chess"),
+            "isolation7x7": ("isolation", "chess"),
             "janus": ("", "capablanca"),
+            "jesonmor": ("", "chess"),
             "joust": ("", "chess"),
+            "judkins": ("", "shogi"),
             "kinglet": ("extinction", "chess"),
             "losers": ("", "antichess"),
+            "micro": ("kyotoshogi", "kyotoshogi"),
             "modern": ("", "capablanca"),
             "nocheckatomic": ("", "atomic"),
+            "okisakishogi": ("", "shogi"),
             "petrified": ("pawnsideways", "chess"),
             "shatar": ("", "shatranj"),
+            "snailtrail": ("", "chess"),
+            "sortofalmost": ("chess", "chess"),
             "tencubed": ("", "grand"),
             "yarishogi": ("", "shogi"),
             "almost": ("", "chess"),
@@ -55,12 +68,8 @@ class FsfBuiltinMetadataTestCase(TestCase):
 
     def test_candidate_relationships_do_not_invent_engine_parents(self) -> None:
         expected = {
-            "chessgi": ("loop", "crazyhouse"),
-            "euroshogi": ("", "shogi"),
             "gorogoro": ("", "shogi"),
-            "judkins": ("", "shogi"),
             "mini": ("", "minishogi"),
-            "okisakishogi": ("", "shogi"),
         }
 
         for name, (base_variant, client_variant) in expected.items():
@@ -69,16 +78,59 @@ class FsfBuiltinMetadataTestCase(TestCase):
                 self.assertEqual(metadata["baseVariant"], base_variant)
                 self.assertEqual(metadata["clientVariant"], client_variant)
 
-        self.assertEqual(
-            FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES["micro"]["baseVariant"],
-            "kyotoshogi",
-        )
-        self.assertNotIn("clientVariant", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES["micro"])
         self.assertEqual(FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES["normal"]["baseVariant"], "")
         self.assertEqual(
             FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES["normal"]["clientVariant"],
             "chess",
         )
+
+    def test_fox_and_hounds_has_named_nonroyal_pieces_and_its_own_artwork(self) -> None:
+        name = "fox-and-hounds"
+        doc = _build_fsf_builtin_doc(name, FSF_CATALOGUED_BUILTIN_VARIANTS[name])
+        self.assertEqual(doc["ini"], "")
+        self.assertEqual((doc["width"], doc["height"]), (8, 8))
+        self.assertEqual(set(doc["pieces"]), {"f", "h"})
+        self.assertEqual(doc["pieceFamilyOverride"], "foxandhounds")
+        self.assertEqual(doc["pieceNames"], {"f": "Fox", "h": "Hound"})
+        self.assertEqual(doc["kingRoles"], [])
+        self.assertEqual(doc["promotionRoles"], [])
+        self.assertEqual(doc["pocketRoles"], [])
+        self.assertEqual(_client_doc(doc)["betzaPieces"], {"h": "mfF", "f": "mF"})
+        self.assertNotIn(name, FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
+
+    def test_aiwok_uses_its_compound_piece_family_and_promotion(self) -> None:
+        doc = _build_fsf_builtin_doc("ai-wok", FSF_CATALOGUED_BUILTIN_VARIANTS["ai-wok"])
+        self.assertEqual(doc["ini"], "")
+        self.assertEqual(doc["fsfBuiltinVariant"], "ai-wok")
+        self.assertEqual((doc["width"], doc["height"]), (8, 8))
+        self.assertEqual(set(doc["pieces"]), {"p", "r", "n", "s", "a", "k"})
+        self.assertEqual(doc["pieceFamilyOverride"], "aiwok")
+        self.assertEqual(doc["promotionRoles"], ["p"])
+        self.assertEqual(doc["promotionOrder"], ["a"])
+        self.assertTrue(doc["showPromoted"])
+        self.assertTrue(doc["legalMovesNeedHistory"])
+        self.assertTrue(doc["nFoldIsDraw"])
+        self.assertFalse(_client_doc(doc)["replayOnly"])
+        self.assertEqual(_client_doc(doc)["betzaPieces"], {"a": "RNF", "s": "FfW"})
+        self.assertNotIn("ai-wok", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
+
+    def test_micro_has_its_4x5_board_and_capture_flip_piece_set(self) -> None:
+        doc = _build_fsf_builtin_doc("micro", FSF_CATALOGUED_BUILTIN_VARIANTS["micro"])
+        self.assertEqual((doc["width"], doc["height"]), (4, 5))
+        self.assertEqual(doc["boardFamilyOverride"], "shogi4x5")
+        self.assertEqual(doc["pieceFamilyOverride"], "microshogi")
+        self.assertEqual(doc["promotionType"], "shogi")
+        self.assertEqual(doc["promotionRoles"], ["p", "l", "b", "r"])
+        self.assertEqual(doc["pocketRoles"], ["p", "l", "b", "r"])
+        self.assertTrue(doc["captureToHand"])
+        self.assertTrue(doc["showPromoted"])
+        self.assertTrue(doc["legalMovesNeedHistory"])
+        self.assertFalse(_client_doc(doc)["replayOnly"])
+        self.assertEqual(
+            _client_doc(doc)["betzaPieces"],
+            {"+p": "fN", "+l": "FfW", "+b": "WfF", "+r": "WfF"},
+        )
+        self.assertNotIn("micro", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
 
     def test_amazons_is_seeded_with_arrowing_input(self) -> None:
         metadata = FSF_CATALOGUED_BUILTIN_VARIANTS["amazons"]
@@ -89,6 +141,39 @@ class FsfBuiltinMetadataTestCase(TestCase):
         self.assertEqual(_fsf_builtin_synced_fields(doc)["pieceFamilyOverride"], "amazons")
         self.assertNotIn("amazons", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
 
+    def test_opulent_is_seeded_with_its_complete_piece_family(self) -> None:
+        doc = _build_fsf_builtin_doc("opulent", FSF_CATALOGUED_BUILTIN_VARIANTS["opulent"])
+        self.assertEqual(doc["pieceFamilyOverride"], "opulent")
+        self.assertEqual(_fsf_builtin_synced_fields(doc)["pieceFamilyOverride"], "opulent")
+        self.assertEqual(set(doc["pieces"]), {"p", "r", "n", "b", "q", "k", "a", "c", "w", "l"})
+
+    def test_loop_preserves_promoted_captures_and_crazyhouse_pockets(self) -> None:
+        for name, base in (("loop", "crazyhouse"), ("chessgi", "loop")):
+            with self.subTest(name=name):
+                doc = _build_fsf_builtin_doc(name, FSF_CATALOGUED_BUILTIN_VARIANTS[name])
+                self.assertEqual(doc["baseVariant"], base)
+                self.assertTrue(doc["captureToHand"])
+                self.assertTrue(doc["dropLoop"])
+                self.assertTrue(doc["showPromoted"])
+                self.assertEqual(set(doc["pocketRoles"]), {"p", "n", "b", "r", "q"})
+                self.assertEqual(doc["promotionRoles"], ["p"])
+                self.assertTrue(_client_doc(doc)["dropLoop"])
+                self.assertTrue(_fsf_builtin_synced_fields(doc)["dropLoop"])
+                self.assertNotIn(name, FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
+
+    def test_jesonmor_uses_standard_knights_on_a_kingless_9x9_board(self) -> None:
+        doc = _build_fsf_builtin_doc("jesonmor", FSF_CATALOGUED_BUILTIN_VARIANTS["jesonmor"])
+        self.assertEqual((doc["width"], doc["height"]), (9, 9))
+        self.assertEqual(doc["boardFamilyOverride"], "standard9x9")
+        self.assertEqual(doc["pieceFamilyOverride"], "standard")
+        self.assertEqual(doc["pieces"], ["n"])
+        self.assertEqual(doc["kingRoles"], [])
+        self.assertEqual(doc["pocketRoles"], [])
+        self.assertEqual(doc["promotionRoles"], [])
+        self.assertFalse(doc["captureToHand"])
+        self.assertTrue(doc["nFoldIsDraw"])
+        self.assertNotIn("jesonmor", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
+
     def test_joust_is_seeded_with_past_walling_input(self) -> None:
         metadata = FSF_CATALOGUED_BUILTIN_VARIANTS["joust"]
         self.assertTrue(metadata["rulesArrowing"])
@@ -98,10 +183,116 @@ class FsfBuiltinMetadataTestCase(TestCase):
         self.assertTrue(_fsf_builtin_synced_fields(doc)["rulesArrowing"])
         self.assertNotIn("joust", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
 
-    def test_chigorin_is_not_seeded_until_side_specific_promotions_are_supported(self) -> None:
-        self.assertNotIn("chigorin", FSF_CATALOGUED_BUILTIN_VARIANTS)
-        self.assertIn("chigorin", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
-        self.assertIn("chigorin", FSF_CATALOGUED_RETIRED_BUILTIN_VARIANTS)
+    def test_snailtrail_is_seeded_with_nonroyal_tokens_and_automatic_walls(self) -> None:
+        doc = _build_fsf_builtin_doc("snailtrail", FSF_CATALOGUED_BUILTIN_VARIANTS["snailtrail"])
+        self.assertEqual((doc["width"], doc["height"]), (7, 7))
+        self.assertEqual(doc["pieces"], ["p"])
+        self.assertEqual(doc["kingRoles"], [])
+        self.assertEqual(doc["pocketRoles"], [])
+        self.assertEqual(doc["promotionRoles"], [])
+        self.assertTrue(doc["rulesArrowing"])
+        self.assertEqual(doc["boardFamilyOverride"], "ataxx7x7")
+        self.assertEqual(doc["pieceFamilyOverride"], "snailtrail")
+        self.assertNotIn("snailtrail", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
+
+    def test_isolation_variants_are_seeded_with_wall_placement_and_nonroyal_tokens(self) -> None:
+        for name, dimensions in (("isolation", (6, 8)), ("isolation7x7", (7, 7))):
+            with self.subTest(name=name):
+                doc = _build_fsf_builtin_doc(name, FSF_CATALOGUED_BUILTIN_VARIANTS[name])
+                self.assertEqual((doc["width"], doc["height"]), dimensions)
+                self.assertEqual(doc["pieces"], ["p"])
+                self.assertEqual(doc["pieceNames"], {"p": "Token"})
+                self.assertEqual(doc["kingRoles"], [])
+                self.assertEqual(doc["pocketRoles"], [])
+                self.assertEqual(doc["promotionRoles"], [])
+                self.assertTrue(doc["rulesArrowing"])
+                self.assertTrue(_client_doc(doc)["rulesArrowing"])
+                self.assertTrue(_fsf_builtin_synced_fields(doc)["rulesArrowing"])
+                self.assertEqual(doc["pieceFamilyOverride"], "isolation")
+                if name == "isolation7x7":
+                    self.assertEqual(doc["boardFamilyOverride"], "ataxx7x7")
+                self.assertNotIn(name, FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
+
+    def test_euroshogi_is_seeded_with_complete_pieces_promotions_and_pockets(self) -> None:
+        doc = _build_fsf_builtin_doc("euroshogi", FSF_CATALOGUED_BUILTIN_VARIANTS["euroshogi"])
+        self.assertEqual((doc["width"], doc["height"]), (8, 8))
+        self.assertEqual(doc["boardFamilyOverride"], "standard8x8")
+        self.assertEqual(doc["pieceFamilyOverride"], "shogi")
+        self.assertEqual(set(doc["pieces"]), {"p", "n", "b", "r", "g", "k"})
+        self.assertEqual(set(doc["pocketRoles"]), {"p", "n", "b", "r", "g"})
+        self.assertTrue(doc["captureToHand"])
+        self.assertEqual(doc["promotionType"], "shogi")
+        self.assertEqual(doc["promotionRoles"], ["p", "n", "b", "r"])
+        self.assertEqual(doc["promotionOrder"], ["+"])
+        self.assertTrue(doc["showPromoted"])
+        self.assertTrue(doc["legalMovesNeedHistory"])
+        self.assertTrue(doc["nFoldIsDraw"])
+        self.assertNotIn("euroshogi", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
+
+    def test_judkins_is_seeded_with_shogi_promotions_and_board(self) -> None:
+        doc = _build_fsf_builtin_doc("judkins", FSF_CATALOGUED_BUILTIN_VARIANTS["judkins"])
+        self.assertEqual((doc["width"], doc["height"]), (6, 6))
+        self.assertEqual(doc["ini"], "")
+        self.assertEqual(doc["boardFamilyOverride"], "shogi6x6")
+        self.assertEqual(_fsf_builtin_synced_fields(doc)["boardFamilyOverride"], "shogi6x6")
+        self.assertEqual(set(doc["pieces"]), {"p", "n", "s", "g", "b", "r", "k"})
+        self.assertEqual(set(doc["pocketRoles"]), {"p", "n", "s", "g", "b", "r"})
+        self.assertTrue(doc["captureToHand"])
+        self.assertEqual(doc["promotionType"], "shogi")
+        self.assertEqual(doc["promotionRoles"], ["p", "n", "s", "b", "r"])
+        self.assertEqual(doc["promotionOrder"], ["+", ""])
+        self.assertTrue(doc["legalMovesNeedHistory"])
+        self.assertTrue(doc["nFoldIsDraw"])
+        self.assertNotIn("judkins", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
+
+    def test_okisakishogi_is_seeded_with_its_board_pieces_and_shogi_rules(self) -> None:
+        metadata = FSF_CATALOGUED_BUILTIN_VARIANTS["okisakishogi"]
+        doc = _build_fsf_builtin_doc("okisakishogi", metadata)
+        self.assertEqual((doc["width"], doc["height"]), (10, 10))
+        self.assertEqual(doc["ini"], "")
+        self.assertEqual(doc["baseVariant"], "")
+        self.assertEqual(doc["boardFamilyOverride"], "shogi10x10")
+        self.assertEqual(doc["pieceFamilyOverride"], "okisakishogi")
+        self.assertEqual(set(doc["pocketRoles"]), {"p", "l", "n", "s", "g", "b", "r", "q"})
+        self.assertTrue(doc["captureToHand"])
+        self.assertEqual(doc["promotionType"], "shogi")
+        self.assertEqual(set(doc["promotionRoles"]), {"p", "l", "n", "s", "b", "r"})
+        self.assertEqual(doc["promotionOrder"], ["+", ""])
+        self.assertTrue(doc["showPromoted"])
+        self.assertTrue(doc["legalMovesNeedHistory"])
+        self.assertTrue(doc["nFoldIsDraw"])
+        synced = _fsf_builtin_synced_fields(doc)
+        self.assertEqual(synced["boardFamilyOverride"], "shogi10x10")
+        self.assertEqual(synced["pieceFamilyOverride"], "okisakishogi")
+        self.assertNotIn("okisakishogi", FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
+
+    def test_asymmetric_variants_expose_side_specific_promotion_preferences(self) -> None:
+        for name, white, black in (
+            ("sortofalmost", ["c", "r", "b", "n"], ["q", "r", "b", "n"]),
+            ("chigorin", ["c", "r", "n"], ["q", "r", "b"]),
+        ):
+            with self.subTest(name=name):
+                doc = _build_fsf_builtin_doc(name, FSF_CATALOGUED_BUILTIN_VARIANTS[name])
+                expected = {"white": white, "black": black}
+                self.assertEqual(doc["ini"], "")
+                self.assertEqual(doc["pieceFamilyOverride"], "capa")
+                self.assertEqual(doc["promotionOrderByColor"], expected)
+                self.assertEqual(_client_doc(doc)["promotionOrderByColor"], expected)
+                self.assertEqual(_fsf_builtin_synced_fields(doc)["promotionOrderByColor"], expected)
+                self.assertEqual(_client_doc(doc)["betzaPieces"], {"c": "RN"})
+                self.assertNotIn(name, FSF_CATALOGUED_BUILTIN_VARIANTS_CANDIDATES)
+                self.assertNotIn(name, FSF_CATALOGUED_RETIRED_BUILTIN_VARIANTS)
+
+    def test_chigorin_enablement_preserves_the_existing_archive_and_counters(self) -> None:
+        doc = _build_fsf_builtin_doc(
+            "chigorin",
+            FSF_CATALOGUED_BUILTIN_VARIANTS["chigorin"],
+            existing={"archived": True, "gameCount": 11, "favoriteCount": 3},
+        )
+        self.assertTrue(doc["archived"])
+        self.assertFalse(doc["enabled"])
+        self.assertEqual(doc["gameCount"], 11)
+        self.assertEqual(doc["favoriteCount"], 3)
 
     def test_premove_profile_can_be_narrower_than_general_client_profile(self) -> None:
         for name in ("omicron", "troitzky"):
@@ -159,12 +350,12 @@ class FsfBuiltinDescriptionStorageTestCase(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch(
-                "catalogued_variants.FSF_CATALOGUED_BUILTIN_VARIANTS",
+                "catalogued.builtin_data.FSF_CATALOGUED_BUILTIN_VARIANTS",
                 {"yarishogi": {"description": FSF_CATALOGUED_BUILTIN_DESCRIPTION}},
             ),
-            patch("catalogued_variants.FSF_CATALOGUED_RETIRED_BUILTIN_VARIANTS", frozenset()),
-            patch("catalogued_variants.BUILTIN_FSF_VARIANT_NAMES", {"yarishogi"}),
-            patch("catalogued_variants._build_fsf_builtin_doc", return_value=rebuilt),
+            patch("catalogued.builtin_data.FSF_CATALOGUED_RETIRED_BUILTIN_VARIANTS", frozenset()),
+            patch("catalogued.builtin_data.BUILTIN_FSF_VARIANT_NAMES", {"yarishogi"}),
+            patch("catalogued.documents._build_fsf_builtin_doc", return_value=rebuilt),
         ):
             await ensure_fsf_catalogued_builtin_variants(app_state)
 
@@ -188,12 +379,12 @@ class FsfBuiltinDescriptionStorageTestCase(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch(
-                "catalogued_variants.FSF_CATALOGUED_BUILTIN_VARIANTS",
+                "catalogued.builtin_data.FSF_CATALOGUED_BUILTIN_VARIANTS",
                 {"yarishogi": {"description": FSF_CATALOGUED_BUILTIN_DESCRIPTION}},
             ),
-            patch("catalogued_variants.FSF_CATALOGUED_RETIRED_BUILTIN_VARIANTS", frozenset()),
-            patch("catalogued_variants.BUILTIN_FSF_VARIANT_NAMES", {"yarishogi"}),
-            patch("catalogued_variants._build_fsf_builtin_doc", return_value=rebuilt),
+            patch("catalogued.builtin_data.FSF_CATALOGUED_RETIRED_BUILTIN_VARIANTS", frozenset()),
+            patch("catalogued.builtin_data.BUILTIN_FSF_VARIANT_NAMES", {"yarishogi"}),
+            patch("catalogued.documents._build_fsf_builtin_doc", return_value=rebuilt),
         ):
             await ensure_fsf_catalogued_builtin_variants(app_state)
 

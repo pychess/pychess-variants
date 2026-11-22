@@ -8,6 +8,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from aiohttp import web
+from client_ip import get_client_ip
 from settings import SECRET_KEY
 
 BAN_SIGNAL_COLLECTION = "security_ban_signal"
@@ -40,17 +41,6 @@ def _hmac_hash(label: str, value: str) -> str:
     payload = f"evasion-v1|{label}|{value}".encode("utf-8", errors="ignore")
     digest = hmac.new(SECRET_KEY, payload, hashlib.sha256).hexdigest()
     return digest[:40]
-
-
-def get_client_ip(request: web.Request) -> str | None:
-    forwarded_for = request.headers.get("X-Forwarded-For")
-    if forwarded_for:
-        ip = forwarded_for.split(",", maxsplit=1)[0].strip()
-        if ip and ip != "unknown":
-            return ip
-    remote = request.remote or ""
-    remote = remote.strip()
-    return remote if remote and remote != "unknown" else None
 
 
 def get_client_fingerprint_source(request: web.Request) -> str | None:

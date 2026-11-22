@@ -1,4 +1,4 @@
-# ![Kiotó sógi ikon](https://github.com/pychess/pychess-variants/blob/master/static/icons/KyotoShogi.svg) Kiotó Sógi (Kyoto Shogi)
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/KyotoShogi.svg) Kiotó Sógi (Kyoto Shogi)
 
 ![ábra](https://github.com/pychess/pychess-variants/blob/master/static/images/ShogiGuide/Kyoto.png)
 

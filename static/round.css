@@ -69,7 +69,9 @@
     }
 }
 
-@media (max-width: 799px) and (orientation: portrait) {
+/* A mobile keyboard can make the layout viewport wider than it is tall.
+   Keep the single-column game layout whenever the desktop columns cannot fit. */
+@media (max-width: 799px) {
     #main-wrap {
         --main-max-width: 100%;
     }
@@ -181,6 +183,14 @@ div.dcontrols {
     border: none;
     padding: 1px;
 }
+div.dcontrols button {
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+    font-family: inherit;
+    line-height: inherit;
+}
 div.dcontrols .text {
     align-self: center;
     text-align: center;
@@ -254,10 +264,11 @@ div.dcontrols .accept {
 
 @media (min-width: 800px) {
     [data-zen="on"] .round-app {
-        grid-template-rows: min-content auto min-content auto 0 auto auto auto 0 auto min-content auto min-content
+        /* Match the desktop grid areas, collapsing only the hidden player rows. */
+        grid-template-rows: min-content auto auto min-content auto 0 auto auto auto 0 auto min-content auto auto min-content auto;
     }
 }
-@media (max-width: 799px) and (orientation: portrait) {
+@media (max-width: 799px) {
     [data-zen="on"] .round-app {
         grid-template-rows: auto auto 36px auto auto min-content auto auto 36px auto auto auto auto auto auto;
     }

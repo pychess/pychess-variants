@@ -4,18 +4,14 @@ from collections.abc import Awaitable, Callable
 from typing import TypeAlias
 
 from account_api import (
-    account_bot,
     account_bot_token_create,
     account_bot_token_revoke,
     account_bot_upgrade_post,
-    account_close,
     account_close_post,
-    account_delete,
     account_delete_post,
-    account_home,
-    account_personal_data,
+    account_engine_token_create,
+    account_engine_token_revoke,
     account_personal_data_export,
-    account_reopen,
     account_reopen_post,
 )
 from admin_api import admin_user_action
@@ -37,7 +33,7 @@ from bot_api import (
     upgrade_account,
 )
 from bug.import_bugh_game import import_game_bpgn
-from catalogued_variants import (
+from catalogued.http import (
     archive_catalogued_variant,
     check_catalogued_variant_rules,
     clone_catalogued_variant,
@@ -57,6 +53,13 @@ from catalogued_variants import (
     upload_catalogued_variant,
 )
 from client_reset import client_reset, client_reset_page
+from external_engine_api import (
+    delete_engine,
+    heartbeat_engine,
+    list_engines,
+    register_engine,
+    stop_engine,
+)
 from fishnet import (
     fishnet_abort,
     fishnet_acquire,
@@ -155,6 +158,7 @@ from user import (
     follow_user,
     get_blocked_users,
     get_status,
+    set_corr_browser,
     set_corr_push,
     set_game_category,
     set_pm_friends_only,
@@ -164,6 +168,7 @@ from user import (
 from utils import get_names, get_notifications, import_game, notified, subscribe_notify
 from views import (
     about,
+    accessibility,
     allplayers,
     analysis,
     api_docs,
@@ -214,6 +219,9 @@ from views import (
     winners,
 )
 from views import (
+    account as account_view,
+)
+from views import (
     admin as admin_view,
 )
 from views import (
@@ -251,18 +259,20 @@ RouteDef: TypeAlias = tuple[str, Handler]
 
 
 get_routes: tuple[RouteDef, ...] = (
+    ("/account/engines", account_view.account_engines),
+    ("/api/external-engine", list_engines),
     ("/login", login_choice),
     ("/login/{provider}", login),
     ("/oauth/{provider}", oauth),
-    ("/account", account_home),
-    ("/account/personal-data", account_personal_data),
+    ("/account", account_view.account_home),
+    ("/account/personal-data", account_view.account_personal_data),
     ("/account/personal-data/export", account_personal_data_export),
-    ("/account/data", account_personal_data),
+    ("/account/data", account_view.account_personal_data),
     ("/account/data/export", account_personal_data_export),
-    ("/account/bot", account_bot),
-    ("/account/close", account_close),
-    ("/account/delete", account_delete),
-    ("/account/reopen", account_reopen),
+    ("/account/bot", account_view.account_bot),
+    ("/account/close", account_view.account_close),
+    ("/account/delete", account_view.account_delete),
+    ("/account/reopen", account_view.account_reopen),
     ("/select-username", select_username),
     ("/", lobby.lobby),
     ("/timeline", timeline.timeline),
@@ -275,6 +285,7 @@ get_routes: tuple[RouteDef, ...] = (
     ("/privacy", privacy.privacy),
     ("/faq", faq.faq),
     ("/page/forum-etiquette", forum_etiquette.forum_etiquette),
+    ("/page/accessibility", accessibility.accessibility),
     ("/stats", stats.stats),
     ("/players", players.players),
     ("/players/{variant}", players50.players50),
@@ -355,6 +366,8 @@ get_routes: tuple[RouteDef, ...] = (
     ("/admin/teams", admin_view.admin_teams),
     ("/admin/system-messages", admin_system_messages_view.admin_system_messages),
     ("/admin/operations", admin_view.admin_operations),
+    ("/admin/fair-play", admin_view.admin_fair_play),
+    (r"/admin/fair-play/overlay/{reportId:[0-9a-fA-F]{24}}", admin_view.admin_overlay_download),
     ("/reports", reports_view.reports),
     ("/mod/public-chat", mod_public_chat_view.mod_public_chat),
     ("/challenges", get_header_challenges),
@@ -412,8 +425,6 @@ get_routes: tuple[RouteDef, ...] = (
     ("/level8win", level8win.level8win),
     ("/patron", patron.patron),
     ("/patron/thanks", patron.patron),
-    ("/blogs/image", ublog.image_proxy_external),
-    (r"/blogs/image/{postId:\w{8}}", ublog.image_proxy),
     (r"/blogs/discuss/{postId:\w{8}}", ublog.discuss),
     ("/blogs/community", ublog.community),
     ("/blogs/@/{profileId}", ublog.user_blog),
@@ -484,6 +495,12 @@ get_routes: tuple[RouteDef, ...] = (
 )
 
 post_routes: tuple[RouteDef, ...] = (
+    ("/account/engines/token/create", account_engine_token_create),
+    (r"/account/engines/token/{tokenId:\w{8}}/revoke", account_engine_token_revoke),
+    ("/api/external-engine", register_engine),
+    (r"/api/external-engine/{engineId:\w{8}}/heartbeat", heartbeat_engine),
+    (r"/api/external-engine/{engineId:\w{8}}/stop", stop_engine),
+    (r"/api/external-engine/{engineId:\w{8}}/delete", delete_engine),
     ("/logout", logout),
     ("/notified", notified),
     (r"/tournament/{tournamentId:\w{8}}/pause", tournament.tournament),
@@ -518,6 +535,7 @@ post_routes: tuple[RouteDef, ...] = (
     ("/pref/game-category", set_game_category),
     ("/pref/pm-friends-only", set_pm_friends_only),
     ("/pref/corr-push", set_corr_push),
+    ("/pref/corr-browser", set_corr_browser),
     ("/pref/rr-push", set_rr_push),
     ("/api/{profileId}/block", block_user),
     ("/api/{profileId}/follow", follow_user),
@@ -570,6 +588,7 @@ post_routes: tuple[RouteDef, ...] = (
     ("/simuls/simul", simul_view.simuls),
     (r"/simul/{simulId:\w{8}}/edit", simul_view.update_simul),
     ("/study", study_view.study_create),
+    ("/study/list-format", study_view.study_list_format),
     ("/study/from-analysis", study_view.study_from_analysis),
     ("/study/import-pgn", study_view.study_create_pgn),
     (r"/study/{studyId:\w{8}}/edit", study_view.study_edit),

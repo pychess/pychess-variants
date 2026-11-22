@@ -1,4 +1,4 @@
-# ![Mansindam](https://github.com/pychess/pychess-variants/blob/master/static/icons/mansindam.svg) Mansindam (Pantheon Tale)
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/mansindam.svg) Mansindam (Pantheon Tale)
 
 _A variant that combines the Shogi's drop rule with strong pieces, and has no draws._
 

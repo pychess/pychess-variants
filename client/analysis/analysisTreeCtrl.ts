@@ -6,6 +6,7 @@ import { updateMovelist } from '../movelist';
 import {
     addOrSelectChild,
     AnalysisTree,
+    type AnalysisTreeNode,
     branchStartPath,
     canPromoteVariation,
     createAnalysisTree,
@@ -180,8 +181,18 @@ export class AnalysisTreeController {
     }
 
     getTreeMainChildPath() {
-        const node = this.getTreeCurrentNode();
-        return node?.children[this.treeForkIndex]?.path ?? node?.children[0]?.path;
+        const children = this.visibleChildren();
+        return children[this.treeForkIndex]?.path ?? children[0]?.path;
+    }
+
+    private visibleChildren(): AnalysisTreeNode[] {
+        return (
+            this.getTreeCurrentNode()?.children.filter(
+                child =>
+                    !(this.ctrl.showServerAnalysis === false && child.serverAnalysis) &&
+                    this.ctrl.analysisExtension?.isTreeNodeVisible?.(child) !== false,
+            ) ?? []
+        );
     }
 
     getTreeSelectedChildPath() {
@@ -264,6 +275,7 @@ export class AnalysisTreeController {
         const changed = nodeAtPath(this.analysisTree, path) !== undefined;
         promoteNodePath(this.analysisTree, path, toMainline);
         if (changed) this.ctrl.analysisExtension?.onVariationPromoted?.(path, toMainline);
+        if (this.ctrl.analysisExtension?.allowVariationArrows?.() !== false) this.ctrl.setAutoShapes();
         updateMovelist(this.ctrl, true, false);
         this.closeTreeContextMenu();
     }
@@ -298,7 +310,9 @@ export class AnalysisTreeController {
 
     getTreeNextBranchPath() {
         if (!this.analysisTree) return this.analysisPath;
-        return nextBranchPath(this.analysisTree, this.analysisPath, this.treeForkIndex);
+        const node = this.getTreeCurrentNode();
+        const selected = this.visibleChildren()[this.treeForkIndex];
+        return nextBranchPath(this.analysisTree, this.analysisPath, selected ? node!.children.indexOf(selected) : 0);
     }
 
     getTreeStepLinePath(which: 'prev' | 'next') {
@@ -307,11 +321,12 @@ export class AnalysisTreeController {
     }
 
     selectTreeFork(which: 'prev' | 'next') {
-        const node = this.getTreeCurrentNode();
-        if (!node || node.children.length < 2) return false;
+        const children = this.visibleChildren();
+        if (children.length < 2) return false;
 
         const delta = which === 'next' ? 1 : -1;
-        this.treeForkIndex = (node.children.length + this.treeForkIndex + delta) % node.children.length;
+        this.treeForkIndex = (children.length + this.treeForkIndex + delta) % children.length;
+        if (this.ctrl.analysisExtension?.allowVariationArrows?.() !== false) this.ctrl.setAutoShapes();
         updateMovelist(this.ctrl, true, false);
         return true;
     }
@@ -399,6 +414,12 @@ export class AnalysisTreeController {
             extendedMainline,
             extendsMainlineTail ? this.ctrl.steps.length : undefined,
         );
+
+        // A move played by the user owns the reused variation, even if it was
+        // originally introduced by server advice. Keep its existing descendants
+        // and annotations, but do not hide this move with server analysis.
+        const playedNode = nodeAtPath(tree, childPath);
+        if (playedNode) playedNode.serverAnalysis = false;
 
         if (extendedMainline) {
             this.ctrl.steps.push(step);

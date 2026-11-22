@@ -68,11 +68,16 @@ export interface AnalysisExtension {
     onPositionChanged?(change: AnalysisPositionChange): void;
     boardInput?(context: AnalysisBoardInputContext): 'white' | 'black' | 'both' | false;
     onEvaluation?(evaluation: AnalysisEvaluationDelivery): boolean | void;
+    /** Refresh extension-owned analysis panels after the display preference changes. */
+    onServerAnalysisVisibilityChanged?(): void;
     /** Consume browser-engine output owned by an extension-specific bounded search. */
     onEngineLine?(line: string): boolean;
     /** Re-check extension-owned engine work after permission/readiness changes. */
     onComputerSearchAvailabilityChanged?(): void;
     allowComputerSearch?(): boolean;
+    /** Match Lichess allowLines(): training and concealed chapters hide forks. */
+    allowVariationArrows?(): boolean;
+    isGamebookEditor?(): boolean;
     isTreeNodeVisible?(node: AnalysisTreeNode): boolean;
     isTreeNodeConcealed?(node: AnalysisTreeNode): boolean;
     areTreeNodeAnnotationsVisible?(node: AnalysisTreeNode): boolean;

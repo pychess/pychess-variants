@@ -1,4 +1,4 @@
-# ![Synochess](https://github.com/pychess/pychess-variants/blob/master/static/icons/synochess.svg) 王朝象棋 | Synochess
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/synochess.svg) 王朝象棋 | Synochess
 
 ![Synochess](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Synochess.png)
 
@@ -154,10 +154,10 @@ Synochess原本拟命名为Sinochess，前缀sino-表示“中国的”。然而
 
 请注意，在下面两种情况，炮擒皇后是没有作用的。
 
-![QueenslayerGoneWrongb1](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/QueenslayerGoneWrongb1.png)
+![Queenslayer trap gone wrong, b1](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/QueenslayerGoneWrongb1.png)
 
 若d3没有阻挡，白方白格主教则可以自由行动。那么当红方吃车时，白方主教可以先行一步跑到b5将军，同时阻挡红炮对b1的攻击。如此一来红方不仅不能捉后，反而白白丢了一车。
 
-![QueenslayerGoneWrongg1](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/QueenslayerGoneWrongg1.png)
+![Queenslayer trap gone wrong, g1](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/QueenslayerGoneWrongg1.png)
 
 在王翼的情况，在车xh2，车xh2，炮xg1+之后，看似白方依然会丢后，但是并非如此。白主教依然可以先行去b5将军，而抢先让白后离开炮的攻击范围。

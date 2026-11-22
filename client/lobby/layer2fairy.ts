@@ -12,7 +12,7 @@ export function layer2fairy(lobbyCtrl: LobbyController, containerId: string, sho
     const infoItems = [
         h('h4', _('Fairy Piece Variants')),
         h('div.generic-image-container.fourarmykings', [
-            h('img', { attrs: { src: assetUrl + '/images/4FairyPieces.svg' } }),
+            h('img', { attrs: { src: assetUrl + '/images/4FairyPieces.svg', alt: '' } }),
         ]),
         h(
             'p.variant-category-description',

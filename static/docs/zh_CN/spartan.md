@@ -1,4 +1,4 @@
-# ![Spartan](https://github.com/pychess/pychess-variants/blob/master/static/icons/spartan.svg) 斯巴达象棋 | Spartan Chess
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/spartan.svg) 斯巴达象棋 | Spartan Chess
 
 ![Spartan](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Spartan.png)
 

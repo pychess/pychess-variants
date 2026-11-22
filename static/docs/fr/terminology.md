@@ -2,7 +2,7 @@
 
 Sur ce site, y compris dans les guides, on trouve partout des mots et des expressions peut-être moins connus, tout en faisant partie du lexique des variantes d'échecs que vous trouverez ici ou ailleurs. Certains termes sont d'usage global ; d'autres se voyent utilisés seulement dans le cadre de quelques jeux en particulier (ex. le *byô-yomi* pour le shogi) ; encore d'autres s'appliquent pour plusieurs jeux, mais sont de sens différent selon le jeu (ex. le concept du *pat*). Tout terme qui est spécifique à une variante particulière sera discuté à la page consacré à ladite variante. Ceci dit, cette page sera une référence pour démystifier tout le reste du lexique des variantes d'échecs.
 
-# "Variantes d'échecs"
+## "Variantes d'échecs"
 
 Il vaut mieux d'abord clarifier ce que l'on entend par une **variante d'échecs**. Si l'on pense au jeu d'échecs classique à l'occident, des jeux comme le Blitz à 4 et le Crazyhouse, basés sur les échecs occidentaux, valent evidémment l'appellation "des variantes d'échecs". Moins évidents sont les jeux régionaux comme le xiangqi (échecs chinois), le shogi (échecs japonais), le janggi (échecs coréens) et le makruk (échecs thaïlandais), qui sont parfois appelés aussi des variantes d'échecs, bien qu'ils ressemblent à peine aux échecs occidentaux.
 
@@ -10,13 +10,13 @@ Sur le grand site des variantes d'échecs, chessvariants.com, il y a un article 
 
 Remarquons que ainsi, le mot « échecs » ne s'agit pas que du jeu d'échecs réglé par la FIDE mais à un concept abstrait d'un jeu d'« échecs ». Le terme « variante d'échecs » comprend aussi donc des variantes basées sur le xiangqi ou le shogi, par exemple. Nous utilisons alors le terme « jeu d'échecs » sans qualification pour designer n'importe quelle variante d'échecs régionale de manière générale. Si l'on veut parler d'une variante en particulier, on la precisera.
 
-# Pièces
+## Pièces
 
 **Pièce féerique** -- Toute pièce qui n'est pas dans les échecs occidentaux, le mot « féerique » ayant le sens de « inventée, pas ordinaire ». Il n'est pas évident si des pièces appartenant aux échecs régionaux sont considérées « féeriques », mais nous préférons considérer qu'elles ne le sont pas dans le contexte de leur jeu d'origine. Pourtant, un canon du xiangqi apparaissant dans un variante des échecs occidentaux (voir le Shako) ou bien une dame dans une variante du shogi seront « féeriques », n'étant pas présentes dans le jeu de base.
 
 On note bien que certaines pièces sont identiques mais s'appellent différemment dans des variantes différentes. Par exemple, la tour des échecs occidentaux et le chariot du xiangqi sont les mêmes. Il sera mieux d'utiliser le nom d'une pièce propre à la variante dont il est question.
 
-## Classification
+### Classification
 
 Parce qu'il existe des centaines de pièces féeriques, il en existe aussi un système de classification. Des [systèmes de notations pour décrire leurs mouvements](https://en.wikipedia.org/wiki/Fairy_chess_piece#Notations) existent aussi, mais ce n'est pas notre sujet ici. Abordons trois catégories de pièces « simples » :
 
@@ -28,7 +28,7 @@ Parce qu'il existe des centaines de pièces féeriques, il en existe aussi un sy
 
 En plus, des pièces **hybrides** combine à la fois deux mouvements simples. Par exemple, la dame aux échecs occidentaux combine les mouvements d'une tour (coureur orthogonal) et d'un fou (coureur diagonal). Le canon du xiangqi se déplace (sans capture) comme une tour (coureur orthogonal), mais il ne capture qu'en sautant (sauteur orthogonal). Beaucoup de pièces féeriques sont des hybrides.
 
-# Cadence du jeu
+## Cadence du jeu
 
 La cadence du jeu, aussi appelé le contrôle du temps, s'agit des limitations de temps de réflexion accordés aux joueurs ; si on le dépasse, on perd la partie. Il en existe plusieurs types.
 
@@ -42,7 +42,7 @@ Les parties jouées en une session précisent souvent une durée de temps princi
 
 3. **Mort subite** -- Il n'y a pas de temps en plus ; les joueurs n'auront que le temps principal pour achever la partie. Une peut se jouer en morte subite en choissisant un íncrément ou byô-yomi de 0 secondes.
 
-# Concepts généraux
+## Concepts généraux
 
 **Échec** -- Une menace sur le roi adverse avec une pièce qui pourrait le prendre le tour suivant.
 
@@ -68,7 +68,7 @@ Les parties jouées en une session précisent souvent une durée de temps princi
 
 **Zone de promotion** -- La région de l'échiquier où les pièces peuvent se promouvoir. Aux échecs occidentaux, seuls les pions ont droit de promotion, et seulement en atteignant la dernière rangée. Au shogi, la zone de promotion contient les trois dernières rangées, et presque toutes les pièces peuvent se promouvoir en entrant, en sortant ou en se déplaçant dans la zone de promotion. D'autres variantes pourraient définir leurs propres zones de promotion.
 
-# Tactiques
+## Tactiques
 
 **Fourchette** -- Une double attaque d'une pièce sur deux pièces. Dans beaucoup de variantes, le cavalier est par excellence la pièce qui donne des fourchettes. Dans des variantes avec le parachutage, les fous et les tours sont aussi doués.
 

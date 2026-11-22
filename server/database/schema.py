@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-from const import GAME_CATEGORIES
+from const import GAME_CATEGORIES, NOTIFY_EXPIRE_WEEKS
 
 IndexKey = tuple[tuple[str, int | str], ...]
 CreateOption = tuple[str, Any]
@@ -88,6 +88,7 @@ COLLECTIONS = (
     CollectionSpec("account_reopen_token"),
     CollectionSpec("autopairing"),
     CollectionSpec("bot_token"),
+    CollectionSpec("external_engine"),
     CollectionSpec("catalogued_variant"),
     CollectionSpec("catalogued_variant_name"),
     CollectionSpec("cheat_report"),
@@ -136,6 +137,7 @@ COLLECTIONS = (
     CollectionSpec("tournament_pairing"),
     CollectionSpec("tournament_player"),
     CollectionSpec("ublog_post"),
+    CollectionSpec("ublog_post2"),
     CollectionSpec("user"),
     CollectionSpec("user_report"),
     CollectionSpec("video"),
@@ -313,7 +315,12 @@ INDEXES = (
     _index("study_chapter", ("studyId", 1), ("order", 1), name="studyId_order"),
     # Notifications, inboxes, teams, forums, and moderation.
     _index("notify", ("notifies", 1)),
-    _index("notify", ("expireAt", 1), expire_after_seconds=0),
+    # createdAt is a BSON date even in legacy documents, unlike expireAt strings.
+    _index(
+        "notify",
+        ("createdAt", 1),
+        expire_after_seconds=int(NOTIFY_EXPIRE_WEEKS.total_seconds()),
+    ),
     _index("notify", ("content.arr", 1), sparse=True),
     _index("push_subscription", ("user", 1)),
     _index(
@@ -365,6 +372,8 @@ INDEXES = (
     _index("seek", ("user", 1)),
     _index("seek", ("rrArrangementId", 1), sparse=True),
     _index("bot_token", ("user", 1)),
+    _index("external_engine", ("user", 1)),
+    _index("external_engine", ("expiresAt", 1), expire_after_seconds=0),
     _index("account_reopen_token", ("username", 1)),
     _index("security_ban_signal", ("expireAt", 1), expire_after_seconds=0),
     # User-generated blogs and account lookup.
@@ -373,6 +382,11 @@ INDEXES = (
     _index("ublog_post", ("live", 1), ("blogType", 1), ("publishedAt", -1)),
     _index("ublog_post", ("legacyBlogId", 1)),
     _index("ublog_post", ("topics", 1)),
+    _index("ublog_post2", ("author", 1), ("live", 1), ("publishedAt", -1)),
+    _index("ublog_post2", ("live", 1), ("sticky", -1), ("publishedAt", -1)),
+    _index("ublog_post2", ("live", 1), ("blogType", 1), ("publishedAt", -1)),
+    _index("ublog_post2", ("legacyBlogId", 1)),
+    _index("ublog_post2", ("topics", 1)),
     _index("config", ("name", 1)),
     # These support manual investigation scripts rather than server queries.
     _index("cheat_report", ("createdAt", 1), startup_policy=StartupPolicy.MANUAL),
@@ -431,9 +445,11 @@ INDEXES = (
 LEGACY_OPTIONAL_INDEXES = (_index("lobbychat", ("user", 1)),)
 
 # Exact historical definitions that can be removed safely before auditing the
-# current schema. Study search now uses one full index for both public and
-# member-visible searches, so the former public-only partial index is obsolete.
+# current schema.
 OBSOLETE_INDEXES = (
+    # Notifications now expire by their BSON createdAt date, not expireAt strings.
+    _index("notify", ("expireAt", 1), expire_after_seconds=0),
+    # Study search uses one full index for both public and member-visible searches.
     _index(
         "study",
         ("searchTokens", 1),

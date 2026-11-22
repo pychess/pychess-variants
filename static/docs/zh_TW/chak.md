@@ -1,4 +1,4 @@
-# ![Chak](https://github.com/pychess/pychess-variants/blob/master/static/icons/Chak.svg) 馬雅象棋 | Chak
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/Chak.svg) 馬雅象棋 | Chak
 
 ![Chak](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/Chak.png)
 
@@ -162,17 +162,17 @@ Chak 這個詞來自馬雅神祇中雨神 Chaac，它掌管雨水、雷電與戰
 
 若對方國王是唯一的防守者，攻擊者只需要迫使對方王移出神殿，便可以輕鬆登壇:
 
-![KvsKzugzwang](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKzugzwang.png)
+![King versus king, zugzwang](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKzugzwang.png)
 
 
 
 當祭品還在的時候，攻擊者仍然可以獲勝，但更加棘手。 攻擊者應該做的不是登壇，而是以下這種困斃：
 
-![KvsKStalemate](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKStalemate.png)
+![King versus king, stalemate](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKStalemate.png)
 
 以下是走出這種困斃的棋譜:
 
-![KvsKO](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKO.png)
+![King versus king and offering](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKO.png)
 
 1. Dd6+ 
 
@@ -186,13 +186,13 @@ Chak 這個詞來自馬雅神祇中雨神 Chaac，它掌管雨水、雷電與戰
 
 如此形成以下局面:
 
-![KvsKOzugzwang](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKOzugzwang.png)
+![King versus king and offering, zugzwang](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKOzugzwang.png)
 
 此時綠方被迫移動，白方即可走出困斃。
 
 然而。 如果防守方多出一子（不動的羽神除外），情況就會發生巨大變化，如下:
 
-![KvsKdraw](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKdraw.png)
+![King versus king, draw](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/KvsKdraw.png)
 
 不管祭品是否還在，神王都沒有辦法將死守方的王。唯一需要擔心的是下錯棋，讓自己多出來的一子被神王吃掉。因此建議將其保留在最後4列內，因為神王永遠無法到達那裡，如此雙方便和棋。
 
@@ -211,30 +211,30 @@ Chak 這個詞來自馬雅神祇中雨神 Chaac，它掌管雨水、雷電與戰
 
 美幻豹對神王會因重複局面而和棋
 
-![JaguarPerpetual](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/JaguarPerpetual.png)
+![Jaguar, draw by repetition](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/JaguarPerpetual.png)
 
 ...除非對方可以直接棄子登壇。
 
-![JaguarPerpetual2](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/JaguarPerpetual2.png)
+![Jaguar, the king runs to the altar](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/JaguarPerpetual2.png)
 
 
 
 然而當祭品還在時，又是兩碼子事:
 
-![JaguarvsKO](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/JaguarvsKO.png)
+![Jaguar versus king and offering](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/JaguarvsKO.png)
 
 綠可走 1. Jf9; 白方唯一可以繼續攻擊美洲豹的走法為 Df7, 但當 2. Je9+ Dg 而 3. Jd9, 則將失去對美洲豹的威脅。而若白方花二步來攻擊美洲豹， 綠方可以在河的另一頭作更有義意的事。 若白把王動到f9, 則 Jd8 後，同樣也會失去對美洲豹的威脅。所以最好是把王動到 d7 來迫使美洲豹移動。最好記得以走法來形成和棋。
 
 #### 蚺蛇
 
-![SerpentFortress](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/SerpentFortress.png)
+![Serpent fortress](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/SerpentFortress.png)
 
 蚺蛇可以封住整條路線，如此神王便無法登壇。
 
-![SerpentFortressTrap](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/SerpentFortressTrap.png)
+![Serpent fortress trap](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/SerpentFortressTrap.png)
 
 而且，若神王從劃記的格子離開去騷擾蚺蛇，可能會付出代價，例如:
 
-![SerpentFortressTrap2](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/SerpentFortressTrap2.png)
+![Serpent fortress trap, skewer](https://github.com/pychess/pychess-variants/blob/master/static/images/ChakGuide/SerpentFortressTrap2.png)
 
 綠方棄蚺蛇攻擊白祭司，同時又守住綠祭壇。此時白祭司無論吃掉蚺蛇與否都無法阻止綠方登壇。

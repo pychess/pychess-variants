@@ -49,6 +49,24 @@ div.versus vs-swords {
 .player-head .profile-user-status::before {
     margin-right: 0;
 }
+.player-engine {
+    min-width: 0;
+    padding: 0 36px 24px;
+    background: var(--bg-color2);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+.player-engine__name {
+    font-weight: 600;
+}
+.player-engine__author {
+    margin-top: 0.25rem;
+}
+.player-engine__label {
+    margin-right: 0.5em;
+    font-weight: normal;
+    color: var(--font-color);
+}
 .player-social {
     display: flex;
     flex-wrap: nowrap;

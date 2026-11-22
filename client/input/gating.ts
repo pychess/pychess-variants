@@ -52,7 +52,10 @@ export class GatingInput extends ExtraInput {
             // Handle the cases of 960 castling with no possible gating square
             // and S-House moving an unmoved piece with nothing in the pocket
             this.finish(this.choices[keys[0] as cg.Key]![0], orig);
-        else this.drawGating(piece.color, this.ctrl.chessground.state.orientation);
+        else {
+            if (meta.premove) meta.premove = false;
+            this.drawGating(piece.color, this.ctrl.chessground.state.orientation);
+        }
     }
 
     private canGate(orig: cg.Key): boolean {

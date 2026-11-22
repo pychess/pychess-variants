@@ -9,30 +9,31 @@ interface AlertDialogOptions {
 }
 
 let dialogVNode: VNode | null = null;
-let keydownHandler: ((event: KeyboardEvent) => void) | null = null;
 let pendingResolve: (() => void) | null = null;
 
-function ensureDialogElement(): HTMLElement {
-    let dialogElement = document.getElementById('alert-dialog');
-    if (!dialogElement) {
-        dialogElement = document.createElement('div');
-        dialogElement.id = 'alert-dialog';
-        dialogElement.className = 'alert-dialog-root';
-        document.body.appendChild(dialogElement);
-    }
+// Native like confirmDialog, so an alert raised from inside a modal <dialog> shows above it.
+function ensureDialogElement(): HTMLDialogElement {
+    const existing = document.getElementById('alert-dialog');
+    if (existing instanceof HTMLDialogElement) return existing;
+    existing?.remove();
+
+    const dialogElement = document.createElement('dialog');
+    dialogElement.id = 'alert-dialog';
+    dialogElement.className = 'alert-dialog-root alert-dialog-native';
+    dialogElement.addEventListener('cancel', event => {
+        event.preventDefault();
+        closeDialog();
+    });
+    dialogElement.addEventListener('click', event => {
+        if (event.target === dialogElement) closeDialog();
+    });
+    document.body.appendChild(dialogElement);
     return dialogElement;
 }
 
 function closeDialog(): void {
-    if (keydownHandler) {
-        document.removeEventListener('keydown', keydownHandler);
-        keydownHandler = null;
-    }
-
     const dialogElement = document.getElementById('alert-dialog');
-    if (dialogElement) {
-        dialogElement.style.display = 'none';
-    }
+    if (dialogElement instanceof HTMLDialogElement && dialogElement.open) dialogElement.close();
     dialogVNode = null;
 
     if (pendingResolve) {
@@ -69,23 +70,7 @@ function renderDialog(options: AlertDialogOptions): void {
         ]),
     );
 
-    const vnode = h('div.alert-dialog-wrap', [
-        h('div.alert-dialog-backdrop', {
-            on: {
-                click: () => closeDialog(),
-            },
-        }),
-        h(
-            'div.alert-dialog-content',
-            {
-                attrs: {
-                    role: 'dialog',
-                    'aria-modal': 'true',
-                },
-            },
-            contentChildren,
-        ),
-    ]);
+    const vnode = h('div.alert-dialog-content', contentChildren);
 
     if (dialogVNode === null) {
         dialogElement.innerHTML = '';
@@ -96,7 +81,7 @@ function renderDialog(options: AlertDialogOptions): void {
         dialogVNode = patch(dialogVNode, vnode);
     }
 
-    dialogElement.style.display = 'flex';
+    if (!dialogElement.open) dialogElement.showModal();
     window.requestAnimationFrame(() => {
         const okButton = dialogElement.querySelector('.alert-dialog-ok') as HTMLButtonElement | null;
         if (okButton) okButton.focus();
@@ -111,14 +96,6 @@ export function alertDialog(options: AlertDialogOptions): Promise<void> {
     }
 
     renderDialog(options);
-
-    keydownHandler = (event: KeyboardEvent) => {
-        if (event.key === 'Escape' || event.key === 'Enter') {
-            event.preventDefault();
-            closeDialog();
-        }
-    };
-    document.addEventListener('keydown', keydownHandler);
 
     return new Promise<void>(resolve => {
         pendingResolve = resolve;

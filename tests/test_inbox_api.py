@@ -80,6 +80,49 @@ class InboxApiTestCase(AioHTTPTestCase):
         unread_after = await (await self.client.get("/api/inbox/unread")).json()
         self.assertEqual(0, unread_after["unread"])
 
+    async def test_closed_contact_existing_thread_can_be_read_and_marked_read(self):
+        app_state = get_app_state(self.app)
+        alice = User(app_state, username="alice")
+        bob = User(app_state, username="bob")
+        app_state.users[alice.username] = alice
+        app_state.users[bob.username] = bob
+
+        self.set_session_user("alice")
+        sent = await self.client.post("/api/inbox/thread/bob", data={"text": "before closure"})
+        self.assertEqual(200, sent.status)
+
+        # Closure disables the profile but retains the existing inbox history.
+        app_state.users.data.pop("alice")
+        await app_state.db.user.update_one(
+            {"_id": "alice"}, {"$set": {"enabled": False}}, upsert=True
+        )
+        app_state.public_users.invalidate("alice")
+
+        self.set_session_user("bob")
+        self.assertEqual(1, (await (await self.client.get("/api/inbox/unread")).json())["unread"])
+        response = await self.client.get("/api/inbox/thread/alice")
+        self.assertEqual(200, response.status)
+        payload = await response.json()
+        self.assertEqual("before closure", payload["messages"][0]["text"])
+        self.assertFalse(payload["contact"]["canMessage"])
+
+        marked = await self.client.post("/api/inbox/thread/alice/read")
+        self.assertEqual(200, marked.status)
+        self.assertEqual(0, (await (await self.client.get("/api/inbox/unread")).json())["unread"])
+        self.assertFalse(
+            (await (await self.client.get("/api/inbox/threads")).json())["threads"][0]["unread"]
+        )
+        forbidden = await self.client.post("/api/inbox/thread/alice", data={"text": "reply"})
+        self.assertEqual(404, forbidden.status)
+
+    async def test_closed_contact_without_existing_thread_is_not_readable(self):
+        app_state = get_app_state(self.app)
+        app_state.users["bob"] = User(app_state, username="bob")
+        await app_state.db.user.insert_one({"_id": "alice", "enabled": False})
+        self.set_session_user("bob")
+        response = await self.client.get("/api/inbox/thread/alice")
+        self.assertEqual(404, response.status)
+
     async def test_sending_to_offline_recipient_does_not_cache_full_user(self):
         app_state = get_app_state(self.app)
         alice = User(app_state, username="alice")

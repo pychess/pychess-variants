@@ -1,4 +1,4 @@
-# ![Makruk](https://github.com/pychess/pychess-variants/blob/master/static/icons/makruk.svg) 泰國象棋
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/makruk.svg) 泰國象棋
 ![Makruk](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Makruk.png?raw=true)
 
 泰國象棋是泰國的經典傳統棋盤遊戲，與古印度恰圖蘭卡(國際象棋的祖先)密切相關，相較國際象棋，泰國象棋保留了恰圖蘭卡的思維與策略形式。遊戲本身十分有趣，步調稍慢，其原始的形式可以讓玩家體會古代象棋的獨特風格。
@@ -62,7 +62,7 @@
 
 |   |   |
 --- | ---
-![Pawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) | ![ProPawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true)
+![Pawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/Pawn.png?raw=true) | ![Promoted pawn](https://github.com/pychess/pychess-variants/blob/master/static/images/MakrukGuide/ProPawn.png?raw=true)
 
 兵走法與西洋棋的兵相類似，單純移動時直前進一步，但吃子時斜進一步。兵的第一步時不能走兩步，故無吃過路兵。在走到對方底線的倒數第三列時，立即升級為士，不能選擇不升級。
 

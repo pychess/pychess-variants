@@ -2,17 +2,17 @@
 
 Az oldalon és a leírásokban is számos szakkifejezés van használatban. Egy részük mindenféle variánsra kiterjed, míg mások csak bizonyos játékokban fordulnak elő. De az is előfordul, hogy egy-egy kifejezést máshogy értelmeznek a különféle sakkváltozatokban (ilyen pl. a patthelyzet). A játékspecifikus kifejezésekről (amelyek más játékokban nem fordulnak elő) az adott játék leírásában olvashatsz.
 
-# "Sakkvariánsok"
+## "Sakkvariánsok"
 
 Valószínűleg a legfontosabb azt tisztázni, hogy mik is azok a sakkvariánsok. Az olyan játékok, mint a Sakk960 vagy a Crazyhouse, egyértelműek sakkvariánsok, hiszen a standard sakk változatai. Azonban az olyan regionális játékokat, mint a xiangqi, janggi vagy a makruk, szintén "sakkvariánsnak" hívunk és ez zavaró vagy megtévesztő lehet.
 
 *"Mi a sakkvariáns?"* címmel jelent meg egy írás a chessvariants.com oldalán (angol nyelven): ["What is a chess variant?"](https://www.chessvariants.com/what.html). Eszerint sakkvariánsoknak azokat a stratégiai játékokat nevezzük, amelyek az ősi [csaturangából](https://hu.wikipedia.org/wiki/Csaturanga) eredeztethetők, melyekben a játékosok felváltva lépnek, a figurák különbözően mozognak, és ahol a cél az ellenfél királyának mattolása. Habár a keleti (ázsiai) sakkjátékok nem a nyugati sakkból erednek, mégis egy közös őstől származnak és mindegyik játék neve "sakkot" jelent. Ilyen értelemben tehát a sakkvariáns elnevezésben a "sakk" inkább a "sakkszerű" játékot jelenti, mintsem a [Nemzetközi Sakkszövetség](https://hu.wikipedia.org/wiki/Nemzetk%C3%B6zi_Sakksz%C3%B6vets%C3%A9g) által is koordinált "standard" sakkot. 
 
-# Bábuk
+## Bábuk
 
 **Tündér figurák** - Az olyan bábukat, melyek a hagyományos sakk készletben nem szerepelnek, *tündér* figuráknak nevezzük (angolul: fairy pieces). Ha például a kínai sakkból (xiangqi) átvett ágyút a hagyományos sakkban felhasználjuk (lásd pl. a *Shako* nevű variánst), akkor abban az ágyú egy tündér figurának számít, míg a kínai sakkban az a hagyományos készlet része. Érdemes azt is megjegyezni, hogy az ilyen figuráknak több nevük is lehet, mert másképp nevezik őket egy-egy variánsban. Jó példa erre pl. az érsek/bíboros (Archbishop/Cardinal) vagy pl. a kancellár/marsall (Chancellor/Marshall). A tündér figurákból több tucat létezik (illetve azok különféle neveit és variációt tekintve több száz)
 
-## A bábuk osztályozása
+### A bábuk osztályozása
 
 A bábukat háromféle osztályba soroljuk:
 
@@ -24,7 +24,7 @@ A bábukat háromféle osztályba soroljuk:
 
 A fenti típusokat kombinálva nagyon sokféle bábu létezik. Például a hagyományos sakkban a vezér a bástya és a futó kombinációja. A kínai sakk ágyúja egy vonal bábu és egy bakugró bábu kombinációja (lépni tud ugrás nélkül, de ütni csak átugrás után tud).
 
-# Játékidő
+## Játékidő
 
 A játékidő meghatározása azt a cél szolgálja, hogy a játék ne nyúljon túl hosszúra azért, mert egy játékos túl sokáig gondolkozik egy-egy lépésen.
 
@@ -36,7 +36,7 @@ A játékidő meghatározása azt a cél szolgálja, hogy a játék ne nyúljon 
 
 3. **"Hirtelen halál"** - Nincs extra idő. Ha a normál játékidőből kifut egy játékos, azonnal veszít.
 
-# Általános fogalmak
+## Általános fogalmak
 
 **Világos, Sötét** - A készletben lévő bábuk színe. Nem minden variánsban fehérek és feketék, illetve valamilyen világos és sötét árnyalatúak a bábuk. A koreai sakkban például piros és kék színűek, míg a kínai sakkban piros és fekete színűek.
 
@@ -60,7 +60,7 @@ A játékidő meghatározása azt a cél szolgálja, hogy a játék ne nyúljon 
 
 **Átváltozási zóna** - A tábla olyan területe, ahol a bábuk átváltozhatnak (átalakulnak más figurává). A sakkban ez az utolsó sor a gyalogok számára, a sógiban viszont ez az utolsó három sor (és a sógiban szinte az összes bábu átváltoztatható).
 
-# Taktika
+## Taktika
 
 **Villa (Fork)** - Más néven kettős támadás. Leginkább a huszár (ló) támad egyszerre két bábut, de még a gyalog is képes lehet rá.
 

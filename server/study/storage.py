@@ -5,9 +5,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from inspect import isawaitable
-from typing import Any, Literal, cast
+from typing import Any, Literal, cast, get_args
 
-from bson import BSON
 from fairy import FairyBoard
 
 from study.annotations import StudyAnnotations
@@ -24,6 +23,8 @@ from study.constants import (
     STUDY_TOPIC_MAX_LENGTH,
     STUDY_TOPIC_MIN_LENGTH,
 )
+from study.document import encode_chapter
+from study.flair import study_flair
 from study.models import (
     Study,
     StudyChapter,
@@ -60,16 +61,21 @@ class StudySharedPositionResult:
 
 
 STUDY_LIST_PAGE_SIZE = 16
-StudyListOrder = Literal["updated", "newest", "oldest", "alphabetical"]
-_STUDY_LIST_ORDERS = frozenset(("updated", "newest", "oldest", "alphabetical"))
+STUDY_LIST_COMPACT_PAGE_SIZE = 64
+StudyListOrder = Literal[
+    "hot", "newest", "oldest", "updated", "popular", "alphabetical", "mine", "relevant"
+]
+_STUDY_LIST_ORDERS = frozenset(get_args(StudyListOrder))
+_DAY_MS = 86_400_000
+_EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
 _STUDY_SEARCH_USERNAME_RE = re.compile(r"^[A-Za-z0-9_-]{3,20}$")
 _STUDY_SEARCH_QUERY_MAX_LENGTH = 100
 
 
-def study_list_order(value: object) -> StudyListOrder:
-    order = str(value or "updated")
+def study_list_order(value: object, *, default: StudyListOrder = "updated") -> StudyListOrder:
+    order = str(value or default)
     if order not in _STUDY_LIST_ORDERS:
-        return "updated"
+        return default
     return cast(StudyListOrder, order)
 
 
@@ -80,7 +86,70 @@ def _study_list_sort(order: StudyListOrder) -> list[tuple[str, int]]:
         return [("createdAt", 1), ("_id", 1)]
     if order == "alphabetical":
         return [("name", 1), ("_id", 1)]
+    if order in ("hot", "mine"):
+        return [("listRank", -1), ("_id", 1)]
+    if order == "popular":
+        return [("listLikes", -1), ("_id", 1)]
+    if order == "relevant":
+        return [("listRelevance", -1), ("updatedAt", -1), ("_id", 1)]
     return [("updatedAt", -1), ("_id", 1)]
+
+
+def _study_list_sort_fields(order: StudyListOrder, tokens: tuple[str, ...]) -> dict[str, object]:
+    # Count the actual likers so older documents and interrupted count updates
+    # are ranked by the same number of likes shown on the study card.
+    likes = {"$size": {"$setUnion": [{"$ifNull": ["$likers", []]}, []]}}
+    if order == "popular":
+        return {"listLikes": likes}
+    if order in ("hot", "mine"):
+        # Lichess Study.Rank: creation time plus floor(5 ln(likes) + 1)
+        # days, capped by the number of likes.
+        bonus_days = {
+            "$cond": [
+                {"$gt": ["$$likes", 0]},
+                {
+                    "$min": [
+                        "$$likes",
+                        {"$trunc": {"$add": [{"$multiply": [5, {"$ln": "$$likes"}]}, 1]}},
+                    ]
+                },
+                0,
+            ]
+        }
+        return {
+            "listRank": {
+                "$let": {
+                    "vars": {"likes": likes},
+                    "in": {
+                        "$add": [
+                            {"$subtract": ["$createdAt", _EPOCH]},
+                            {"$multiply": [bonus_days, _DAY_MS]},
+                        ]
+                    },
+                }
+            }
+        }
+    if order == "relevant":
+        # The search index also includes chapter metadata. Prefer hits in the
+        # study title by counting query prefixes that start a word there.
+        title_matches = [
+            {
+                "$cond": [
+                    {
+                        "$regexMatch": {
+                            "input": "$name",
+                            "regex": rf"(?:^|[\W_]){re.escape(token)}",
+                            "options": "i",
+                        }
+                    },
+                    1,
+                    0,
+                ]
+            }
+            for token in tokens
+        ]
+        return {"listRelevance": {"$add": title_matches} if title_matches else 0}
+    return {}
 
 
 async def study_list_chapter_names(
@@ -123,22 +192,33 @@ async def _studies_page(
     *,
     order: StudyListOrder = "updated",
     page: int = 1,
+    compact: bool = False,
+    search_tokens: tuple[str, ...] = (),
 ) -> dict[str, object]:
     page = max(1, page)
+    page_size = STUDY_LIST_COMPACT_PAGE_SIZE if compact else STUDY_LIST_PAGE_SIZE
     total = await app_state.db.study.count_documents(query)
-    pages = max(1, (total + STUDY_LIST_PAGE_SIZE - 1) // STUDY_LIST_PAGE_SIZE)
+    pages = max(1, (total + page_size - 1) // page_size)
     page = min(page, pages)
-    skip = (page - 1) * STUDY_LIST_PAGE_SIZE
-    cursor = (
-        app_state.db.study.find(query)
-        .sort(_study_list_sort(order))
-        .skip(skip)
-        .limit(STUDY_LIST_PAGE_SIZE)
-    )
+    skip = (page - 1) * page_size
+    collection = app_state.db.study
+    sort = _study_list_sort(order)
+    sort_fields = _study_list_sort_fields(order, search_tokens)
+    if sort_fields:
+        pipeline = [{"$match": query}, {"$addFields": sort_fields}, {"$sort": dict(sort)}]
+        if skip:
+            pipeline.append({"$skip": skip})
+        pipeline.append({"$limit": page_size})
+        cursor_or_awaitable = collection.aggregate(pipeline)
+        cursor = (
+            await cursor_or_awaitable if isawaitable(cursor_or_awaitable) else cursor_or_awaitable
+        )
+    else:
+        cursor = collection.find(query).sort(sort).skip(skip).limit(page_size)
     studies = [Study.from_document(doc) async for doc in cursor]
     return {
         "studies": studies,
-        "chapter_names": await study_list_chapter_names(app_state, studies),
+        "chapter_names": {} if compact else await study_list_chapter_names(app_state, studies),
         "order": order,
         "page": page,
         "pages": pages,
@@ -155,13 +235,14 @@ async def owner_studies_page(
     visibility: StudyVisibility | Literal["private-or-unlisted"] | None = None,
     order: StudyListOrder = "updated",
     page: int = 1,
+    compact: bool = False,
 ) -> dict[str, object]:
     query: dict[str, object] = {"owner": owner}
     if visibility == "private-or-unlisted":
         query["visibility"] = {"$in": ["private", "unlisted"]}
     elif visibility is not None:
         query["visibility"] = visibility
-    return await _studies_page(app_state, query, order=order, page=page)
+    return await _studies_page(app_state, query, order=order, page=page, compact=compact)
 
 
 async def contributed_studies_page(
@@ -170,6 +251,7 @@ async def contributed_studies_page(
     *,
     order: StudyListOrder = "updated",
     page: int = 1,
+    compact: bool = False,
 ) -> dict[str, object]:
     # memberIds is a bounded indexed array maintained with the member map.
     # Like Lichess's member list, this includes read-only memberships as well
@@ -188,6 +270,7 @@ async def contributed_studies_page(
         },
         order=order,
         page=page,
+        compact=compact,
     )
 
 
@@ -197,6 +280,7 @@ async def favorite_studies_page(
     *,
     order: StudyListOrder = "updated",
     page: int = 1,
+    compact: bool = False,
 ) -> dict[str, object]:
     """Return Studies explicitly liked by ``username`` and still accessible.
 
@@ -221,6 +305,7 @@ async def favorite_studies_page(
         },
         order=order,
         page=page,
+        compact=compact,
     )
 
 
@@ -231,14 +316,21 @@ async def topic_studies_page(
     viewer: str | None,
     order: StudyListOrder = "updated",
     page: int = 1,
+    compact: bool = False,
 ) -> dict[str, object]:
     """Return Studies with one exact topic that are discoverable to ``viewer``."""
 
+    access = (
+        {"$or": [{"owner": viewer}, _member_query(viewer)]}
+        if order == "mine" and viewer is not None
+        else _study_search_access_query(viewer)
+    )
     return await _studies_page(
         app_state,
-        {"$and": [{"topics": topic}, _study_search_access_query(viewer)]},
+        {"$and": [{"topics": topic}, access]},
         order=order,
         page=page,
+        compact=compact,
     )
 
 
@@ -396,6 +488,7 @@ async def study_search_page(
     viewer: str | None,
     order: StudyListOrder = "updated",
     page: int = 1,
+    compact: bool = False,
 ) -> dict[str, object]:
     """Search discoverable Studies using text plus Lichess-style owner/member filters."""
 
@@ -424,13 +517,20 @@ async def study_search_page(
     # Empty /study/search requests behave like All studies rather than exposing
     # every private membership to an accidental blank search.
     if not clean_query:
-        result = await public_studies_page(app_state, order=order, page=page)
+        result = await public_studies_page(
+            app_state,
+            order="hot" if order == "relevant" else order,
+            page=page,
+            compact=compact,
+        )
     else:
         result = await _studies_page(
             app_state,
             {"$and": clauses},
             order=order,
             page=page,
+            compact=compact,
+            search_tokens=tokens,
         )
     result["q"] = clean_query
     result["query_too_short"] = False
@@ -493,6 +593,7 @@ async def public_studies_page(
     q: str = "",
     order: StudyListOrder = "updated",
     page: int = 1,
+    compact: bool = False,
 ) -> dict[str, object]:
     """Return one public Study discovery page, optionally filtered by indexed prefixes."""
 
@@ -536,7 +637,7 @@ async def public_studies_page(
             "query_too_short": True,
         }
 
-    result = await _studies_page(app_state, query, order=order, page=page)
+    result = await _studies_page(app_state, query, order=order, page=page, compact=compact)
     result["q"] = clean_query
     result["query_too_short"] = False
     return result
@@ -549,13 +650,15 @@ def _clean_name(value: object, *, fallback: str, max_length: int) -> str:
     return name[:max_length]
 
 
-def _ensure_chapter_size(chapter: StudyChapter) -> None:
+async def _ensure_chapter_size(chapter: StudyChapter) -> dict[str, object]:
     try:
-        encoded_size = len(BSON.encode(chapter.to_document()))
+        encoded = await encode_chapter(chapter, include_document=True)
     except Exception as exc:
         raise StudyStorageError("Study chapter could not be encoded") from exc
-    if encoded_size > STUDY_CHAPTER_MAX_BSON_BYTES:
+    if encoded.size > STUDY_CHAPTER_MAX_BSON_BYTES:
         raise StudyStorageError("Study chapter is too large")
+    assert encoded.document is not None
+    return encoded.document
 
 
 async def studies_for_owner(app_state: Any, owner: str, *, limit: int = 100) -> list[Study]:
@@ -572,15 +675,18 @@ def _owner_listing_filter(owner: str, viewer: str | None) -> dict[str, object]:
     return {"owner": owner, "visibility": "public"}
 
 
-async def studies_for_owner_view(
-    app_state: Any, owner: str, viewer: str | None, *, limit: int = 100
-) -> list[Study]:
-    cursor = (
-        app_state.db.study.find(_owner_listing_filter(owner, viewer))
-        .sort("updatedAt", -1)
-        .limit(limit)
+async def owner_view_studies_page(
+    app_state: Any,
+    owner: str,
+    viewer: str | None,
+    *,
+    order: StudyListOrder = "hot",
+    page: int = 1,
+    compact: bool = False,
+) -> dict[str, object]:
+    return await _studies_page(
+        app_state, _owner_listing_filter(owner, viewer), order=order, page=page, compact=compact
     )
-    return [Study.from_document(doc) async for doc in cursor]
 
 
 async def count_studies_for_owner_view(app_state: Any, owner: str, viewer: str | None) -> int:
@@ -904,6 +1010,7 @@ async def create_study_from_draft(
     name: str | None = None,
     visibility: StudyVisibility = "private",
     settings: Mapping[str, object] | None = None,
+    flair: str = "",
 ) -> tuple[Study, StudyChapter]:
     study = await make_study(
         app_state.db.study,
@@ -911,6 +1018,7 @@ async def create_study_from_draft(
         name=_clean_name(name, fallback=f"{owner}'s Study", max_length=STUDY_NAME_MAX_LENGTH),
         visibility=visibility,
         settings=settings,
+        flair=flair,
         source=draft.source,
     )
     chapter = await make_chapter(
@@ -933,11 +1041,11 @@ async def create_study_from_draft(
             draft.name, fallback="Chapter 1", max_length=STUDY_CHAPTER_NAME_MAX_LENGTH
         ),
     )
-    _ensure_chapter_size(chapter)
+    chapter_document = await _ensure_chapter_size(chapter)
     study = replace(study, current_chapter=chapter.id)
     await app_state.db.study.insert_one(study.to_document())
     try:
-        await app_state.db.study_chapter.insert_one(chapter.to_document())
+        await app_state.db.study_chapter.insert_one(chapter_document)
         await refresh_study_search_tokens(app_state, study.id)
     except Exception:
         await app_state.db.study.delete_one({"_id": study.id, "owner": owner})
@@ -953,6 +1061,7 @@ async def create_study_from_drafts(
     name: str | None = None,
     visibility: StudyVisibility = "private",
     settings: Mapping[str, object] | None = None,
+    flair: str = "",
 ) -> tuple[Study, list[StudyChapter]]:
     if not drafts:
         raise StudyStorageError("PGN import contains no chapters")
@@ -966,6 +1075,7 @@ async def create_study_from_drafts(
         name=name,
         visibility=visibility,
         settings=settings,
+        flair=flair,
     )
     if len(drafts) == 1:
         return study, [first]
@@ -1022,6 +1132,7 @@ async def clone_study(
         app_state.db.study,
         owner=owner,
         name=source.name,
+        flair=source.flair,
         source=StudySource("study", source.id),
         now=now,
     )
@@ -1064,8 +1175,8 @@ async def clone_study(
                 tags=original.tags,
                 now=now,
             )
-            _ensure_chapter_size(chapter)
-            await app_state.db.study_chapter.insert_one(chapter.to_document())
+            chapter_document = await _ensure_chapter_size(chapter)
+            await app_state.db.study_chapter.insert_one(chapter_document)
             if first_chapter is None:
                 first_chapter = chapter
 
@@ -1118,8 +1229,8 @@ async def add_chapter_from_draft(
             draft.name, fallback=f"Chapter {order}", max_length=STUDY_CHAPTER_NAME_MAX_LENGTH
         ),
     )
-    _ensure_chapter_size(chapter)
-    await app_state.db.study_chapter.insert_one(chapter.to_document())
+    chapter_document = await _ensure_chapter_size(chapter)
+    await app_state.db.study_chapter.insert_one(chapter_document)
     now = datetime.now(UTC)
     study_update: dict[str, object] = {
         "$set": {"updatedAt": now},
@@ -1162,6 +1273,7 @@ async def add_chapters_from_drafts(
     )
     start_order = int(last["order"]) + 1 if last is not None else 1
     chapters: list[StudyChapter] = []
+    documents: list[dict[str, object]] = []
     for offset, draft in enumerate(drafts):
         order = start_order + offset
         chapter = await make_chapter(
@@ -1184,14 +1296,13 @@ async def add_chapters_from_drafts(
                 draft.name, fallback=f"Chapter {order}", max_length=STUDY_CHAPTER_NAME_MAX_LENGTH
             ),
         )
-        _ensure_chapter_size(chapter)
+        chapter_document = await _ensure_chapter_size(chapter)
         chapters.append(chapter)
+        documents.append(chapter_document)
 
     ids = [chapter.id for chapter in chapters]
     try:
-        await app_state.db.study_chapter.insert_many(
-            [chapter.to_document() for chapter in chapters]
-        )
+        await app_state.db.study_chapter.insert_many(documents)
         now = datetime.now(UTC)
         study_update: dict[str, object] = {
             "$set": {"updatedAt": now},
@@ -1429,18 +1540,20 @@ async def reset_concealment(
     )
 
 
-async def rename_study(app_state: Any, study: Study, name: object) -> str:
+async def rename_study(
+    app_state: Any, study: Study, name: object, *, flair: str | None = None
+) -> str:
     clean = _clean_name(name, fallback=study.name, max_length=STUDY_NAME_MAX_LENGTH)
-    now = datetime.now(UTC)
+    fields: dict[str, object] = {"name": clean, "updatedAt": datetime.now(UTC)}
+    update: dict[str, object] = {"$set": fields, "$inc": {"revision": 1}}
+    if flair is not None:
+        if flair:
+            fields["flair"] = study_flair(flair)
+        else:
+            update["$unset"] = {"flair": ""}
     await app_state.db.study.update_one(
         {"_id": study.id, "owner": study.owner},
-        {
-            "$set": {
-                "name": clean,
-                "updatedAt": now,
-            },
-            "$inc": {"revision": 1},
-        },
+        update,
     )
     await refresh_study_search_tokens(app_state, study.id)
     return clean
@@ -1680,9 +1793,9 @@ async def clear_chapter_annotations(app_state: Any, study: Study, chapter: Study
         revision=chapter.revision + 1,
         updated_at=datetime.now(UTC),
     )
-    _ensure_chapter_size(candidate)
+    chapter_document = await _ensure_chapter_size(candidate)
     update: dict[str, object] = {
-        "$set": {"root": root.to_document(), "updatedAt": candidate.updated_at},
+        "$set": {"root": chapter_document["root"], "updatedAt": candidate.updated_at},
         "$inc": {"revision": 1},
     }
     if chapter.server_eval is not None:
@@ -1718,8 +1831,8 @@ async def clear_chapter_variations(app_state: Any, study: Study, chapter: StudyC
         revision=chapter.revision + 1,
         updated_at=now,
     )
-    _ensure_chapter_size(candidate)
-    set_fields: dict[str, object] = {"root": root.to_document(), "updatedAt": now}
+    chapter_document = await _ensure_chapter_size(candidate)
+    set_fields: dict[str, object] = {"root": chapter_document["root"], "updatedAt": now}
     if next_conceal_ply != chapter.conceal_ply:
         set_fields["concealPly"] = next_conceal_ply
     await app_state.db.study_chapter.update_one(

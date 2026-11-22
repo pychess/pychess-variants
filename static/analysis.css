@@ -10,6 +10,14 @@
     grid-area: main;
     display: grid;
 }
+.analysis-app.gauge-off {
+    --gauge-gap: 4px;
+}
+
+/* Match upstream Chessground: move glyphs may extend past an edge square. */
+.analysis-app .cg-custom-svgs {
+    overflow: visible;
+}
 
 /* DuckInput uses a0 as a temporary off-board holding square before
    the first duck placement. Clip the analysis board so that fake
@@ -26,6 +34,8 @@
         --main-max-width: 100%;
     }
     .analysis-app {
+        /* Long FENs and variant selectors must not widen the mobile board. */
+        grid-template-columns: minmax(0, 1fr);
         grid-template-rows: auto;
         grid-template-areas: 'pocket-top' 'board' 'pocket-bot' 'move-controls' 'ceval' 'pv' 'misc-info' 'vari' 'tools' 'uboard' 'side';
     }
@@ -97,6 +107,9 @@ div.ctable-container {
     overflow: hidden;
     position: relative;
 }
+.analysis-app.gauge-off #gauge {
+    display: none;
+}
 .flipped {
     transform: rotateX(180deg);
 }
@@ -162,6 +175,92 @@ div.analysis-settings {
   padding: 2vmin;
   background: var(--bg-color0);
   border-bottom: 3px solid var(--green-switch);
+}
+.analysis-settings .analysis-general-settings-group {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    min-width: 0;
+    margin: 0 0 .75rem;
+    padding: .55rem .75rem .7rem;
+    border: 1px solid var(--border-color);
+}
+.analysis-settings .analysis-general-settings-group:last-child {
+    margin-bottom: 0;
+}
+.analysis-settings .analysis-general-settings-group legend {
+    padding: 0 .35rem;
+    color: var(--text-color);
+    font-weight: 600;
+}
+.analysis-settings .analysis-general-settings-group > div {
+    min-width: 0;
+}
+.analysis-settings-group {
+    display: flex;
+    flex-direction: column;
+}
+.analysis-settings-group + .analysis-settings-group {
+    margin-top: .5rem;
+    padding-top: .5rem;
+    border-top: 1px solid var(--border-color);
+}
+.external-engine-settings {
+    gap: .4rem;
+    min-width: 0;
+}
+.external-engine-field {
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+    min-width: 0;
+}
+.external-engine-field select {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    flex: 1;
+}
+.external-engine-choice {
+    display: flex;
+    gap: .4rem;
+    min-width: 0;
+}
+#external-engine-forget {
+    flex: 0 0 auto;
+    align-self: stretch;
+    color: var(--bad);
+    padding: 0 .8em;
+    font-size: 1.1em;
+}
+#external-engine-forget:hover,
+#external-engine-forget:focus-visible {
+    background: var(--bad);
+    color: white;
+}
+.external-engine-settings [hidden] {
+    display: none;
+}
+.external-engine-settings p {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+.analysis-engine-preferences[data-engine-source="external"] .browser-engine-settings {
+    display: none;
+}
+#analysis-engine-name {
+    overflow-wrap: anywhere;
+}
+.analysis-settings :is(.serverAnalysis-toggle, .gauge-toggle, .variation-arrows-toggle, .maneuver-arrows-toggle, .move-annotations-toggle) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.analysis-settings .arrow-toggle {
+    margin-top: 0;
+}
+.analysis-settings :is(.infiniteAnalysis-toggle, .nnue-file-settings) {
+    margin-bottom: 0;
 }
 
 button#bars {
@@ -647,4 +746,69 @@ div.more {
     display: block;
     padding: .25rem .5rem;
     background: var(--bg-color2);
+}
+
+/* Local engine controls remain in the header; detailed preferences are anchored below it. */
+div#ceval { position: relative; }
+.engine { gap: .5rem; align-items: center; }
+.engine .engine-toggle { order: -1; }
+#analysis-engine-gear {
+    flex: 0 0 auto;
+    border: 0;
+    background: transparent;
+    color: var(--text-color);
+    cursor: pointer;
+    padding: .5rem;
+    font-size: 1.1rem;
+}
+#analysis-engine-gear:hover, #analysis-engine-gear:focus-visible { color: var(--good); }
+.analysis-engine-preferences {
+    position: absolute;
+    z-index: 20;
+    top: 100%;
+    left: 0;
+    right: 0;
+    width: 100%;
+    box-sizing: border-box;
+    max-height: min(70vh, 650px);
+    overflow-y: auto;
+    padding: 1rem;
+    background: var(--bg-color0);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--base-shadow);
+}
+.analysis-engine-preferences[hidden] { display: none; }
+.analysis-engine-preferences > *,
+.analysis-engine-preferences .analysis-settings-group > * {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+.analysis-engine-preferences .labelled {
+    display: grid;
+    grid-template-columns: minmax(0, 4.5rem) minmax(0, 1fr) auto;
+    gap: .5rem;
+    align-items: center;
+}
+.analysis-engine-preferences .labelled input[type="range"] {
+    min-width: 0;
+    width: 100%;
+}
+
+.analysis-engine-preferences .analysis-settings-group { display: flex; flex-direction: column; }
+.analysis-engine-preferences .analysis-settings-group + .analysis-settings-group {
+    margin-top: .5rem;
+    padding-top: .5rem;
+    border-top: 1px solid var(--border-color);
+}
+.analysis-engine-preferences .browser-engine-settings[hidden] { display: none; }
+.analysis-engine-preferences :is(.infiniteAnalysis-toggle, .nnue-file-settings) { margin-bottom: 0; }
+.analysis-engine-preferences :is(.infiniteAnalysis-toggle, .nnue-toggle, .fsfDebug-toggle) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+@media (max-width: 550px) {
+    .analysis-engine-preferences { width: 100%; max-height: 60vh; }
 }

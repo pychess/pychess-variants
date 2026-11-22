@@ -9,7 +9,12 @@ from tournament.tournaments import get_tournament_name, load_tournament
 from typing_defs import ViewContext
 from utils import load_game, simul_games
 
-from views import add_corr_games_context, add_game_context, get_user_context
+from views import (
+    add_catalogued_variant_context,
+    add_corr_games_context,
+    add_game_context,
+    get_user_context,
+)
 
 if TYPE_CHECKING:
     from game import Game
@@ -17,7 +22,7 @@ if TYPE_CHECKING:
 
 @aiohttp_jinja2.template("index.html")
 async def round_view(request: web.Request) -> ViewContext:
-    user, context = await get_user_context(request)
+    user, context = await get_user_context(request, include_catalogued_variants=True)
 
     app_state = get_app_state(request.app)
 
@@ -33,6 +38,7 @@ async def round_view(request: web.Request) -> ViewContext:
     context["view_css"] = "round.css"
 
     add_game_context(game, ply, user, context)
+    await add_catalogued_variant_context(app_state, user, context, game.variant, game=game)
 
     context["ct"] = json_dumps(game.crosstable)
 
@@ -70,5 +76,9 @@ async def round_view(request: web.Request) -> ViewContext:
         ):
             context["simulhost"] = True
             context["simul_games"] = json_dumps(simul_games(simul.games.values()))
+            for simul_game in simul.games.values():
+                await add_catalogued_variant_context(
+                    app_state, user, context, simul_game.variant, game=simul_game
+                )
 
     return context

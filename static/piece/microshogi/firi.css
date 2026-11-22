@@ -1,0 +1,59 @@
+.microshogi piece {
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+.microshogi piece.p-piece.white {
+    background-image: url('../../images/pieces/firi/bp.svg');
+}
+.microshogi piece.pp-piece.white {
+    background-image: url('../../images/pieces/firi/bn.svg');
+}
+.microshogi piece.l-piece.white {
+    background-image: url('../../images/pieces/firi/bl.svg');
+}
+.microshogi piece.pl-piece.white {
+    background-image: url('../../images/pieces/firi/bs.svg');
+}
+.microshogi piece.b-piece.white {
+    background-image: url('../../images/pieces/firi/bb.svg');
+}
+.microshogi piece.pb-piece.white {
+    background-image: url('../../images/pieces/firi/bpp.svg');
+}
+.microshogi piece.r-piece.white {
+    background-image: url('../../images/pieces/firi/br.svg');
+}
+.microshogi piece.pr-piece.white {
+    background-image: url('../../images/pieces/firi/bg.svg');
+}
+.microshogi piece.k-piece.white {
+    background-image: url('../../images/pieces/firi/bk.svg');
+}
+.microshogi piece.p-piece.black {
+    background-image: url('../../images/pieces/firi/wp.svg');
+}
+.microshogi piece.pp-piece.black {
+    background-image: url('../../images/pieces/firi/wn.svg');
+}
+.microshogi piece.l-piece.black {
+    background-image: url('../../images/pieces/firi/wl.svg');
+}
+.microshogi piece.pl-piece.black {
+    background-image: url('../../images/pieces/firi/ws.svg');
+}
+.microshogi piece.b-piece.black {
+    background-image: url('../../images/pieces/firi/wb.svg');
+}
+.microshogi piece.pb-piece.black {
+    background-image: url('../../images/pieces/firi/wpp.svg');
+}
+.microshogi piece.r-piece.black {
+    background-image: url('../../images/pieces/firi/wr.svg');
+}
+.microshogi piece.pr-piece.black {
+    background-image: url('../../images/pieces/firi/wg.svg');
+}
+.microshogi piece.k-piece.black {
+    background-image: url('../../images/pieces/firi/wk.svg');
+}

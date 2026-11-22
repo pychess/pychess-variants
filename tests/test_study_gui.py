@@ -197,6 +197,82 @@ class TestStudyGUI:
         await app_state.db.study.replace_one({"_id": study.id}, current.to_document())
         return current, chapter, second_chapter
 
+    async def test_drawings_survive_piece_selection_and_moves(self, aiohttp_server):
+        app = make_app(db_client=AsyncMongoMockClient(tz_aware=True), simple_cookie_storage=True)
+        server = await aiohttp_server(app, host="127.0.0.1")
+        app_state = get_app_state(app)
+        username = "study_drawings"
+        await self._insert_user(app_state, username)
+        base_url = f"http://{server.host}:{server.port}"
+
+        async with async_playwright() as p:
+            browser = await self._launch_browser(p)
+            context, page = await self._page_for_user(browser, base_url, username)
+            try:
+                await page.goto(f"{base_url}/study")
+                await page.locator("[data-study-new-open]").click()
+                await page.locator('#study-new-dialog input[name="name"]').fill("Study drawings")
+                await page.locator('#study-new-dialog button[type="submit"]').click()
+                await expect(page.locator("#study-first-chapter-dialog")).to_be_visible()
+                await page.locator('#study-first-chapter-form button[type="submit"]').click()
+                await page.wait_for_url(
+                    re.compile(rf"{re.escape(base_url)}/study/\w{{8}}/\w{{8}}$")
+                )
+                _, chapter_id = self._study_ids_from_url(page.url)
+                board = page.locator("#mainboard cg-board")
+                await expect(board).to_be_visible()
+                box = await board.bounding_box()
+                assert box is not None
+
+                # Draw an arrow from e2 to e4 using real right-button events.
+                await page.mouse.move(
+                    box["x"] + 4.5 * box["width"] / 8,
+                    box["y"] + 6.5 * box["height"] / 8,
+                )
+                await page.mouse.down(button="right")
+                await page.mouse.move(
+                    box["x"] + 4.5 * box["width"] / 8,
+                    box["y"] + 4.5 * box["height"] / 8,
+                    steps=5,
+                )
+                await page.mouse.up(button="right")
+                arrow = page.locator("#mainboard svg.cg-shapes g line")
+                await expect(arrow).to_have_count(1)
+
+                async def root_has_arrow():
+                    doc = await app_state.db.study_chapter.find_one({"_id": chapter_id})
+                    assert doc is not None
+                    shapes = StudyTree.from_document(doc["root"]).root_annotations.shapes
+                    return len(shapes) == 1 and shapes[0].orig == "e2" and shapes[0].dest == "e4"
+
+                await self._eventually_async(root_has_arrow)
+                await board.click(
+                    position={"x": 4.5 * box["width"] / 8, "y": 6.5 * box["height"] / 8}
+                )
+                await expect(board.locator("square.selected")).to_have_count(1)
+                await expect(arrow).to_have_count(1)
+                await board.click(
+                    position={"x": 4.5 * box["width"] / 8, "y": 4.5 * box["height"] / 8}
+                )
+                await self._eventually_async(
+                    lambda: self._study_has_node_count(app_state, chapter_id, 1)
+                )
+                await expect(arrow).to_have_count(0)
+                await page.locator("#btn-controls-top button:has(.icon-step-backward)").click()
+                await expect(arrow).to_have_count(1)
+                assert await root_has_arrow()
+                await page.reload()
+                await expect(arrow).to_have_count(1)
+
+                # An empty-square click still deliberately clears the annotations.
+                await board.click(
+                    position={"x": 0.5 * box["width"] / 8, "y": 5.5 * box["height"] / 8}
+                )
+                await expect(arrow).to_have_count(0)
+            finally:
+                await context.close()
+                await browser.close()
+
     async def test_persistence_chapters_and_fresh_app_state(self, aiohttp_server):
         db_client = AsyncMongoMockClient(tz_aware=True)
         app = make_app(db_client=db_client, simple_cookie_storage=True)
@@ -464,8 +540,8 @@ class TestStudyGUI:
                     anon_page.get_by_role("heading", name="404", exact=True)
                 ).to_be_visible()
                 await expect(
-                    anon_page.get_by_role("button", name=re.compile(r"Login"))
-                ).to_be_visible()
+                    anon_page.get_by_role("link", name="Return to PyChess")
+                ).to_have_attribute("href", "/")
             finally:
                 await owner_context.close()
                 await intruder_context.close()

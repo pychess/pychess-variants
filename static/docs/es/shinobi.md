@@ -1,4 +1,4 @@
-# ![Ajedrez Shinobi](https://github.com/pychess/pychess-variants/blob/master/static/icons/shinobi.svg) Ajedrez Shinobi
+# ![](https://github.com/pychess/pychess-variants/blob/master/static/icons/shinobi.svg) Ajedrez Shinobi
 
 ![Shinobi](https://github.com/pychess/pychess-variants/blob/master/static/images/CVariantsGuide/Shinobi.png)
 

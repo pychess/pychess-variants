@@ -1,24 +1,248 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import patch
 
-from catalogued_variants import (
+from catalogued.builtin_data import (
     FSF_CATALOGUED_BUILTIN_DESCRIPTION,
     FSF_CATALOGUED_BUILTIN_VARIANTS,
+)
+from catalogued.documents import (
     _build_fsf_builtin_doc,
     _client_doc,
     _fsf_builtin_description_for_doc,
     catalogued_variant_rule_context,
 )
+from catalogued.variants import register_catalogued_variant_doc
+from fairy.fairy_board import FairyBoard, sf
+from variants import get_server_variant, unregister_catalogued_server_variant
 
 
 class FsfBuiltinRulesIniTestCase(TestCase):
+    def test_fox_and_hounds_non_capturing_moves_and_win_conditions(self) -> None:
+        name = "fox-and-hounds"
+        doc = _build_fsf_builtin_doc(name, FSF_CATALOGUED_BUILTIN_VARIANTS[name])
+        context = catalogued_variant_rule_context(doc)
+        self.assertIn("flagRegionWhite = *8", context["ini"])
+        start = sf.start_fen(name)
+        self.assertEqual(set(sf.legal_moves(name, start, [])), {"e1d2", "e1f2"})
+        self.assertEqual(
+            set(sf.legal_moves(name, start, ["e1d2"])),
+            {"b8a7", "b8c7", "d8c7", "d8e7", "f8e7", "f8g7", "h8g7"},
+        )
+        fox = "8/8/8/8/3F4/8/8/1h6 w - - 0 1"
+        self.assertEqual(set(sf.legal_moves(name, fox, [])), {"d4c3", "d4e3", "d4c5", "d4e5"})
+        hound = "8/8/8/8/3h4/8/8/4F3 b - - 0 1"
+        self.assertEqual(set(sf.legal_moves(name, hound, [])), {"d4c3", "d4e3"})
+        blocked = "8/8/8/8/8/8/3h1h2/4F3 w - - 0 1"
+        self.assertEqual(sf.legal_moves(name, blocked, []), [])
+        self.assertLess(sf.game_result(name, blocked, []), 0)
+        goal = "8/5F2/8/8/8/8/1h1h1h1h/8 w - - 0 1"
+        self.assertIn("f7e8", sf.legal_moves(name, goal, []))
+        ended, result = sf.is_immediate_game_end(name, goal, ["f7e8"])
+        self.assertTrue(ended)
+        self.assertLess(result, 0)  # Black is to move after the fox reaches rank eight.
+
+    def test_asymmetric_promotion_targets_match_the_engine_for_both_sides(self) -> None:
+        for name, white, black in (
+            ("sortofalmost", "crbn", "qrbn"),
+            ("chigorin", "crn", "qrb"),
+        ):
+            doc = _build_fsf_builtin_doc(name, FSF_CATALOGUED_BUILTIN_VARIANTS[name])
+            context = catalogued_variant_rule_context(doc)
+            self.assertIn("promotionPieceTypesWhite", context["ini"])
+            self.assertIn("promotionPieceTypesBlack", context["ini"])
+            for color, fen, prefix, targets in (
+                ("white", "7k/P7/8/8/8/8/8/7K w - - 0 1", "a7a8", white),
+                ("black", "7k/8/8/8/8/8/p7/7K b - - 0 1", "a2a1", black),
+            ):
+                with self.subTest(name=name, color=color):
+                    moves = sf.legal_moves(name, fen, [])
+                    self.assertEqual(
+                        {move for move in moves if move.startswith(prefix)},
+                        {prefix + target for target in targets},
+                    )
+                    for target in targets:
+                        move = prefix + target
+                        self.assertIn("=" + target.upper(), sf.get_san(name, fen, move))
+                        promoted = sf.get_fen(name, fen, [move])
+                        self.assertEqual(promoted.split()[1], "b" if color == "white" else "w")
+
+    def test_aiwok_movement_promotion_replay_and_counting(self) -> None:
+        doc = _build_fsf_builtin_doc("ai-wok", FSF_CATALOGUED_BUILTIN_VARIANTS["ai-wok"])
+        context = catalogued_variant_rule_context(doc)
+        self.assertIn("promotionPieceTypes = a", context["ini"])
+        self.assertEqual(
+            {diagram["piece"]: diagram["betza"] for diagram in context["customPieceDiagrams"]},
+            {"a": "RNF", "s": "FfW"},
+        )
+        fen = "7k/8/8/8/3A4/8/8/7K w - - 0 1"
+        moves = set(sf.legal_moves("ai-wok", fen, []))
+        for move in ("d4d8", "d4a4", "d4f5", "d4c3"):
+            self.assertIn(move, moves)
+        self.assertNotIn("d4b2", moves)  # The ferz step is not a bishop slide.
+
+        register_catalogued_variant_doc(SimpleNamespace(catalogued_variants={}), doc)
+        try:
+            variant = get_server_variant("ai-wok", False)
+            self.assertEqual(variant.uci_variant, "ai-wok")
+            fen = "7k/8/8/P7/8/8/8/7K w - - 0 1"
+            board = FairyBoard("ai-wok", fen, show_promoted=variant.show_promoted)
+            self.assertIn("a5a6a", board.legal_moves())
+            self.assertNotIn("a5a6m", board.legal_moves())
+            self.assertEqual(variant.move_decoding(variant.move_encoding("a5a6a")), "a5a6a")
+            self.assertIn("=A", board.get_san("a5a6a"))
+            board.push("a5a6a")
+            self.assertIn("A~", board.fen)
+            restored = FairyBoard("ai-wok", board.fen, show_promoted=variant.show_promoted)
+            self.assertEqual(restored.legal_moves(), board.legal_moves())
+            board.pop()
+            self.assertEqual(board.fen, fen)
+
+            exhausted = "7k/8/8/8/8/8/8/R6K w - 128 129 65"
+            self.assertEqual(sf.is_optional_game_end("ai-wok", exhausted, []), (True, 0))
+            self.assertTrue(variant.n_fold_is_draw)
+        finally:
+            unregister_catalogued_server_variant("ai-wok")
+
+    def test_isolation_places_permanent_walls_and_protects_starting_squares(self) -> None:
+        for name, first, second, protected, target_count in (
+            ("isolation", "c1b1,b1f8", "d8c8,c8f7", {"c1", "d8"}, 45),
+            ("isolation7x7", "d1c1,c1g7", "d7c7,c7g6", {"d1", "d7"}, 46),
+        ):
+            with self.subTest(name=name):
+                doc = _build_fsf_builtin_doc(name, FSF_CATALOGUED_BUILTIN_VARIANTS[name])
+                client_doc = _client_doc(doc)
+                self.assertEqual(client_doc["ini"], "")
+                self.assertEqual(client_doc["betzaPieces"], {"p": "mK"})
+                context = catalogued_variant_rule_context(doc)
+                self.assertIn("wallingRule = static", context["ini"])
+                summary_text = " ".join(
+                    line["text"]
+                    for section in context["ruleSummary"]["sections"]
+                    for line in section["lines"]
+                )
+                self.assertIn("permanent wall", summary_text)
+
+                start = sf.start_fen(name)
+                moves = sf.legal_moves(name, start, [])
+                self.assertIn(first, moves)  # The wall can be far away from the token.
+                targets = {move[-2:] for move in moves if move.startswith(first[:5])}
+                self.assertEqual(len(targets), target_count)
+                self.assertTrue(targets.isdisjoint(protected))
+                after = sf.get_fen(name, start, [first, second])
+                self.assertEqual(after.count("*"), 2)
+                self.assertFalse(
+                    {move[-2:] for move in sf.legal_moves(name, after, [])}
+                    & {first[-2:], second[-2:]}
+                )
+
+                # Persist and restore the complete compound turn through the actual
+                # catalogue registration path, rather than a plain chess codec.
+                register_catalogued_variant_doc(SimpleNamespace(catalogued_variants={}), doc)
+                try:
+                    variant = get_server_variant(name, False)
+                    self.assertEqual(variant.move_decoding(variant.move_encoding(first)), first)
+                finally:
+                    unregister_catalogued_server_variant(name)
+
+    def test_isolation_tokens_cannot_capture_and_lose_when_blocked(self) -> None:
+        for name, adjacent, blocked in (
+            ("isolation", "6/6/6/3p2/3P2/6/6/6 w - - 0 1", "3p2/6/6/6/6/6/1***2/1*P*2 w - - 0 1"),
+            ("isolation7x7", "7/7/3p3/3P3/7/7/7 w - - 0 1", "3p3/7/7/7/7/2***2/2*P*2 w - - 0 1"),
+        ):
+            with self.subTest(name=name):
+                self.assertFalse(
+                    any(move.startswith("d4d5,") for move in sf.legal_moves(name, adjacent, []))
+                )
+                self.assertEqual(sf.legal_moves(name, blocked, []), [])
+                self.assertLess(sf.game_result(name, blocked, []), 0)
+
+    def test_micro_documents_mandatory_capture_flips_and_both_face_drops(self) -> None:
+        doc = _build_fsf_builtin_doc("micro", FSF_CATALOGUED_BUILTIN_VARIANTS["micro"])
+        context = catalogued_variant_rule_context(doc)
+        self.assertIn("piecePromotionOnCapture = true", context["ini"])
+        self.assertIn("pieceDemotion = true", context["ini"])
+        self.assertIn("dropPromoted = true", context["ini"])
+        self.assertIn("promotedPieceType = p:n l:s b:g r:g", context["ini"])
+        self.assertEqual(_client_doc(doc)["ini"], "")
+        start = sf.start_fen("micro")
+        self.assertIn("d2d3", sf.legal_moves("micro", start, []))
+        self.assertNotIn("d2d3+", sf.legal_moves("micro", start, []))
+
+    def test_snailtrail_exposes_non_capturing_king_moves_and_loses_when_blocked(self) -> None:
+        doc = _build_fsf_builtin_doc("snailtrail", FSF_CATALOGUED_BUILTIN_VARIANTS["snailtrail"])
+        client_doc = _client_doc(doc)
+        self.assertEqual(client_doc["ini"], "")
+        self.assertEqual(client_doc["betzaPieces"], {"p": "mK"})
+        self.assertTrue(client_doc["rulesArrowing"])
+        context = catalogued_variant_rule_context(doc)
+        self.assertIn("wallingRule = past", context["ini"])
+        fen = sf.start_fen("snailtrail")
+        self.assertEqual(
+            set(sf.legal_moves("snailtrail", fen, [])),
+            {"a1b1,b1a1", "a1a2,a2a1", "a1b2,b2a1"},
+        )
+        blocked = "6p/7/7/7/7/**5/P*5 w - - 0 1"
+        self.assertEqual(sf.legal_moves("snailtrail", blocked, []), [])
+        self.assertLess(sf.game_result("snailtrail", blocked, []), 0)
+        adjacent = "7/7/7/3p3/3P3/7/7 w - - 0 1"
+        self.assertNotIn("d3d4,d4d3", sf.legal_moves("snailtrail", adjacent, []))
+
+    def test_chessgi_documents_loop_captures_and_first_rank_pawn_drops(self) -> None:
+        doc = _build_fsf_builtin_doc("chessgi", FSF_CATALOGUED_BUILTIN_VARIANTS["chessgi"])
+        client_doc = _client_doc(doc)
+        self.assertEqual(client_doc["ini"], "")
+        self.assertEqual(client_doc["fsfBuiltinVariant"], "chessgi")
+        self.assertNotIn("rulesIni", client_doc)
+        context = catalogued_variant_rule_context(doc)
+        self.assertIn("[chessgi:loop]", context["ini"])
+        self.assertIn("dropLoop = true", context["ini"])
+        self.assertIn("firstRankPawnDrops = true", context["ini"])
+
+    def test_jesonmor_documents_its_centre_goal_without_redefining_the_builtin(self) -> None:
+        doc = _build_fsf_builtin_doc("jesonmor", FSF_CATALOGUED_BUILTIN_VARIANTS["jesonmor"])
+        client_doc = _client_doc(doc)
+        self.assertEqual(client_doc["ini"], "")
+        self.assertNotIn("rulesIni", client_doc)
+        self.assertEqual(client_doc["fsfBuiltinVariant"], "jesonmor")
+        context = catalogued_variant_rule_context(doc)
+        self.assertIn("flagPiece = n", context["ini"])
+        self.assertIn("flagRegionWhite = e5", context["ini"])
+        self.assertIn("flagRegionBlack = e5", context["ini"])
+        self.assertIn("flagMove = true", context["ini"])
+        self.assertEqual(context["customPieceDiagrams"], [])
+
+    def test_euroshogi_rules_expose_sideways_knight_and_mandatory_promotion(self) -> None:
+        doc = _build_fsf_builtin_doc("euroshogi", FSF_CATALOGUED_BUILTIN_VARIANTS["euroshogi"])
+        client_doc = _client_doc(doc)
+        self.assertEqual(client_doc["ini"], "")
+        self.assertNotIn("rulesIni", client_doc)
+        self.assertEqual(client_doc["fsfBuiltinVariant"], "euroshogi")
+        self.assertEqual(client_doc["betzaPieces"], {"n": "fNsW"})
+        context = catalogued_variant_rule_context(doc)
+        self.assertIn("mandatoryPiecePromotion = true", context["ini"])
+        self.assertIn("nFoldRule = 4", context["ini"])
+        self.assertEqual([diagram["piece"] for diagram in context["customPieceDiagrams"]], ["n"])
+
+    def test_okisakishogi_rules_document_the_vertical_lance_and_chess_knight(self) -> None:
+        doc = _build_fsf_builtin_doc(
+            "okisakishogi", FSF_CATALOGUED_BUILTIN_VARIANTS["okisakishogi"]
+        )
+        client_doc = _client_doc(doc)
+        self.assertEqual(client_doc["ini"], "")
+        self.assertNotIn("rulesIni", client_doc)
+        self.assertEqual(client_doc["betzaPieces"], {"l": "vR", "n": "N"})
+        context = catalogued_variant_rule_context(doc)
+        self.assertIn("customPiece1 = l:vR", context["ini"])
+        self.assertEqual([diagram["piece"] for diagram in context["customPieceDiagrams"]], ["l"])
+
     def test_yarishogi_rules_ini_is_documentation_only(self) -> None:
         metadata = FSF_CATALOGUED_BUILTIN_VARIANTS["yarishogi"]
         start_fen = "rnnkbbr/7/ppppppp/7/7/7/PPPPPPP/7/RBBKNNR[-] w 0 1"
 
-        with patch("catalogued_variants.sf.start_fen", return_value=start_fen):
+        with patch("catalogued.validation.sf.start_fen", return_value=start_fen):
             doc = _build_fsf_builtin_doc("yarishogi", metadata)
 
         self.assertEqual(doc["ini"], "")
