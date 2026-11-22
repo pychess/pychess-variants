@@ -468,6 +468,15 @@ class FairyBoard:
             cached = self._legal_moves_cache = (key, tuple(self.legal_moves()))
         return cached[1]
 
+    def is_move_excluded_by_cache(self, move: str) -> bool:
+        """Check for an illegal move using only a cached list for this position."""
+        cached = self._legal_moves_cache
+        return (
+            cached is not None
+            and cached[0] == self._legal_moves_cache_key()
+            and move not in cached[1]
+        )
+
     def legal_moves_no_history(self):
         # move legality can depend on history, but for bughouse we can't recreate history so we need this version
         return self.sf.legal_moves(self.variant, self.fen, [], self.chess960)

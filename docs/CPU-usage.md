@@ -308,12 +308,14 @@ proposed in [Fairy-Stockfish PR #1055](https://github.com/fairy-stockfish/Fairy-
 The pinned pyffish release uses the existing move path. The combined path is
 enabled when the installed pyffish build exposes that API.
 
-Human moves are validated by the combined operation before clocks, draw offers,
-or board state change. Bots compute the same result in the existing trusted move
-path. A single native replay preserves repetition, chasing, and history-dependent
-legality while returning SAN, FEN, check, material, game-end information, and
-the full list of legal replies. Every combined move populates the board's
-position-bound legal-move cache, including moves in human-vs-human games.
+For human moves, a matching legal-move cache can reject an illegal submission
+before native replay. Other submissions are validated by the combined operation
+before clocks, draw offers, or board state change. Bots compute the same result
+in the existing trusted move path. A single native replay preserves repetition,
+chasing, and history-dependent legality while returning SAN, FEN, check,
+material, game-end information, and the full list of legal replies. Every
+combined move populates the board's position-bound legal-move cache, including
+moves in human-vs-human games.
 
 Counting variants retain one incremental FEN call because counting toggles can
 change serialized counters outside native move history. Their other engine

@@ -1261,18 +1261,16 @@ async def play_move(
 
         if not user.bot and not invalid_move:
             if game.board.supports_combined_move:
-                try:
-                    # The native parser accepts these aliases; human clients
-                    # previously had to submit the exact legal UCI string.
-                    if len(move) == 5 and (
-                        move[-1] == "=" or ("@" not in move and move[-1].isupper())
-                    ):
-                        raise ValueError("Noncanonical human move")
-                    move_result = game.board.prepare_move(move)
-                except ValueError:
-                    illegal_move = True
-                else:
-                    illegal_move = False
+                # Human clients submit canonical UCI even when the native
+                # parser would accept an alias on a cache miss.
+                illegal_move = game.board.is_move_excluded_by_cache(move) or (
+                    len(move) == 5 and (move[-1] == "=" or ("@" not in move and move[-1].isupper()))
+                )
+                if not illegal_move:
+                    try:
+                        move_result = game.board.prepare_move(move)
+                    except ValueError:
+                        illegal_move = True
             else:
                 illegal_move = move not in game.legal_moves
             if illegal_move:

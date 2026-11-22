@@ -235,7 +235,7 @@ class CombinedGameMoveTestCase(AioHTTPTestCase):
         self.assertEqual(combined.call_count, 1)
         self.assertTrue(combined.call_args.args[-1])
 
-    async def test_illegal_human_move_leaves_clocks_offers_and_board_untouched(self):
+    async def test_cached_illegal_human_move_skips_engine_and_preserves_game_state(self):
         game = self.make_game()
         await game.play_move("e2e4", [600000, 600000])
         await game.play_move("e7e5", [600000, 600000])
@@ -243,7 +243,10 @@ class CombinedGameMoveTestCase(AioHTTPTestCase):
         game.takeback_offer = game.bplayer.username, game.ply
         before = self.state(game), list(game.clocks_w), list(game.clocks_b), game.last_server_clock
         game.wplayer.send_game_message = AsyncMock()
-        await play_move(get_app_state(self.app), game.wplayer, game, "e4e7", [1, 1], ply=3)
+        with patch.object(sf, "apply_move") as combined, patch.object(sf, "legal_moves") as legal:
+            await play_move(get_app_state(self.app), game.wplayer, game, "e4e7", [1, 1], ply=3)
+        combined.assert_not_called()
+        legal.assert_not_called()
         self.assertEqual(
             before, (self.state(game), game.clocks_w, game.clocks_b, game.last_server_clock)
         )
@@ -251,6 +254,23 @@ class CombinedGameMoveTestCase(AioHTTPTestCase):
         self.assertIsNotNone(game.takeback_offer)
         self.assertTrue(game.stopwatch.running)
         self.assertEqual(game.wplayer.send_game_message.await_args.args[1]["type"], "board")
+
+    async def test_human_move_after_takeback_uses_combined_validation_on_cache_miss(self):
+        game = self.make_game()
+        await game.play_move("e2e4", [600000, 600000])
+        await game.play_move("e7e5", [600000, 600000])
+        self.assertNotIn("c7c5", game.legal_moves)
+        await game.takeback(game.bplayer)
+
+        with (
+            patch.object(sf, "apply_move", wraps=NATIVE_APPLY_MOVE) as combined,
+            patch.object(sf, "legal_moves") as legal,
+        ):
+            await play_move(game.app_state, game.bplayer, game, "c7c5", [600000, 600000], ply=2)
+        combined.assert_called_once()
+        legal.assert_not_called()
+        self.assertEqual(game.board.move_stack, ["e2e4", "c7c5"])
+        self.assertEqual(game.status, STARTED)
 
     async def test_native_input_aliases_remain_rejected_for_human_moves(self):
         for fen, move in (("", "e2e4="), ("7k/P7/8/8/8/8/8/7K w - - 0 1", "a7a8Q")):
