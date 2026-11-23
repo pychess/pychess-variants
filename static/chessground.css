@@ -375,6 +375,32 @@ piece.fading {
   opacity: 0.5;
 }
 
+/* Paint the artwork on a separate layer so scaling can't shift the piece's position. */
+@media (prefers-reduced-motion: no-preference) {
+  .piece-move-lift > cg-container > cg-board > piece {
+    background-size: 0 0;
+  }
+
+  .piece-move-lift > cg-container > cg-board > piece::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: inherit;
+    background-color: transparent;
+    background-size: cover;
+    background-repeat: no-repeat;
+  }
+
+  .piece-move-lift > cg-container > cg-board > piece:not(.dragging)::before {
+    transition: scale 240ms ease-out;
+  }
+
+  .piece-move-lift > cg-container > cg-board > piece.anim:not(.dragging)::before {
+    scale: 1.2;
+    transition-duration: 55ms;
+  }
+}
+
 @keyframes pass-move-flip {
   0% {
     transform: var(--pass-move-transform) rotateY(0deg) scale(1);

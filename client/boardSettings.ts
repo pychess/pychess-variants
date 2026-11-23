@@ -16,7 +16,15 @@ import {
 import { Settings, NumberSettings, BooleanSettings } from './settings';
 import { slider, checkbox } from './view';
 import { BoardName, PyChessModel } from './types';
-import { BOARD_FAMILIES, cwdaArmyClassNames, isCataloguedVariant, PIECE_FAMILIES, Variant, VARIANTS } from './variants';
+import {
+    BOARD_FAMILIES,
+    cwdaArmyClassNames,
+    isCataloguedVariant,
+    PIECE_FAMILIES,
+    Variant,
+    VARIANTS,
+    xiangqiVariants,
+} from './variants';
 import { renderResized, updateBounds } from 'chessgroundx/render';
 import { setSquareColors } from './boardColors';
 import { clampZoom, minZoomPercent, setBoardZoom } from './two-board/squareUnit';
@@ -270,6 +278,7 @@ class BoardSettings {
         const css = this.boardCSS(family, variant);
 
         if (el instanceof HTMLElement) {
+            el.classList.toggle('piece-move-lift', xiangqiVariants.has(variant.name));
             const target = (el.closest('.' + family) as HTMLElement | null) ?? el;
             target.dataset.boardVariant = variant.name;
             if (variant.hasBoard) {

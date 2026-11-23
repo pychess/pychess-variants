@@ -3202,6 +3202,9 @@ export const variantGroups: { [key: string]: { variants: string[] } } = {
     other: { variants: ['borderlands', 'ataxx'] },
 };
 
+// Board behavior uses group membership before the variant picker filters development variants.
+export const xiangqiVariants: ReadonlySet<string> = new Set(variantGroups.xiangqi.variants);
+
 export function variantGroupLabel(group: string): string {
     return gameCategoryLabel(group);
 }
