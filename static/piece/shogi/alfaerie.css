@@ -1,0 +1,99 @@
+.shogi piece.p-piece.white {
+    background-image: url('../../images/pieces/alfaerie/bchinesepawn.svg');
+}
+.shogi piece.pp-piece.white {
+    background-image: url('../../images/pieces/alfaerie/bpromotedshogipawn.svg');
+}
+.shogi piece.b-piece.white {
+    background-image: url('../../images/pieces/alfaerie/bbishop.svg');
+}
+.shogi piece.pb-piece.white {
+    background-image: url('../../images/pieces/alfaerie/bpromotedbishop.svg');
+}
+.shogi piece.n-piece.white {
+    background-image: url('../../images/pieces/alfaerie/bknight.svg');
+}
+.shogi piece.pn-piece.white {
+    background-image: url('../../images/pieces/alfaerie/bpromotedknight.svg');
+}
+.shogi piece.r-piece.white {
+    background-image: url('../../images/pieces/alfaerie/brook.svg');
+}
+.shogi piece.pr-piece.white {
+    background-image: url('../../images/pieces/alfaerie/bpromotedrook.svg');
+}
+.shogi piece.l-piece.white {
+    background-image: url('../../images/pieces/alfaerie/blance.svg');
+}
+.shogi piece.pl-piece.white {
+    background-image: url('../../images/pieces/alfaerie/bpromotedlance.svg');
+}
+.shogi piece.s-piece.white {
+    background-image: url('../../images/pieces/alfaerie/bsilvergeneral.svg');
+}
+.shogi piece.ps-piece.white {
+    background-image: url('../../images/pieces/alfaerie/bpromotedsilver.svg');
+}
+.shogi piece.g-piece.white {
+    background-image: url('../../images/pieces/alfaerie/bgoldgeneral.svg');
+}
+.shogi piece.k-piece.white {
+    background-image: url('../../images/pieces/alfaerie/bking.svg');
+}
+
+
+.shogi piece.p-piece.black {
+    background-image: url('../../images/pieces/alfaerie/wchinesepawn.svg');
+}
+.shogi piece.pp-piece.black {
+    background-image: url('../../images/pieces/alfaerie/wpromotedshogipawn.svg');
+}
+.shogi piece.b-piece.black {
+    background-image: url('../../images/pieces/alfaerie/wbishop.svg');
+}
+.shogi piece.pb-piece.black {
+    background-image: url('../../images/pieces/alfaerie/wpromotedbishop.svg');
+}
+.shogi piece.n-piece.black {
+    background-image: url('../../images/pieces/alfaerie/wknight.svg');
+}
+.shogi piece.pn-piece.black {
+    background-image: url('../../images/pieces/alfaerie/wpromotedknight.svg');
+}
+.shogi piece.r-piece.black {
+    background-image: url('../../images/pieces/alfaerie/wrook.svg');
+}
+.shogi piece.pr-piece.black {
+    background-image: url('../../images/pieces/alfaerie/wpromotedrook.svg');
+}
+.shogi piece.l-piece.black {
+    background-image: url('../../images/pieces/alfaerie/wlance.svg');
+}
+.shogi piece.pl-piece.black {
+    background-image: url('../../images/pieces/alfaerie/wpromotedlance.svg');
+}
+.shogi piece.s-piece.black {
+    background-image: url('../../images/pieces/alfaerie/wsilvergeneral.svg');
+}
+.shogi piece.ps-piece.black {
+    background-image: url('../../images/pieces/alfaerie/wpromotedsilver.svg');
+}
+.shogi piece.g-piece.black {
+    background-image: url('../../images/pieces/alfaerie/wgoldgeneral.svg');
+}
+.shogi piece.k-piece.black {
+    background-image: url('../../images/pieces/alfaerie/wking.svg');
+}
+
+.shogi piece.e-piece.white {
+    background-image: url('../../images/pieces/alfaerie/bdrunkelephant.svg');
+}
+.shogi piece.pe-piece.white {
+    background-image: url('../../images/pieces/alfaerie/bguard.svg');
+}
+.shogi piece.e-piece.black {
+    background-image: url('../../images/pieces/alfaerie/wdrunkelephant.svg');
+}
+.shogi piece.pe-piece.black {
+    background-image: url('../../images/pieces/alfaerie/wguard.svg');
+}

@@ -355,7 +355,13 @@ label.piece.piece1.decimalshogi,
 label.piece.piece1.okisakishogi {
     background-image: url('images/pieces/firi/bb.svg');
 }
-label.piece.piece16.shogi,
+label.piece.piece16.shogi {
+    background-image: url('images/pieces/alfaerie/bbishop.svg');
+}
+label.piece.piece17.shogi {
+    background-image: url('images/pieces/shogi/Greenwade/5bb.svg');
+}
+label.piece.piece18.shogi,
 label.piece.piece2.decimalshogi,
 label.piece.piece2.okisakishogi {
     background-image: url('images/pieces/disguised/shogi-ally.svg');

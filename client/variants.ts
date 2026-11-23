@@ -367,6 +367,8 @@ export const PIECE_FAMILIES: Record<string, PieceFamily> = {
             'porti',
             'cz',
             'firi',
+            'alfaerie',
+            'greenwade',
             'disguised',
         ],
         imageLayerCSS: ['shogik', 'shogi', 'cz'],

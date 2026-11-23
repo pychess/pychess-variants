@@ -50,6 +50,7 @@ static/images/pieces/paradigm/* | pychess-variants contributors | [AGPLv3+](http
 static/images/pieces/santa/* | pychess-variants contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/pieces/shinobi/* | Couch Tomato | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/pieces/shogi/2kanji/* | [orangain](https://github.com/orangain/shogi-piece-images) | [CC-BY-SA-3.0](https://creativecommons.org/licenses/by-sa/3.0/deed.en) |
+static/images/pieces/shogi/Greenwade/* | Bob Greenwade | ??? | See [Bob Greenwade's SVG Library](https://www.chessvariants.com/graphics.dir/svg/Greenwade/index.html). Redistribution permission unconfirmed.
 static/images/pieces/shogi/Ka/* | [Kadagaden](https://github.com/orangain/shogi-piece-images) | [CC-BY-SA-3.0](https://creativecommons.org/licenses/by-sa/3.0/deed.en) |
 static/images/pieces/shogi/* | pychess-variants contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
 static/images/pieces/shogun/* | pychess-variants contributors | [AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.txt) |
