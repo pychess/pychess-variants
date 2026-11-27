@@ -3,7 +3,7 @@ FROM node:24 AS frontend
 WORKDIR /app
 
 COPY package.json /app/
-COPY cp2static.sh md2html.sh md2html.js esbuild.mjs tsconfig.json yarn.lock /app/
+COPY cp2static.sh md2html.sh md2html.js esbuild.mjs tsconfig.json yarn.lock markdown.js markdown.d.ts /app/
 
 RUN yarn install --ignore-scripts
 
