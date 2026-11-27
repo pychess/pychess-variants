@@ -1,5 +1,6 @@
 import unittest
 from datetime import UTC, datetime
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock, patch
@@ -7,6 +8,7 @@ from unittest.mock import AsyncMock, patch
 import test_logger
 from aiohttp import web
 from catalogued.assets import (
+    _board_svg_revision,
     _canonical_piece_set_filename,
     _catalogued_board_svg_css,
     _catalogued_disguised_piece_css,
@@ -16,9 +18,11 @@ from catalogued.assets import (
     _copy_catalogued_uploaded_assets,
     _has_complete_piece_set,
     _piece_set_revision,
+    _prepare_catalogued_board_svg,
     _sanitize_catalogued_board_svg,
     _sanitize_catalogued_piece_svg,
 )
+from catalogued.models import MAX_CATALOGUED_BOARD_UPLOAD_BYTES
 from catalogued.validation import (
     _check_ini_with_pyffish_child,
     _read_bool_metadata,
@@ -343,6 +347,46 @@ class CataloguedVariantPieceSvgSanitizerTestCase(unittest.TestCase):
 
 
 class CataloguedVariantBoardSvgTestCase(unittest.TestCase):
+    def test_every_bundled_svg_can_be_uploaded_with_its_original_artwork(self) -> None:
+        board_dir = Path(__file__).resolve().parents[1] / "static" / "images" / "board"
+        for path in sorted(board_dir.glob("*.svg")):
+            with self.subTest(board=path.name):
+                raw = path.read_bytes()
+                self.assertLessEqual(len(raw), MAX_CATALOGUED_BOARD_UPLOAD_BYTES)
+                board = _prepare_catalogued_board_svg(raw, "my-board.svg", 9, 9)
+                self.assertEqual(board, {"bundled": path.name, "size": 0})
+                css = _catalogued_board_svg_css("customshogi", board)
+                self.assertIn(f'background-image: url("/static/images/board/{path.name}', css)
+
+    def test_upload_preserves_local_shape_references_and_clipping(self) -> None:
+        svg = b"""<svg viewBox="0 0 900 900" xmlns="http://www.w3.org/2000/svg"
+                      xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <clipPath id="board" clipPathUnits="userSpaceOnUse">
+      <rect width="900" height="900"/>
+    </clipPath>
+    <path id="row" d="m0 0h100v100h-100z"/>
+  </defs>
+  <g style="clip-path:url(#board)">
+    <use xlink:href="#row" transform="translate(0 100)"/>
+    <use href="https://example.org/board.svg#row"/>
+  </g>
+</svg>"""
+
+        board = _prepare_catalogued_board_svg(svg, "9x9brown.svg", 9, 9)
+        sanitized = board["svg"]
+
+        self.assertIn('<clipPath id="board" clipPathUnits="userSpaceOnUse">', sanitized)
+        self.assertIn('clip-path="url(#board)"', sanitized)
+        self.assertIn('<use href="#row" transform="translate(0 100)"', sanitized)
+        self.assertNotIn("example.org", sanitized)
+
+    def test_distinguishes_upload_revisions_within_one_second(self) -> None:
+        time = datetime(2026, 1, 1, tzinfo=UTC)
+        first = _board_svg_revision({"boardSvgUpdatedAt": time})
+        second = _board_svg_revision({"boardSvgUpdatedAt": time.replace(microsecond=1_000)})
+        self.assertNotEqual(first, second)
+
     def test_accepts_board_svg_matching_variant_aspect_ratio(self) -> None:
         svg = b"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 800">
   <rect x="0" y="0" width="1000" height="800" fill="#f0d9b5"/>

@@ -28,6 +28,7 @@ CATALOGUED_AI_DISABLE_SECONDS = 24 * 60 * 60
 MAX_CATALOGUED_PIECE_SET_TOTAL_BYTES = 256 * 1024
 MAX_CATALOGUED_PIECE_SVG_BYTES = 32 * 1024
 MAX_CATALOGUED_BOARD_SVG_BYTES = 128 * 1024
+MAX_CATALOGUED_BOARD_UPLOAD_BYTES = 3 * 1024 * 1024
 MAX_CATALOGUED_INI_BYTES = 64 * 1024
 MAX_DESCRIPTION_LEN = 1000
 MAX_DISPLAY_NAME_LEN = 50
@@ -217,8 +218,9 @@ class CataloguedVariantPieceSetSvg(TypedDict):
 
 
 class CataloguedVariantBoardSvg(TypedDict):
-    svg: str
     size: int
+    svg: NotRequired[str]
+    bundled: NotRequired[str]
 
 
 class CataloguedVariantReference(TypedDict):

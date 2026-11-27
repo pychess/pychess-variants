@@ -11,6 +11,7 @@ from urllib.parse import unquote
 import aiohttp_session
 from aiohttp import web
 from const import ANON_PREFIX
+from csrf import CSRF_HEADER
 from json_utils import json_response
 from pychess_global_app_state_utils import get_app_state
 from pymongo import ReturnDocument
@@ -660,6 +661,38 @@ async def delete_catalogued_piece_set(request: web.Request) -> web.Response:
     return json_response({"ok": True, "variant": documents._client_doc(updated, game_count=count)})
 
 
+async def _read_catalogued_board_upload(request: web.Request) -> tuple[str, bytes]:
+    max_bytes = models.MAX_CATALOGUED_BOARD_UPLOAD_BYTES
+    # Leave a previously parsed form on the original request. Header-token
+    # uploads and bodies larger than the default limit can use the larger parser.
+    use_larger_parser = (
+        request.headers.get(CSRF_HEADER) or (request.content_length or 0) > request.client_max_size
+    )
+    upload_request = (
+        request.clone(client_max_size=max_bytes + 16 * 1024) if use_larger_parser else request
+    )
+    data = await read_post_data(upload_request)
+    if data is None:
+        raise web.HTTPBadRequest(text="Missing form data.")
+
+    try:
+        uploads = [upload for key in ("board", "file", "files") for upload in data.getall(key, [])]
+        if len(uploads) != 1 or not isinstance(uploads[0], web.FileField):
+            raise web.HTTPBadRequest(text="Upload exactly one board SVG file.")
+        upload = uploads[0]
+        filename = upload.filename.strip() or "board.svg"
+        filename = filename.rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
+        filename = unquote(filename).rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
+        if not filename.casefold().endswith(".svg"):
+            raise web.HTTPBadRequest(text="Board upload must be an SVG file.")
+        return filename, upload.file.read(max_bytes + 1)
+    finally:
+        if upload_request is not request:
+            for value in data.values():
+                if isinstance(value, web.FileField):
+                    value.file.close()
+
+
 async def upload_catalogued_board(request: web.Request) -> web.Response:
     app_state, _username, name, doc = await _load_owned_doc(request)
     if app_state.db is None:
@@ -667,35 +700,10 @@ async def upload_catalogued_board(request: web.Request) -> web.Response:
     if not documents._is_active_catalogued_doc(doc):
         raise web.HTTPConflict(text="Archived variants cannot have custom boards.")
 
-    data = await read_post_data(request)
-    if data is None:
-        raise web.HTTPBadRequest(text="Missing form data.")
-
-    upload = None
-    if hasattr(data, "getall"):
-        uploads = []
-        uploads.extend(data.getall("board", []))
-        uploads.extend(data.getall("file", []))
-        uploads.extend(data.getall("files", []))
-        if len(uploads) > 1:
-            raise web.HTTPBadRequest(text="Upload exactly one board SVG file.")
-        upload = uploads[0] if uploads else None
-    if upload is None:
-        upload = data.get("board") or data.get("file")
-    if not hasattr(upload, "file"):
-        raise web.HTTPBadRequest(text="Upload exactly one board SVG file.")
-
-    filename = str(getattr(upload, "filename", "") or "board.svg").strip() or "board.svg"
-    filename = filename.rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
-    filename = unquote(filename).rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
-    if not filename.casefold().endswith(".svg"):
-        raise web.HTTPBadRequest(text="Board upload must be an SVG file.")
-
-    raw = upload.file.read(models.MAX_CATALOGUED_BOARD_SVG_BYTES + 1)
-    svg = assets._sanitize_catalogued_board_svg(
+    filename, raw = await _read_catalogued_board_upload(request)
+    board_svg = assets._prepare_catalogued_board_svg(
         raw, filename, int(doc["width"]), int(doc["height"])
     )
-    board_svg: models.CataloguedVariantBoardSvg = {"svg": svg, "size": len(svg.encode("utf-8"))}
 
     now = datetime.now(UTC)
     result = await app_state.db[models.CATALOGUED_VARIANT_COLLECTION].update_one(

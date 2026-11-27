@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import re
 import xml.etree.ElementTree as ET
 from collections.abc import Mapping
 from datetime import datetime
+from functools import cache
+from pathlib import Path
 from typing import Any, cast
-from urllib.parse import unquote
+from urllib.parse import quote, unquote
 
 from aiohttp import web
+from settings import local_static_url
 
 from . import models, validation
 
@@ -49,6 +53,8 @@ SAFE_SVG_TAGS = frozenset(
         "svg",
         "defs",
         "g",
+        "use",
+        "clipPath",
         "pattern",
         "linearGradient",
         "radialGradient",
@@ -109,6 +115,8 @@ SAFE_SVG_ATTRS = frozenset(
         "stroke-dashoffset",
         "fill-rule",
         "clip-rule",
+        "clip-path",
+        "clipPathUnits",
         "opacity",
         "fill-opacity",
         "stroke-opacity",
@@ -137,6 +145,7 @@ SAFE_SVG_STYLE_ATTRS = frozenset(
         "stroke-dashoffset",
         "fill-rule",
         "clip-rule",
+        "clip-path",
         "opacity",
         "fill-opacity",
         "stroke-opacity",
@@ -160,6 +169,10 @@ SAFE_SVG_LOCAL_REF_RE = re.compile(r"^url\(#[A-Za-z0-9_][A-Za-z0-9_.:-]*\)$")
 
 
 SAFE_SVG_FRAGMENT_REF_RE = re.compile(r"^#[A-Za-z0-9_][A-Za-z0-9_.:-]*$")
+
+SVG_LOCAL_URL_ATTRS = frozenset({"fill", "stroke", "filter", "clip-path"})
+
+BOARD_IMAGE_DIRECTORY = Path(__file__).resolve().parents[2] / "static" / "images" / "board"
 
 
 def _local_xml_name(name: str) -> str:
@@ -197,7 +210,7 @@ def _parse_safe_svg_style(style: str, filename: str) -> dict[str, str]:
         if prop not in SAFE_SVG_STYLE_ATTRS:
             continue
         cleaned_value = value.strip()
-        allow_local_ref_value = prop in {"fill", "stroke", "filter"}
+        allow_local_ref_value = prop in SVG_LOCAL_URL_ATTRS
         if _svg_value_is_unsafe(cleaned_value, allow_local_ref=allow_local_ref_value):
             raise web.HTTPBadRequest(text=f"{filename} contains unsafe SVG attribute values.")
         if not SAFE_SVG_VALUE_RE.fullmatch(cleaned_value):
@@ -311,7 +324,7 @@ def _piece_set_revision(doc: Mapping[str, Any]) -> str:
 def _board_svg_revision(doc: Mapping[str, Any]) -> str:
     updated_at = doc.get("boardSvgUpdatedAt")
     if isinstance(updated_at, datetime):
-        return str(int(updated_at.timestamp()))
+        return updated_at.isoformat(timespec="microseconds")
     return re.sub(r"\W+", "", str(updated_at or "0")) or "0"
 
 
@@ -394,7 +407,7 @@ def _sanitize_catalogued_svg(
                     continue
                 clean_attrs[local_attr] = value
                 continue
-            allow_local_ref_value = local_attr in {"fill", "stroke", "filter"}
+            allow_local_ref_value = local_attr in SVG_LOCAL_URL_ATTRS
             if _svg_value_is_unsafe(value, allow_local_ref=allow_local_ref_value):
                 raise web.HTTPBadRequest(text=f"{filename} contains unsafe SVG attribute values.")
             if not _svg_value_is_supported(local_attr, value):
@@ -446,6 +459,32 @@ def _sanitize_catalogued_board_svg(raw: bytes, filename: str, width: int, height
     sanitized = _sanitize_catalogued_svg(raw, filename, models.MAX_CATALOGUED_BOARD_SVG_BYTES)
     _parse_svg_view_box_size(sanitized, filename)
     return sanitized
+
+
+@cache
+def _bundled_board_svgs() -> dict[str, tuple[bytes, tuple[float, float]]]:
+    boards = {}
+    for path in sorted(BOARD_IMAGE_DIRECTORY.glob("*.svg")):
+        raw = path.read_bytes()
+        boards[path.name] = (
+            hashlib.sha256(raw).digest(),
+            _parse_svg_view_box_size(raw.decode("utf-8"), path.name),
+        )
+    return boards
+
+
+def _prepare_catalogued_board_svg(
+    raw: bytes, filename: str, width: int, height: int
+) -> models.CataloguedVariantBoardSvg:
+    # Reuse the shipped image only when its entire contents match. Bundled
+    # textures and filters can then keep their original appearance in CSS.
+    digest = hashlib.sha256(raw).digest()
+    for name, (bundled_digest, _) in _bundled_board_svgs().items():
+        if digest == bundled_digest:
+            return {"bundled": name, "size": 0}
+
+    svg = _sanitize_catalogued_board_svg(raw, filename, width, height)
+    return {"svg": svg, "size": len(svg.encode("utf-8"))}
 
 
 def _catalogued_piece_css_selector(
@@ -567,12 +606,17 @@ def _catalogued_disguised_piece_css(variant_name: str) -> str:
 
 
 def _catalogued_board_svg_css(variant_name: str, board_svg: Mapping[str, Any]) -> str:
-    svg = str(board_svg.get("svg") or "")
-    view_box_width, view_box_height = _parse_svg_view_box_size(svg, "board.svg")
+    bundled = board_svg.get("bundled")
+    if isinstance(bundled, str) and bundled in _bundled_board_svgs():
+        _, (view_box_width, view_box_height) = _bundled_board_svgs()[bundled]
+        image = f'url("{local_static_url(f"images/board/{quote(bundled)}")}")'
+    else:
+        svg = str(board_svg.get("svg") or "")
+        view_box_width, view_box_height = _parse_svg_view_box_size(svg, "board.svg")
+        encoded = base64.b64encode(svg.encode("utf-8")).decode("ascii")
+        image = f'url("data:image/svg+xml;base64,{encoded}")'
     padding_bottom = view_box_height * 100 / view_box_width
 
-    encoded = base64.b64encode(svg.encode("utf-8")).decode("ascii")
-    image = f'url("data:image/svg+xml;base64,{encoded}")'
     scope = f'[data-board-variant="{variant_name}"]'
     # Keep uploaded artwork available for its settings thumbnail while a user
     # selects a built-in theme on the actual board.
@@ -621,7 +665,7 @@ def _copy_catalogued_uploaded_assets(
             target_doc["pieceSetUpdatedAt"] = updated_at
 
     board_svg = source_doc.get("boardSvg")
-    if isinstance(board_svg, Mapping) and board_svg.get("svg"):
+    if isinstance(board_svg, Mapping) and _has_board_svg(source_doc):
         target_doc["boardSvg"] = cast(models.CataloguedVariantBoardSvg, dict(board_svg))
         updated_at = source_doc.get("boardSvgUpdatedAt")
         if isinstance(updated_at, datetime):
@@ -630,4 +674,9 @@ def _copy_catalogued_uploaded_assets(
 
 def _has_board_svg(doc: Mapping[str, Any]) -> bool:
     board_svg = doc.get("boardSvg")
-    return isinstance(board_svg, Mapping) and bool(board_svg.get("svg"))
+    if not isinstance(board_svg, Mapping):
+        return False
+    bundled = board_svg.get("bundled")
+    return bool(board_svg.get("svg")) or (
+        isinstance(bundled, str) and bundled in _bundled_board_svgs()
+    )
