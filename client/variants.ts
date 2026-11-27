@@ -2219,6 +2219,10 @@ export interface CataloguedVariantClientDocument {
     readonly premoveVariant?: string;
     readonly startFen: string;
     readonly randomStart?: boolean;
+    readonly doubleRandomStart?: boolean;
+    readonly hiddenInfo?: boolean;
+    readonly hiddenInfoMode?: HiddenInfoMode;
+    readonly dropsRequireVisibility?: boolean;
     readonly width: number;
     readonly height: number;
     readonly pieces: cg.Letter[];
@@ -2360,6 +2364,23 @@ function cataloguedIniOption(ini: string | undefined, key: string): string | und
 
 function cataloguedIniHasOption(ini: string | undefined, key: string): boolean {
     return cataloguedIniOption(ini, key) !== undefined;
+}
+
+// Fog-of-war's extinction rule (no check, king capture ends the game) breaks
+// local move generation on the fog-redacted FEN the client receives, the same
+// way it does for the built-in fogofwar variant (see client/variantsIni.ts).
+// Drop it from the ini loaded into the client's own WASM engine only.
+const FOG_EXTINCTION_KEYS = new Set(['extinctionvalue', 'extinctionpiecetypes']);
+function stripExtinctionRulesForClientFog(ini: string): string {
+    return ini
+        .split(/\r?\n/)
+        .filter(line => {
+            const stripped = line.trim();
+            if (!stripped || stripped.startsWith('#') || !stripped.includes('=')) return true;
+            const key = stripped.split('=')[0].trim().toLowerCase();
+            return !FOG_EXTINCTION_KEYS.has(key);
+        })
+        .join('\n');
 }
 
 export function cataloguedShowPromoted(ini: string, startFen: string): boolean {
@@ -2985,6 +3006,8 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
         displayName: meta.displayName || meta.name,
         display960: '',
         randomStart: !!meta.randomStart,
+        hiddenInfo: !!meta.hiddenInfo,
+        hiddenInfoMode: meta.hiddenInfoMode ?? 'none',
         tooltip: meta.tooltip || 'Catalogued variant',
         aiDisabled: !!meta.aiDisabled,
         replayOnly: !!meta.replayOnly,
@@ -3047,7 +3070,8 @@ export function registerCataloguedVariant(meta: CataloguedVariantClientDocument)
     if (meta.favorite) favoriteCataloguedVariantNames.add(meta.name);
     else favoriteCataloguedVariantNames.delete(meta.name);
     if (meta.ini) {
-        cataloguedVariantInis[meta.name] = meta.ini;
+        cataloguedVariantInis[meta.name] =
+            meta.hiddenInfoMode === 'fog' ? stripExtinctionRulesForClientFog(meta.ini) : meta.ini;
         cataloguedVariantBaseNames[meta.name] = meta.baseVariant ?? '';
     }
     registerCataloguedPremove(meta);
@@ -3336,7 +3360,7 @@ export function moddedVariant(
 }
 
 export function getLastMoveFen(variantName: string, lastMove: string, fen: string): [cg.Orig[] | undefined, string] {
-    return [uci2LastMove(lastMove), variantName === 'fogofwar' ? fogFen(fen) : fen];
+    return [uci2LastMove(lastMove), VARIANTS[variantName]?.hiddenInfoMode === 'fog' ? fogFen(fen) : fen];
 }
 
 // Replace all brick ("*") pieces to be promoted ("*~") to let them CSS style as fog instead of duck

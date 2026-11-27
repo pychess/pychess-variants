@@ -343,7 +343,7 @@ export function createMovelistButtons(ctrl: GameController) {
             ),
         );
     } else {
-        if (ctrl.corr && ctrl.variant.name !== 'fogofwar') {
+        if (ctrl.corr && ctrl.variant.hiddenInfoMode !== 'fog') {
             const url = ctrl.home + '/corranalysis/' + ctrl.gameId + `?ply=${ctrl.ply + 1}`;
             buttons.push(
                 h(

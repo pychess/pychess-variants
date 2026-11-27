@@ -95,6 +95,7 @@ class GamesApiBughousePreviewTestCase(AioHTTPTestCase):
             lastmove = None
             turn_player = "whiteA"
             preview_fen = "fen-a"
+            server_variant = SimpleNamespace(hidden_info=False)
             wplayer = SimpleNamespace(username="whiteA", title="")
             bplayer = SimpleNamespace(username="blackA", title="")
             spectators: ClassVar[set[object]] = set()

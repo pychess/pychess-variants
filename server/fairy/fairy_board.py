@@ -7,7 +7,12 @@ from functools import lru_cache
 from typing import TYPE_CHECKING
 
 from const import CATEGORIES
-from variants import JANGGI_VARIANTS, catalogued_variant_random_start, is_catalogued_variant
+from variants import (
+    JANGGI_VARIANTS,
+    catalogued_variant_double_random,
+    catalogued_variant_random_start,
+    is_catalogued_variant,
+)
 
 # -*- coding: utf-8 -*-
 from fairy.ataxx import ATAXX_FENS
@@ -210,13 +215,16 @@ class FairyBoard:
             fields = default_fen.split()
             placement, bracket, pockets = fields[0].partition("[")
             rows = placement.split("/")
+            double_random = catalogued_variant_double_random(normalized_variant)
             candidates = list(CHESS960_FENS)
             random.shuffle(candidates)
-            for rank in candidates:
-                rows[0], rows[-1] = rank, rank.upper()
+            for rank_white in candidates:
+                rank_black = random.choice(CHESS960_FENS) if double_random else rank_white
+                rows[0], rows[-1] = rank_black, rank_white.upper()
                 fields[0] = "/".join(rows) + bracket + pockets
-                rights = FILES[rank.rindex("r")] + FILES[rank.index("r")]
-                fields[2] = rights.upper() + rights
+                white_rights = FILES[rank_white.rindex("r")] + FILES[rank_white.index("r")]
+                black_rights = FILES[rank_black.rindex("r")] + FILES[rank_black.index("r")]
+                fields[2] = white_rights.upper() + black_rights
                 new_fen = " ".join(fields)
                 if (
                     fields[0] != disabled_fen.split(" ", 1)[0]
@@ -405,6 +413,10 @@ class FairyBoard:
     def legal_moves_no_history(self):
         # move legality can depend on history, but for bughouse we can't recreate history so we need this version
         return self.sf.legal_moves(self.variant, self.fen, [], self.chess960)
+
+    def visible_drop_squares(self) -> set[str]:
+        """Squares reachable by non-drop moves; drops_require_visibility variants only allow drops there."""
+        return {move[2:4] for move in self.cached_legal_moves() if "@" not in move}
 
     def is_checked(self):
         return self.sf.gives_check(self.variant, self.fen, [], self.chess960)
@@ -627,8 +639,75 @@ class FairyBoard:
 FOG_FEN_CACHE_SIZE = 4096
 
 
+def _parse_fen_rank(rank: str) -> list[str]:
+    """Expand one FEN rank (e.g. 'p2q~1K') into 8 cells: pieces, '~'-suffixed pieces, or '.'."""
+    squares = []
+    i = 0
+    while i < len(rank):
+        ch = rank[i]
+        if ch.isdigit():
+            squares.extend(["."] * int(ch))
+            i += 1
+        elif i + 1 < len(rank) and rank[i + 1] == "~":
+            squares.append(rank[i : i + 2])
+            i += 2
+        else:
+            squares.append(ch)
+            i += 1
+    return squares
+
+
+def _fen_rank_from_squares(squares: list[str]) -> str:
+    rank = ""
+    empty = 0
+    for square in squares:
+        if square == ".":
+            empty += 1
+        else:
+            if empty:
+                rank += str(empty)
+                empty = 0
+            rank += square
+    if empty:
+        rank += str(empty)
+    return rank
+
+
+def _own_piece_squares(placement: str, persp_color: int) -> set[str]:
+    board_part = placement.partition("[")[0]
+    squares = set()
+    for rank_index, rank in enumerate(board_part.split("/")):
+        rank_number = 8 - rank_index
+        for file_index, cell in enumerate(_parse_fen_rank(rank)):
+            if cell == ".":
+                continue
+            is_white = cell[0].isupper()
+            if (persp_color == WHITE) == is_white:
+                squares.add(f"{FILES[file_index]}{rank_number}")
+    return squares
+
+
+def _mask_invisible_squares(placement: str, visible_squares: set[str]) -> str:
+    board_part, bracket, holdings = placement.partition("[")
+    masked_ranks = []
+    for rank_index, rank in enumerate(board_part.split("/")):
+        rank_number = 8 - rank_index
+        cells = _parse_fen_rank(rank)
+        masked_ranks.append(
+            _fen_rank_from_squares(
+                [
+                    cell if f"{FILES[file_index]}{rank_number}" in visible_squares else "*"
+                    for file_index, cell in enumerate(cells)
+                ]
+            )
+        )
+    return "/".join(masked_ranks) + bracket + holdings
+
+
 @lru_cache(maxsize=FOG_FEN_CACHE_SIZE)
-def get_fog_fen(fen, persp_color):
+def get_fog_fen(
+    fen, persp_color, variant="fogofwar", chess960=False, drops_require_visibility=False
+):
     parts = fen.split(" ")
 
     fen_color = "w" if parts[1] == "w" else "b"
@@ -643,9 +722,19 @@ def get_fog_fen(fen, persp_color):
         parts[2] = "".join(letter for letter in parts[2] if letter.isupper())
     else:
         parts[2] = "".join(letter for letter in parts[2] if letter.islower())
-    fen = " ".join(parts)
+    doctored_fen = " ".join(parts)
 
-    fen = sf.get_fog_fen(fen, "fogofwar")
+    if drops_require_visibility:
+        # Don't let fog_area() reveal drop-only terrain the player can't
+        # actually drop on.
+        board = FairyBoard(variant, doctored_fen, chess960)
+        visible = _own_piece_squares(parts[0], persp_color)
+        visible |= {move[2:4] for move in board.legal_moves() if "@" not in move}
+        masked_parts = doctored_fen.split(" ")
+        masked_parts[0] = _mask_invisible_squares(masked_parts[0], visible)
+        fen = " ".join(masked_parts)
+    else:
+        fen = sf.get_fog_fen(doctored_fen, variant, chess960)
 
     # restore original FEN color
     parts = fen.split(" ")

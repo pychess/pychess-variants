@@ -57,6 +57,34 @@ VARIANT_NAME_ERROR = (
     "and contain only lowercase letters, digits, hyphens, and underscores."
 )
 PYCHESS_PIECES_METADATA_KEY = "pychesspieces"
+PYCHESS_HIDDEN_INFO_METADATA_KEY = "pychesshiddeninfo"
+PYCHESS_DOUBLE_RANDOM_METADATA_KEY = "pychessdoublerandom"
+PYCHESS_DROPS_REQUIRE_VISIBILITY_METADATA_KEY = "pychessdropsrequirevisibility"
+
+
+def pychess_metadata_value(line: str, key: str) -> str | None:
+    """Read a '# pychess<Key> = value' comment Fairy-Stockfish itself ignores."""
+    stripped = line.strip()
+    if not stripped or stripped[0] not in {"#", ";"}:
+        return None
+
+    body = stripped[1:].lstrip()
+    found_key, separator, value = body.partition("=")
+    if not separator or found_key.strip().casefold() != key:
+        return None
+
+    # After the leading Fairy-Stockfish comment marker has made the line safe
+    # for FSF, let users add ordinary inline notes after the pychess metadata.
+    return value.split("#", 1)[0].split(";", 1)[0].strip()
+
+
+def pychess_metadata_lines(ini: str, key: str) -> list[str]:
+    values: list[str] = []
+    for line in ini.splitlines():
+        value = pychess_metadata_value(line, key)
+        if value is not None:
+            values.append(value)
+    return values
 
 
 # XBoard/WinBoard presentation and protocol settings do not change gameplay.
@@ -300,6 +328,10 @@ class CataloguedVariantClientDocument(TypedDict):
     premoveVariant: NotRequired[str]
     startFen: str
     randomStart: NotRequired[bool]
+    doubleRandomStart: NotRequired[bool]
+    hiddenInfo: NotRequired[bool]
+    hiddenInfoMode: NotRequired[str]
+    dropsRequireVisibility: NotRequired[bool]
     width: int
     height: int
     pieces: list[str]

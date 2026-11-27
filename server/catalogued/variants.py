@@ -21,7 +21,7 @@ from variants import (
 
 from . import documents, models, repository, validation
 from .promotions import promotion_chaining_requires_replay_only
-from .rules import catalogued_random_start
+from .rules import catalogued_double_random_start, catalogued_random_start
 
 log = logging.getLogger(__name__)
 
@@ -252,10 +252,15 @@ def register_catalogued_variant_doc(
     if not width or not height:
         width, height = validation.board_dimensions_from_fen(start_fen)
 
+    hidden_info_mode = validation.catalogued_hidden_info_mode(ini)
     register_catalogued_server_variant(
         name,
         str(doc.get("displayName") or name),
         random_start=catalogued_random_start(ini, start_fen, width, height),
+        double_random=catalogued_double_random_start(ini, start_fen, width, height),
+        hidden_info_mode=hidden_info_mode,
+        hidden_info=hidden_info_mode != "none",
+        drops_require_visibility=validation.catalogued_drops_require_visibility(ini),
         grand=validation._catalogued_grand_from_dimensions(width, height),
         extended_move_codec=validation._catalogued_extended_move_codec_from_dimensions(
             width, height
@@ -297,10 +302,15 @@ def register_historical_catalogued_variant_doc(
     width = int(doc.get("width") or validated.width)
     height = int(doc.get("height") or validated.height)
     start_fen = str(doc.get("startFen") or validated.start_fen)
+    hidden_info_mode = validation.catalogued_hidden_info_mode(ini)
     register_catalogued_server_variant(
         name,
         str(doc.get("displayName") or doc.get("vd") or name),
         random_start=catalogued_random_start(ini, start_fen, width, height),
+        double_random=catalogued_double_random_start(ini, start_fen, width, height),
+        hidden_info_mode=hidden_info_mode,
+        hidden_info=hidden_info_mode != "none",
+        drops_require_visibility=validation.catalogued_drops_require_visibility(ini),
         grand=validation._catalogued_grand_from_dimensions(width, height),
         extended_move_codec=validation._catalogued_extended_move_codec_from_dimensions(
             width, height

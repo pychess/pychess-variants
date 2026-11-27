@@ -15,7 +15,7 @@ from settings import ADMINS
 from . import assets, builtin_data, models, validation
 from .betza import catalogued_betza_diagrams, catalogued_betza_pieces
 from .promotions import promotion_chaining_requires_replay_only
-from .rules import catalogued_random_start, catalogued_rule_summary
+from .rules import catalogued_double_random_start, catalogued_random_start, catalogued_rule_summary
 
 
 def _is_admin_username(username: str) -> bool:
@@ -158,6 +158,7 @@ def _client_doc(
     show_check_counters = bool(
         doc.get("showCheckCounters", validation.catalogued_show_check_counters(ini))
     )
+    hidden_info_mode = validation.catalogued_hidden_info_mode(ini)
 
     client_doc: models.CataloguedVariantClientDocument = {
         "name": str(doc["name"]),
@@ -169,6 +170,12 @@ def _client_doc(
         "randomStart": catalogued_random_start(
             ini, start_fen, int(doc["width"]), int(doc["height"])
         ),
+        "doubleRandomStart": catalogued_double_random_start(
+            ini, start_fen, int(doc["width"]), int(doc["height"])
+        ),
+        "hiddenInfo": hidden_info_mode != "none",
+        "hiddenInfoMode": hidden_info_mode,
+        "dropsRequireVisibility": validation.catalogued_drops_require_visibility(ini),
         "width": int(doc["width"]),
         "height": int(doc["height"]),
         "pieces": pieces,

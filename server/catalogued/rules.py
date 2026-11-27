@@ -8,6 +8,9 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Any, NotRequired, TypedDict
 
+from . import models
+from .models import pychess_metadata_lines
+
 
 class CataloguedRuleLine(TypedDict):
     text: str
@@ -310,8 +313,21 @@ def _catalogued_random_start_from_parsed(
         return False
     if parsed.has("castling") and not _bool_value(parsed.option("castling")):
         return False
+
+    # Fog-of-war's well-known "no royal king" idiom (king = -, commoner = <x>,
+    # castlingKingPiece = <x>) keeps castling geometry standard even though it
+    # reassigns which piece type plays "king" for check/capture purposes.
+    commoner_letter = (parsed.option("commoner") or "").strip().casefold()
+    royalless_king_setup = (
+        (parsed.option("king") or "").strip() == "-"
+        and len(commoner_letter) == 1
+        and (parsed.option("castlingkingpiece") or "").strip().casefold() == commoner_letter
+    )
+
     for key, value in parsed.items():
         key = key.casefold()
+        if royalless_king_setup and key in {"king", "commoner", "castlingkingpiece"}:
+            continue
         if key.startswith("castling") and key != "castling":
             return False
         if key in {"gating", "seirawangating", "cambodianmoves", "oppositecastling"} and _bool_value(value):
@@ -335,6 +351,20 @@ def catalogued_random_start(ini: str, start_fen: str, width: int, height: int) -
     """
     return _catalogued_random_start_from_parsed(
         parse_catalogued_ini(ini), start_fen, width, height
+    )
+
+
+def catalogued_double_random_start(ini: str, start_fen: str, width: int, height: int) -> bool:
+    """Opt in to independent (non-mirrored) per-side Chess960 starts.
+
+    Layered on top of the existing random-start convention via
+    '# pychessDoubleRandom = true'.
+    """
+    if not catalogued_random_start(ini, start_fen, width, height):
+        return False
+    return any(
+        value.strip().casefold() in {"true", "yes", "1", "on"}
+        for value in pychess_metadata_lines(ini, models.PYCHESS_DOUBLE_RANDOM_METADATA_KEY)
     )
 
 
