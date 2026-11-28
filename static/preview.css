@@ -655,6 +655,7 @@ label.piece.piece4.mansindam {
 }
 label.piece.piece5.mansindam {
     background-image: url('images/pieces/mansindam/ctk/0GI.svg');
+    filter: drop-shadow(2px 2px 2px #000);
 }
 label.piece.piece6.mansindam {
     background-image: url('images/pieces/disguised/w.svg');

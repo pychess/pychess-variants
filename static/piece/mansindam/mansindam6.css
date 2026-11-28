@@ -1,3 +1,18 @@
+.mansindam piece {
+    --ctk-shadow-size: max(
+        calc(var(--cg-width) / var(--cg-board-files, var(--files)) * 0.0385),
+        calc(var(--cg-height) / var(--cg-board-ranks, var(--ranks)) * 0.03333)
+    );
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    filter: drop-shadow(
+        var(--ctk-shadow-size, 2px)
+        var(--ctk-shadow-size, 2px)
+        var(--ctk-shadow-size, 2px)
+        #000
+    );
+}
 .mansindam piece.a-piece.ally {
     background-image: url('../../images/pieces/mansindam/ctk/0CE.svg');
 }
