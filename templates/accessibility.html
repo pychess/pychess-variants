@@ -5,7 +5,7 @@
 <aside></aside>
 <div class="guide legal-doc">
 <h1 id="accessibility">{% trans %}Accessibility guide{% endtrans %}</h1>
-<p>{% trans %}PyChess can be used with a screen reader and with the keyboard alone. This guide describes what works today. More is on the way, including typing moves and moving pieces with the keyboard.{% endtrans %}</p>
+<p>{% trans %}PyChess can be used with a screen reader and with the keyboard alone. You can play on the board with the arrow keys, or type your moves. This guide describes what works today.{% endtrans %}</p>
 
 <h2 id="finding-your-way">{% trans %}Finding your way around a page{% endtrans %}</h2>
 <ul>
@@ -15,19 +15,48 @@
 </ul>
 
 <h2 id="the-board">{% trans %}The board{% endtrans %}</h2>
-<p>{% trans %}The board itself is a picture. Every game, analysis and puzzle page also carries a text summary of it, hidden from sight, with these headings:{% endtrans %}</p>
+<p>{% trans %}The board itself is a picture. Every game, analysis, puzzle and study page also carries a text summary of it, hidden from sight, under the level 2 heading "Board: Summary". The summary is a list; the pieces of each side are a list inside it. It holds:{% endtrans %}</p>
 <ul>
 <li><strong>{% trans %}Pieces{% endtrans %}</strong>: {% trans %}for each side, one line per kind of piece with the squares it stands on, for example "rook: a1, h1". Shogi and janggi use their own square names.{% endtrans %}</li>
 <li><strong>{% trans %}Pockets{% endtrans %}</strong>: {% trans %}in drop variants, how many of each piece are in hand.{% endtrans %}</li>
 <li><strong>{% trans %}Last move{% endtrans %}</strong>: {% trans %}read out whenever it changes: at once in your own games, at the next pause on analysis and puzzle pages.{% endtrans %}</li>
-<li><strong>{% trans %}Time{% endtrans %}</strong>: {% trans %}each clock in words. It is not read out as it ticks; go to it whenever you want to know.{% endtrans %}</li>
+<li><strong>{% trans %}Time{% endtrans %}</strong>: {% trans %}both clocks in words. It is not read out as it ticks; go to it whenever you want to know.{% endtrans %}</li>
 <li><strong>{% trans %}Status{% endtrans %}</strong>: {% trans %}the result of the game, and on puzzle pages whether your move was right. Read out when it changes.{% endtrans %}</li>
 </ul>
-<p>{% trans %}On two-board pages such as bughouse, each board has its own summary, headed "Board A" and "Board B".{% endtrans %}</p>
+<p>{% trans %}On two-board pages such as bughouse, each board has its own summary, headed "Board A: Summary" and "Board B: Summary".{% endtrans %}</p>
+
+<h2 id="playing-on-the-board">{% trans %}Playing on the board with the keyboard{% endtrans %}</h2>
+<p>{% trans %}Every board can be played from the keyboard. It is one stop in the Tab order, under a level 2 heading "Board", and starts on your king; Tab later returns to the square you left. Playing with the mouse works as before.{% endtrans %}</p>
+<ul>
+<li>{% trans %}Arrow keys move one square. Up is always away from you, also after the board is flipped. Each square is read out with its piece, for example "e4 White pawn", or just its name when it is empty. A short sound means you reached the edge.{% endtrans %}</li>
+<li>{% trans %}Enter or Space on one of your pieces picks it up, with a short sound. Enter or Space on another square plays the move, which is then read out as the last move. To pick up a different piece, press Enter on it.{% endtrans %}</li>
+<li>{% trans %}The number keys jump to a rank in the current file: 1 to 9, and 0 for the tenth. With Shift they jump to a file in the current rank: Shift+1 is the a-file, Shift+3 the c-file. On shogi and janggi boards the numbers count from the lower left corner as the first player sees it, not by the spoken square names.{% endtrans %}</li>
+<li>{% trans %}A piece letter jumps to the next piece of that kind, of either side: K king, Q queen, R rook, B bishop, N knight, P pawn, and the letters of the variant's other pieces. With Shift it goes back.{% endtrans %}</li>
+<li>{% trans %}M reads the legal moves of the piece you are on. L reads the last move again, and T both clocks.{% endtrans %}</li>
+<li>{% trans %}When a move promotes a piece, or gates one in, the choices appear on the board: the arrow keys move between them, Enter picks one, and Escape takes the move back.{% endtrans %}</li>
+<li>{% trans %}In drop variants, Right arrow at the right edge of the board goes into your pocket (on analysis boards, that of the side to move). Left and Right move through the pieces in hand, and Left from the first one goes back to the board. Pick a piece with Enter, go to a square, and press Enter again to drop it there.{% endtrans %}</li>
+<li>{% trans %}The page's own keys still work on the board: F flips it, and the question mark lists the shortcuts. When the board does not have focus, the arrow keys step through the moves instead.{% endtrans %}</li>
+<li>{% trans %}On two-board pages each board has its own keyboard board, headed "Board A" and "Board B".{% endtrans %}</li>
+<li>{% trans %}If the arrow keys read the page instead of moving on the board, your screen reader is in browse mode. Switch to focus mode: NVDA+Space in NVDA, Insert+Z in JAWS, Orca+A in Orca; in VoiceOver, turn Quick Nav off by pressing Left and Right arrow together.{% endtrans %}</li>
+</ul>
+<p>{% trans %}Posting in the forum asks you to find a checkmate in one move. The position is described under the heading that names the side to move, the board works as described above, and the result is read out.{% endtrans %}</p>
+
+<h2 id="typing-moves">{% trans %}Typing moves{% endtrans %}</h2>
+<p>{% trans %}You can also type your moves. Turn on "Input moves with the keyboard" under Settings, Board Settings. A text field named "Your move" then appears under the board on game, analysis, puzzle and study pages. On phones and on two-board pages it is there for screen readers only.{% endtrans %}</p>
+<ul>
+<li>{% trans %}Press M to go to the field, when no square of the board has focus, and Escape to leave it. On two-board pages there is one field per board you play, named "Your move: Board A" and "Your move: Board B"; M in an empty field goes on to the other one.{% endtrans %}</li>
+<li>{% trans %}Type a move the way the move list writes it, for example Nf3, exd5, O-O, e8=Q, or P@e4 to drop a pawn. Shogi, xiangqi and the other variants use the notation of their own move list. The x of a capture is optional, and 0-0 works as O-O.{% endtrans %}</li>
+<li>{% trans %}You can also type the two squares, for example e2e4: the first square picks up the piece and the second plays the move. To promote, add the piece letter, for example e7e8q. In shogi, add + to promote, or press Enter after the two squares to keep the piece as it is.{% endtrans %}</li>
+<li>{% trans %}A move is played as soon as the text can only mean that move. When a longer move also starts the same way, such as O-O while O-O-O is possible, press Enter to play what you typed.{% endtrans %}</li>
+<li>{% trans %}Text that cannot become a move or a command turns red with a short sound, and your screen reader reports the field as invalid. A move typed while it is not your turn is played when your turn comes, if it is legal then.{% endtrans %}</li>
+<li>{% trans %}Commands: "clock" reads both clocks, "who" your opponent's name, "draw" offers a draw, "resign" resigns at once, and "zerk" berserks in an arena game. Typed draw and resign do not ask for confirmation. In a finished puzzle, "next" opens the next one, and "upv" and "downv" vote. A slash goes to the chat, and "help" or the question mark lists all keys and commands, the same list as the question mark outside the field.{% endtrans %}</li>
+<li>{% trans %}In bughouse, "clock" and "who" answer for the board of the field you type in, and "resign" asks your partner to confirm, as the Resign button does.{% endtrans %}</li>
+<li>{% trans %}In the field, the arrow keys step through the moves, and Enter in the empty field confirms a correspondence move that is waiting for confirmation.{% endtrans %}</li>
+</ul>
 
 <h2 id="moving-through-a-game">{% trans %}Moving through a game{% endtrans %}</h2>
 <ul>
-<li>{% trans %}Left and Right arrow: previous and next move. Up and Down arrow: first and last move. Each step is read out as the last move.{% endtrans %}</li>
+<li>{% trans %}Left and Right arrow: previous and next move. Up and Down arrow: first and last move. Each step is read out as the last move. These keys work when the board does not have focus.{% endtrans %}</li>
 <li>{% trans %}Press the question mark key to hear all keyboard shortcuts of the page.{% endtrans %}</li>
 </ul>
 
@@ -36,7 +65,6 @@
 <li>{% trans %}Draw, takeback and rematch offers are read out when they arrive, and are answered with Accept and Decline buttons.{% endtrans %}</li>
 <li>{% trans %}On the analysis board each engine line is a button. Enter plays the line's first move; pressing Enter again follows the line move by move.{% endtrans %}</li>
 <li>{% trans %}Chat messages are read out as they arrive.{% endtrans %}</li>
-<li>{% trans %}Making moves on the board with the keyboard is not available yet.{% endtrans %}</li>
 </ul>
 </div>
 </main>

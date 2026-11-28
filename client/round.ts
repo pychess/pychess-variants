@@ -6,12 +6,14 @@ import { renderTimeago } from './datetime';
 import { VARIANTS } from './variants';
 import { PyChessModel } from './types';
 import { BoardSummaryView } from './accessibility/boardSummary';
+import { ChessgroundKeyboard } from './accessibility/chessgroundKeyboard';
+import { keyboardMovePlaceholder } from './accessibility/keyboardMove';
 import { _ } from './i18n';
 import { pageHeading, srHeading } from './accessibility/headings';
 
-function runGround(vnode: VNode, model: PyChessModel, aliceBoardVNode?: VNode) {
+function runGround(vnode: VNode, model: PyChessModel, keyboard: ChessgroundKeyboard, aliceBoardVNode?: VNode) {
     const el = vnode.elm as HTMLElement;
-    const ctrl = new RoundController(el, model, aliceBoardVNode?.elm as HTMLElement | undefined);
+    const ctrl = new RoundController(el, model, keyboard, aliceBoardVNode?.elm as HTMLElement | undefined);
     const cg = ctrl.chessground;
     window['cg'] = cg;
 }
@@ -21,6 +23,9 @@ export function roundView(model: PyChessModel): VNode[] {
     const isAlice = variant.name === 'alice';
     let mainboardVNode: VNode;
     let aliceBoardVNode: VNode | undefined;
+    const keyboard = new ChessgroundKeyboard(variant, '');
+    // Typing moves is for the players, as lichess's.
+    const playing = model.username === model.wplayer || model.username === model.bplayer;
 
     renderTimeago();
 
@@ -31,13 +36,14 @@ export function roundView(model: PyChessModel): VNode[] {
             'div.round-app',
             {
                 class: { 'alice-round': isAlice },
-                hook: { insert: () => runGround(mainboardVNode, model, aliceBoardVNode) },
+                hook: { insert: () => runGround(mainboardVNode, model, keyboard, aliceBoardVNode) },
             },
             [
                 h(`selection#mainboard.${variant.boardFamily}.${variant.pieceFamily}.${variant.ui.boardMark}`, [
                     h('div.cg-wrap.' + variant.board.cg, {
                         hook: { insert: vnode => (mainboardVNode = vnode) },
                     }),
+                    keyboard.boardView(),
                 ]),
                 !isAlice
                     ? ''
@@ -54,7 +60,7 @@ export function roundView(model: PyChessModel): VNode[] {
                 h('div.material.material-top.' + variant.pieceFamily + '.disabled'),
                 h('div.pocket-top', [
                     h('div.' + variant.pieceFamily + '.' + model['variant'], [
-                        h('div.cg-wrap.pocket', [h('div#pocket0.pocketrow')]),
+                        h('div.cg-wrap.pocket', [h('div#pocket0.pocketrow'), keyboard.pocketView('top')]),
                     ]),
                 ]),
                 h('div.info-wrap0', [
@@ -74,14 +80,15 @@ export function roundView(model: PyChessModel): VNode[] {
                 h('div.info-wrap1', [h('div.clock-wrap', [h('div#clock1'), h('div#berserk1')]), h('div#misc-info1')]),
                 h('div.pocket-bot', [
                     h('div.' + variant.pieceFamily + '.' + model['variant'], [
-                        h('div.cg-wrap.pocket', [h('div#pocket1.pocketrow')]),
+                        h('div.cg-wrap.pocket', [h('div#pocket1.pocketrow'), keyboard.pocketView('bottom')]),
                     ]),
                 ]),
                 h('div.material.material-bottom.' + variant.pieceFamily + '.disabled'),
             ],
         ),
         h('under-left#spectators'),
-        h('under-board', [h('div.ctable-container'), h('div.games-container')]),
+        h('under-board', [playing ? keyboardMovePlaceholder('') : '', h('div.ctable-container'), h('div.games-container')]),
+        h('h2.sr-only', `${_('Board')}: ${_('Summary')}`),
         BoardSummaryView.placeholder('', 'assertive'),
     ];
 }

@@ -4834,3 +4834,90 @@ div button.login-btn {
     white-space: nowrap;
     border: 0;
 }
+
+/* Typing moves (client/accessibility/keyboardMove.ts), sized as lichess's. The help replaces the
+   hint while the input has focus. */
+.keyboard-move {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    height: fit-content;
+    margin: 8px 0;
+}
+.keyboard-move input {
+    width: 4.5em;
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-inline-end: 1rem;
+    padding: 0.25em 0.8em;
+    border: 1px solid var(--border-color);
+}
+.keyboard-move input.wrong {
+    background: var(--bad);
+    color: #fff;
+}
+.keyboard-move em {
+    opacity: 0.7;
+}
+.keyboard-move kbd {
+    margin-inline: 3px;
+}
+.keyboard-move:focus-within strong,
+.keyboard-move:not(:focus-within) em {
+    display: none;
+}
+/* For screen readers only on two-board pages, and below the 800px width at which the one-board
+   pages leave their phone layout. */
+#keyboard-move-a,
+#keyboard-move-b {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+@media (max-width: 799px) {
+    .keyboard-move {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+    }
+}
+
+/* The keyboard layer over a board and its pockets (client/accessibility/chessgroundKeyboard.ts):
+   placed like cg-container and the pocket row, invisible, and never in the way of the mouse. */
+.cg-keyboard,
+.cg-keyboard-pocket {
+    position: absolute;
+    top: 0;
+    display: grid;
+    z-index: 20;
+    pointer-events: none;
+}
+
+.cg-keyboard {
+    right: 0;
+}
+
+.cg-keyboard-pocket {
+    left: 0;
+}
+
+.cg-keyboard button,
+.cg-keyboard-pocket button {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    pointer-events: none;
+}

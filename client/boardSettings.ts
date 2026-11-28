@@ -28,6 +28,7 @@ import {
 import { renderResized, updateBounds } from 'chessgroundx/render';
 import { setSquareColors } from './boardColors';
 import { clampZoom, minZoomPercent, setBoardZoom } from './two-board/squareUnit';
+import type { KeyboardMove } from './accessibility/keyboardMove';
 
 export interface BoardController {
     readonly chessground: Api;
@@ -49,6 +50,7 @@ export interface BoardController {
     evalFile?: string;
     materialDifference?: boolean;
     updateMaterial?: any;
+    keyboardMove?: KeyboardMove;
     pvboxIni?: any;
     nnueIni?: any;
     chartFunctions?: any[];
@@ -195,6 +197,7 @@ class BoardSettings {
         this.settings['animation'] = new AnimationSettings(this);
         this.settings['confirmresign'] = new ConfirmResignSettings(this);
         this.settings['showDests'] = new ShowDestsSettings(this);
+        this.settings['keyboardMove'] = new KeyboardMoveSettings(this);
         this.settings['autoPromote'] = new AutoPromoteSettings(this);
         this.settings['autoClaimDraw'] = new AutoClaimDrawSettings(this);
         this.settings['confirmCorrMove'] = new ConfirmCorrMoveSettings(this);
@@ -412,6 +415,8 @@ class BoardSettings {
         settingsList.push(this.settings['confirmresign'].view());
 
         settingsList.push(this.settings['showDests'].view());
+
+        settingsList.push(this.settings['keyboardMove'].view());
 
         if (variant.promotion.autoPromoteable) settingsList.push(this.settings['autoPromote'].view());
 
@@ -729,6 +734,24 @@ class ZoomSettings extends NumberSettings {
                 _('Zoom'),
             ),
         );
+    }
+}
+
+class KeyboardMoveSettings extends BooleanSettings {
+    readonly boardSettings: BoardSettings;
+
+    constructor(boardSettings: BoardSettings) {
+        super('keyboardMove', false);
+        this.boardSettings = boardSettings;
+    }
+
+    update(): void {
+        this.boardSettings.ctrl?.keyboardMove?.redraw();
+        this.boardSettings.ctrl2?.keyboardMove?.redraw();
+    }
+
+    view(): VNode {
+        return h('div', checkbox(this, 'keyboardMove', _('Input moves with the keyboard')));
     }
 }
 

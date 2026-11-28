@@ -7,12 +7,15 @@ import { VARIANTS } from '../variants';
 import { gaugeSideColors } from '../variantColor';
 import { analysisSettings } from './analysisSettings';
 import { BoardSummaryView } from '../accessibility/boardSummary';
+import { ChessgroundKeyboard } from '../accessibility/chessgroundKeyboard';
 import { pageHeading, srHeading } from '../accessibility/headings';
+import { keyboardMovePlaceholder } from '../accessibility/keyboardMove';
 
 export type AnalysisPageParts = {
     side: VNode | VNode[];
     underboard: VNode | VNode[];
     mountBoard: (vnode: VNode, model: PyChessModel) => void;
+    keyboard: ChessgroundKeyboard;
     ongoing: boolean;
     boardTop?: VNode;
     boardBottom?: VNode;
@@ -50,12 +53,13 @@ export function renderAnalysisPage(model: PyChessModel, parts: AnalysisPageParts
                 h('div.cg-wrap.' + variant.board.cg, {
                     hook: { insert: vnode => parts.mountBoard(vnode, model) },
                 }),
+                parts.keyboard.boardView(),
                 parts.boardBottom ?? h('div#anal-clock-bottom'),
             ]),
             isOngoingGame ? '' : gauge(variant.colors),
             h('div.pocket-top', [
                 h('div.' + variant.pieceFamily + '.' + model.variant, [
-                    h('div.cg-wrap.pocket', [h('div#pocket0.pocketrow')]),
+                    h('div.cg-wrap.pocket', [h('div#pocket0.pocketrow'), parts.keyboard.pocketView('top')]),
                 ]),
             ]),
             analysisTools(isOngoingGame, parts.toolsAfterMoves, variant),
@@ -63,11 +67,12 @@ export function renderAnalysisPage(model: PyChessModel, parts: AnalysisPageParts
             h('div#move-controls'),
             h('div.pocket-bot', [
                 h('div.' + variant.pieceFamily + '.' + model.variant, [
-                    h('div.cg-wrap.pocket', [h('div#pocket1.pocketrow')]),
+                    h('div.cg-wrap.pocket', [h('div#pocket1.pocketrow'), parts.keyboard.pocketView('bottom')]),
                 ]),
             ]),
             h('under-left#spectators'),
-            h('under-board', parts.underboard),
+            h('under-board', [keyboardMovePlaceholder(''), ...[parts.underboard].flat()]),
+            h('h2.sr-only', `${_('Board')}: ${_('Summary')}`),
             BoardSummaryView.placeholder('', 'polite'),
         ]),
     ];
