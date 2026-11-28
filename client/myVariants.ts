@@ -884,6 +884,30 @@ function renderForm(model: PyChessModel): VNode {
                 ? null
                 : h(
                       'p.catalogued-help',
+                      _(
+                          'Add a comment line # pychessDoubleRandom = true on top of a Chess960 start to draw an independent (non-mirrored) back rank for each side instead of the usual mirrored one.',
+                      ),
+                  ),
+            editingSystem
+                ? null
+                : h(
+                      'p.catalogued-help',
+                      _(
+                          'For fog of war visibility, add a comment line # pychessHiddenInfo = fog. This only makes sense paired with no-check, king-capture rules (king = -, extinctionValue, extinctionPieceTypes); check still applying with fog enabled is allowed but can make a position unplayable.',
+                      ),
+                  ),
+            editingSystem
+                ? null
+                : h(
+                      'p.catalogued-help',
+                      _(
+                          'With pieceDrops, capturesToHand, and fog of war all enabled, add # pychessDropsRequireVisibility = true to restrict drops to squares already visible through ordinary moves, instead of any empty square. Without it, holding a piece reveals every empty square as a possible drop target; with it, far more of the board stays hidden.',
+                      ),
+                  ),
+            editingSystem
+                ? null
+                : h(
+                      'p.catalogued-help',
                       _('Private and unlisted variants are sandbox variants: games are playable but are not saved.'),
                   ),
             editingSystem

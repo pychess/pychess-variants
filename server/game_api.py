@@ -587,7 +587,7 @@ async def get_user_games(request: web.Request) -> web.StreamResponse:
                     }
                 )
             else:
-                if doc["s"] <= STARTED and variant == "fogofwar":
+                if doc["s"] <= STARTED and server_variant.hidden_info:
                     doc["f"] = DARK_FEN
                     doc["lm"] = ""
                     doc["m"] = ""
@@ -709,8 +709,8 @@ async def _get_games(request: web.Request) -> web.StreamResponse:
             {
                 "gameId": game.id,
                 "variant": game.variant,
-                "fen": DARK_FEN if game.variant == "fogofwar" else game.preview_fen,
-                "lastMove": "" if game.variant == "fogofwar" else game.lastmove,
+                "fen": DARK_FEN if game.server_variant.hidden_info else game.preview_fen,
+                "lastMove": "" if game.server_variant.hidden_info else game.lastmove,
                 "tp": game.turn_player,
                 "w": game.wplayer.username,
                 "wTitle": game.wplayer.title,
@@ -990,7 +990,7 @@ async def _game_doc_for_list(request: web.Request, doc: GameDoc) -> GameDoc | No
     if tournament_id is not None:
         doc["tn"] = await get_tournament_name(request, tournament_id)
     doc["initialFen"] = doc.get("if", "")
-    if doc["s"] <= STARTED and variant == "fogofwar":
+    if doc["s"] <= STARTED and server_variant.hidden_info:
         doc["f"] = DARK_FEN
         doc["lm"] = ""
         doc["m"] = ""

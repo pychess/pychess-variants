@@ -14,7 +14,7 @@ from typing import Any
 from aiohttp import web
 from compress import MAX_COMPRESSED_BOARD_HEIGHT, MAX_COMPRESSED_BOARD_WIDTH
 from fairy.fairy_board import sf
-from variants import ServerVariants
+from variants import HiddenInfoMode, ServerVariants
 
 from . import builtin_data, models
 from .promotions import ensure_no_promotion_chaining
@@ -444,27 +444,37 @@ def _ini_piece_letters(ini: str, key: str) -> list[str]:
 
 
 def _pychess_pieces_metadata_value(line: str) -> str | None:
-    stripped = line.strip()
-    if not stripped or stripped[0] not in {"#", ";"}:
-        return None
-
-    body = stripped[1:].lstrip()
-    key, separator, value = body.partition("=")
-    if not separator or key.strip().casefold() != models.PYCHESS_PIECES_METADATA_KEY:
-        return None
-
-    # After the leading Fairy-Stockfish comment marker has made the line safe
-    # for FSF, let users add ordinary inline notes after the pychess metadata.
-    return value.split("#", 1)[0].split(";", 1)[0].strip()
+    return models.pychess_metadata_value(line, models.PYCHESS_PIECES_METADATA_KEY)
 
 
 def _pychess_pieces_metadata_lines(ini: str) -> list[str]:
-    values: list[str] = []
-    for line in ini.splitlines():
-        value = _pychess_pieces_metadata_value(line)
-        if value is not None:
-            values.append(value)
-    return values
+    return models.pychess_metadata_lines(ini, models.PYCHESS_PIECES_METADATA_KEY)
+
+
+def catalogued_hidden_info_mode(ini: str) -> HiddenInfoMode:
+    """Fog-of-war opt-in via '# pychessHiddenInfo = fog'.
+
+    Only fog mode is supported for user-defined variants; jieqi's
+    covered_pieces mode stays a built-in-only special case.
+    """
+    for value in models.pychess_metadata_lines(ini, models.PYCHESS_HIDDEN_INFO_METADATA_KEY):
+        if value.strip().casefold() == "fog":
+            return "fog"
+    return "none"
+
+
+def catalogued_drops_require_visibility(ini: str) -> bool:
+    """Visibility-gated drop restriction, opt-in via '# pychessDropsRequireVisibility = true'.
+
+    Only meaningful alongside drops and fog-of-war visibility.
+    """
+    requested = any(
+        value.strip().casefold() in {"true", "yes", "1", "on"}
+        for value in models.pychess_metadata_lines(
+            ini, models.PYCHESS_DROPS_REQUIRE_VISIBILITY_METADATA_KEY
+        )
+    )
+    return requested and catalogued_hidden_info_mode(ini) == "fog" and _ini_bool(ini, "pieceDrops")
 
 
 def _strip_pychess_pieces_metadata(ini: str) -> str:

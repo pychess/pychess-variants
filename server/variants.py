@@ -35,6 +35,7 @@ class Variant:
     rating_enabled: bool = True
     hidden_info: bool = False
     hidden_info_mode: HiddenInfoMode = "none"
+    drops_require_visibility: bool = False
     base_variant: str = ""
     show_promoted: bool = False
     legal_moves_need_history: bool = False
@@ -60,12 +61,14 @@ class CataloguedServerVariant:
     icon: str = CATALOGUED_VARIANT_ICON
     chess960: bool = False
     random_start: bool = False
+    double_random: bool = False
     grand: bool = False
     byo: bool = False
     two_boards: bool = False
     rating_enabled: bool = False
     hidden_info: bool = False
     hidden_info_mode: HiddenInfoMode = "none"
+    drops_require_visibility: bool = False
     base_variant: str = ""
     show_promoted: bool = False
     legal_moves_need_history: bool = False
@@ -98,6 +101,7 @@ class ServerVariants(Enum):
         self.rating_enabled = variant.rating_enabled
         self.hidden_info = variant.hidden_info
         self.hidden_info_mode = variant.hidden_info_mode
+        self.drops_require_visibility = variant.drops_require_visibility
         self.base_variant = variant.base_variant
         self.show_promoted = variant.show_promoted
         self.legal_moves_need_history = variant.legal_moves_need_history
@@ -275,6 +279,10 @@ def register_catalogued_server_variant(
     legal_moves_need_history: bool = False,
     n_fold_is_draw: bool = False,
     random_start: bool = False,
+    double_random: bool = False,
+    hidden_info: bool = False,
+    hidden_info_mode: HiddenInfoMode = "none",
+    drops_require_visibility: bool = False,
     replay_only: bool = False,
 ) -> CataloguedServerVariant:
     """Register a casual uploaded variant in the runtime server variant maps.
@@ -295,6 +303,10 @@ def register_catalogued_server_variant(
         legal_moves_need_history=legal_moves_need_history,
         n_fold_is_draw=n_fold_is_draw,
         random_start=random_start,
+        double_random=double_random,
+        hidden_info=hidden_info,
+        hidden_info_mode=hidden_info_mode,
+        drops_require_visibility=drops_require_visibility,
         replay_only=replay_only,
         move_encoding=(
             encode_move_duck
@@ -347,6 +359,11 @@ def is_catalogued_variant(name: str | None) -> bool:
 def catalogued_variant_random_start(name: str) -> bool:
     variant = CATALOGUED_VARIANTS.get(name)
     return variant is not None and variant.random_start
+
+
+def catalogued_variant_double_random(name: str) -> bool:
+    variant = CATALOGUED_VARIANTS.get(name)
+    return variant is not None and variant.double_random
 
 
 def is_catalogued_variant_code(code: str | None) -> bool:
