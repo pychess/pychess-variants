@@ -546,7 +546,9 @@ export function analysisView(model: PyChessModel): VNode[] {
                 ]),
             ],
         ),
+        h('h2.sr-only', `${_('Board')} A: ${_('Summary')}`),
         BoardSummaryView.placeholder('a', 'polite'),
+        h('h2.sr-only', `${_('Board')} B: ${_('Summary')}`),
         BoardSummaryView.placeholder('b', 'polite'),
     ];
 }

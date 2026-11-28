@@ -31,13 +31,6 @@ export type Politeness = 'assertive' | 'polite';
 
 const COLORS: cg.Color[] = ['white', 'black'];
 
-// level: its top heading's, under the page's own (the forum captcha sits lower than a game page).
-// lastMove: false where a position has no history (the forum captcha).
-interface SummaryOptions {
-    level?: number;
-    lastMove?: boolean;
-}
-
 // A live region speaks only when its text changes, so the same words again (Nxd5 answered by Nxd5)
 // get a trailing no-break space, added and dropped in turn.
 function respoken(shown: string, text: string): string {
@@ -85,10 +78,9 @@ export class BoardSummaryView {
     constructor(
         private readonly variant: Variant,
         private readonly boardName: BoardName,
-        private readonly options: SummaryOptions = {},
     ) {}
 
-    /** The page decides where the summary goes and how urgently it speaks. */
+    /** The page decides where the summary goes, its heading, and how urgently it speaks. */
     static placeholder(boardName: BoardName, live: Politeness): VNode {
         return h(`div#${elementId(boardName)}.sr-only`, { attrs: { 'data-live': live } });
     }
@@ -119,21 +111,16 @@ export class BoardSummaryView {
         this.setClock(color(), clock.duration);
     }
 
-    /** What the "Last move" section says, for the board's `l` key; empty where there is none. */
+    /** What the "Last move" section says, for the board's `l` key. */
     lastMoveText(): string {
-        if (this.options.lastMove === false) return '';
         return this.lastMove ?? _('Initial position');
     }
 
     /** Both clocks in one line, for the board's `t` key; empty when the game has none. */
     clockText(): string {
-        return this.clockLines().join(', ');
-    }
-
-    private clockLines(): string[] {
-        return COLORS.filter(color => this.clocks[color] !== undefined).map(
-            color => `${this.colorName(color)}: ${this.clocks[color]}`,
-        );
+        return COLORS.filter(color => this.clocks[color] !== undefined)
+            .map(color => `${this.colorName(color)}: ${this.clocks[color]}`)
+            .join(', ');
     }
 
     // An event (a puzzle's "Best move!") is spoken even in the words the status already holds;
@@ -171,65 +158,65 @@ export class BoardSummaryView {
         return [...new Set(roles)].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
     }
 
-    private piecesByColor(color: cg.Color): VNode[] {
+    private piecesByColor(color: cg.Color): string[] {
         const squares = new Map<cg.Role, cg.Key[]>();
         for (const [key, piece] of this.boardState?.pieces ?? []) {
             if (piece.color !== color) continue;
             squares.set(piece.role, [...(squares.get(piece.role) ?? []), key]);
         }
-        return this.orderedRoles(color, squares.keys()).map(role =>
-            h(
-                'p',
+        return this.orderedRoles(color, squares.keys()).map(
+            role =>
                 `${pieceName(this.variant, role, color)}: ${squares
                     .get(role)!
                     .sort(bySquare)
                     .map(key => this.squareName(key))
                     .join(', ')}`,
-            ),
         );
     }
 
-    private pocketByColor(color: cg.Color): VNode[] {
+    private pocketByColor(color: cg.Color): string[] {
         const pocket = this.boardState?.pockets?.[color];
         if (pocket === undefined) return [];
         const roles = [...pocket.keys()].filter(role => (pocket.get(role) ?? 0) > 0);
-        return this.orderedRoles(color, roles).map(role =>
-            h('p', `${pieceName(this.variant, role, color)}: ${pocket.get(role)}`),
+        return this.orderedRoles(color, roles).map(
+            role => `${pieceName(this.variant, role, color)}: ${pocket.get(role)}`,
         );
     }
 
+    // Lists, not headings: the screen reader tells their nesting itself, so the summary sits under
+    // whatever heading the page gives it.
     private render(): VNode {
-        // A two-board page heads each board's summary, so the sections sit one level lower.
-        const titled = this.boardName !== '';
-        const top = this.options.level ?? 2;
-        const section = `h${titled ? top + 1 : top}`;
-        const side = `h${titled ? top + 2 : top + 1}`;
         const region = { 'aria-live': this.live, 'aria-atomic': 'true' };
-
-        const byColor = (title: string, rows: (color: cg.Color) => VNode[]) => [
-            h(section, title),
-            // "Pieces: White", not just "White": headings are also heard out of order, in a list.
-            ...COLORS.map(color => h('div', [h(side, `${title}: ${this.colorName(color)}`), ...rows(color)])),
-        ];
+        const byColor = (title: string, rows: (color: cg.Color) => string[]) =>
+            COLORS.map(color =>
+                h('li', [
+                    `${title}: ${this.colorName(color)}`,
+                    h(
+                        'ul',
+                        rows(color).map(row => h('li', row)),
+                    ),
+                ]),
+            );
+        const clocks = this.clockText();
 
         return h(`div#${elementId(this.boardName)}.sr-only`, { attrs: { 'data-live': this.live } }, [
-            // "Summary", so it is told apart from the keyboard board's own "Board A" heading.
-            ...(titled ? [h(`h${top}`, `${_('Board')} ${this.boardName.toUpperCase()}: ${_('Summary')}`)] : []),
-            ...byColor(_('Pieces'), color => this.piecesByColor(color)),
-            ...(this.variant.pocket ? byColor(_('Pockets'), color => this.pocketByColor(color)) : []),
-            ...(this.options.lastMove === false
-                ? []
-                : [h(section, _('Last move')), h('p', { attrs: region }, this.lastMoveShown)]),
-            // role="timer" is never announced as it changes; the time is read when the reader gets there.
-            ...(Object.keys(this.clocks).length === 0
-                ? []
-                : [
-                      h(section, _('Time')),
-                      ...this.clockLines().map(line => h('p', { attrs: { role: 'timer' } }, line)),
-                  ]),
-            ...(this.status === undefined
-                ? []
-                : [h(section, _('Status')), h('p', { attrs: { role: 'status', ...region } }, this.status)]),
+            h('ul', [
+                ...byColor(_('Pieces'), color => this.piecesByColor(color)),
+                ...(this.variant.pocket ? byColor(_('Pockets'), color => this.pocketByColor(color)) : []),
+                h('li', [`${_('Last move')}: `, h('span', { attrs: region }, this.lastMoveShown)]),
+                // role="timer" is never announced as it changes; the time is read when the reader gets there.
+                ...(clocks === ''
+                    ? []
+                    : [h('li', [`${_('Time')}: `, h('span', { attrs: { role: 'timer' } }, clocks)])]),
+                ...(this.status === undefined
+                    ? []
+                    : [
+                          h('li', [
+                              `${_('Status')}: `,
+                              h('span', { attrs: { role: 'status', ...region } }, this.status),
+                          ]),
+                      ]),
+            ]),
         ]);
     }
 }

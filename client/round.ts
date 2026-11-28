@@ -88,6 +88,7 @@ export function roundView(model: PyChessModel): VNode[] {
         ),
         h('under-left#spectators'),
         h('under-board', [playing ? keyboardMovePlaceholder('') : '', h('div.ctable-container'), h('div.games-container')]),
+        h('h2.sr-only', `${_('Board')}: ${_('Summary')}`),
         BoardSummaryView.placeholder('', 'assertive'),
     ];
 }

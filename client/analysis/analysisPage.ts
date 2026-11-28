@@ -72,6 +72,7 @@ export function renderAnalysisPage(model: PyChessModel, parts: AnalysisPageParts
             ]),
             h('under-left#spectators'),
             h('under-board', [keyboardMovePlaceholder(''), ...[parts.underboard].flat()]),
+            h('h2.sr-only', `${_('Board')}: ${_('Summary')}`),
             BoardSummaryView.placeholder('', 'polite'),
         ]),
     ];

@@ -626,10 +626,7 @@ export function forumView(model: PyChessModel) {
                                         });
                                         // The forum redraws the whole page on every change, so the
                                         // keyboard board goes into a host the redraw leaves empty.
-                                        const summary = new BoardSummaryView(captchaVariant, '', {
-                                            level: level + 1,
-                                            lastMove: false,
-                                        });
+                                        const summary = new BoardSummaryView(captchaVariant, '');
                                         captchaKeyboard = new ChessgroundKeyboard(captchaVariant, '', level + 1);
                                         captchaKeyboard.attach(board, summary);
                                         const host = (vnode.elm as HTMLElement).nextElementSibling!;

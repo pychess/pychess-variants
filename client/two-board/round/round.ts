@@ -424,7 +424,9 @@ export function roundView(model: PyChessModel): VNode[] {
         // A crosstable here would be worth having — the stylesheet's comments call its absence a
         // cost. But it was never a cost this markup was paying: nothing was ever drawn in it, so
         // building one is a feature, not the restoration of something these lines provided.
+        h('h2.sr-only', `${_('Board')} A: ${_('Summary')}`),
         BoardSummaryView.placeholder('a', 'assertive'),
+        h('h2.sr-only', `${_('Board')} B: ${_('Summary')}`),
         BoardSummaryView.placeholder('b', 'assertive'),
     ];
 }

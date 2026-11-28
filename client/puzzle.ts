@@ -69,6 +69,7 @@ export function puzzleView(model: PyChessModel): VNode[] {
             ]),
             h('under-left#spectators'),
             h('under-board', [keyboardMovePlaceholder('')]),
+            h('h2.sr-only', `${_('Board')}: ${_('Summary')}`),
             BoardSummaryView.placeholder('', 'polite'),
         ]),
     ];
