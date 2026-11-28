@@ -1,0 +1,96 @@
+.mansindam piece.a-piece.ally {
+    background-image: url('../../images/pieces/mansindam/ctk/0CE.svg');
+}
+.mansindam piece.c-piece.ally {
+    background-image: url('../../images/pieces/mansindam/ctk/0YE.svg');
+}
+.mansindam piece.m-piece.ally {
+    background-image: url('../../images/pieces/mansindam/ctk/0SU.svg');
+}
+.mansindam piece.pc-piece.ally {
+    background-image: url('../../images/pieces/mansindam/ctk/0SE.svg');
+}
+.mansindam piece.pm-piece.ally {
+    background-image: url('../../images/pieces/mansindam/ctk/0MY.svg');
+}
+.mansindam piece.p-piece.ally {
+    background-image: url('../../images/pieces/shogi/ctk/0FU.svg');
+}
+.mansindam piece.b-piece.ally {
+    background-image: url('../../images/pieces/shogi/ctk/0KA.svg');
+}
+.mansindam piece.n-piece.ally {
+    background-image: url('../../images/pieces/mansindam/ctk/0GI.svg');
+}
+.mansindam piece.r-piece.ally {
+    background-image: url('../../images/pieces/mansindam/ctk/0BA.svg');
+}
+.mansindam piece.pp-piece.ally {
+    background-image: url('../../images/pieces/mansindam/ctk/0CH.svg');
+}
+.mansindam piece.pb-piece.ally {
+    background-image: url('../../images/pieces/shogi/ctk/0UM.svg');
+}
+.mansindam piece.pn-piece.ally {
+    background-image: url('../../images/pieces/mansindam/ctk/0WI.svg');
+}
+.mansindam piece.pr-piece.ally {
+    background-image: url('../../images/pieces/shogi/ctk/0RY.svg');
+}
+.mansindam piece.q-piece.ally {
+    background-image: url('../../images/pieces/mansindam/ctk/0BU.svg');
+}
+.mansindam piece.k-piece.white.ally {
+    background-image: url('../../images/pieces/mansindam/ctk/0YANG.svg');
+}
+.mansindam piece.k-piece.white.enemy {
+    background-image: url('../../images/pieces/mansindam/ctk/1YANG.svg');
+}
+.mansindam piece.a-piece.enemy {
+    background-image: url('../../images/pieces/mansindam/ctk/1CE.svg');
+}
+.mansindam piece.c-piece.enemy {
+    background-image: url('../../images/pieces/mansindam/ctk/1YE.svg');
+}
+.mansindam piece.m-piece.enemy {
+    background-image: url('../../images/pieces/mansindam/ctk/1SU.svg');
+}
+.mansindam piece.pc-piece.enemy {
+    background-image: url('../../images/pieces/mansindam/ctk/1SE.svg');
+}
+.mansindam piece.pm-piece.enemy {
+    background-image: url('../../images/pieces/mansindam/ctk/1MY.svg');
+}
+.mansindam piece.p-piece.enemy {
+    background-image: url('../../images/pieces/mansindam/ctk/1FU.svg');
+}
+.mansindam piece.b-piece.enemy {
+    background-image: url('../../images/pieces/mansindam/ctk/1KA.svg');
+}
+.mansindam piece.n-piece.enemy {
+    background-image: url('../../images/pieces/mansindam/ctk/1GI.svg');
+}
+.mansindam piece.r-piece.enemy {
+    background-image: url('../../images/pieces/mansindam/ctk/1BA.svg');
+}
+.mansindam piece.pp-piece.enemy {
+    background-image: url('../../images/pieces/mansindam/ctk/1CH.svg');
+}
+.mansindam piece.pb-piece.enemy {
+    background-image: url('../../images/pieces/mansindam/ctk/1UM.svg');
+}
+.mansindam piece.pn-piece.enemy {
+    background-image: url('../../images/pieces/mansindam/ctk/1WI.svg');
+}
+.mansindam piece.pr-piece.enemy {
+    background-image: url('../../images/pieces/mansindam/ctk/1RY.svg');
+}
+.mansindam piece.q-piece.enemy {
+    background-image: url('../../images/pieces/mansindam/ctk/1BU.svg');
+}
+.mansindam piece.k-piece.black.enemy {
+    background-image: url('../../images/pieces/mansindam/ctk/1EU.svg');
+}
+.mansindam piece.k-piece.black.ally {
+    background-image: url('../../images/pieces/mansindam/ctk/0EU.svg');
+}

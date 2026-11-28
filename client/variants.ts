@@ -460,7 +460,7 @@ export const PIECE_FAMILIES: Record<string, PieceFamily> = {
     chak: { pieceCSS: ['chak0', 'ronin', 'chak1', 'chak2', 'disguised'] },
     chennis: { pieceCSS: ['chennis0', 'chennis1', 'chennis2', 'chennis3', 'chennis4', 'disguised'] },
     spartan: { pieceCSS: ['spartan0', 'spartan1', 'disguised'] },
-    mansindam: { pieceCSS: ['mansindam2', 'mansindam1', 'mansindam3', 'mansindam4', 'mansindam5', 'disguised'] },
+    mansindam: { pieceCSS: ['mansindam2', 'mansindam1', 'mansindam3', 'mansindam4', 'mansindam5', 'mansindam6', 'disguised'] },
     xiangfu: { pieceCSS: ['eventintl', 'eventhanzi', 'eventhanziguided', 'disguised'] },
     borderlands: { pieceCSS: ['borderlands', 'disguised'] },
     yokai: { pieceCSS: ['yokai', 'disguised'] },
